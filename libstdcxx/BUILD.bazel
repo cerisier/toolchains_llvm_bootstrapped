@@ -1,0 +1,63 @@
+load("@bazel_skylib//rules:select_file.bzl", "select_file")
+load("@aspect_bazel_lib//lib:run_binary.bzl", "run_binary")
+load("//toolchain:selects.bzl", "platform_extra_binary")
+load(":libstdcxx_stubs_assembly_files.bzl", "libstdcxx_stubs_assembly_files")
+load("//libc/glibc:libc_aware_target_triple.bzl", "libc_aware_target_triple")
+load("//libc/glibc:libc_shared_library.bzl", "make_glibc_shared_library")
+load("@aspect_bazel_lib//lib:copy_file.bzl", "copy_file")
+load("@aspect_bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
+
+alias(
+    name = "libstdcxx-stubs-generator",
+    actual = platform_extra_binary("bin/glibc-stubs-generator"),
+)
+
+# Generate assembly files for the glibc (one per lib)
+libstdcxx_stubs_assembly_files(
+    name = "generate_glibc_stubs",
+    target = libc_aware_target_triple(),
+    baseline_symbols = "baseline_symbols.txt",
+    visibility = ["//visibility:public"],
+)
+
+select_file(
+    # Note the .S suffix.
+    # This is only to avoid warnings about unused flags because rules_cc
+    # treat most flags as compile_actions and most flags are not used
+    # for non preprocessed assembly actions.
+    name = "libstdc++.S",
+    srcs = ":generate_glibc_stubs",
+    subpath = "build/libstdc++.S",
+    visibility = ["//visibility:public"],
+)
+
+select_file(
+    name = "all.map",
+    srcs = ":generate_glibc_stubs",
+    subpath = "build/all.map",
+    visibility = ["//visibility:public"],
+)
+
+
+make_glibc_shared_library(
+    lib_name = "libstdc++",
+    lib_version = "6",
+    srcs = [
+        ":libstdc++.S",
+    ],
+)
+
+copy_file(
+    name = "libstdc++.so.6",
+    src = ":libstdc++",
+    out = "libstdc++.so.6",
+    allow_symlink = True,
+)
+
+copy_to_directory(
+    name = "search_directory",
+    srcs = [
+        ":libstdc++.so.6",
+    ],
+    visibility = ["//visibility:public"],
+)
