@@ -1144,15 +1144,6 @@ genrule(
     visibility = ["//visibility:public"],
 )
 
-# genrule(
-#     name = "__config_site",
-#     srcs = [],
-#     outs = ["include/__config_site"],
-#     cmd = """
-#         echo '// Defines are passed by command line' > $@
-#     """,
-# )
-
 copy_file(
     name = "__assertion_handler",
     src = "vendor/llvm/default_assertion_handler.in",
