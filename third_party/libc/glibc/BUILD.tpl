@@ -275,3 +275,11 @@ cc_stage2_library(
     ],
     visibility = ["//visibility:public"],
 )
+
+cc_stage2_static_library(
+    name = "c_nonshared.static",
+    deps = [
+        ":c_nonshared",
+    ],
+    visibility = ["//visibility:public"],
+)

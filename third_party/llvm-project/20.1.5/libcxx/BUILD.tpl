@@ -1,6 +1,7 @@
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
 load("@aspect_bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_library.bzl", "cc_stage2_library")
+load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_static_library.bzl", "cc_stage2_static_library")
 
 filegroup(
     name = "libcxx_headers_files",
@@ -1316,6 +1317,14 @@ cc_stage2_library(
         ],
     }) + [
         "@toolchains_llvm_bootstrapped//third_party/llvm-project:libc_headers",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+cc_stage2_static_library(
+    name = "libcxx.static",
+    deps = [
+        ":libcxx",
     ],
     visibility = ["//visibility:public"],
 )

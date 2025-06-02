@@ -1,4 +1,5 @@
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_library.bzl", "cc_stage2_library")
+load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_static_library.bzl", "cc_stage2_static_library")
 load("@aspect_bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
 
 filegroup(
@@ -111,6 +112,14 @@ cc_stage2_library(
         ],
     }) + [
         "@toolchains_llvm_bootstrapped//third_party/llvm-project:libc_headers",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+cc_stage2_static_library(
+    name = "libcxxabi.static",
+    deps = [
+        ":libcxxabi",
     ],
     visibility = ["//visibility:public"],
 )

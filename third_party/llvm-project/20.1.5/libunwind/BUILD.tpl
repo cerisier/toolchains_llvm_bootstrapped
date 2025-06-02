@@ -1,5 +1,6 @@
 
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_library.bzl", "cc_stage2_library")
+load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_static_library.bzl", "cc_stage2_static_library")
 
 cc_stage2_library(
     name = "libunwind",
@@ -73,5 +74,13 @@ cc_stage2_library(
             "@glibc//:gnu_libc_headers",
         ],
     }),
+    visibility = ["//visibility:public"],
+)
+
+cc_stage2_static_library(
+    name = "libunwind.static",
+    deps = [
+        ":libunwind",
+    ],
     visibility = ["//visibility:public"],
 )

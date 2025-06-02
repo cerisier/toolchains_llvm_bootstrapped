@@ -13,8 +13,8 @@ alias(
 )
 
 alias(
-    name = "c_nonshared",
-    actual = make_select_glibc_repository_target("@glibc", "c_nonshared"),
+    name = "c_nonshared.static",
+    actual = make_select_glibc_repository_target("@glibc", "c_nonshared.static"),
 )
 
 alias(
