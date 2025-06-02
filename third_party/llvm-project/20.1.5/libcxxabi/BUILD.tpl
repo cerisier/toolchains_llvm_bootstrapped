@@ -60,6 +60,7 @@ cc_stage2_library(
         "-Wno-user-defined-literals",
         "-Wno-covered-switch-default",
         "-Wno-suggest-override",
+        "-funwind-tables", # if exceptions
     ],
     includes = [
         "include",
@@ -79,12 +80,12 @@ cc_stage2_library(
         "src/cxa_aux_runtime.cpp",
         "src/cxa_default_handlers.cpp",
         "src/cxa_demangle.cpp",
-        "src/cxa_exception.cpp",
+        "src/cxa_exception.cpp", # if exception
         "src/cxa_exception_storage.cpp",
         "src/cxa_guard.cpp",
         "src/cxa_handlers.cpp",
-        "src/cxa_noexception.cpp",
-        "src/cxa_personality.cpp",
+        # "src/cxa_noexception.cpp", # if no exceptions
+        "src/cxa_personality.cpp", # if exceptions
         "src/cxa_thread_atexit.cpp", # not if no threads
         "src/cxa_vector.cpp",
         "src/cxa_virtual.cpp",
