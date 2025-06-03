@@ -100,17 +100,32 @@ cc_args(
 )
 
 cc_args(
-    name = "linux_default_libs_gnu",
+    name = "crt1_gnu",
     actions = [
         "@rules_cc//cc/toolchains/actions:link_executable_actions",
+    ],
+    args = [
+        "-L.", # needed to -l:bazel-out/...
+        "-l:{Scrt1}",
+    ],
+    data = [
+        "@glibc//:glibc_Scrt1.static",
+    ],
+    format = {
+        "Scrt1": "@glibc//:glibc_Scrt1.static",
+    },
+)
+
+cc_args(
+    name = "linux_default_libs_gnu",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
     ],
     args = [
         # We need to support copts like -lc -ldl etc...
         "-L{libc_library_search_path}",
         "-L.", # needed to -l:bazel-out/...
 
-        # Only static libraries
-        "-l:{Scrt1}",
         "-l:{compiler_rt_builtins}",
 
         # In prevention of when all of those can be shared libraries.
@@ -136,7 +151,6 @@ cc_args(
         "-Wl,--pop-state",
     ],
     data = [
-        "@glibc//:glibc_Scrt1.static",
         "@compiler-rt//:builtins.static",
         "@libunwind//:libunwind.static",
         "@libcxx//:libcxx.static",
@@ -145,7 +159,6 @@ cc_args(
         "//libc/glibc:search_directory",
     ],
     format = {
-        "Scrt1": "@glibc//:glibc_Scrt1.static",
         "compiler_rt_builtins": "@compiler-rt//:builtins.static",
         "libunwind": "@libunwind//:libunwind.static",
         "libcxx": "@libcxx//:libcxx.static",
@@ -175,6 +188,23 @@ cc_args(
     ],
 )
 
+cc_args(
+    name = "crt1_musl",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_executable_actions",
+    ],
+    args = [
+        "-L.", # needed to -l:bazel-out/...
+        "-l:{Scrt1}",
+    ],
+    data = [
+        "//libc/musl:musl_Scrt1",
+    ],
+    format = {
+        "Scrt1": "//libc/musl:musl_Scrt1",
+    },
+)
+
 #TODO: Factorize this and gnu
 cc_args(
     name = "linux_default_libs_musl",
@@ -186,8 +216,6 @@ cc_args(
         "-L{libc_library_search_path}",
         "-L.", # needed to -l:bazel-out/...
 
-        # Only static libraries
-        "-l:{Scrt1}",
         "-l:{compiler_rt_builtins}",
 
         # In prevention of when all of those can be shared libraries.
@@ -211,7 +239,6 @@ cc_args(
         "-Wl,--pop-state",
     ],
     data = [
-        "//libc/musl:musl_Scrt1",
         "@compiler-rt//:builtins.static",
         "@libunwind//:libunwind",
         "@libcxx//:libcxx",
@@ -219,13 +246,22 @@ cc_args(
         "//libc/musl:search_directory",
     ],
     format = {
-        "Scrt1": "//libc/musl:musl_Scrt1",
         "compiler_rt_builtins": "@compiler-rt//:builtins.static",
         "libunwind": "@libunwind//:libunwind",
         "libcxx": "@libcxx//:libcxx",
         "libcxxabi": "@libcxxabi//:libcxxabi",
         "libc_library_search_path": "//libc/musl:search_directory",
     },
+)
+
+alias(
+    name = "crt1",
+    actual = select({
+        "//constraints/libc:musl": ":crt1_musl",
+        "//platforms/config/libc_aware:gnu": ":crt1_gnu",
+        #TODO: Remove once we have set the default glibc for a given target
+        "//constraints/libc:unconstrained": ":crt1_gnu",
+    })
 )
 
 alias(

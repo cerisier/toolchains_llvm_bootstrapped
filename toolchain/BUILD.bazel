@@ -43,6 +43,7 @@ cc_args_list(
             "//toolchain/args/macos:macos_default_libs",
         ],
         "@platforms//os:linux": [
+            "//toolchain/args/linux:crt1",
             "//toolchain/args/linux:linux_default_libs",
         ],
         "//conditions:default": [],
