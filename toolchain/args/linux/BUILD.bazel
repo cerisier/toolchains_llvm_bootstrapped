@@ -4,6 +4,8 @@ load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 
 package(default_visibility = ["//visibility:public"])
 
+# Passing a sysroot to /dev/null has the side effect of removing all default
+# library search paths.
 cc_args(
     name = "linux_no_sysroot",
     actions = [
@@ -11,7 +13,6 @@ cc_args(
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
     args = [
-        # Just in case :)
         "--sysroot=/dev/null",
     ],
 )
@@ -43,10 +44,21 @@ cc_args(
     ],
 )
 
+config_setting(
+    name = "empty_sysroot",
+    flag_values = {
+        "//config:empty_sysroot": "True",
+    },
+)
+
 cc_args_list(
     name = "hermetic_linux_args",
-    args = [
-        ":linux_no_sysroot",
+    args = select({
+        ":empty_sysroot": [
+            ":linux_no_sysroot",
+        ],
+        "//conditions:default": [],
+    }) + [
         ":hermetic_compile_flags",
         ":hermetic_link_flags",
     ],

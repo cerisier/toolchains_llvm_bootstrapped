@@ -1,4 +1,5 @@
 load("@bazel_skylib//rules:common_settings.bzl", "string_flag")
+load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
 
 OPTIMIZATION_MODES = [
     "debug",
@@ -9,6 +10,7 @@ string_flag(
     name = "stage2_optimization_mode",
     values = OPTIMIZATION_MODES,
     build_setting_default = "optimized",
+    visibility = ["//visibility:public"],
 )
 
 [ 
@@ -20,3 +22,15 @@ string_flag(
         visibility = ["//visibility:public"],
     ) for optimization_mode in OPTIMIZATION_MODES
 ]
+
+# This flag controls whether we compile and link with --sysroot=/dev/null
+# to ensure hermeticity.
+#
+# It was added to work around the fact that the rust toolchain brings prebuilt
+# crates that embeds link flags that are expected to be present on the system.
+# See https://github.com/rust-lang/rust/blob/ec28ae9454139023117270985f114823d6570657/library/unwind/src/lib.rs#L107-L123
+bool_flag(
+    name = "empty_sysroot",
+    build_setting_default = True,
+    visibility = ["//visibility:public"],
+)
