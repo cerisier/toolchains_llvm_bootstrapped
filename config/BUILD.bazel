@@ -26,11 +26,34 @@ string_flag(
 # This flag controls whether we compile and link with --sysroot=/dev/null
 # to ensure hermeticity.
 #
-# It was added to work around the fact that the rust toolchain brings prebuilt
-# crates that embeds link flags that are expected to be present on the system.
-# See https://github.com/rust-lang/rust/blob/ec28ae9454139023117270985f114823d6570657/library/unwind/src/lib.rs#L107-L123
+# This is useful if dependencies that you do not control link against host system
+# libraries and you want to allow this behavior. (Hello rust_std).
 bool_flag(
     name = "empty_sysroot",
     build_setting_default = True,
+    visibility = ["//visibility:public"],
+)
+
+# This flag makes a dummy gcc_s library to link against.
+#
+# libgcc_s is a shared library (only libgcc_s.so exists) that is required
+# when creating or linking against a shared library that uses c++ exceptions
+# that may cross the library boundary.
+#
+# This toolchain currently doesn't support linking dynamically against an
+# unwinder, which means that this toolchain doesn't support cross boundary
+# c++ exceptions for the moment (and the only unwinder supported is libunwind).
+# Yet, it is possible for dependencies that you do not control to pass -lgcc_s
+# linker flags.
+#
+# If you know what you are doing and want to no-op these flags, this option
+# will make a stub libgcc_s to satistfy the linker, but will still link libunwind
+# statically.
+#
+# In theory, such option should only be available if this toolchain had support
+# for a dynamically linked unwinder.
+bool_flag(
+    name = "discouraged_stub_libgcc_s",
+    build_setting_default = False,
     visibility = ["//visibility:public"],
 )
