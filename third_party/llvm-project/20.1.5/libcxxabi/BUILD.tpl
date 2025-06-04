@@ -12,7 +12,7 @@ filegroup(
 )
 
 copy_to_directory(
-    name = "libcxxabi_headers_directory",
+    name = "libcxxabi_headers_include_search_directory",
     srcs = [
         ":libcxxabi_headers_files",
     ],

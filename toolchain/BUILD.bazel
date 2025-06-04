@@ -62,19 +62,19 @@ cc_args_list(
     name = "linux_toolchain_args",
     args = [
         "//toolchain/args/linux:hermetic_linux_args",
-        "//toolchain/args:libcxx_headers_include_paths",
+        "//toolchain/args:libcxx_headers_include_search_paths",
     ] + select({
         "//platforms/config/libc_aware:musl": [
-            "//toolchain/args/linux:musl_libc_headers_include_paths",
+            "//toolchain/args/linux:musl_libc_headers_include_search_paths",
         ],
         "//platforms/config/libc_aware:gnu": [
-            "//toolchain/args/linux:kernel_headers_include_paths",
-            "//toolchain/args/linux:glibc_headers_include_paths",
+            "//toolchain/args/linux:kernel_headers_include_search_paths",
+            "//toolchain/args/linux:glibc_headers_include_search_paths",
         ],
         #TODO: Remove once we have set the default glibc for a given target
         "//constraints/libc:unconstrained": [
-            "//toolchain/args/linux:kernel_headers_include_paths",
-            "//toolchain/args/linux:glibc_headers_include_paths",
+            "//toolchain/args/linux:kernel_headers_include_search_paths",
+            "//toolchain/args/linux:glibc_headers_include_search_paths",
         ],
         "//conditions:default": [],
     }) + select({

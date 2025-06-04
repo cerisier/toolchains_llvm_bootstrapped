@@ -39,7 +39,7 @@ glibc_stubs_assembly_files = rule(
             mandatory = True,
         ),
         "_generator": attr.label(
-            default = "//libc/glibc:glibc-stubs-generator",
+            default = "//runtimes/glibc:glibc-stubs-generator",
             allow_single_file = True,
             executable = True,
             cfg = "exec",

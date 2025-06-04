@@ -45,14 +45,14 @@ cc_args(
     ],
     # -l: is not supported by lld64
     args = [
-        "{compiler_rt_builtins}",
+        "{libclang_rt.builtins.a}",
         "-lSystem",
     ],
     format = {
-        "compiler_rt_builtins": "@compiler-rt//:builtins.static",
+        "libclang_rt.builtins.a": "//runtimes/compiler-rt:clang_rt.builtins.static",
     },
     data = [
-        "@compiler-rt//:builtins.static",
+        "//runtimes/compiler-rt:clang_rt.builtins.static",
     ],
 )
 

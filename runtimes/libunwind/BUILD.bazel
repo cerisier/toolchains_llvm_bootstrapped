@@ -1,0 +1,25 @@
+load("@aspect_bazel_lib//lib:copy_file.bzl", "copy_file")
+load("@aspect_bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
+
+copy_file(
+    name = "libunwind",
+    src = "@libunwind//:libunwind.static",
+    out = "libunwind.a",
+    allow_symlink = True,
+)
+
+copy_file(
+    name = "gcc_s",
+    src = "@libunwind//:libunwind.static",
+    out = "libgcc_s.a",
+    allow_symlink = True,
+)
+
+copy_to_directory(
+    name = "libunwind_library_search_directory",
+    srcs = [
+        "libunwind.a",
+        "libgcc_s.a",
+    ],
+    visibility = ["//visibility:public"],
+)

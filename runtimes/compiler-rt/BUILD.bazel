@@ -1,0 +1,5 @@
+alias(
+    name = "clang_rt.builtins.static",
+    actual = "@compiler-rt//:clang_rt.builtins.static",
+    visibility = ["//visibility:public"],
+)

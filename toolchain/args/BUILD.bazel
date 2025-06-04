@@ -34,23 +34,23 @@ cc_args(
 )
 
 cc_args(
-    name = "libcxx_headers_include_paths",
+    name = "libcxx_headers_include_search_paths",
     actions = [
         "@rules_cc//cc/toolchains/actions:cpp_compile_actions",
     ],
     args = [
         "-isystem",
-        "{libcxx_headers_include_path}",
+        "{libcxx_headers_include_search_path}",
         "-isystem",
-        "{libcxxabi_headers_include_path}",
+        "{libcxxabi_headers_include_search_path}",
     ],
     format = {
-        "libcxx_headers_include_path": "@libcxx//:libcxx_headers_directory",
-        "libcxxabi_headers_include_path": "@libcxxabi//:libcxxabi_headers_directory",
+        "libcxx_headers_include_search_path": "//runtimes/libcxx:libcxx_headers_include_search_directory",
+        "libcxxabi_headers_include_search_path": "//runtimes/libcxx:libcxxabi_headers_include_search_directory",
     },
     data = [
-        "@libcxx//:libcxx_headers_directory",
-        "@libcxxabi//:libcxxabi_headers_directory",
+        "//runtimes/libcxx:libcxx_headers_include_search_directory",
+        "//runtimes/libcxx:libcxxabi_headers_include_search_directory",
     ],
 )
 

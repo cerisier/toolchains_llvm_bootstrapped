@@ -1151,7 +1151,7 @@ copy_file(
 )
 
 copy_to_directory(
-    name = "libcxx_headers_directory",
+    name = "libcxx_headers_include_search_directory",
     srcs = [
         ":__config_site",
         ":__assertion_handler",

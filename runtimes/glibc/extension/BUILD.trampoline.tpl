@@ -1,4 +1,4 @@
-load("@toolchains_llvm_bootstrapped//libc/glibc/extension:make_select_glibc_repository_target.bzl", "make_select_glibc_repository_target")
+load("@toolchains_llvm_bootstrapped//runtimes/glibc/extension:make_select_glibc_repository_target.bzl", "make_select_glibc_repository_target")
 
 package(default_visibility = ["//visibility:public"])
 

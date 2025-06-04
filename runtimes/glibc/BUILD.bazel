@@ -118,7 +118,25 @@ LINKER_SCRIPTS = [
 ]
 
 copy_to_directory(
-    name = "search_directory",
+    name = "glibc_library_search_directory",
     srcs = LIBS + LINKER_SCRIPTS,
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "glibc_headers_include_search_directory",
+    actual = "@glibc//:glibc_headers_directory",
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "glibc_Scrt1.static",
+    actual = "@glibc//:glibc_Scrt1.static",
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "glibc_libc_nonshared.static",
+    actual = "@glibc//:c_nonshared.static",
     visibility = ["//visibility:public"],
 )

@@ -65,16 +65,16 @@ cc_args_list(
 )
 
 cc_args(
-    name = "kernel_headers_include_paths",
+    name = "kernel_headers_include_search_paths",
     actions = [
         "@rules_cc//cc/toolchains/actions:compile_actions",
     ],
     args = [
         "-isystem",
-        "{kernel_headers_include_path}",
+        "{kernel_headers_include_search_path}",
     ],
     format = {
-        "kernel_headers_include_path": "@kernel_headers//:kernel_headers_directory",
+        "kernel_headers_include_search_path": "@kernel_headers//:kernel_headers_directory",
     },
     data = [
         "@kernel_headers//:kernel_headers_directory",
@@ -82,20 +82,20 @@ cc_args(
 )
 
 cc_args(
-    name = "glibc_headers_include_paths",
+    name = "glibc_headers_include_search_paths",
     actions = [
         "@rules_cc//cc/toolchains/actions:compile_actions",
     ],
     args = [
         # "__GLIBC_MINOR__={d}", version.minor
         "-isystem",
-        "{libc_headers_include_path}",
+        "{libc_headers_include_search_path}",
     ],
     format = {
-        "libc_headers_include_path": "@glibc//:glibc_headers_directory",
+        "libc_headers_include_search_path": "//runtimes/glibc:glibc_headers_include_search_directory",
     },
     data = [
-        "@glibc//:glibc_headers_directory",
+        "//runtimes/glibc:glibc_headers_include_search_directory",
     ],
 )
 
@@ -109,10 +109,10 @@ cc_args(
         "-l:{Scrt1}",
     ],
     data = [
-        "@glibc//:glibc_Scrt1.static",
+        "//runtimes/glibc:glibc_Scrt1.static",
     ],
     format = {
-        "Scrt1": "@glibc//:glibc_Scrt1.static",
+        "Scrt1": "//runtimes/glibc:glibc_Scrt1.static",
     },
 )
 
@@ -123,18 +123,18 @@ cc_args(
     ],
     args = [
         # We need to support copts like -lc -ldl etc...
+        "-L{libcxx_library_search_path}",
         "-L{libc_library_search_path}",
+        "-L{libunwind_library_search_path}",
         "-L.", # needed to -l:bazel-out/...
 
-        "-l:{compiler_rt_builtins}",
+        "-l:{clang_rt.builtins.a}",
 
         # In prevention of when all of those can be shared libraries.
         "-Wl,--push-state",
         "-Wl,--as-needed",
-        "-l:{libunwind}", # only if libcxx on linux
-        "-l:{libcxx}",
-        "-l:{libcxxabi}",
-        "-l:{libc_nonshared}",
+        "-lc++",
+        "-lc++abi",
 
         # In newer versions of glibc various libs such as libm, librt are
         # normally included in libc and not available as separate libraries.
@@ -144,27 +144,32 @@ cc_args(
         # handle varying inclusions.
         "-lm",
         "-lpthread",
+
         "-lc",
+        # In real life, libc_nonshared is added the libc.so linker script right 
+        # after the libc.so.6 library.
+        "-l:{libc_nonshared.a}",
+
         "-ldl",
         "-lrt",
         "-lutil",
+
+        "-lunwind", # only if libcxx on linux
         "-Wl,--pop-state",
     ],
     data = [
-        "@compiler-rt//:builtins.static",
-        "@libunwind//:libunwind.static",
-        "@libcxx//:libcxx.static",
-        "@libcxxabi//:libcxxabi.static",
-        "@glibc//:c_nonshared.static",
-        "//libc/glibc:search_directory",
+        "//runtimes/compiler-rt:clang_rt.builtins.static",
+        "//runtimes/libcxx:libcxx_library_search_directory",
+        "//runtimes/glibc:glibc_libc_nonshared.static",
+        "//runtimes/glibc:glibc_library_search_directory",
+        "//runtimes/libunwind:libunwind_library_search_directory",
     ],
     format = {
-        "compiler_rt_builtins": "@compiler-rt//:builtins.static",
-        "libunwind": "@libunwind//:libunwind.static",
-        "libcxx": "@libcxx//:libcxx.static",
-        "libcxxabi": "@libcxxabi//:libcxxabi.static",
-        "libc_nonshared": "@glibc//:c_nonshared.static",
-        "libc_library_search_path": "//libc/glibc:search_directory",
+        "clang_rt.builtins.a": "//runtimes/compiler-rt:clang_rt.builtins.static",
+        "libcxx_library_search_path": "//runtimes/libcxx:libcxx_library_search_directory",
+        "libc_nonshared.a": "//runtimes/glibc:glibc_libc_nonshared.static",
+        "libc_library_search_path": "//runtimes/glibc:glibc_library_search_directory",
+        "libunwind_library_search_path": "//runtimes/libunwind:libunwind_library_search_directory",
     },
 )
 
@@ -172,19 +177,19 @@ cc_args(
 ###
 
 cc_args(
-    name = "musl_libc_headers_include_paths",
+    name = "musl_libc_headers_include_search_paths",
     actions = [
         "@rules_cc//cc/toolchains/actions:compile_actions",
     ],
     args = [
         "-isystem",
-        "{libc_headers_include_path}",
+        "{libc_headers_include_search_path}",
     ],
     format = {
-        "libc_headers_include_path": "@musl_libc//:musl_libc_headers_include_directory",
+        "libc_headers_include_search_path": "//runtimes/musl:musl_headers_include_search_directory",
     },
     data = [
-        "@musl_libc//:musl_libc_headers_include_directory",
+        "//runtimes/musl:musl_headers_include_search_directory",
     ],
 )
 
@@ -198,10 +203,10 @@ cc_args(
         "-l:{Scrt1}",
     ],
     data = [
-        "//libc/musl:musl_Scrt1",
+        "//runtimes/musl:musl_Scrt1.static",
     ],
     format = {
-        "Scrt1": "//libc/musl:musl_Scrt1",
+        "Scrt1": "//runtimes/musl:musl_Scrt1.static",
     },
 )
 
@@ -213,17 +218,20 @@ cc_args(
     ],
     args = [
         # We need to support copts like -lc -ldl etc...
+        "-L{libcxx_library_search_path}",
         "-L{libc_library_search_path}",
+        "-L{libunwind_library_search_path}",
         "-L.", # needed to -l:bazel-out/...
 
-        "-l:{compiler_rt_builtins}",
+        "-l:{clang_rt.builtins.a}",
 
         # In prevention of when all of those can be shared libraries.
         "-Wl,--push-state",
         "-Wl,--as-needed",
-        "-l:{libunwind}", # only if libcxx on linux
-        "-l:{libcxx}",
-        "-l:{libcxxabi}",
+
+        "-lc++",
+        "-lc++abi",
+
         # In newer versions of musl_libc various libs such as libm, librt are
         # normally included in libc and not available as separate libraries.
         #
@@ -236,21 +244,21 @@ cc_args(
         "-ldl",
         "-lrt",
         "-lutil",
+
+        "-lunwind", # only if libcxx on linux
         "-Wl,--pop-state",
     ],
     data = [
-        "@compiler-rt//:builtins.static",
-        "@libunwind//:libunwind",
-        "@libcxx//:libcxx",
-        "@libcxxabi//:libcxxabi",
-        "//libc/musl:search_directory",
+        "//runtimes/compiler-rt:clang_rt.builtins.static",
+        "//runtimes/libcxx:libcxx_library_search_directory",
+        "//runtimes/musl:musl_library_search_directory",
+        "//runtimes/libunwind:libunwind_library_search_directory",
     ],
     format = {
-        "compiler_rt_builtins": "@compiler-rt//:builtins.static",
-        "libunwind": "@libunwind//:libunwind",
-        "libcxx": "@libcxx//:libcxx",
-        "libcxxabi": "@libcxxabi//:libcxxabi",
-        "libc_library_search_path": "//libc/musl:search_directory",
+        "clang_rt.builtins.a": "//runtimes/compiler-rt:clang_rt.builtins.static",
+        "libcxx_library_search_path": "//runtimes/libcxx:libcxx_library_search_directory",
+        "libc_library_search_path": "//runtimes/musl:musl_library_search_directory",
+        "libunwind_library_search_path": "//runtimes/libunwind:libunwind_library_search_directory",
     },
 )
 

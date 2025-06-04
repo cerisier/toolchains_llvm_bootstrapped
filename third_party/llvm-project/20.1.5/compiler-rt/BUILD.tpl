@@ -371,11 +371,10 @@ cc_stage2_library(
             "@glibc//:gnu_libc_headers",
         ],
     }),
-    visibility = ["//visibility:public"],
 )
 
 cc_stage2_static_library(
-    name = "builtins.static",
+    name = "clang_rt.builtins.static",
     deps = [
         ":builtins",
     ],

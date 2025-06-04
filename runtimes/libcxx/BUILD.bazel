@@ -1,0 +1,35 @@
+load("@aspect_bazel_lib//lib:copy_file.bzl", "copy_file")
+load("@aspect_bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
+
+copy_file(
+    name = "libc++",
+    src = "@libcxx//:libcxx.static",
+    out = "libc++.a",
+)
+
+copy_file(
+    name = "libc++abi",
+    src = "@libcxxabi//:libcxxabi.static",
+    out = "libc++abi.a",
+)
+
+copy_to_directory(
+    name = "libcxx_library_search_directory",
+    srcs = [
+        ":libc++",
+        ":libc++abi",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "libcxx_headers_include_search_directory",
+    actual = "@libcxx//:libcxx_headers_include_search_directory",
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "libcxxabi_headers_include_search_directory",
+    actual = "@libcxxabi//:libcxxabi_headers_include_search_directory",
+    visibility = ["//visibility:public"],
+)

@@ -116,9 +116,9 @@ http_pkg_archive(
     strip_prefix = "Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk",
 )
 
-glibc = use_extension("//libc/glibc/extension:glibc.bzl", "glibc")
+glibc = use_extension("//runtimes/glibc/extension:glibc.bzl", "glibc")
 # https://cerisier.github.io/glibc-headers/index.json
-glibc.index(file = "//libc/glibc/extension:glibc_headers_index.json")
+glibc.index(file = "//runtimes/glibc/extension:glibc_headers_index.json")
 use_repo(glibc, "glibc")
 
 kernel_headers = use_extension("//kernel/extension:kernel_headers.bzl", "kernel_headers")

@@ -52,7 +52,7 @@ cc_stage2_static_library(
 )
 
 cc_stage2_library(
-    name = "musl_crt1",
+    name = "musl_crt1.static",
     srcs = ["@musl_libc//:crt/crt1.c"],
     implementation_deps = [
         "@musl_libc//:musl_internal_headers",
@@ -62,7 +62,7 @@ cc_stage2_library(
 )
 
 cc_stage2_library(
-    name = "musl_rcrt1",
+    name = "musl_rcrt1.static",
     srcs = ["@musl_libc//:crt/rcrt1.c"],
     implementation_deps = [
         "@musl_libc//:musl_internal_headers",
@@ -72,7 +72,7 @@ cc_stage2_library(
 )
 
 cc_stage2_library(
-    name = "musl_Scrt1",
+    name = "musl_Scrt1.static",
     srcs = ["@musl_libc//:crt/Scrt1.c"],
     textual_hdrs = [
         "@musl_libc//:crt/crt1.c",
@@ -121,7 +121,7 @@ alias(
 ]
 
 copy_to_directory(
-    name = "search_directory",
+    name = "musl_library_search_directory",
     srcs = [
         ":musl_libc.a",
     ] + [
@@ -130,15 +130,8 @@ copy_to_directory(
     visibility = ["//visibility:public"],
 )
 
-# Some invocations have -lc copts so we need to support those in a hermetic
-# context. I had the choice between creating a directory layout or making a
-# compiler wrapper that would ignore specific -l flags.
-#
-# > I chose the layout because it will also serve the purpose of generating
-# > sysroots for those who want this instead.
-# alias(
-#     name = "search_directory",
-#     actual = ":musl_libc_search_directory",
-#     visibility = ["//visibility:public"],
-# )
-
+alias(
+    name = "musl_headers_include_search_directory",
+    actual = "@musl_libc//:musl_libc_headers_include_directory",
+    visibility = ["//visibility:public"],
+)
