@@ -3,3 +3,15 @@ alias(
     actual = "@compiler-rt//:clang_rt.builtins.static",
     visibility = ["//visibility:public"],
 )
+
+alias(
+    name = "clang_rt.crtbegin",
+    actual = "@compiler-rt//:clang_rt.crtbegin.static",
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "clang_rt.crtend",
+    actual = "@compiler-rt//:clang_rt.crtend.static",
+    visibility = ["//visibility:public"],
+)

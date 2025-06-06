@@ -431,3 +431,49 @@ cc_stage2_static_library(
     ],
     visibility = ["//visibility:public"],
 )
+
+CRT_CFLAGS = [
+    "-std=c11",
+    "-fPIC",
+]
+
+CRT_DEFINES = [
+    "CRT_HAS_INITFINI_ARRAY",
+    "CRT_USE_FRAME_REGISTRY",
+]
+
+cc_stage2_library(
+    name = "clang_rt.crtbegin",
+    srcs = [
+        "lib/builtins/crtbegin.c",
+    ],
+    copts = CRT_CFLAGS,
+    local_defines = CRT_DEFINES,
+    visibility = ["//visibility:public"],
+)
+
+cc_stage2_static_library(
+    name = "clang_rt.crtbegin.static",
+    deps = [
+        ":clang_rt.crtbegin",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+cc_stage2_library(
+    name = "clang_rt.crtend",
+    srcs = [
+        "lib/builtins/crtend.c",
+    ],
+    copts = CRT_CFLAGS,
+    local_defines = CRT_DEFINES,
+    visibility = ["//visibility:public"],
+)
+
+cc_stage2_static_library(
+    name = "clang_rt.crtend.static",
+    deps = [
+        ":clang_rt.crtend",
+    ],
+    visibility = ["//visibility:public"],
+)
