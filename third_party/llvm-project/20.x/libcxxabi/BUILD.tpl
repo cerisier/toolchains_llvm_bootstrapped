@@ -1,5 +1,6 @@
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_library.bzl", "cc_stage2_library")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_static_library.bzl", "cc_stage2_static_library")
+load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_shared_library.bzl", "cc_stage2_shared_library")
 load("@aspect_bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
 
 filegroup(
@@ -43,18 +44,18 @@ cc_library(
     visibility = ["//visibility:public"],
 )
 
-cc_stage2_library(
+cc_library(
     name = "libcxxabi",
     defines = [
         "NDEBUG",
         "LIBCXX_BUILDING_LIBCXXABI",
         # DHAVE___CXA_THREAD_ATEXIT_IMPL (gnu but not linux and glibc >= 2.18)
-        "_LIBCXXABI_DISABLE_VISIBILITY_ANNOTATIONS", # Only for satic c++abi"
+        # "_LIBCXXABI_DISABLE_VISIBILITY_ANNOTATIONS", # Only for satic c++abi"
     ],
     copts = [
         "-fvisibility=hidden",
         "-fvisibility-inlines-hidden",
-        # "-fPIC", #TODO: Support PIC
+        "-fPIC", #TODO: Support PIC
         "-fstrict-aliasing",
         "-std=c++23",
         "-Wno-user-defined-literals",
@@ -114,7 +115,6 @@ cc_stage2_library(
     }) + [
         "@toolchains_llvm_bootstrapped//third_party/llvm-project:libc_headers",
     ],
-    visibility = ["//visibility:public"],
 )
 
 cc_stage2_static_library(
@@ -122,5 +122,14 @@ cc_stage2_static_library(
     deps = [
         ":libcxxabi",
     ],
+    visibility = ["//visibility:public"],
+)
+
+cc_stage2_shared_library(
+    name = "libcxxabi.shared",
+    deps = [
+        ":libcxxabi",
+    ],
+    # shared_lib_name = "libc++abi.1.0",
     visibility = ["//visibility:public"],
 )

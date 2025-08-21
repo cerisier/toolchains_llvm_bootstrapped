@@ -1,8 +1,8 @@
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_library.bzl", "cc_stage2_library")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_static_library.bzl", "cc_stage2_static_library")
-load("@toolchains_llvm_bootstrapped//third_party/llvm-project/20.1.5/compiler-rt:targets.bzl", "atomic_helper_cc_library")
-load("@toolchains_llvm_bootstrapped//third_party/llvm-project/20.1.5/compiler-rt:darwin_excludes.bzl", "filter_excludes")
-load("@toolchains_llvm_bootstrapped//third_party/llvm-project/20.1.5/compiler-rt:filter_builtin_sources.bzl", "filter_builtin_sources")
+load("@toolchains_llvm_bootstrapped//third_party/llvm-project/20.x/compiler-rt:targets.bzl", "atomic_helper_cc_library")
+load("@toolchains_llvm_bootstrapped//third_party/llvm-project/20.x/compiler-rt:darwin_excludes.bzl", "filter_excludes")
+load("@toolchains_llvm_bootstrapped//third_party/llvm-project/20.x/compiler-rt:filter_builtin_sources.bzl", "filter_builtin_sources")
 load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
 

@@ -2,6 +2,7 @@ load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
 load("@aspect_bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_library.bzl", "cc_stage2_library")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_static_library.bzl", "cc_stage2_static_library")
+load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_shared_library.bzl", "cc_stage2_shared_library")
 
 filegroup(
     name = "libcxx_headers_files",
@@ -1189,7 +1190,7 @@ filegroup(
     visibility = ["//visibility:public"],
 )
 
-cc_stage2_library(
+cc_library(
     name = "libcxx",
     local_defines = [
         "NDEBUG",
@@ -1309,7 +1310,6 @@ cc_stage2_library(
     }) + [
         "@toolchains_llvm_bootstrapped//third_party/llvm-project:libc_headers",
     ],
-    visibility = ["//visibility:public"],
 )
 
 cc_stage2_static_library(
@@ -1317,5 +1317,14 @@ cc_stage2_static_library(
     deps = [
         ":libcxx",
     ],
+    visibility = ["//visibility:public"],
+)
+
+cc_stage2_shared_library(
+    name = "libcxx.shared",
+    deps = [
+        ":libcxx",
+    ],
+    shared_lib_name = "libc++.so.1.0",
     visibility = ["//visibility:public"],
 )
