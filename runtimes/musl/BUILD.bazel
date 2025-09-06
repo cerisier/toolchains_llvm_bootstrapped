@@ -76,7 +76,7 @@ cc_stage2_static_library(
 )
 
 cc_stage2_library(
-    name = "musl_crt1.static",
+    name = "musl_crt1",
     srcs = ["@musl_libc//:crt/crt1.c"],
     copts = CFLAGS_ALL + ["-DCRT"] + CFLAGS_NOSSP,
     implementation_deps = [
@@ -86,8 +86,14 @@ cc_stage2_library(
     visibility = ["//visibility:public"],
 )
 
+cc_stage2_static_library(
+    name = "musl_crt1.static",
+    deps = [":musl_crt1"],
+    visibility = ["//visibility:public"],
+)
+
 cc_stage2_library(
-    name = "musl_rcrt1.static",
+    name = "musl_rcrt1",
     srcs = ["@musl_libc//:crt/rcrt1.c"],
     copts = CFLAGS_ALL + ["-DCRT"] + CFLAGS_NOSSP + ["-fPIC"],
     implementation_deps = [
@@ -97,8 +103,14 @@ cc_stage2_library(
     visibility = ["//visibility:public"],
 )
 
+cc_stage2_static_library(
+    name = "musl_rcrt1.static",
+    deps = [":musl_rcrt1"],
+    visibility = ["//visibility:public"],
+)
+
 cc_stage2_library(
-    name = "musl_Scrt1.static",
+    name = "musl_Scrt1",
     srcs = ["@musl_libc//:crt/Scrt1.c"],
     copts = CFLAGS_ALL + ["-DCRT"] + CFLAGS_NOSSP + ["-fPIC"],
     textual_hdrs = [
@@ -108,6 +120,12 @@ cc_stage2_library(
         "@musl_libc//:musl_internal_headers",
         "@musl_libc//:musl_libc_headers",
     ],
+    visibility = ["//visibility:public"],
+)
+
+cc_stage2_static_library(
+    name = "musl_Scrt1.static",
+    deps = [":musl_Scrt1"],
     visibility = ["//visibility:public"],
 )
 
