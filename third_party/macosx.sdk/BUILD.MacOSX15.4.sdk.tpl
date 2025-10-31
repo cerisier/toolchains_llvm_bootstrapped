@@ -31,7 +31,7 @@ COMMON_EXCLUDES = [
     "usr/include/pexpert/**",
     "usr/include/Spatial/**",
     "usr/include/tidy/**",
-])
+], allow_empty = True)
 
 directory(
     name = "sysroot",
@@ -42,7 +42,7 @@ directory(
         "System/Library/CoreServices/**",
         "System/Library/Perl/**",
         "System/Library/PrivateFrameworks/**",
-    ])),
+    ], allow_empty = True)),
     visibility = ["//visibility:public"],
 )
 
