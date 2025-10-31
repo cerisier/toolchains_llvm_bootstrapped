@@ -30,6 +30,11 @@ LLVM_TOOLCHAIN_MINIMAL_SHA256 = {
     ) for (target, sha256) in LLVM_TOOLCHAIN_MINIMAL_SHA256.items()
 ]
 
+# Register the bootstrap toolchains since they are a prerequisite to all other toolchains.
+register_toolchains(
+    "//toolchain/stage2:all",
+)
+
 LLVM_TOOLCHAIN_EXTRAS_SHA256 = {
     "darwin-arm64": "5f21cff510da9a5fd6444f4239383c220246193bbc17d48ffe7d2583476d6a25",
     "linux-amd64-musl": "7296ab64eaea3276260d4db934d9986e6b8ec01effb89fb35cf87c02f93ea027",
@@ -148,8 +153,3 @@ use_repo(zig, "zig_toolchains")
 
 register_toolchains("@rules_zig//zig/target:all", dev_dependency = True)
 register_toolchains("@zig_toolchains//:all", dev_dependency = True)
-
-# Register the bootstrap toolchain since it is a prerequisite to all other toolchains.
-register_toolchains(
-    "@toolchains_llvm_bootstrapped//toolchain/stage2:stage2_toolchain",
-)

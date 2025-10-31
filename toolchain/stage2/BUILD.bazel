@@ -1,5 +1,5 @@
-load("@rules_cc//cc/toolchains:toolchain.bzl", "cc_toolchain")
 load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
+load("//toolchain/stage2:declare_toolchains.bzl", "declare_toolchains")
 
 cc_args_list(
     name = "platform_specific_args",
@@ -28,28 +28,4 @@ cc_args_list(
     }),
 )
 
-cc_toolchain(
-    name = "stage2",
-    args = [
-        "//toolchain/args:llvm_target_for_platform",
-        "//toolchain/args:no_absolute_paths_for_builtins",
-        "//toolchain/args:deterministic_compile_flags",
-        ":platform_specific_args",
-        ":optimization_flags",
-        "//toolchain/stage2/args:default_link_flags",
-    ],
-    enabled_features = ["@rules_cc//cc/toolchains/args:experimental_replace_legacy_action_config_features"],
-    known_features = ["@rules_cc//cc/toolchains/args:experimental_replace_legacy_action_config_features"],
-    tool_map = "//toolchain/llvm:all_tools",
-    compiler = "clang",
-)
-
-toolchain(
-    name = "stage2_toolchain",
-    toolchain = ":stage2",
-    toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
-    target_settings = [
-        "//toolchain:bootstrapping",
-    ],
-    visibility = ["//visibility:public"],
-)
+declare_toolchains()

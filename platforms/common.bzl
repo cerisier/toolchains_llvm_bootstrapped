@@ -10,6 +10,12 @@ SUPPORTED_TARGETS = [
     ("macos", "aarch64"),
 ]
 
+SUPPORTED_EXECS = [
+    ("linux", "x86_64"),
+    ("linux", "aarch64"),
+    ("macos", "aarch64"),
+]
+
 LIBC_SUPPORTED_TARGETS = [
     ("linux", "x86_64"),
     ("linux", "aarch64"),
