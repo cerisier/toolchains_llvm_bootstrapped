@@ -18,7 +18,7 @@ def declare_toolchains():
             ],
             enabled_features = ["@rules_cc//cc/toolchains/args:experimental_replace_legacy_action_config_features"],
             known_features = ["@rules_cc//cc/toolchains/args:experimental_replace_legacy_action_config_features"],
-            tool_map = platform_cc_tool_map(),
+            tool_map = platform_cc_tool_map(exec_os, exec_cpu),
             compiler = "clang",
         )
 

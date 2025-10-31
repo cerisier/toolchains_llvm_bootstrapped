@@ -36,7 +36,7 @@ def _declare_toolchains(exec_os, exec_cpu):
             ],
             "//conditions:default": [],
         }),
-        tool_map = platform_cc_tool_map(),
+        tool_map = platform_cc_tool_map(exec_os, exec_cpu),
         compiler = "clang",
     )
 
