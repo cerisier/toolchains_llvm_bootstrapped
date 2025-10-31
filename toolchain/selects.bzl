@@ -25,6 +25,6 @@ def platform_cc_tool_map():
     return select({
         "//platforms/config:macos_aarch64": "@llvm-toolchain-minimal-%s-darwin-arm64//:all_tools" % LLVM_VERSION,
         "//platforms/config:linux_x86_64": "@llvm-toolchain-minimal-%s-linux-amd64//:all_tools" % LLVM_VERSION,
-        "//platforms/config:linux_aarch64": "@llvm-toolchain-minimal-%s-//:all_tools" % LLVM_VERSION,
+        "//platforms/config:linux_aarch64": "@llvm-toolchain-minimal-%s-linux-arm64//:all_tools" % LLVM_VERSION,
     })
 
