@@ -1,5 +1,5 @@
 load("@rules_cc//cc/toolchains:toolchain.bzl", "cc_toolchain")
-load("//platforms:common.bzl", _arch_aliases = "ARCH_ALIASES", _supported_targets = "SUPPORTED_TARGETS", _supported_execs = "SUPPORTED_EXECS")
+load("//platforms:common.bzl", _supported_targets = "SUPPORTED_TARGETS", _supported_execs = "SUPPORTED_EXECS")
 load("//toolchain:selects.bzl", "platform_cc_tool_map")
 
 def declare_all_toolchains():
@@ -58,22 +58,3 @@ def _declare_toolchains(exec_os, exec_cpu):
             toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
             visibility = ["//visibility:public"],
         )
-
-        for alias in _arch_aliases.get(target_cpu, []):
-            native.toolchain(
-                name = "{}_{}_to_{}_{}".format(exec_os, exec_cpu, target_os, alias),
-                exec_compatible_with = [
-                    "@platforms//cpu:{}".format(exec_cpu),
-                    "@platforms//os:{}".format(exec_os),
-                ],
-                target_compatible_with = [
-                    "@platforms//cpu:{}".format(target_cpu),
-                    "@platforms//os:{}".format(target_os),
-                ],
-                target_settings = [
-                    "//toolchain:bootstrapped",
-                ],
-                toolchain = Label(":" + cc_toolchain_name),
-                toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
-                visibility = ["//visibility:public"],
-            )

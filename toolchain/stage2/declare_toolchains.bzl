@@ -1,5 +1,5 @@
 load("@rules_cc//cc/toolchains:toolchain.bzl", "cc_toolchain")
-load("//platforms:common.bzl", _arch_aliases = "ARCH_ALIASES", _supported_targets = "SUPPORTED_TARGETS", _supported_execs = "SUPPORTED_EXECS")
+load("//platforms:common.bzl", _supported_targets = "SUPPORTED_TARGETS", _supported_execs = "SUPPORTED_EXECS")
 load("//toolchain:selects.bzl", "platform_cc_tool_map")
 
 def declare_toolchains():
@@ -22,21 +22,22 @@ def declare_toolchains():
             compiler = "clang",
         )
 
-        native.toolchain(
-            name = "{}_{}".format(exec_os, exec_cpu),
-            exec_compatible_with = [
-                "@platforms//cpu:{}".format(exec_cpu),
-                "@platforms//os:{}".format(exec_os),
-            ],
-            target_compatible_with = [
-                "@platforms//cpu:{}".format(exec_cpu),
-                "@platforms//os:{}".format(exec_os),
-            ],
-            toolchain = cc_toolchain_name,
-            toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
-            target_settings = [
-                "//toolchain:bootstrapping",
-            ],
-            visibility = ["//visibility:public"],
-        )
+        for (target_os, target_cpu) in _supported_targets:
+            native.toolchain(
+                name = "{}_{}_to_{}_{}".format(exec_os, exec_cpu, target_os, target_cpu),
+                exec_compatible_with = [
+                    "@platforms//cpu:{}".format(exec_cpu),
+                    "@platforms//os:{}".format(exec_os),
+                ],
+                target_compatible_with = [
+                    "@platforms//cpu:{}".format(target_cpu),
+                    "@platforms//os:{}".format(target_os),
+                ],
+                toolchain = cc_toolchain_name,
+                toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
+                target_settings = [
+                    "//toolchain:bootstrapping",
+                ],
+                visibility = ["//visibility:public"],
+            )
 
