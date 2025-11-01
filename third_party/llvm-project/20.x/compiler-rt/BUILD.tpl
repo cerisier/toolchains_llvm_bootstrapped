@@ -346,6 +346,11 @@ cc_stage2_library(
             "-fomit-frame-pointer",
         ],
         "//conditions:default": [],
+    }) + select({
+        "@platforms//os:macos": [
+            "-Wno-deprecated-declarations",
+         ],
+        "//conditions:default": [],
     }),
     local_defines = selects.with_or({
         (
