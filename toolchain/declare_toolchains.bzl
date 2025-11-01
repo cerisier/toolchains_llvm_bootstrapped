@@ -9,6 +9,9 @@ def declare_all_toolchains():
 def _declare_toolchains(exec_os, exec_cpu):
     cc_toolchain_name = "{}_{}_cc_toolchain".format(exec_os, exec_cpu)
 
+    # Even though `tool_map` has an exec transition, Bazel doesn't properly handle
+    # binding a single `cc_toolchain` to multiple toolchains with different `exec_compatible_with`.
+    # See https://github.com/bazelbuild/rules_cc/issues/299#issuecomment-2660340534
     cc_toolchain(
         name = cc_toolchain_name,
         args = [":toolchain_args"],
