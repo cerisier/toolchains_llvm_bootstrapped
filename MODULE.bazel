@@ -53,7 +53,7 @@ LLVM_RELEASE_ASSETS_SHA256 = {
   "compiler-rt": "84fed7aa95bfac348642a753d332afd303a0847b1fe1e76acf13fe98f8760d5f",
   "libcxx": "5d0af8cc8a387074bdac8587bbf3421addfcdf5b7cc05af9e3fbc9f5961e5a7e",
   "libcxxabi": "df0005d6f2238ed6d0c236cf02271de4e08719d0fe1f63454037734af527ad87",
-  "libunwind": "fc3ca27e1094b5fd4b7c1879e83705d89e9a2632b9a43426eb96c0536ace5345"
+  "libunwind": "fc3ca27e1094b5fd4b7c1879e83705d89e9a2632b9a43426eb96c0536ace5345",
 }
 [
     http_archive(
@@ -113,12 +113,12 @@ archive_override(
     strip_prefix = "libstdcxx-stubs-generator-{}".format(LIBSTDCXX_STUBS_GENERATOR_COMMIT),
 )
 
-bazel_dep(name = "rules_python", version = "0.40.0", dev_dependency = True)
+bazel_dep(name = "rules_python", version = "0.40.0")
 
-llvm_raw = use_extension("//:llvm_raw.bzl", "llvm_raw", dev_dependency = True)
+llvm_raw = use_extension("//:llvm_raw.bzl", "llvm_raw")
 use_repo(llvm_raw, "llvm-raw", "llvm_zlib", "llvm_zstd")
 
-llvm = use_extension("//:llvm.bzl", "llvm", dev_dependency = True)
+llvm = use_extension("//:llvm.bzl", "llvm")
 llvm.configure(
     targets = ["AArch64", "X86"],
 )

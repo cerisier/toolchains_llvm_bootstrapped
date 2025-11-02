@@ -67,3 +67,17 @@ bool_flag(
     build_setting_default = False,
     visibility = ["//visibility:public"],
 )
+
+# TODO(zbarsky): Some sanitizers are mutually exclusive, some can be stacked.
+# Think about the right interface here.
+bool_flag(
+    name = "ubsan",
+    build_setting_default = False,
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "ubsan_enabled",
+    flag_values = {":ubsan": "1"},
+    visibility = ["//:__subpackages__"],
+)

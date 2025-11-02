@@ -15,6 +15,7 @@ def declare_toolchains():
                 ":platform_specific_args",
                 ":optimization_flags",
                 "//toolchain/stage2/args:default_link_flags",
+                "//toolchain/stage2/args:ubsan_flags",
             ],
             enabled_features = ["@rules_cc//cc/toolchains/args:experimental_replace_legacy_action_config_features"],
             known_features = ["@rules_cc//cc/toolchains/args:experimental_replace_legacy_action_config_features"],

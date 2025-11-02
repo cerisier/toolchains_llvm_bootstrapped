@@ -1,4 +1,7 @@
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
+load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
+
+package(default_visibility = ["//toolchain/stage2:__subpackages__"])
 
 # compile_actions minus assemble_actions (only preprocess_assemble)
 OPT_FLAGS_COMPILE_ACTIONS = [
@@ -18,7 +21,6 @@ cc_args(
         "-DNDEBUG",
         "-O2",
     ],
-    visibility = ["//visibility:public"],
 )
 
 cc_args(
@@ -29,7 +31,6 @@ cc_args(
         "-O0",
         "-g",
     ],
-    visibility = ["//visibility:public"],
 )
 
 # Use args/use_lld when it's fixed
@@ -42,5 +43,17 @@ cc_args(
         "-fuse-ld=lld",
         # "--ld-path={lld_path}",
     ],
-    visibility = ["//visibility:public"],
+)
+
+cc_args_list(
+    name = "ubsan_flags",
+    args = select({
+        # We just need to recompile with sanitizer flags, don't need linker flags.
+        # And in fact linker flags will cause a cycle. If we ever need a sanitizer
+        # for compilation, we would need an extra bootstrap stage.
+        "//config:ubsan_enabled": [
+            "//toolchain/args:ubsan_compiler_flags",
+        ],
+        "//conditions:default": [],
+    }),
 )

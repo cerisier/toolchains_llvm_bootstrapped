@@ -5,7 +5,7 @@ A rule similar to filegroup, but it ensures that only the last occurrence of eac
 It is used to compile arch specific builtins without including the generic ones.
 It implies that arch specific sources are listed after the generic ones in the `srcs` attribute.
 """
-def filter_builtin_sources_impl(ctx):
+def _filter_builtin_sources_impl(ctx):
     basename_to_file = {}
     for f in ctx.files.srcs:
         basename_to_file[f.basename] = f
@@ -20,7 +20,7 @@ def filter_builtin_sources_impl(ctx):
     ]
 
 filter_builtin_sources = rule(
-    implementation = filter_builtin_sources_impl,
+    implementation = _filter_builtin_sources_impl,
     attrs = {
         "srcs": attr.label_list(allow_files = True),
     },

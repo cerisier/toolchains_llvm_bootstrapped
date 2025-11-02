@@ -1,6 +1,20 @@
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("//:defs.bzl", "ubsan_cc_binary")
 
 cc_binary(
     name = "main",
     srcs = ["main.cc"],
+)
+
+# TODO(zbarsky): Turn more of this into a macro once we have more sanitizers?
+ubsan_cc_binary(
+    name = "ubsan_fail",
+    srcs = ["ubsan_fail.cc"],
+)
+
+sh_test(
+    name = "ubsan_output_test",
+    srcs = ["ubsan_output_test.sh"],
+    data = [":ubsan_fail"],
+    env = {"BINARY": "$(rootpath :ubsan_fail)"},
 )

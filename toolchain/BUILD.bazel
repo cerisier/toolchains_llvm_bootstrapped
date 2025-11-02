@@ -120,6 +120,9 @@ cc_args_list(
 
         ":platform_specific_args",
 
+        # Optional sanitizers
+        "//toolchain/args:ubsan_flags",
+
         # Common default link flags.
         "//toolchain/args:use_lld",
         ":default_link_flags",

@@ -3,3 +3,4 @@ bazel-*
 .idea/
 .ijwb/
 examples/*/MODULE.bazel.lock
+*.swp
