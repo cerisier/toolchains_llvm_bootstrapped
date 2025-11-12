@@ -58,7 +58,7 @@ register_toolchains(
 
 To list all available toolchains, you can run the following bazel query command:
 ```sh
-bazel query 'kind(toolchain, //toolchain:all) except kind(cc_toolchain, //toolchain:all)'
+bazel query 'kind(toolchain, @toolchains_llvm_bootstrapped//toolchain:all) except kind(cc_toolchain, @toolchains_llvm_bootstrapped//toolchain:all)'
 ```
 
 ## Examples
@@ -66,14 +66,14 @@ bazel query 'kind(toolchain, //toolchain:all) except kind(cc_toolchain, //toolch
 If you clone this repository, you can test this toolchain for all the registered platforms:
 
 See all supported platforms:
-```
-bazel query 'kind(platform, //platforms/...)'
+```sh
+bazel query 'kind(platform, @toolchains_llvm_bootstrapped//platforms/...)'
 ```
 
 Build a simple C++ program to play with the toolchain:
-```
+```sh
 cd examples/rules_cc
-bazel build :main --platforms=//platforms:linux_amd64
+bazel build :main --platforms=@toolchains_llvm_bootstrapped//platforms:linux_amd64
 ```
 
 Or just verify that it runs on your current platform:
@@ -99,7 +99,7 @@ Compiling and linking against musl on linux is supported, but only statically.
 For now, this toolchain uses the latest available musl version.
 
 To target musl, use:
-`--platforms //platforms/libc_aware:linux_aarch64_musl`
+`--platforms @toolchains_llvm_bootstrapped//platforms/libc_aware:linux_aarch64_musl`
 
 > By default, the binary will be fully statically link (no dynamic linker at all).
 
@@ -109,7 +109,7 @@ Compiling and linking dynamically against an arbitrary version of the glibc is s
 By default, the earliest glibc version that supports your target is used (2.28 in most case).
 
 To target a specific version, use:
-`--platforms //platforms/libc_aware:linux_x86_64_gnu.2.28`
+`--platforms @toolchains_llvm_bootstrapped//platforms/libc_aware:linux_x86_64_gnu.2.28`
 
 Behind the scenes, your code is compiled using the appropriate headers for the
 target version, and dynamically linked against a stub glibc that includes only
