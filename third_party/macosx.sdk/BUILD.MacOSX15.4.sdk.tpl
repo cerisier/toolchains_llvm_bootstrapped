@@ -58,6 +58,7 @@ directory(
         "System/Library/Frameworks/Kernel.framework/**",
         "System/Library/Frameworks/OSLog.framework/**",
         "System/Library/Frameworks/Security.framework/**",
+        "System/Library/Frameworks/SystemConfiguration.framework/**",
 
         "usr/**",
     ], exclude = COMMON_EXCLUDES),
