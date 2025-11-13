@@ -505,6 +505,36 @@ cc_unsanitized_library(
 
 # TODO(zbarsky): It would be nice to not have to jam everything into a single BUILD file
 
+# TODO(cerisier): This should be exposed from //runtimes in some way since it is needed in several places.
+
+cc_stage2_library(
+    name = "linux_libc_headers",
+    deps = [
+        # Order matter. Search path should have C++ headers before any lib C headers.
+        "@kernel_headers//:kernel_headers",
+        "@toolchains_llvm_bootstrapped//third_party/llvm-project:libc_headers",
+    ] + select({
+        "@toolchains_llvm_bootstrapped//constraints/libc:musl": [
+            "@musl_libc//:musl_libc_headers",
+        ],
+        "//conditions:default": [
+            "@glibc//:gnu_libc_headers",
+        ],
+    })
+)
+
+cc_stage2_library(
+    name = "libcxx_headers",
+    deps = select({
+        "@platforms//os:macos": [],
+        "@platforms//os:linux": [
+            "@libcxx//:headers",
+            "@libcxxabi//:headers",
+            ":linux_libc_headers",
+        ],
+    }),
+)
+
 ## Common
 
 SANITIZER_SOURCES_NOTERMINATION = [
@@ -743,6 +773,7 @@ SANITIZER_IMPL_HEADERS = [
   "sanitizer_mallinfo.h",
   "sanitizer_glibc_version.h",
   "sanitizer_thread_history.h",
+  "sanitizer_solaris.h",
 ]
 
 filegroup(
@@ -783,6 +814,9 @@ cc_stage2_library(
         "lib/sanitizer_common/sanitizer_syscall_generic.inc",
     ],
     includes = ["lib"],
+    implementation_deps = [
+        ":libcxx_headers",
+    ],
 )
 
 cc_stage2_library(
@@ -792,6 +826,9 @@ cc_stage2_library(
         ":sanitizer_impl_headers",
     ],
     includes = ["lib"],
+    implementation_deps = [
+        ":libcxx_headers",
+    ],
 )
 
 cc_stage2_library(
@@ -801,6 +838,9 @@ cc_stage2_library(
         ":sanitizer_impl_headers",
     ],
     includes = ["lib"],
+    implementation_deps = [
+        ":libcxx_headers",
+    ],
 )
 
 cc_stage2_library(
@@ -810,6 +850,9 @@ cc_stage2_library(
         ":sanitizer_impl_headers",
     ],
     includes = ["lib"],
+    implementation_deps = [
+        ":libcxx_headers",
+    ],
 )
 
 cc_stage2_library(
@@ -822,6 +865,9 @@ cc_stage2_library(
         ":llvm_Symbolize",
     ],
     includes = ["lib"],
+    implementation_deps = [
+        ":libcxx_headers",
+    ],
 )
 
 ## INTERCEPTION
@@ -858,6 +904,9 @@ cc_stage2_library(
         ":sanitizer_impl_headers",
     ],
     includes = ["lib"],
+    implementation_deps = [
+        ":libcxx_headers",
+    ],
 )
 
 ## UBSAN
@@ -946,6 +995,9 @@ cc_stage2_library(
         ":interception",
         # if COMPILER_RT_ENABLE_INTERNAL_SYMBOLIZER
         ":llvm_Symbolize",
+    ],
+    implementation_deps = [
+        ":libcxx_headers",
     ],
 )
 
