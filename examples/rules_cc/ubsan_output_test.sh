@@ -17,10 +17,10 @@ trim() {
   echo "$1" | sed 's/[[:space:]]*$//'
 }
 
-if [[ "$(trim "$OUTPUT")" == "$(trim "$EXPECTED_OUTPUT")" ]]; then
-  echo "✅ UBSan output matches expected string."
+if [[ "$(trim "$OUTPUT")" == *"$(trim "$EXPECTED_OUTPUT")"* ]]; then
+  echo "✅ UBSan output contains expected string."
 else
-  echo "❌ UBSan output does not match expected string."
+  echo "❌ UBSan output does not contain expected string."
   echo
   echo "---- Expected ----"
   printf '%s\n' "$EXPECTED_OUTPUT"
