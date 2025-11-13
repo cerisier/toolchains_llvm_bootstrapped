@@ -3,6 +3,13 @@ load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
 def _reset_sanitizers_impl(settings, attr):
     return {
         "//config:ubsan": False,
+
+        # Right now, this rule is used to compile parts of LLVM.
+        # We can't use the stage2 toolchain for that.
+        "//toolchain:bootstrap_setting": False,
+
+        # And LLVM uses <zlib.h> instead of "zlib.h" so we disable it here too.
+        "@llvm_zlib//:llvm_enable_zlib": False,
     }
 
 _reset_sanitizers = transition(
@@ -10,6 +17,8 @@ _reset_sanitizers = transition(
     inputs = [],
     outputs = [
         "//config:ubsan",
+        "//toolchain:bootstrap_setting",
+        "@llvm_zlib//:llvm_enable_zlib",
     ],
 )
 
