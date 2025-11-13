@@ -1,7 +1,9 @@
+load("@rules_cc//cc:cc_shared_library.bzl", "cc_shared_library")
+load("@rules_cc//cc/common:cc_shared_library_info.bzl", "CcSharedLibraryInfo")
 load("@with_cfg.bzl", "with_cfg")
 
 _builder = with_cfg(
-    native.cc_shared_library,
+    cc_shared_library,
     extra_providers = [CcSharedLibraryInfo],
 )
 

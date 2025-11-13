@@ -1,3 +1,5 @@
+load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
+
 def _reset_sanitizers_impl(settings, attr):
     return {
         "//config:ubsan": False,

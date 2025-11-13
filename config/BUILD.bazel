@@ -5,11 +5,6 @@ OPTIMIZATION_MODES = [
     "optimized",
 ]
 
-alias(
-    name = "use_libtool_on_macos",
-    actual = "@rules_cc//cc/toolchains/args/archiver_flags:use_libtool_on_macos",
-)
-
 # This flag controls the optimization mode for the compilation of the target
 # prequisites like the standard C library, the C++ standard library,
 # the unwinder, etc.

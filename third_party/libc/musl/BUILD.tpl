@@ -1,4 +1,5 @@
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
 MUSL_SUPPORTED_ARCHS = ["x86_64", "aarch64"]
 

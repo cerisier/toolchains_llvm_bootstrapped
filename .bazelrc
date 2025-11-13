@@ -20,7 +20,7 @@ build:bootstrap   --extra_toolchains=//toolchain/...
 build:bootstrap   --@rules_python//python/config_settings:bootstrap_impl=script
 
 build:rust    --@toolchains_llvm_bootstrapped//config:experimental_stub_libgcc_s=True
-build:rust    --@toolchains_llvm_bootstrapped//config:use_libtool_on_macos=False
+build:rust    --@rules_cc//cc/toolchains/args/archiver_flags:use_libtool_on_macos
 
 common:remote --bes_results_url=https://app.buildbuddy.io/invocation/
 common:remote --bes_backend=grpcs://remote.buildbuddy.io

@@ -1,7 +1,8 @@
+load("@rules_cc//cc:cc_static_library.bzl", "cc_static_library")
 load("@with_cfg.bzl", "with_cfg")
 
 _builder = with_cfg(
-    native.cc_static_library,
+    cc_static_library,
 )
 
 # The problem is that compiler-rt and start libs can only be compiled with
