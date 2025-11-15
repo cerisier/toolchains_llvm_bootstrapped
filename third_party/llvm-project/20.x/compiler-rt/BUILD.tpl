@@ -351,6 +351,8 @@ cc_stage2_library(
     }) + select({
         "@platforms//os:macos": [
             "-Wno-deprecated-declarations",
+            # TODO(zbarsky): This is spammy, but we should do a real fix.
+            # "-Wno-macro-redefined",
          ],
         "//conditions:default": [],
     }),

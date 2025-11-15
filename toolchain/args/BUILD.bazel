@@ -111,6 +111,7 @@ cc_args(
         "-D__DATE__=\"redacted\"",
         "-D__TIMESTAMP__=\"redacted\"",
         "-D__TIME__=\"redacted\"",
+        "-ffile-compilation-dir=.",  # Avoid absolute paths in binaries
     ],
 )
 

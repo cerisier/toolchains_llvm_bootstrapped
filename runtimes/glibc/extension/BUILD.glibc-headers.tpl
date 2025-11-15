@@ -10,10 +10,6 @@ cc_library(
     includes = [
         "include",
     ],
-    copts = [
-        # include/stdint.h:106:11: warning: '__INT64_C' macro redefined
-        "-Wno-macro-redefined",
-    ],
     visibility = ["//visibility:public"],
 )
 
