@@ -2,6 +2,7 @@ common          --enable_platform_specific_config
 
 common          --incompatible_strict_action_env
 common          --repo_env=BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1
+common          --repo_env=BAZEL_NO_APPLE_CPP_TOOLCHAIN=1
 
 common          --experimental_cc_static_library
 common          --experimental_platform_in_output_dir

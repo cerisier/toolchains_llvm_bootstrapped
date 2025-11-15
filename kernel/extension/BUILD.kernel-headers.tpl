@@ -1,5 +1,6 @@
 load("@bazel_skylib//rules/directory:directory.bzl", "directory")
 load("@bazel_skylib//rules/directory:subdirectory.bzl", "subdirectory")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
 cc_library(
     name = "kernel_headers",
