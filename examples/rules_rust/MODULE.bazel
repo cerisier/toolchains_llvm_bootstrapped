@@ -20,7 +20,7 @@ bazel_dep(name = "platforms", version = "1.0.0")
 # https://github.com/bazelbuild/rules_shell/releases
 bazel_dep(name = "rules_shell", version = "0.6.1")
 
-bazel_dep(name = "rules_cc", version = "0.2.13")
+bazel_dep(name = "rules_cc", version = "0.2.14")
 
 # https://github.com/cerisier/toolchains_llvm_bootstrapped/releases
 bazel_dep(name = "toolchains_llvm_bootstrapped", version = "0.0.0", dev_dependency = True)

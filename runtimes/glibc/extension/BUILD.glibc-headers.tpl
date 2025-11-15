@@ -1,5 +1,6 @@
 load("@bazel_skylib//rules/directory:directory.bzl", "directory")
 load("@bazel_skylib//rules/directory:subdirectory.bzl", "subdirectory")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
 cc_library(
     name = "gnu_libc_headers",
@@ -8,6 +9,10 @@ cc_library(
     ]),
     includes = [
         "include",
+    ],
+    copts = [
+        # include/stdint.h:106:11: warning: '__INT64_C' macro redefined
+        "-Wno-macro-redefined",
     ],
     visibility = ["//visibility:public"],
 )
