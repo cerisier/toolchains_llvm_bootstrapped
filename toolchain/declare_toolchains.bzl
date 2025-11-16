@@ -1,5 +1,5 @@
 load("@rules_cc//cc/toolchains:toolchain.bzl", "cc_toolchain")
-load("//platforms:common.bzl", _supported_targets = "SUPPORTED_TARGETS", _supported_execs = "SUPPORTED_EXECS")
+load("//platforms:common.bzl", _supported_execs = "SUPPORTED_EXECS", _supported_targets = "SUPPORTED_TARGETS")
 load("//toolchain:selects.bzl", "platform_cc_tool_map")
 
 def declare_all_toolchains():
@@ -20,11 +20,14 @@ def _declare_toolchains(exec_os, exec_cpu):
             "//toolchain/features:all_non_legacy_builtin_features",
             "//toolchain/features/legacy:all_legacy_builtin_features",
         ] + select({
+            "@platforms//os:linux": [
+                "@rules_cc//cc/toolchains/args/thin_lto:feature",
+            ],
+            "//conditions:default": [],
+        }) + select({
             # Should be last. This is a workaround to add those args last.
             # See comment of this target.
-            "@platforms//os:linux": [
-                "//toolchain/args/linux:crtend_feature",
-            ],
+            "@platforms//os:linux": ["//toolchain/args/linux:crtend_feature"],
             "//conditions:default": [],
         }),
         enabled_features = [
