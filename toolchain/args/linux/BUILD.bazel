@@ -1,8 +1,27 @@
 
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
+load("@rules_cc//cc/toolchains:actions.bzl", "cc_action_type_set")
 
 package(default_visibility = ["//visibility:public"])
+
+# TODO(zbarsky): Remove this when ugprading rules_cc
+cc_action_type_set(
+    name = "source_compile_actions",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:linkstamp_compile",
+        "@rules_cc//cc/toolchains/actions:cpp_compile",
+        "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
+        "@rules_cc//cc/toolchains/actions:cpp_module_compile",
+        "@rules_cc//cc/toolchains/actions:cpp_module_codegen",
+        "@rules_cc//cc/toolchains/actions:clif_match",
+        "@rules_cc//cc/toolchains/actions:objcpp_compile",
+        "@rules_cc//cc/toolchains/actions:preprocess_assemble",
+        "@rules_cc//cc/toolchains/actions:c_compile_actions",
+        "@rules_cc//cc/toolchains/actions:assembly_actions",
+        "@rules_cc//cc/toolchains/actions:objc_compile",
+    ],
+)
 
 # Passing a sysroot to /dev/null has the side effect of removing all default
 # library search paths.
@@ -50,7 +69,7 @@ cc_args_list(
 cc_args(
     name = "kernel_headers_include_search_paths",
     actions = [
-        "@rules_cc//cc/toolchains/actions:compile_actions",
+        ":source_compile_actions",
     ],
     args = [
         "-isystem",
@@ -67,7 +86,7 @@ cc_args(
 cc_args(
     name = "glibc_headers_include_search_paths",
     actions = [
-        "@rules_cc//cc/toolchains/actions:compile_actions",
+        ":source_compile_actions",
     ],
     args = [
         # "__GLIBC_MINOR__={d}", version.minor
@@ -123,7 +142,7 @@ cc_args(
 cc_args(
     name = "musl_libc_headers_include_search_paths",
     actions = [
-        "@rules_cc//cc/toolchains/actions:compile_actions",
+        ":source_compile_actions",
     ],
     args = [
         "-isystem",

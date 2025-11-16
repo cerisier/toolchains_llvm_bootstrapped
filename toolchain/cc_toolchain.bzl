@@ -15,7 +15,13 @@ def cc_toolchain(name, tool_map):
             "@rules_cc//cc/toolchains/args:experimental_replace_legacy_action_config_features",
             "//toolchain/features:all_non_legacy_builtin_features",
             "//toolchain/features/legacy:all_legacy_builtin_features",
-        ],
+        ] + select({
+            "@platforms//os:linux": [
+                # TODO(zbarsky): Enable this once rules_cc cuts a release.
+                # "@rules_cc//cc/toolchains/args/thin_lto:feature",
+            ],
+            "//conditions:default": [],
+        }),
         enabled_features = select({
             "@platforms//os:linux": [
                 "//toolchain/features:static_link_cpp_runtimes",
