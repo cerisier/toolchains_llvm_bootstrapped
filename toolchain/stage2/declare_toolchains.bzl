@@ -17,8 +17,14 @@ def declare_toolchains():
                 "//toolchain/stage2/args:default_link_flags",
                 "//toolchain/stage2/args:ubsan_flags",
             ],
-            enabled_features = ["@rules_cc//cc/toolchains/args:experimental_replace_legacy_action_config_features"],
-            known_features = ["@rules_cc//cc/toolchains/args:experimental_replace_legacy_action_config_features"],
+            enabled_features = [
+                "//toolchain/features/legacy:all_legacy_builtin_features",
+                "@rules_cc//cc/toolchains/args:experimental_replace_legacy_action_config_features",
+            ],
+            known_features = [
+                "//toolchain/features/legacy:all_legacy_builtin_features",
+                "@rules_cc//cc/toolchains/args:experimental_replace_legacy_action_config_features",
+            ],
             tool_map = platform_cc_tool_map(exec_os, exec_cpu),
             compiler = "clang",
         )

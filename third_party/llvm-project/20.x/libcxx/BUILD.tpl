@@ -1385,6 +1385,7 @@ cc_library(
             "@glibc//:gnu_libc_headers",
         ],
     }),
+    visibility = ["//visibility:public"],
 )
 
 cc_stage2_static_library(
@@ -1395,11 +1396,11 @@ cc_stage2_static_library(
     visibility = ["//visibility:public"],
 )
 
-cc_stage2_shared_library(
-    name = "libcxx.shared",
-    deps = [
-        ":libcxx",
-    ],
-    shared_lib_name = "libc++.so.1.0",
-    visibility = ["//visibility:public"],
-)
+#cc_stage2_shared_library(
+#    name = "libcxx.shared",
+#    deps = [
+#        ":libcxx",
+#    ],
+#    shared_lib_name = "libc++.so.1.0",
+#    visibility = ["//visibility:public"],
+#)

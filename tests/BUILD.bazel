@@ -1,4 +1,6 @@
+load("@bazel_lib//lib:transitions.bzl", "platform_transition_filegroup")
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("//bootstrap:platforms.bzl", "PLATFORMS")
 
 cc_binary(
     name = "main_c",
@@ -9,3 +11,14 @@ cc_binary(
     name = "main_cc",
     srcs = ["main.cc"],
 )
+
+[
+    platform_transition_filegroup(
+        name = "for_" + platform.split(":")[1],
+        srcs = [
+            ":main_cc",
+        ],
+        target_platform = platform,
+    )
+    for platform in PLATFORMS
+]

@@ -1,7 +1,9 @@
 load("@bazel_lib//lib:copy_file.bzl", "copy_file")
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
+load("@rules_cc//cc:cc_import.bzl", "cc_import")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_library.bzl", "cc_stage2_library")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_static_library.bzl", "cc_stage2_static_library")
+load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_import.bzl", "cc_stage2_import")
 load("//toolchain:selects.bzl", "platform_llvm_binary")
 load(":libc_musl_srcs_filegroup.bzl", "libc_musl_srcs_filegroup")
 
@@ -75,6 +77,12 @@ cc_stage2_static_library(
     visibility = ["//visibility:public"],
 )
 
+cc_stage2_import(
+    name = "musl_libc.import",
+    static_library = "musl_libc.static",
+    visibility = ["//visibility:public"],
+)
+
 cc_stage2_library(
     name = "musl_crt1",
     srcs = ["@musl_libc//:crt/crt1.c"],
@@ -134,6 +142,13 @@ copy_file(
     src = ":musl_libc.static",
     out = "libc.a",
     allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+cc_import(
+    name = "musl_libc_static_import",
+    static_library = ":musl_libc.a",
+    visibility = ["//visibility:public"],
 )
 
 MUSL_LIBS = [

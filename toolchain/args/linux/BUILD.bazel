@@ -217,7 +217,7 @@ cc_args(
     args = [
         # We need to support copts like -lc -ldl etc...
         "-L{libcxx_library_search_path}",
-        "-L{libc_library_search_path}",
+        #"-L{libc_library_search_path}",
         "-L{libunwind_library_search_path}",
         "-L.", # needed to -l:bazel-out/...
 
@@ -231,23 +231,21 @@ cc_args(
         # But in the way we handle generating libc stubs, we chose to generate
         # empty libs for those that have been removed so that we do not have to
         # handle varying inclusions.
-        "-lm",
-        "-lpthread",
-        "-lc",
-        "-ldl",
-        "-lrt",
-        "-lutil",
+        #"-lm",
+        #"-lpthread",
+        #"-lc",
+        #"-ldl",
+        #"-lrt",
+        #"-lutil",
 
         "-Wl,--pop-state",
     ],
     data = [
         "//runtimes/libcxx:libcxx_library_search_directory",
-        "//runtimes/musl:musl_library_search_directory",
         "//runtimes/libunwind:libunwind_library_search_directory",
     ],
     format = {
         "libcxx_library_search_path": "//runtimes/libcxx:libcxx_library_search_directory",
-        "libc_library_search_path": "//runtimes/musl:musl_library_search_directory",
         "libunwind_library_search_path": "//runtimes/libunwind:libunwind_library_search_directory",
     },
 )

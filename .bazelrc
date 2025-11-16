@@ -13,7 +13,8 @@ common:bootstrap  --@llvm_zlib//:llvm_enable_zlib=false
 build:bootstrap   -c opt
 build:bootstrap   --strip=always
 build:bootstrap   --stripopt=--strip-all
-build:bootstrap   --copt=-flto=thin
+build:bootstrap   --features=thin_lto
+#build:bootstrap   --copt=-flto=thin
 build:bootstrap   --copt=-ffunction-sections
 build:bootstrap   --copt=-fdata-sections
 build:bootstrap   --dynamic_mode=off
@@ -26,7 +27,7 @@ build:rust    --@rules_cc//cc/toolchains/args/archiver_flags:use_libtool_on_maco
 common:remote --bes_results_url=https://app.buildbuddy.io/invocation/
 common:remote --bes_backend=grpcs://remote.buildbuddy.io
 common:remote --remote_cache=grpcs://remote.buildbuddy.io
-common:remote --remote_download_toplevel
+common:remote --remote_download_outputs=all
 common:remote --nobuild_runfile_links
 common:remote --remote_timeout=3600
 common:remote --remote_executor=grpcs://remote.buildbuddy.io

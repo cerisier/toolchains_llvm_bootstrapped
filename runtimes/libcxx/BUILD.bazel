@@ -1,16 +1,24 @@
 load("@bazel_lib//lib:copy_file.bzl", "copy_file")
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
+load("//toolchain/stage2:cc_stage2_import.bzl", "cc_stage2_import")
+
+exports_files([
+    "libcxx_library_search_directory/libc++.a",
+    "libcxx_library_search_directory/libc++abi.a",
+])
 
 copy_file(
     name = "libc++",
     src = "@libcxx//:libcxx.static",
     out = "libc++.a",
+    visibility = ["//visibility:public"],
 )
 
 copy_file(
     name = "libc++abi",
     src = "@libcxxabi//:libcxxabi.static",
     out = "libc++abi.a",
+    visibility = ["//visibility:public"],
 )
 
 copy_to_directory(
@@ -19,6 +27,18 @@ copy_to_directory(
         ":libc++",
         ":libc++abi",
     ],
+    visibility = ["//visibility:public"],
+)
+
+cc_stage2_import(
+    name = "libcxx_static",
+    static_library = "@libcxx//:libcxx.static",
+    visibility = ["//visibility:public"],
+)
+
+cc_stage2_import(
+    name = "libcxxabi_static",
+    static_library = "@libcxxabi//:libcxxabi.static",
     visibility = ["//visibility:public"],
 )
 

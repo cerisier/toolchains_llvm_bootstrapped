@@ -1,11 +1,14 @@
-filegroup(
+load("//toolchain/stage2:cc_stage2_library.bzl", "cc_stage2_library")
+
+cc_stage2_library(
     name = "static_runtime_lib",
-    srcs = [
-        "@compiler-rt//:clang_rt.builtins.static",
-        "@libcxx//:libcxx.static",
-        "@libcxxabi//:libcxxabi.static",
+    deps = [
+        "//runtimes/compiler-rt:clang_rt_builtins_import",
+        "//runtimes/libcxx:libcxx_static",
+        "//runtimes/libcxx:libcxxabi_static",
         # only if libcxx on linux
-        "@libunwind//:libunwind.static",
+        "//runtimes/libunwind:libunwind_static",
+        "//runtimes/musl:musl_libc.import",
     ],
     visibility = ["//toolchain:__subpackages__"],
 )
@@ -13,9 +16,9 @@ filegroup(
 filegroup(
     name = "dynamic_runtime_lib",
     srcs = [
-        "@compiler-rt//:clang_rt.builtins.static",
-        "@libcxx//:libcxx.shared",
-        "@libcxxabi//:libcxxabi.shared",
+        #"@compiler-rt//:clang_rt.builtins.static",
+        #"@libcxx//:libcxx.shared",
+        #"@libcxxabi//:libcxxabi.shared",
         # only if libcxx on linux
         # TODO(zbarsky): Enable this? libunwind depends on a another shared lib which loses GraphNodeInfo provider
         #"@libunwind//:libunwind.shared",

@@ -1,12 +1,14 @@
 load("@bazel_lib//lib:copy_file.bzl", "copy_file")
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
 load("//toolchain:selects.bzl", "platform_llvm_binary")
+load("//toolchain/stage2:cc_stage2_import.bzl", "cc_stage2_import")
 
 copy_file(
     name = "libunwind",
     src = "@libunwind//:libunwind.static",
     out = "libunwind.a",
     allow_symlink = True,
+    visibility = ["//visibility:public"],
 )
 
 alias(
@@ -42,5 +44,11 @@ copy_to_directory(
         ],
         "//conditions:default": [],
     }),
+    visibility = ["//visibility:public"],
+)
+
+cc_stage2_import(
+    name = "libunwind_static",
+    static_library = "@libunwind//:libunwind.static",
     visibility = ["//visibility:public"],
 )

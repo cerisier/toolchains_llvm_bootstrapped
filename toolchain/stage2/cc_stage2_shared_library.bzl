@@ -17,6 +17,8 @@ _builder.set("linkopt", [])
 _builder.set("host_copt", [])
 _builder.set("host_cxxopt", [])
 _builder.set("host_linkopt", [])
+_builder.set("features", [])
+_builder.set("host_features", [])
 
 _builder.set(
     Label("//toolchain:bootstrap_setting"),

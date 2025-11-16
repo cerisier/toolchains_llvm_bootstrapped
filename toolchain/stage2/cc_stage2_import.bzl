@@ -1,9 +1,10 @@
+load("@rules_cc//cc:cc_import.bzl", "cc_import")
 load("@with_cfg.bzl", "with_cfg")
-load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
 _builder = with_cfg(
-    cc_library,
+    cc_import,
 )
+
 # The problem is that compiler-rt and start libs can only be compiled with
 # a specific set of flags and compilation mode. It is not safe to let the user
 # interfere with them using default command line flags.
@@ -22,4 +23,5 @@ _builder.set(
     True,
 )
 
-cc_stage2_library, _cc_stage2_library_internal  = _builder.build()
+cc_stage2_import, _cc_stage2_import_internal = _builder.build()
+

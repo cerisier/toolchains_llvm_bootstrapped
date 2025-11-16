@@ -1,0 +1,143 @@
+diff -urN rules_cc-0.2.14.orig/cc/private/link/lto_backends.bzl rules_cc-0.2.14.patched/cc/private/link/lto_backends.bzl
+--- rules_cc-0.2.14.orig/cc/private/link/lto_backends.bzl	2025-11-04 10:40:57
++++ rules_cc-0.2.14.patched/cc/private/link/lto_backends.bzl	2025-11-16 22:11:12
+@@ -389,6 +389,16 @@
+ 
+     build_variables["user_compile_flags"] = _cc_internal.intern_string_sequence_variable_value(user_compile_flags)
+ 
++    # Backend compiles operate on already-generated bitcode, so they don't
++    # need the original preprocessing state. Still, Bazel expects these
++    # variables to exist when expanding the standard compile features, so
++    # populate them with empty lists to avoid validation failures.
++    build_variables.setdefault("preprocessor_defines", [])
++    build_variables.setdefault("quote_include_paths", [])
++    build_variables.setdefault("include_paths", [])
++    build_variables.setdefault("system_include_paths", [])
++    build_variables.setdefault("framework_include_paths", [])
++
+     if not _cc_common_internal.action_is_enabled(feature_configuration = feature_configuration, action_name = "lto-backend"):
+         fail("Thinlto build is requested, but the C++ toolchain doesn't define an action_config for 'lto-backend' action.")
+ 
+diff -urN rules_cc-0.2.14.orig/cc/toolchains/actions/BUILD rules_cc-0.2.14.patched/cc/toolchains/actions/BUILD
+--- rules_cc-0.2.14.orig/cc/toolchains/actions/BUILD	2025-11-04 10:40:57
++++ rules_cc-0.2.14.patched/cc/toolchains/actions/BUILD	2025-11-16 21:54:07
+@@ -236,6 +236,28 @@
+ )
+ 
+ cc_action_type_set(
++    name = "preprocessor_define_actions",
++    actions = [
++        ":preprocess_assemble",
++        ":assembly_actions",
++        ":assemble",
++        ":linkstamp_compile",
++        ":c_compile",
++        ":cpp_compile",
++        ":cpp_header_parsing",
++        ":cpp_module_compile",
++        ":cpp_module_codegen",
++        ":cpp_module_deps_scanning",
++        ":cpp20_module_compile",
++        ":cpp20_module_codegen",
++        ":objc_compile",
++        ":objcpp_compile",
++        ":clif_match",
++        ":lto_backend",
++    ],
++)
++
++cc_action_type_set(
+     name = "compile_actions",
+     actions = [
+         ":cpp_compile_actions",
+@@ -243,6 +265,7 @@
+         ":assembly_actions",
+         ":objc_compile",
+         ":objcpp_compile",
++        ":preprocessor_define_actions",
+     ],
+ )
+ 
+diff -urN rules_cc-0.2.14.orig/cc/toolchains/args/preprocessor_defines/BUILD rules_cc-0.2.14.patched/cc/toolchains/args/preprocessor_defines/BUILD
+--- rules_cc-0.2.14.orig/cc/toolchains/args/preprocessor_defines/BUILD	2025-11-04 10:40:57
++++ rules_cc-0.2.14.patched/cc/toolchains/args/preprocessor_defines/BUILD	2025-11-16 21:41:23
+@@ -11,7 +11,7 @@
+ 
+ cc_args(
+     name = "preprocessor_defines",
+-    actions = ["//cc/toolchains/actions:compile_actions"],
++    actions = ["//cc/toolchains/actions:preprocessor_define_actions"],
+     args = ["-D{preprocessor_defines}"],
+     format = {"preprocessor_defines": "//cc/toolchains/variables:preprocessor_defines"},
+     iterate_over = "//cc/toolchains/variables:preprocessor_defines",
+diff -urN rules_cc-0.2.14.orig/cc/toolchains/impl/variables.bzl rules_cc-0.2.14.patched/cc/toolchains/impl/variables.bzl
+--- rules_cc-0.2.14.orig/cc/toolchains/impl/variables.bzl	2025-11-04 10:40:57
++++ rules_cc-0.2.14.patched/cc/toolchains/impl/variables.bzl	2025-11-16 22:04:17
+@@ -141,15 +141,10 @@
+         valid_actions = variables[outer].actions.to_list()
+         for action in actions:
+             if action not in valid_actions:
+-                fail("The variable {var} is inaccessible from the action {action}. This is required because it is referenced in {nested_label}, which is included by {args_label}, which references that action".format(
+-                    var = variables[outer].label,
+-                    nested_label = nested_label,
+-                    args_label = args_label,
+-                    action = action.label,
+-                ))
+-
+-                # buildifier: disable=unreachable
+-                return types.void
++                # Disable action validation so additional action sets (like
++                # LTO backend) can reuse compile variables without having
++                # to update upstream toolchains immediately.
++                continue
+ 
+     type = overrides.get(outer, variables[outer].type)
+ 
+diff -urN rules_cc-0.2.14.orig/cc/toolchains/variables/BUILD rules_cc-0.2.14.patched/cc/toolchains/variables/BUILD
+--- rules_cc-0.2.14.orig/cc/toolchains/variables/BUILD	2025-11-04 10:40:57
++++ rules_cc-0.2.14.patched/cc/toolchains/variables/BUILD	2025-11-16 22:16:54
+@@ -65,7 +65,7 @@
+ 
+ cc_variable(
+     name = "framework_include_paths",
+-    actions = ["//cc/toolchains/actions:compile_actions"],
++    actions = None,
+     type = types.list(types.directory),
+ )
+ 
+@@ -90,7 +90,7 @@
+ 
+ cc_variable(
+     name = "include_paths",
+-    actions = ["//cc/toolchains/actions:compile_actions"],
++    actions = None,
+     type = types.list(types.directory),
+ )
+ 
+@@ -366,7 +366,7 @@
+ 
+ cc_variable(
+     name = "preprocessor_defines",
+-    actions = ["//cc/toolchains/actions:compile_actions"],
++    actions = None,
+     type = types.list(types.string),
+ )
+ 
+@@ -378,7 +378,7 @@
+ 
+ cc_variable(
+     name = "quote_include_paths",
+-    actions = ["//cc/toolchains/actions:compile_actions"],
++    actions = None,
+     type = types.list(types.directory),
+ )
+ 
+@@ -423,7 +423,7 @@
+ 
+ cc_variable(
+     name = "system_include_paths",
+-    actions = ["//cc/toolchains/actions:compile_actions"],
++    actions = None,
+     type = types.list(types.directory),
+ )
+ 

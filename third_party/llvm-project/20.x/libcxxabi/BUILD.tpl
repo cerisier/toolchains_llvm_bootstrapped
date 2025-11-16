@@ -127,6 +127,7 @@ cc_library(
             "@glibc//:gnu_libc_headers",
         ],
     }),
+    visibility = ["//visibility:public"],
 )
 
 cc_stage2_static_library(

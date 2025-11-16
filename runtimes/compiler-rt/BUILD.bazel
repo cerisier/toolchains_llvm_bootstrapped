@@ -1,3 +1,12 @@
+load("@rules_cc//cc:cc_import.bzl", "cc_import")
+load("//toolchain/stage2:cc_stage2_import.bzl", "cc_stage2_import")
+
+cc_stage2_import(
+    name = "clang_rt_builtins_import",
+    static_library = "@compiler-rt//:clang_rt.builtins.static",
+    visibility = ["//visibility:public"],
+)
+
 alias(
     name = "clang_rt.builtins.static",
     actual = "@compiler-rt//:clang_rt.builtins.static",
