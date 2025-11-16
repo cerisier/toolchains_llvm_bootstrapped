@@ -1,0 +1,169 @@
+diff --git a/cc/toolchains/actions/BUILD b/cc/toolchains/actions/BUILD
+index 56ee618a8..1c2a7ba39 100644
+--- a/cc/toolchains/actions/BUILD
++++ b/cc/toolchains/actions/BUILD
+@@ -235,6 +235,25 @@ cc_action_type_set(
+     ],
+ )
+ 
++# This should match `compile_actions` with `lto_backend` omitted, because `lto_backend` actions
++# do not instantiate the full set of build variables.
++cc_action_type_set(
++    name = "source_compile_actions",
++    actions = [
++        ":linkstamp_compile",
++        ":cpp_compile",
++        ":cpp_header_parsing",
++        ":cpp_module_compile",
++        ":cpp_module_codegen",
++        ":clif_match",
++        ":objcpp_compile",
++        ":preprocess_assemble",
++        ":c_compile_actions",
++        ":assembly_actions",
++        ":objc_compile",
++    ],
++)
++
+ cc_action_type_set(
+     name = "compile_actions",
+     actions = [
+@@ -242,7 +261,6 @@ cc_action_type_set(
+         ":c_compile_actions",
+         ":assembly_actions",
+         ":objc_compile",
+-        ":objcpp_compile",
+     ],
+ )
+ 
+diff --git a/cc/toolchains/args/include_flags/BUILD b/cc/toolchains/args/include_flags/BUILD
+index ee43baf1e..1ee790e26 100644
+--- a/cc/toolchains/args/include_flags/BUILD
++++ b/cc/toolchains/args/include_flags/BUILD
+@@ -19,7 +19,7 @@ cc_feature(
+ 
+ cc_args(
+     name = "includes_flags",
+-    actions = ["//cc/toolchains/actions:compile_actions"],
++    actions = ["//cc/toolchains/actions:source_compile_actions"],
+     args = [
+         "-include",
+         "{includes}",
+@@ -42,7 +42,7 @@ cc_feature(
+ 
+ cc_args(
+     name = "quote_include_paths_flags",
+-    actions = ["//cc/toolchains/actions:compile_actions"],
++    actions = ["//cc/toolchains/actions:source_compile_actions"],
+     args = [
+         "-iquote",
+         "{quote_include_paths}",
+@@ -53,7 +53,7 @@ cc_args(
+ 
+ cc_args(
+     name = "include_paths_flags",
+-    actions = ["//cc/toolchains/actions:compile_actions"],
++    actions = ["//cc/toolchains/actions:source_compile_actions"],
+     args = [
+         "-I{include_paths}",
+     ],
+@@ -63,7 +63,7 @@ cc_args(
+ 
+ cc_args(
+     name = "system_include_paths_flags",
+-    actions = ["//cc/toolchains/actions:compile_actions"],
++    actions = ["//cc/toolchains/actions:source_compile_actions"],
+     args = [
+         "-isystem",
+         "{system_include_paths}",
+@@ -74,7 +74,7 @@ cc_args(
+ 
+ cc_args(
+     name = "framework_include_paths_flags",
+-    actions = ["//cc/toolchains/actions:compile_actions"],
++    actions = ["//cc/toolchains/actions:source_compile_actions"],
+     args = [
+         "-F{framework_include_paths}",
+     ],
+diff --git a/cc/toolchains/args/preprocessor_defines/BUILD b/cc/toolchains/args/preprocessor_defines/BUILD
+index 77677cde0..d7c3267dd 100644
+--- a/cc/toolchains/args/preprocessor_defines/BUILD
++++ b/cc/toolchains/args/preprocessor_defines/BUILD
+@@ -11,7 +11,7 @@ cc_feature(
+ 
+ cc_args(
+     name = "preprocessor_defines",
+-    actions = ["//cc/toolchains/actions:compile_actions"],
++    actions = ["//cc/toolchains/actions:source_compile_actions"],
+     args = ["-D{preprocessor_defines}"],
+     format = {"preprocessor_defines": "//cc/toolchains/variables:preprocessor_defines"},
+     iterate_over = "//cc/toolchains/variables:preprocessor_defines",
+diff --git a/cc/toolchains/variables/BUILD b/cc/toolchains/variables/BUILD
+index 3e52dec1a..2e9c0a358 100644
+--- a/cc/toolchains/variables/BUILD
++++ b/cc/toolchains/variables/BUILD
+@@ -65,7 +65,7 @@ cc_variable(
+ 
+ cc_variable(
+     name = "framework_include_paths",
+-    actions = ["//cc/toolchains/actions:compile_actions"],
++    actions = ["//cc/toolchains/actions:source_compile_actions"],
+     type = types.list(types.directory),
+ )
+ 
+@@ -90,13 +90,13 @@ cc_variable(
+ 
+ cc_variable(
+     name = "include_paths",
+-    actions = ["//cc/toolchains/actions:compile_actions"],
++    actions = ["//cc/toolchains/actions:source_compile_actions"],
+     type = types.list(types.directory),
+ )
+ 
+ cc_variable(
+     name = "includes",
+-    actions = ["//cc/toolchains/actions:compile_actions"],
++    actions = ["//cc/toolchains/actions:source_compile_actions"],
+     type = types.option(types.list(types.file)),
+ )
+ 
+@@ -366,7 +366,7 @@ cc_variable(
+ 
+ cc_variable(
+     name = "preprocessor_defines",
+-    actions = ["//cc/toolchains/actions:compile_actions"],
++    actions = ["//cc/toolchains/actions:source_compile_actions"],
+     type = types.list(types.string),
+ )
+ 
+@@ -378,7 +378,7 @@ cc_variable(
+ 
+ cc_variable(
+     name = "quote_include_paths",
+-    actions = ["//cc/toolchains/actions:compile_actions"],
++    actions = ["//cc/toolchains/actions:source_compile_actions"],
+     type = types.list(types.directory),
+ )
+ 
+@@ -423,7 +423,7 @@ cc_variable(
+ 
+ cc_variable(
+     name = "system_include_paths",
+-    actions = ["//cc/toolchains/actions:compile_actions"],
++    actions = ["//cc/toolchains/actions:source_compile_actions"],
+     type = types.list(types.directory),
+ )
+ 
+diff --git a/tests/rule_based_toolchain/args/BUILD b/tests/rule_based_toolchain/args/BUILD
+index 506338f29..dd72250df 100644
+--- a/tests/rule_based_toolchain/args/BUILD
++++ b/tests/rule_based_toolchain/args/BUILD
+@@ -83,7 +83,7 @@ util.helper_target(
+ util.helper_target(
+     cc_args,
+     name = "bad_env_format_list",
+-    actions = ["//cc/toolchains/actions:compile_actions"],
++    actions = ["//cc/toolchains/actions:source_compile_actions"],
+     env = {"FOO": "{preprocessor_defines}"},
+     format = {"preprocessor_defines": "//cc/toolchains/variables:preprocessor_defines"},
+     tags = ["manual"],

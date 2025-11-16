@@ -146,7 +146,11 @@ archive_override(
 single_version_override(
     module_name = "rules_cc",
     patch_strip = 1,
-    patches = ["//third_party/rules_cc:windows_strip.patch"],
+    patches = [
+        "//third_party/rules_cc:windows_strip.patch",
+        "//third_party/rules_cc:thinlto.patch",
+        "//third_party/rules_cc:action_configs.patch",
+    ],
     version = "0.2.14",
 )
 

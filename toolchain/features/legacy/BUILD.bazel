@@ -45,12 +45,23 @@ cc_feature(
     ],
 )
 
+cc_feature(
+    name = "supports_start_end_lib",
+    feature_name = "supports_start_end_lib",
+    visibility = ["//visibility:public"],
+)
+
 ###
 
 cc_feature_set(
     name = "all_legacy_builtin_features",
     all_of = [
         ":default_compile_flags",
-    ],
+    ] + select({
+        "@platforms//os:windows": [],
+        "//conditions:default": [
+            ":supports_start_end_lib",
+        ],
+    }),
     visibility = ["//visibility:public"],
 )
