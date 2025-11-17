@@ -1,0 +1,24 @@
+filegroup(
+    name = "static_runtime_lib",
+    srcs = [
+        "@compiler-rt//:clang_rt.builtins.static",
+        "@libcxx//:libcxx.static",
+        "@libcxxabi//:libcxxabi.static",
+        # only if libcxx on linux
+        "@libunwind//:libunwind.static",
+    ],
+    visibility = ["//toolchain:__subpackages__"],
+)
+
+filegroup(
+    name = "dynamic_runtime_lib",
+    srcs = [
+        "@compiler-rt//:clang_rt.builtins.static",
+        "@libcxx//:libcxx.shared",
+        "@libcxxabi//:libcxxabi.shared",
+        # only if libcxx on linux
+        # TODO(zbarsky): Enable this? libunwind depends on a another shared lib which loses GraphNodeInfo provider
+        #"@libunwind//:libunwind.shared",
+    ],
+    visibility = ["//toolchain:__subpackages__"],
+)

@@ -1,4 +1,5 @@
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_library.bzl", "cc_stage2_library")
+load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_shared_library.bzl", "cc_stage2_shared_library")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_static_library.bzl", "cc_stage2_static_library")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_unsanitized_library.bzl", "cc_unsanitized_library")
 load("@toolchains_llvm_bootstrapped//third_party/llvm-project/20.x/compiler-rt:targets.bzl", "atomic_helper_cc_library")
@@ -438,6 +439,15 @@ cc_stage2_static_library(
     deps = [
         ":builtins",
     ],
+    visibility = ["//visibility:public"],
+)
+
+cc_stage2_shared_library(
+    name = "clang_rt.builtins.shared",
+    deps = [
+        ":builtins",
+    ],
+    shared_lib_name = "libclang_rt.so.1.0",
     visibility = ["//visibility:public"],
 )
 
