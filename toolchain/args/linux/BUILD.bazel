@@ -131,13 +131,9 @@ cc_args(
         "-L{libunwind_library_search_path}",
         "-L.", # needed to -l:bazel-out/...
 
-        "{clang_rt.builtins.a}",
-
         # In prevention of when all of those can be shared libraries.
         "-Wl,--push-state",
         "-Wl,--as-needed",
-        "-lc++",
-        "-lc++abi",
 
         # In newer versions of glibc various libs such as libm, librt are
         # normally included in libc and not available as separate libraries.
@@ -157,18 +153,15 @@ cc_args(
         "-lrt",
         "-lutil",
 
-        "-lunwind", # only if libcxx on linux
         "-Wl,--pop-state",
     ],
     data = [
-        "//runtimes/compiler-rt:clang_rt.builtins.static",
         "//runtimes/libcxx:libcxx_library_search_directory",
         "//runtimes/glibc:glibc_libc_nonshared.static",
         "//runtimes/glibc:glibc_library_search_directory",
         "//runtimes/libunwind:libunwind_library_search_directory",
     ],
     format = {
-        "clang_rt.builtins.a": "//runtimes/compiler-rt:clang_rt.builtins.static",
         "libcxx_library_search_path": "//runtimes/libcxx:libcxx_library_search_directory",
         "libc_nonshared.a": "//runtimes/glibc:glibc_libc_nonshared.static",
         "libc_library_search_path": "//runtimes/glibc:glibc_library_search_directory",
@@ -228,14 +221,9 @@ cc_args(
         "-L{libunwind_library_search_path}",
         "-L.", # needed to -l:bazel-out/...
 
-        "{clang_rt.builtins.a}",
-
         # In prevention of when all of those can be shared libraries.
         "-Wl,--push-state",
         "-Wl,--as-needed",
-
-        "-lc++",
-        "-lc++abi",
 
         # In newer versions of musl_libc various libs such as libm, librt are
         # normally included in libc and not available as separate libraries.
@@ -250,17 +238,14 @@ cc_args(
         "-lrt",
         "-lutil",
 
-        "-lunwind", # only if libcxx on linux
         "-Wl,--pop-state",
     ],
     data = [
-        "//runtimes/compiler-rt:clang_rt.builtins.static",
         "//runtimes/libcxx:libcxx_library_search_directory",
         "//runtimes/musl:musl_library_search_directory",
         "//runtimes/libunwind:libunwind_library_search_directory",
     ],
     format = {
-        "clang_rt.builtins.a": "//runtimes/compiler-rt:clang_rt.builtins.static",
         "libcxx_library_search_path": "//runtimes/libcxx:libcxx_library_search_directory",
         "libc_library_search_path": "//runtimes/musl:musl_library_search_directory",
         "libunwind_library_search_path": "//runtimes/libunwind:libunwind_library_search_directory",

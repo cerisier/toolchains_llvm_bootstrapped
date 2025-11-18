@@ -16,6 +16,7 @@ def _declare_toolchains(exec_os, exec_cpu):
         name = cc_toolchain_name,
         args = [":toolchain_args"],
         known_features = [
+            "//toolchain/features:static_link_cpp_runtimes",
             "@rules_cc//cc/toolchains/args:experimental_replace_legacy_action_config_features",
             "//toolchain/features:all_non_legacy_builtin_features",
             "//toolchain/features/legacy:all_legacy_builtin_features",
@@ -28,6 +29,7 @@ def _declare_toolchains(exec_os, exec_cpu):
             "//conditions:default": [],
         }),
         enabled_features = [
+            "//toolchain/features:static_link_cpp_runtimes",
             "@rules_cc//cc/toolchains/args:experimental_replace_legacy_action_config_features",
             # Do not enable this manually. Those features are enabled internally by --compilation_mode flags family.
             "//toolchain/features/legacy:all_legacy_builtin_features",
@@ -40,6 +42,8 @@ def _declare_toolchains(exec_os, exec_cpu):
             "//conditions:default": [],
         }),
         tool_map = platform_cc_tool_map(exec_os, exec_cpu),
+        static_runtime_lib = "//runtimes:static_runtime_lib",
+        dynamic_runtime_lib = "//runtimes:dynamic_runtime_lib",
         compiler = "clang",
     )
 
