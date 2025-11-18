@@ -14,8 +14,9 @@ build:bootstrap   -c opt
 build:bootstrap   --strip=always
 build:bootstrap   --stripopt=--strip-all
 build:bootstrap   --copt=-flto=thin
-build:bootstrap   --copt=-ffunction-sections
-build:bootstrap   --copt=-fdata-sections
+build:bootstrap   --copt=-fno-exceptions
+build:bootstrap   --copt=-fno-rtti
+build:bootstrap   --copt=-fomit-frame-pointer
 build:bootstrap   --dynamic_mode=off
 build:bootstrap   --extra_toolchains=//toolchain/...
 build:bootstrap   --@rules_python//python/config_settings:bootstrap_impl=script
