@@ -1,0 +1,21 @@
+diff --git a/cc/private/link/lto_backends.bzl b/cc/private/link/lto_backends.bzl
+index b3e33e1..ed1a558 100644
+--- a/cc/private/link/lto_backends.bzl
++++ b/cc/private/link/lto_backends.bzl
+@@ -389,6 +389,16 @@ def _initialize_build_variables(build_variables, additional_inputs, cc_toolchain
+ 
+     build_variables["user_compile_flags"] = _cc_internal.intern_string_sequence_variable_value(user_compile_flags)
+ 
++    # Backend compiles operate on already-generated bitcode, so they don't
++    # need the original preprocessing state. Still, Bazel expects these
++    # variables to exist when expanding the standard compile features, so
++    # populate them with empty lists to avoid validation failures.
++    build_variables.setdefault("preprocessor_defines", [])
++    build_variables.setdefault("quote_include_paths", [])
++    build_variables.setdefault("include_paths", [])
++    build_variables.setdefault("system_include_paths", [])
++    build_variables.setdefault("framework_include_paths", [])
++
+     if not _cc_common_internal.action_is_enabled(feature_configuration = feature_configuration, action_name = "lto-backend"):
+         fail("Thinlto build is requested, but the C++ toolchain doesn't define an action_config for 'lto-backend' action.")
+ 
