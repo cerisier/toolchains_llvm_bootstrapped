@@ -20,18 +20,6 @@ subdirectory(
 
 ##
 
-# This `select` happens under the target configuration. For macOS,
-# llvm-libtool-darwin should be used when creating static libraries even if the
-# exec platform is linux.
-alias(
-    name = "all_tools",
-    actual = select({
-        "@platforms//os:macos": ":macos_tools",
-        "//conditions:default": ":default_tools",
-    }),
-    visibility = ["//visibility:public"],
-)
-
 COMMON_TOOLS = {
     "@rules_cc//cc/toolchains/actions:assembly_actions": ":clang",
     "@rules_cc//cc/toolchains/actions:c_compile": ":clang",
@@ -46,13 +34,15 @@ cc_tool_map(
     tools = COMMON_TOOLS | {
         "@rules_cc//cc/toolchains/actions:ar_actions": ":llvm-ar",
     },
+    visibility = ["//visibility:public"],
 )
 
 cc_tool_map(
-    name = "macos_tools",
+    name = "tools_with_libtool",
     tools = COMMON_TOOLS | {
-        "@rules_cc//cc/toolchains/actions:ar_actions": ":archiver",
+        "@rules_cc//cc/toolchains/actions:ar_actions": ":llvm-libtool-darwin",
     },
+    visibility = ["//visibility:public"],
 )
 
 cc_tool(
@@ -79,14 +69,6 @@ cc_tool(
         "bin/ld64.lld",
         "bin/lld",
     ],
-)
-
-alias(
-    name = "archiver",
-    actual = select({
-        "@rules_cc//cc/toolchains/args/archiver_flags:use_libtool_on_macos_setting": ":llvm-libtool-darwin",
-        "//conditions:default": ":llvm-ar",
-    }),
 )
 
 cc_tool(
