@@ -1,6 +1,8 @@
 
+
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_library.bzl", "cc_stage2_library")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_static_library.bzl", "cc_stage2_static_library")
+load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_shared_library.bzl", "cc_stage2_shared_library")
 
 cc_stage2_library(
     name = "libunwind",
@@ -82,5 +84,14 @@ cc_stage2_static_library(
     deps = [
         ":libunwind",
     ],
+    visibility = ["//visibility:public"],
+)
+
+cc_stage2_shared_library(
+    name = "libunwind.shared",
+    deps = [
+        ":libunwind",
+    ],
+    shared_lib_name = "libunwind.so.1.0",
     visibility = ["//visibility:public"],
 )
