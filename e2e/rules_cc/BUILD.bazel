@@ -6,7 +6,7 @@ load("@rules_cc//cc:cc_static_library.bzl", "cc_static_library")
 load("@rules_cc//cc:cc_test.bzl", "cc_test")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("@toolchains_llvm_bootstrapped//:defs.bzl", "exec_test")
-load(":defs.bzl", "opt_binary", "ubsan_cc_binary")
+load("//:defs.bzl", "opt_binary", "ubsan_cc_binary", "msan_cc_binary", "asan_cc_binary")
 
 opt_binary(
     name = "no_optimize",
@@ -120,6 +120,47 @@ exec_test(
         "@platforms//os:windows": ["@platforms//:incompatible"],
         "//conditions:default": [],
     }),
+)
+
+
+msan_cc_binary(
+    name = "msan_fail",
+    srcs = ["msan_fail.cc"],
+    target_compatible_with = select({
+        "@platforms//os:linux": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+)
+
+exec_test(
+    sh_test,
+    name = "msan_output_test",
+    srcs = ["msan_output_test.sh"],
+    data = [":msan_fail"],
+    env = {"BINARY": "$(rootpath :msan_fail)"},
+    target_compatible_with = select({
+        "@platforms//os:linux": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+)
+
+asan_cc_binary(
+    name = "asan_fail",
+    srcs = ["asan_fail.cc"],
+    linkopts = [
+        "-Wl,-undefined,dynamic_lookup",
+        "-Wl,-U,___lsan_default_options",
+        "-Wl,-U,___lsan_default_suppressions",
+        "-Wl,-U,___lsan_is_turned_off",
+    ],
+)
+
+exec_test(
+    sh_test,
+    name = "asan_output_test",
+    srcs = ["asan_output_test.sh"],
+    data = [":asan_fail"],
+    env = {"BINARY": "$(rootpath :asan_fail)"},
 )
 
 # Test that this toolchain properly supports the supports_pic capability.

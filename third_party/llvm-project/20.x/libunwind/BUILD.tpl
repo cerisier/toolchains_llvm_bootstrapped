@@ -114,6 +114,10 @@ cc_library(
         ],
         "@platforms//os:macos": [],
     }),
+    deps = select({
+        "@toolchains_llvm_bootstrapped//config:asan_enabled": ["@compiler-rt//:asan_interface"],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
 )
 

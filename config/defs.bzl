@@ -16,7 +16,6 @@ def config_settings():
         name = "runtimes_optimization_mode",
         values = OPTIMIZATION_MODES,
         build_setting_default = "optimized",
-        visibility = ["//visibility:public"],
     )
 
     for optimization_mode in OPTIMIZATION_MODES:
@@ -25,7 +24,6 @@ def config_settings():
             flag_values = {
                 ":runtimes_optimization_mode": optimization_mode,
             },
-            visibility = ["//visibility:public"],
         )
 
     # This flag controls whether we compile and link with --sysroot=/dev/null
@@ -36,7 +34,6 @@ def config_settings():
     bool_flag(
         name = "empty_sysroot",
         build_setting_default = True,
-        visibility = ["//visibility:public"],
     )
 
     # This flag makes a dummy gcc_s library to link against.
@@ -60,7 +57,6 @@ def config_settings():
     bool_flag(
         name = "experimental_stub_libgcc_s",
         build_setting_default = False,
-        visibility = ["//visibility:public"],
     )
 
     # TODO(zbarsky): Some sanitizers are mutually exclusive, some can be stacked.
@@ -68,11 +64,29 @@ def config_settings():
     bool_flag(
         name = "ubsan",
         build_setting_default = False,
-        visibility = ["//visibility:public"],
     )
 
     native.config_setting(
         name = "ubsan_enabled",
         flag_values = {":ubsan": "1"},
-        visibility = ["//:__subpackages__"],
+    )
+
+    bool_flag(
+        name = "msan",
+        build_setting_default = False,
+    )
+
+    native.config_setting(
+        name = "msan_enabled",
+        flag_values = {":msan": "1"},
+    )
+
+    bool_flag(
+        name = "asan",
+        build_setting_default = False,
+    )
+
+    native.config_setting(
+        name = "asan_enabled",
+        flag_values = {":asan": "1"},
     )

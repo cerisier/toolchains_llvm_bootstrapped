@@ -89,6 +89,8 @@ cc_args_list(
 
         # Optional sanitizers
         "//toolchain/runtimes/args:ubsan_flags",
+        "//toolchain/runtimes/args:msan_flags",
+        "//toolchain/runtimes/args:asan_flags",
 
         # Common default link flags.
         "//toolchain/args:fuse_ld",

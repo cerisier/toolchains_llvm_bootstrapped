@@ -166,6 +166,8 @@ cc_args(
     ],
 )
 
+#######
+
 cc_args(
     name = "ubsan_compiler_flags",
     actions = [
@@ -218,6 +220,114 @@ cc_args_list(
         "//conditions:default": [],
     }),
 )
+
+#######
+
+cc_args(
+    name = "msan_compiler_flags",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:compile_actions",
+    ],
+    args = [
+        "-fno-omit-frame-pointer",
+        "-fsanitize=memory",
+    ],
+)
+
+# Note that sanitizers must use `cc_unsanitized_library` on third-party deps
+# if they end up depending on an exec-configure binary, as linking that binary can fail
+# since it was compiled with sanitizer support but linked without it.
+cc_args(
+    name = "msan_linker_flags",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = [
+        "-fsanitize=memory",
+        "-fno-sanitize-link-runtime",
+        "-fno-sanitize-link-c++-runtime",
+        "{msan_path}",
+    ],
+    format = {
+        "msan_path": "@compiler-rt//:msan.static",
+    },
+    data = ["@compiler-rt//:msan.static"],
+)
+
+alias(
+    name = "msan_enabled",
+    actual = select({
+        "//toolchain:bootstrapped_toolchain": "//config/bootstrap:msan_enabled",
+        "//conditions:default": "//config:msan_enabled",
+    }),
+    visibility = ["//toolchain:__subpackages__"],
+)
+
+cc_args_list(
+    name = "msan_flags",
+    args = select({
+        ":msan_enabled": [
+            ":msan_compiler_flags",
+            ":msan_linker_flags",
+        ],
+        "//conditions:default": [],
+    }),
+)
+
+#######
+
+cc_args(
+    name = "asan_compiler_flags",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:compile_actions",
+    ],
+    args = [
+        "-fno-omit-frame-pointer",
+        "-fsanitize=address",
+    ],
+)
+
+# Note that sanitizers must use `cc_unsanitized_library` on third-party deps
+# if they end up depending on an exec-configure binary, as linking that binary can fail
+# since it was compiled with sanitizer support but linked without it.
+cc_args(
+    name = "asan_linker_flags",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = [
+        "-fsanitize=address",
+        "-fno-sanitize-link-runtime",
+        "-fno-sanitize-link-c++-runtime",
+        "{asan_path}",
+    ],
+    format = {
+        "asan_path": "@compiler-rt//:asan.shared",
+    },
+    data = ["@compiler-rt//:asan.shared"],
+)
+
+alias(
+    name = "asan_enabled",
+    actual = select({
+        "//toolchain:bootstrapped_toolchain": "//config/bootstrap:asan_enabled",
+        "//conditions:default": "//config:asan_enabled",
+    }),
+    visibility = ["//toolchain:__subpackages__"],
+)
+
+cc_args_list(
+    name = "asan_flags",
+    args = select({
+        ":asan_enabled": [
+            ":asan_compiler_flags",
+            ":asan_linker_flags",
+        ],
+        "//conditions:default": [],
+    }),
+)
+
+#######
 
 cc_args(
     name = "hermetic_compile_flags",

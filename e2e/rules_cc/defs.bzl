@@ -5,6 +5,14 @@ ubsan_cc_binary, _ubsan_cc_binary_internal = with_cfg(cc_binary).set(
     Label("@toolchains_llvm_bootstrapped//config:ubsan"), True
 ).build()
 
+msan_cc_binary, _msan_cc_binary_internal = with_cfg(cc_binary).set(
+    Label("@toolchains_llvm_bootstrapped//config:msan"), True
+).build()
+
+asan_cc_binary, _asan_cc_binary_internal = with_cfg(cc_binary).set(
+    Label("@toolchains_llvm_bootstrapped//config:asan"), True
+).build()
+
 opt_binary, _opt_binary_internal = with_cfg(cc_binary).set(
     "compilation_mode", "opt"
 ).build()

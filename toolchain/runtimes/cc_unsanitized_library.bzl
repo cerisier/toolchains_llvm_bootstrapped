@@ -3,7 +3,11 @@ load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
 def _reset_sanitizers_impl(settings, attr):
     return {
         "//config:ubsan": False,
+        "//config:msan": False,
+        "//config:asan": False,
         "//config/bootstrap:ubsan": False,
+        "//config/bootstrap:msan": False,
+        "//config/bootstrap:asan": False,
 
         # we are compiling sanitizers, so we want all runtimes except sanitizers.
         # TODO(cerisier): Should this be exressed with a dedicated stage ?
@@ -21,7 +25,11 @@ _reset_sanitizers = transition(
     inputs = [],
     outputs = [
         "//config:ubsan",
+        "//config:msan",
+        "//config:asan",
         "//config/bootstrap:ubsan",
+        "//config/bootstrap:msan",
+        "//config/bootstrap:asan",
         "//toolchain:runtime_stage",
         "//toolchain:source",
         "@llvm_zlib//:llvm_enable_zlib",
