@@ -4,3 +4,7 @@ load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 ubsan_cc_binary, _ubsan_cc_binary_internal = with_cfg(cc_binary).set(
     Label("@toolchains_llvm_bootstrapped//config:ubsan"), True
 ).build()
+
+msan_cc_binary, _msan_cc_binary_internal = with_cfg(cc_binary).set(
+    Label("@toolchains_llvm_bootstrapped//config:msan"), True
+).build()

@@ -690,6 +690,7 @@ SANITIZER_IMPL_HEADERS = [
   "sanitizer_common_interceptors_format.inc",
   "sanitizer_common_interceptors_ioctl.inc",
   "sanitizer_common_interceptors_memintrinsics.inc",
+  "sanitizer_common_interceptors_netbsd_compat.inc",
   "sanitizer_common_interface.inc",
   "sanitizer_common_interface_posix.inc",
   "sanitizer_common_syscalls.inc",
@@ -1006,5 +1007,84 @@ cc_stage2_library(
 cc_stage2_static_library(
     name = "ubsan.static",
     deps = [":ubsan"],
+    visibility = ["//visibility:public"],
+)
+
+## MSAN
+
+MSAN_SOURCES = [
+  "msan.cpp",
+  "msan_allocator.cpp",
+  "msan_chained_origin_depot.cpp",
+  "msan_dl.cpp",
+  "msan_interceptors.cpp",
+  "msan_linux.cpp",
+  "msan_report.cpp",
+  "msan_thread.cpp",
+  "msan_poisoning.cpp",
+]
+
+filegroup(
+    name = "msan_sources",
+    srcs = ["lib/msan/" + f for f in MSAN_SOURCES],
+)
+
+MSAN_CXX_SOURCES = [
+  "msan_new_delete.cpp",
+]
+
+filegroup(
+    name = "msan_cxx_sources",
+    srcs = ["lib/msan/" + f for f in MSAN_CXX_SOURCES],
+)
+
+
+MSAN_HEADERS = [
+    "msan.h",
+    "msan_allocator.h",
+    "msan_chained_origin_depot.h",
+    "msan_dl.h",
+    "msan_flags.h",
+    "msan_flags.inc",
+    "msan_interface_internal.h",
+    "msan_origin.h",
+    "msan_poisoning.h",
+    "msan_report.h",
+    "msan_thread.h",
+]
+
+filegroup(
+    name = "msan_headers",
+    srcs = ["lib/msan/" + f for f in MSAN_HEADERS],
+)
+
+cc_stage2_library(
+    name = "msan",
+    srcs = [
+        ":msan_sources",
+        ":msan_cxx_sources",
+        ":msan_headers",
+    ],
+    textual_hdrs = [
+        "lib/msan/msan_flags.inc",
+    ],
+    includes = ["lib"],
+    deps = [
+        ":interception",
+        ":sanitizer_common",
+        ":sanitizer_common_libc",
+        ":sanitizer_common_coverage",
+        ":sanitizer_common_symbolizer",
+        ":sanitizer_common_symbolizer_internal",
+        ":ubsan",
+    ],
+    implementation_deps = [
+        ":libcxx_headers",
+    ],
+)
+
+cc_stage2_static_library(
+    name = "msan.static",
+    deps = [":msan"],
     visibility = ["//visibility:public"],
 )
