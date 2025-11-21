@@ -1,6 +1,6 @@
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
-load("//:defs.bzl", "ubsan_cc_binary", "msan_cc_binary")
+load("//:defs.bzl", "ubsan_cc_binary", "msan_cc_binary", "asan_cc_binary")
 
 cc_binary(
     name = "main",
@@ -38,4 +38,16 @@ sh_test(
         "@platforms//os:linux": [],
         "//conditions:default": ["@platforms//:incompatible"],
     }),
+)
+
+ubsan_cc_binary(
+    name = "asan_fail",
+    srcs = ["asan_fail.cc"],
+)
+
+sh_test(
+    name = "asan_output_test",
+    srcs = ["asan_output_test.sh"],
+    data = [":asan_fail"],
+    env = {"BINARY": "$(rootpath :asan_fail)"},
 )

@@ -88,3 +88,15 @@ config_setting(
     flag_values = {":msan": "1"},
     visibility = ["//:__subpackages__"],
 )
+
+bool_flag(
+    name = "asan",
+    build_setting_default = False,
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "asan_enabled",
+    flag_values = {":asan": "1"},
+    visibility = ["//:__subpackages__"],
+)

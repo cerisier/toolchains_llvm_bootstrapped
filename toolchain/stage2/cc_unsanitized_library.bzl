@@ -4,6 +4,7 @@ def _reset_sanitizers_impl(settings, attr):
     return {
         "//config:ubsan": False,
         "//config:msan": False,
+        "//config:asan": False,
 
         # Right now, this rule is used to compile parts of LLVM.
         # We can't use the stage2 toolchain for that.
@@ -19,6 +20,7 @@ _reset_sanitizers = transition(
     outputs = [
         "//config:ubsan",
         "//config:msan",
+        "//config:asan",
         "//toolchain:bootstrap_setting",
         "@llvm_zlib//:llvm_enable_zlib",
     ],

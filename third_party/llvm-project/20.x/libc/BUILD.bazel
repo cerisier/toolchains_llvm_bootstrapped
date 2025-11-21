@@ -11,5 +11,9 @@ cc_library(
         "shared/*.h",
         "src/**/*.h",
     ]),
+    deps = select({
+        "@toolchains_llvm_bootstrapped//config:msan_enabled": ["@compiler-rt//:msan_interface"],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
 )

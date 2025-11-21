@@ -17,6 +17,7 @@ def declare_toolchains():
                 "//toolchain/stage2/args:default_link_flags",
                 "//toolchain/stage2/args:ubsan_flags",
                 "//toolchain/stage2/args:msan_flags",
+                "//toolchain/stage2/args:asan_flags",
             ],
             enabled_features = ["@rules_cc//cc/toolchains/args:experimental_replace_legacy_action_config_features"],
             known_features = ["@rules_cc//cc/toolchains/args:experimental_replace_legacy_action_config_features"],

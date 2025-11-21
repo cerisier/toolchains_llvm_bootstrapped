@@ -6,6 +6,7 @@ load("@toolchains_llvm_bootstrapped//third_party/llvm-project/20.x/compiler-rt:d
 load("@toolchains_llvm_bootstrapped//third_party/llvm-project/20.x/compiler-rt:filter_builtin_sources.bzl", "filter_builtin_sources")
 load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
 BUILTINS_GENERIC_SRCS = [
     "lib/builtins/absvdi2.c",
@@ -1012,6 +1013,16 @@ cc_stage2_static_library(
 
 ## MSAN
 
+cc_library(
+    name = "msan_interface",
+    hdrs = [
+        "include/sanitizer/common_interface_defs.h",
+        "include/sanitizer/msan_interface.h",
+    ],
+    strip_include_prefix = "include",
+    visibility = ["//visibility:public"],
+)
+
 MSAN_SOURCES = [
   "msan.cpp",
   "msan_allocator.cpp",
@@ -1086,5 +1097,144 @@ cc_stage2_library(
 cc_stage2_static_library(
     name = "msan.static",
     deps = [":msan"],
+    visibility = ["//visibility:public"],
+)
+
+
+## ASAN
+
+ASAN_SOURCES = [
+    "asan_aix.cpp",
+    "asan_allocator.cpp",
+    "asan_activation.cpp",
+    "asan_debugging.cpp",
+    "asan_descriptions.cpp",
+    "asan_errors.cpp",
+    "asan_fake_stack.cpp",
+    "asan_flags.cpp",
+    "asan_fuchsia.cpp",
+    "asan_globals.cpp",
+    "asan_globals_win.cpp",
+    "asan_interceptors.cpp",
+    "asan_interceptors_memintrinsics.cpp",
+    "asan_linux.cpp",
+    "asan_mac.cpp",
+    "asan_malloc_linux.cpp",
+    "asan_malloc_mac.cpp",
+    "asan_malloc_win.cpp",
+    "asan_memory_profile.cpp",
+    "asan_poisoning.cpp",
+    "asan_posix.cpp",
+    "asan_premap_shadow.cpp",
+    "asan_report.cpp",
+    "asan_rtl.cpp",
+    "asan_shadow_setup.cpp",
+    "asan_stack.cpp",
+    "asan_stats.cpp",
+    "asan_suppressions.cpp",
+    "asan_thread.cpp",
+    "asan_win.cpp",
+    # CMake adds this only on non-Windows, non-Apple:
+    # "asan_interceptors_vfork.S",
+]
+
+filegroup(
+    name = "asan_sources",
+    srcs = ["lib/asan/" + f for f in ASAN_SOURCES],
+)
+
+ASAN_CXX_SOURCES = [
+    "asan_new_delete.cpp",
+]
+
+filegroup(
+    name = "asan_cxx_sources",
+    srcs = ["lib/asan/" + f for f in ASAN_CXX_SOURCES],
+)
+
+ASAN_STATIC_SOURCES = [
+    "asan_rtl_static.cpp",
+    # CMake adds this only for x86_64 and non-Windows, non-Apple:
+    # "asan_rtl_x86_64.S",
+]
+
+filegroup(
+    name = "asan_static_sources",
+    srcs = ["lib/asan/" + f for f in ASAN_STATIC_SOURCES],
+)
+
+ASAN_PREINIT_SOURCES = [
+    "asan_preinit.cpp",
+]
+
+filegroup(
+    name = "asan_preinit_sources",
+    srcs = ["lib/asan/" + f for f in ASAN_PREINIT_SOURCES],
+)
+
+ASAN_HEADERS = [
+    "asan_activation.h",
+    "asan_activation_flags.inc",
+    "asan_allocator.h",
+    "asan_descriptions.h",
+    "asan_errors.h",
+    "asan_fake_stack.h",
+    "asan_flags.h",
+    "asan_flags.inc",
+    "asan_init_version.h",
+    "asan_interceptors.h",
+    "asan_interceptors_memintrinsics.h",
+    "asan_interface.inc",
+    "asan_interface_internal.h",
+    "asan_internal.h",
+    "asan_mapping.h",
+    "asan_poisoning.h",
+    "asan_premap_shadow.h",
+    "asan_report.h",
+    "asan_scariness_score.h",
+    "asan_stack.h",
+    "asan_stats.h",
+    "asan_suppressions.h",
+    "asan_thread.h",
+]
+
+filegroup(
+    name = "asan_headers",
+    srcs = ["lib/asan/" + f for f in ASAN_HEADERS],
+)
+
+cc_stage2_library(
+    name = "asan",
+    srcs = [
+        ":asan_sources",
+        ":asan_cxx_sources",
+        ":asan_static_sources",
+        ":asan_preinit_sources",
+        ":asan_headers",
+    ],
+    textual_hdrs = [
+        "lib/asan/asan_activation_flags.inc",
+        "lib/asan/asan_flags.inc",
+        "lib/asan/asan_interface.inc",
+    ],
+    includes = ["lib"],
+    deps = [
+        ":interception",
+        ":sanitizer_common",
+        ":sanitizer_common_libc",
+        ":sanitizer_common_coverage",
+        ":sanitizer_common_symbolizer",
+        ":sanitizer_common_symbolizer_internal",
+        #":lsan",
+        ":ubsan",
+    ],
+    implementation_deps = [
+        ":libcxx_headers",
+    ],
+)
+
+cc_stage2_static_library(
+    name = "asan.static",
+    deps = [":asan"],
     visibility = ["//visibility:public"],
 )

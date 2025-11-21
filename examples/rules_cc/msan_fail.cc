@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 int main(void) {
+    printf("hi hi");
     int *p = (int *)malloc(sizeof(int));  // memory is uninitialized
 
     int x = *p;  // <-- MSan should report an uninitialized read here
