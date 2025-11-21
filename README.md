@@ -155,7 +155,7 @@ I have early validation of the most popular targets and os, and will progressive
 - Allow configuration with the same granularity as `toolchains_llvm`
   (custom LLVM release, user-provided sysroot, static/dynamic linking option for the c++ standard library, libunwind etc.).
 - [IN PROGRESS] Support linking against libstd++ (`libstdcxx` branch).
-- Support for asan/tsan/ubsan.
+- Support for asan/tsan
 - Support `rules_foreign_cc` and `rules_go` out of the box.
 - Support easy LLVM targets (arm, loongarch, mips, riscv, sparc, spirv, thumb).
 - Support WASM targets.
