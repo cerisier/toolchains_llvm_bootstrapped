@@ -13,6 +13,7 @@ cc_library(
     ]),
     deps = select({
         "@toolchains_llvm_bootstrapped//config:msan_enabled": ["@compiler-rt//:msan_interface"],
+        "@toolchains_llvm_bootstrapped//config:asan_enabled": ["@compiler-rt//:asan_interface"],
         "//conditions:default": [],
     }),
     visibility = ["//visibility:public"],

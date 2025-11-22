@@ -98,5 +98,5 @@ bool_flag(
 config_setting(
     name = "asan_enabled",
     flag_values = {":asan": "1"},
-    visibility = ["//:__subpackages__"],
+    visibility = ["//visibility:public"],
 )

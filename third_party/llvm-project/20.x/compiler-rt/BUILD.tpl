@@ -471,7 +471,7 @@ cc_stage2_static_library(
     visibility = ["//visibility:public"],
 )
 
-cc_stage2_library(
+cc_stage2_unsanitized_library(
     name = "clang_rt.crtend",
     srcs = [
         "lib/builtins/crtend.c",
@@ -813,10 +813,17 @@ cc_stage2_library(
         ":interception_impl_headers",
     ],
     textual_hdrs = [
+        "lib/builtins/assembly.h",
         "lib/sanitizer_common/sancov_flags.inc",
         "lib/sanitizer_common/sanitizer_flags.inc",
         "lib/sanitizer_common/sanitizer_signal_interceptors.inc",
         "lib/sanitizer_common/sanitizer_syscall_generic.inc",
+        "lib/sanitizer_common/sanitizer_common_interceptors_vfork_aarch64.inc.S",
+        "lib/sanitizer_common/sanitizer_common_interceptors_vfork_arm.inc.S",
+        "lib/sanitizer_common/sanitizer_common_interceptors_vfork_i386.inc.S",
+        "lib/sanitizer_common/sanitizer_common_interceptors_vfork_loongarch64.inc.S",
+        "lib/sanitizer_common/sanitizer_common_interceptors_vfork_riscv64.inc.S",
+        "lib/sanitizer_common/sanitizer_common_interceptors_vfork_x86_64.inc.S",
     ],
     includes = ["lib"],
     implementation_deps = [
@@ -1202,6 +1209,16 @@ cc_stage2_static_library(
 
 ## ASAN
 
+cc_library(
+    name = "asan_interface",
+    hdrs = [
+        "include/sanitizer/common_interface_defs.h",
+        "include/sanitizer/asan_interface.h",
+    ],
+    strip_include_prefix = "include",
+    visibility = ["//visibility:public"],
+)
+
 ASAN_SOURCES = [
     # "asan_aix.cpp",
     "asan_allocator.cpp",
@@ -1233,13 +1250,16 @@ ASAN_SOURCES = [
     "asan_suppressions.cpp",
     "asan_thread.cpp",
     "asan_win.cpp",
-    # CMake adds this only on non-Windows, non-Apple:
-    # "asan_interceptors_vfork.S",
 ]
 
 filegroup(
     name = "asan_sources",
-    srcs = ["lib/asan/" + f for f in ASAN_SOURCES],
+    srcs = ["lib/asan/" + f for f in ASAN_SOURCES] + select({
+        "@platforms//os:linux": [
+            "lib/asan/asan_interceptors_vfork.S",
+        ],
+        "//conditions:default": [],
+    })
 )
 
 ASAN_CXX_SOURCES = [
