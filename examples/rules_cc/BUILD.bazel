@@ -40,7 +40,7 @@ sh_test(
     }),
 )
 
-ubsan_cc_binary(
+asan_cc_binary(
     name = "asan_fail",
     srcs = ["asan_fail.cc"],
 )

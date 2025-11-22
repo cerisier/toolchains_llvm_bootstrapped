@@ -223,6 +223,8 @@ cc_args(
     ],
     args = [
         "-fsanitize=address",
+        "-fno-sanitize-link-runtime",
+        "-fno-sanitize-link-c++-runtime",
         "{asan_path}",
     ],
     format = {

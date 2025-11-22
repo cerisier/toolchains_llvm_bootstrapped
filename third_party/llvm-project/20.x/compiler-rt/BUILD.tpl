@@ -1,5 +1,6 @@
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_library.bzl", "cc_stage2_library")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_static_library.bzl", "cc_stage2_static_library")
+load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_unsanitized_library.bzl", "cc_stage2_unsanitized_library")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_unsanitized_library.bzl", "cc_unsanitized_library")
 load("@toolchains_llvm_bootstrapped//third_party/llvm-project/20.x/compiler-rt:targets.bzl", "atomic_helper_cc_library")
 load("@toolchains_llvm_bootstrapped//third_party/llvm-project/20.x/compiler-rt:darwin_excludes.bzl", "filter_excludes")
@@ -1100,11 +1101,109 @@ cc_stage2_static_library(
     visibility = ["//visibility:public"],
 )
 
+## LSAN
+
+LSAN_COMMON_SOURCES = [
+    "lsan_common.cpp",
+    "lsan_common_fuchsia.cpp",
+    "lsan_common_linux.cpp",
+    "lsan_common_mac.cpp",
+]
+
+filegroup(
+    name = "lsan_common_sources",
+    srcs = ["lib/lsan/" + f for f in LSAN_COMMON_SOURCES],
+)
+
+LSAN_SOURCES = [
+    "lsan.cpp",
+    "lsan_allocator.cpp",
+    "lsan_fuchsia.cpp",
+    "lsan_interceptors.cpp",
+    "lsan_linux.cpp",
+    "lsan_mac.cpp",
+    "lsan_malloc_mac.cpp",
+    "lsan_posix.cpp",
+    "lsan_preinit.cpp",
+    "lsan_thread.cpp",
+]
+
+filegroup(
+    name = "lsan_sources",
+    srcs = ["lib/lsan/" + f for f in LSAN_SOURCES],
+)
+
+LSAN_HEADERS = [
+    "lsan.h",
+    "lsan_allocator.h",
+    "lsan_common.h",
+    "lsan_flags.inc",
+    "lsan_thread.h",
+]
+
+filegroup(
+    name = "lsan_headers",
+    srcs = ["lib/lsan/" + f for f in LSAN_HEADERS],
+)
+
+# This corresponds to RTLSanCommon in CMake: used by asan/hwasan even if LSan
+# itself is not enabled.
+cc_stage2_library(
+    name = "lsan_common",
+    srcs = [
+        ":lsan_common_sources",
+        ":lsan_headers",
+    ],
+    textual_hdrs = [
+        "lib/lsan/lsan_flags.inc",
+    ],
+    includes = ["lib"],
+    deps = [
+        ":sanitizer_common",
+        ":sanitizer_common_libc",
+        ":sanitizer_common_coverage",
+        ":sanitizer_common_symbolizer",
+        ":sanitizer_common_symbolizer_internal",
+    ],
+    implementation_deps = [
+        ":libcxx_headers",
+    ],
+)
+
+cc_stage2_library(
+    name = "lsan",
+    srcs = [
+        ":lsan_sources",
+        ":lsan_headers",
+    ],
+    textual_hdrs = [
+        "lib/lsan/lsan_flags.inc",
+    ],
+    includes = ["lib"],
+    deps = [
+        ":lsan_common",
+        ":interception",
+        ":sanitizer_common",
+        ":sanitizer_common_libc",
+        ":sanitizer_common_coverage",
+        ":sanitizer_common_symbolizer",
+        ":sanitizer_common_symbolizer_internal",
+    ],
+    implementation_deps = [
+        ":libcxx_headers",
+    ],
+)
+
+cc_stage2_static_library(
+    name = "lsan.static",
+    deps = [":lsan"],
+    visibility = ["//visibility:public"],
+)
 
 ## ASAN
 
 ASAN_SOURCES = [
-    "asan_aix.cpp",
+    # "asan_aix.cpp",
     "asan_allocator.cpp",
     "asan_activation.cpp",
     "asan_debugging.cpp",
@@ -1203,7 +1302,7 @@ filegroup(
     srcs = ["lib/asan/" + f for f in ASAN_HEADERS],
 )
 
-cc_stage2_library(
+cc_stage2_unsanitized_library(
     name = "asan",
     srcs = [
         ":asan_sources",
@@ -1225,8 +1324,13 @@ cc_stage2_library(
         ":sanitizer_common_coverage",
         ":sanitizer_common_symbolizer",
         ":sanitizer_common_symbolizer_internal",
-        #":lsan",
+        ":lsan_common",
         ":ubsan",
+    ],
+    linkopts = [
+        "-Wl,-U,___lsan_default_options",
+        "-Wl,-U,___lsan_default_suppressions",
+        "-Wl,-U,___lsan_is_turned_off",
     ],
     implementation_deps = [
         ":libcxx_headers",
@@ -1236,5 +1340,9 @@ cc_stage2_library(
 cc_stage2_static_library(
     name = "asan.static",
     deps = [":asan"],
+    # ___lsan_default_options
+    # ___lsan_default_suppressions
+    # ___lsan_is_turned_off
+
     visibility = ["//visibility:public"],
 )
