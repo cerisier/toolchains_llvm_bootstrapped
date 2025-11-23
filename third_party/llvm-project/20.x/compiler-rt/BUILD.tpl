@@ -1,5 +1,6 @@
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_library.bzl", "cc_stage2_library")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_static_library.bzl", "cc_stage2_static_library")
+load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_shared_library.bzl", "cc_stage2_shared_library")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_unsanitized_library.bzl", "cc_stage2_unsanitized_library")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_unsanitized_library.bzl", "cc_unsanitized_library")
 load("@toolchains_llvm_bootstrapped//third_party/llvm-project/20.x/compiler-rt:targets.bzl", "atomic_helper_cc_library")
@@ -1348,6 +1349,7 @@ cc_stage2_unsanitized_library(
         ":ubsan",
     ],
     linkopts = [
+        "-Wl,-undefined,dynamic_lookup",
         "-Wl,-U,___lsan_default_options",
         "-Wl,-U,___lsan_default_suppressions",
         "-Wl,-U,___lsan_is_turned_off",
@@ -1359,6 +1361,16 @@ cc_stage2_unsanitized_library(
 
 cc_stage2_static_library(
     name = "asan.static",
+    deps = [":asan"],
+    # ___lsan_default_options
+    # ___lsan_default_suppressions
+    # ___lsan_is_turned_off
+
+    visibility = ["//visibility:public"],
+)
+
+cc_stage2_shared_library(
+    name = "asan.shared",
     deps = [":asan"],
     # ___lsan_default_options
     # ___lsan_default_suppressions

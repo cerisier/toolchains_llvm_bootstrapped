@@ -1,9 +1,12 @@
 load("@with_cfg.bzl", "with_cfg")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc/private/rules_impl:cc_shared_library.bzl", "GraphNodeInfo")
 
 _builder = with_cfg(
     cc_library,
+    extra_providers = [GraphNodeInfo],
 )
+
 # The problem is that compiler-rt and start libs can only be compiled with
 # a specific set of flags and compilation mode. It is not safe to let the user
 # interfere with them using default command line flags.

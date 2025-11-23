@@ -228,9 +228,9 @@ cc_args(
         "{asan_path}",
     ],
     format = {
-        "asan_path": "@compiler-rt//:asan.static",
+        "asan_path": "@compiler-rt//:asan.shared",
     },
-    data = ["@compiler-rt//:asan.static"],
+    data = ["@compiler-rt//:asan.shared"],
 )
 
 cc_args_list(

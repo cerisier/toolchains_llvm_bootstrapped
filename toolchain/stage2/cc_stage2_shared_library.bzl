@@ -1,10 +1,11 @@
 load("@rules_cc//cc:cc_shared_library.bzl", "cc_shared_library")
 load("@rules_cc//cc/common:cc_shared_library_info.bzl", "CcSharedLibraryInfo")
+load("@rules_cc//cc/private/rules_impl:cc_shared_library.bzl", "GraphNodeInfo")
 load("@with_cfg.bzl", "with_cfg")
 
 _builder = with_cfg(
     cc_shared_library,
-    extra_providers = [CcSharedLibraryInfo],
+    extra_providers = [CcSharedLibraryInfo, GraphNodeInfo],
 )
 
 # The problem is that compiler-rt and start libs can only be compiled with
