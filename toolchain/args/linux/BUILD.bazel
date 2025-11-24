@@ -136,8 +136,6 @@ cc_args(
         # In prevention of when all of those can be shared libraries.
         "-Wl,--push-state",
         "-Wl,--as-needed",
-        "-lc++",
-        "-lc++abi",
 
         # In newer versions of glibc various libs such as libm, librt are
         # normally included in libc and not available as separate libraries.
@@ -157,7 +155,6 @@ cc_args(
         "-lrt",
         "-lutil",
 
-        "-lunwind", # only if libcxx on linux
         "-Wl,--pop-state",
     ],
     data = [
@@ -234,9 +231,6 @@ cc_args(
         "-Wl,--push-state",
         "-Wl,--as-needed",
 
-        "-lc++",
-        "-lc++abi",
-
         # In newer versions of musl_libc various libs such as libm, librt are
         # normally included in libc and not available as separate libraries.
         #
@@ -250,7 +244,6 @@ cc_args(
         "-lrt",
         "-lutil",
 
-        "-lunwind", # only if libcxx on linux
         "-Wl,--pop-state",
     ],
     data = [

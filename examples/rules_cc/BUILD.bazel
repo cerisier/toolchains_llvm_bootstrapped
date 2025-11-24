@@ -5,6 +5,14 @@ load("//:defs.bzl", "ubsan_cc_binary")
 cc_binary(
     name = "main",
     srcs = ["main.cc"],
+    # We provide these libs explicitly via the toolchain runtime_library.
+    # These options are all no-ops as they resolve to empty stubs.
+    # This is basically a test that we can properly ignore these opts.
+    linkopts = [
+        "-lc++",
+        "-lc++abi",
+        "-lunwind",
+    ],
 )
 
 # TODO(zbarsky): Turn more of this into a macro once we have more sanitizers?

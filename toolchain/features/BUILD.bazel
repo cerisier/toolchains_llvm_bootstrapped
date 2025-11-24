@@ -2,13 +2,20 @@ load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains:feature.bzl", "cc_feature")
 load("@rules_cc//cc/toolchains:feature_set.bzl", "cc_feature_set")
 
+package(default_visibility = ["//visibility:public"])
+
 # [x] opt
 # [x] dbg
 # [] fastbuild
-# [] static_linking_mode
+# [] static_linking_mode - does this do anything? Seems obsolete
 # [] dynamic_linking_mode
 # [] per_object_debug_info
-# [] static_link_cpp_runtimes
+# [x] static_link_cpp_runtimes
+
+cc_feature(
+    name = "static_link_cpp_runtimes",
+    overrides = "@rules_cc//cc/toolchains/features:static_link_cpp_runtimes",
+)
 
 cc_args(
     name = "opt_link_flags",
@@ -101,6 +108,7 @@ cc_feature_set(
     all_of = [
         ":opt",
         ":dbg",
+        ":static_link_cpp_runtimes",
     ],
     visibility = ["//visibility:public"],
 )

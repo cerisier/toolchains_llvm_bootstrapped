@@ -1,23 +1,20 @@
 load("@bazel_lib//lib:copy_file.bzl", "copy_file")
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
+load("//runtimes:defs.bzl", "stub_library")
 
-copy_file(
-    name = "libc++",
-    src = "@libcxx//:libcxx.static",
-    out = "libc++.a",
+stub_library(
+    name = "c++",
 )
 
-copy_file(
-    name = "libc++abi",
-    src = "@libcxxabi//:libcxxabi.static",
-    out = "libc++abi.a",
+stub_library(
+    name = "c++abi",
 )
 
 copy_to_directory(
     name = "libcxx_library_search_directory",
     srcs = [
-        ":libc++",
-        ":libc++abi",
+        ":c++",
+        ":c++abi",
     ],
     visibility = ["//visibility:public"],
 )

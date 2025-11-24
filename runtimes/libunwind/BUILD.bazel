@@ -1,29 +1,15 @@
-load("@bazel_lib//lib:copy_file.bzl", "copy_file")
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
-load("//toolchain:selects.bzl", "platform_llvm_binary")
+load("//runtimes:defs.bzl", "stub_library")
 
-copy_file(
-    name = "libunwind",
-    src = "@libunwind//:libunwind.static",
-    out = "libunwind.a",
-    allow_symlink = True,
+stub_library(
+    name = "unwind",
+    visibility = ["//visibility:public"],
 )
 
-alias(
-    name = "llvm_ar",
-    actual = platform_llvm_binary("bin/llvm-ar"),
+stub_library(
+    name = "gcc_s",
+    visibility = ["//visibility:public"],
 )
-
-[
-    genrule(
-        name = lib,
-        srcs = [],
-        outs = ["lib{}.a".format(lib)],
-        tools = [":llvm_ar"],
-        cmd = "$(location :llvm_ar) rc $@",
-        visibility = ["//visibility:public"],
-    ) for lib in ["gcc_s"]
-]
 
 config_setting(
     name = "stub_libgcc_s",
@@ -35,11 +21,9 @@ config_setting(
 copy_to_directory(
     name = "libunwind_library_search_directory",
     srcs = [
-        "libunwind.a",
+        ":unwind",
     ] + select({
-        ":stub_libgcc_s": [
-            "libgcc_s.a",
-        ],
+        ":stub_libgcc_s": [":gcc_s"],
         "//conditions:default": [],
     }),
     visibility = ["//visibility:public"],

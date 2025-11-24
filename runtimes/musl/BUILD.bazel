@@ -2,7 +2,7 @@ load("@bazel_lib//lib:copy_file.bzl", "copy_file")
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_library.bzl", "cc_stage2_library")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_static_library.bzl", "cc_stage2_static_library")
-load("//toolchain:selects.bzl", "platform_llvm_binary")
+load("//runtimes:defs.bzl", "stub_library")
 load(":libc_musl_srcs_filegroup.bzl", "libc_musl_srcs_filegroup")
 
 libc_musl_srcs_filegroup(
@@ -147,20 +147,12 @@ MUSL_LIBS = [
     "xnet",
 ]
 
-alias(
-    name = "llvm_ar",
-    actual = platform_llvm_binary("bin/llvm-ar"),
-)
-
 # Generate empty static libraries for all other companion libraries.
 # That's what musl does.
 [
-    genrule(
+    stub_library(
         name = "musl_lib{}".format(lib),
-        srcs = [],
-        outs = ["lib{}.a".format(lib)],
-        tools = [":llvm_ar"],
-        cmd = "$(location :llvm_ar) rc $@",
+        out = "lib{}.a".format(lib),
         visibility = ["//visibility:public"],
     ) for lib in MUSL_LIBS
 ]
