@@ -47,14 +47,19 @@ cc_args(
     ],
     # -l: is not supported by lld64
     args = [
+        # provides a stub for -lunwind on macOS
+        "-L{libunwind_library_search_path}",
+
         "{libclang_rt.builtins.a}",
         "-lSystem",
     ],
     format = {
         "libclang_rt.builtins.a": "//runtimes/compiler-rt:clang_rt.builtins.static",
+        "libunwind_library_search_path": "//runtimes/libunwind:libunwind_library_search_directory",
     },
     data = [
         "//runtimes/compiler-rt:clang_rt.builtins.static",
+        "//runtimes/libunwind:libunwind_library_search_directory",
     ],
 )
 

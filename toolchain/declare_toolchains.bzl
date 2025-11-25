@@ -28,8 +28,12 @@ def _declare_toolchains(exec_os, exec_cpu):
             ],
             "//conditions:default": [],
         }),
-        enabled_features = [
-            "//toolchain/features:static_link_cpp_runtimes",
+        enabled_features = select({
+            "@platforms//os:linux": [
+                "//toolchain/features:static_link_cpp_runtimes",
+            ],
+            "@platforms//os:macos": [],
+        }) + [
             "@rules_cc//cc/toolchains/args:experimental_replace_legacy_action_config_features",
             # Do not enable this manually. Those features are enabled internally by --compilation_mode flags family.
             "//toolchain/features/legacy:all_legacy_builtin_features",
