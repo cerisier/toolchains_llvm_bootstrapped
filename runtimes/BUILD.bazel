@@ -8,23 +8,29 @@ alias(
 
 filegroup(
     name = "static_runtime_lib",
-    srcs = [
-        "@libcxx//:libcxx.static",
-        "@libcxxabi//:libcxxabi.static",
-        # only if libcxx on linux
-        "@libunwind//:libunwind.static",
-    ],
+    srcs = select({
+        "@platforms//os:linux": [
+            "@libcxx//:libcxx.static",
+            "@libcxxabi//:libcxxabi.static",
+            ## only if libcxx on linux
+            "@libunwind//:libunwind.static",
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//toolchain:__subpackages__"],
 )
 
 filegroup(
     name = "dynamic_runtime_lib",
-    srcs = [
-        "@libcxx//:libcxx.shared",
-        "@libcxxabi//:libcxxabi.shared",
-        # only if libcxx on linux
-        # TODO(zbarsky): Enable this? libunwind depends on a another shared lib which loses GraphNodeInfo provider
-        #"@libunwind//:libunwind.shared",
-    ],
+    srcs = select({
+        "@platforms//os:linux": [
+            "@libcxx//:libcxx.shared",
+            "@libcxxabi//:libcxxabi.shared",
+            # only if libcxx on linux
+            # TODO(zbarsky): Enable this? libunwind depends on a another shared lib which loses GraphNodeInfo provider
+            #"@libunwind//:libunwind.shared",
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//toolchain:__subpackages__"],
 )
