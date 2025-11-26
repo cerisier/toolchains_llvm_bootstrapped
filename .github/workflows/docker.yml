@@ -1,0 +1,36 @@
+name: Docker Build and Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        run: docker build -t toolchains-llvm-bootstrapped .
+
+      - name: Build with test target
+        run: |
+          docker build --target test -t toolchains-llvm-bootstrapped-test .
+          docker run --rm toolchains-llvm-bootstrapped-test
+
+      # XXX: add a "run" test like:
+      #- name: Use the image to build examples/rules_cc
+      #  working-directory: examples/rules_cc
+      #  run: |
+      #    docker run \
+      #      --rm \
+      #      --volume "${PWD}:${PWD}" \
+      #      --workdir "${PWD}" \
+      #      toolchains-llvm-bootstrapped \
+      #        build :main
+      #    ./bazel-bin/main
