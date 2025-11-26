@@ -1,0 +1,41 @@
+load("@rules_go//go:def.bzl", "go_binary", "go_cross_binary", "go_library", "go_test")
+load("@bazel_skylib//rules:build_test.bzl", "build_test")
+
+go_library(
+    name = "cgo_lib",
+    srcs = ["cgo.go"],
+    cgo = True,
+    visibility = ["//visibility:private"],
+)
+
+go_test(
+    name = "cgo_test",
+    srcs = ["cgo_test.go"],
+    embed = [":cgo_lib"],
+)
+
+go_binary(
+    name = "cgo",
+    embed = [":cgo_lib"],
+    gc_linkopts = select({
+        "@platforms//os:macos": [
+            "-w",  # https://github.com/ziglang/zig/issues/15439
+            "-buildmode=pie",  # https://github.com/ziglang/zig/issues/15438
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+)
+
+go_cross_binary(
+    name = "cgo_linux_amd64",
+    target = "cgo",
+    platform = "@toolchains_llvm_bootstrapped//platforms:linux_x86_64",
+)
+
+build_test(
+    name = "cgo_build_test_linux_amd64",
+    targets = [
+        ":cgo_linux_amd64",
+    ],
+)
