@@ -17,13 +17,6 @@ go_test(
 go_binary(
     name = "cgo",
     embed = [":cgo_lib"],
-    gc_linkopts = select({
-        "@platforms//os:macos": [
-            "-w",  # https://github.com/ziglang/zig/issues/15439
-            "-buildmode=pie",  # https://github.com/ziglang/zig/issues/15438
-        ],
-        "//conditions:default": [],
-    }),
     visibility = ["//visibility:public"],
 )
 
