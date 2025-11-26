@@ -76,6 +76,10 @@ cc_stage2_library(
             "@glibc//:gnu_libc_headers",
         ],
     }),
+    deps = select({
+        "@toolchains_llvm_bootstrapped//config:asan_enabled": ["@compiler-rt//:asan_interface"],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
 )
 
