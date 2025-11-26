@@ -7,14 +7,10 @@ bazel_dep(name = "platforms", version = "1.0.0")
 bazel_dep(name = "rules_go", version = "0.59.0")
 
 # https://github.com/cerisier/toolchains_llvm_bootstrapped/releases
-bazel_dep(name = "toolchains_llvm_bootstrapped", version = "0.0.0", dev_dependency = True)
+bazel_dep(name = "toolchains_llvm_bootstrapped", version = "0.0.0")
 local_path_override(
     module_name = "toolchains_llvm_bootstrapped",
     path = "../..",
 )
 
-register_toolchains(
-    "@toolchains_llvm_bootstrapped//toolchain:all",
-    dev_dependency = True,
-)
-
+register_toolchains("@toolchains_llvm_bootstrapped//toolchain:all")
