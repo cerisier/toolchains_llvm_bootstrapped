@@ -21,18 +21,18 @@ index 5e28c3b67fc3..e041d8a497bc 100644
 +
 +rules_shell_toolchains()
 diff --git a/utils/bazel/llvm-project-overlay/clang/BUILD.bazel b/utils/bazel/llvm-project-overlay/clang/BUILD.bazel
-index 1e03e59e1dcf..c27c6ab25bfc 100644
+index ac4e3813fbba..a6e4bbb7bd60 100644
 --- a/utils/bazel/llvm-project-overlay/clang/BUILD.bazel
 +++ b/utils/bazel/llvm-project-overlay/clang/BUILD.bazel
-@@ -4,6 +4,7 @@
+@@ -2,6 +2,7 @@
+ # See https://llvm.org/LICENSE.txt for license information.
+ # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
  
- load("@bazel_skylib//rules/directory:directory.bzl", "directory")
- load("@bazel_skylib//rules/directory:subdirectory.bzl", "subdirectory")
 +load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
  load("@rules_python//python:defs.bzl", "py_binary")
  load(
      "//:vars.bzl",
-@@ -2475,30 +2476,30 @@ cc_library(
+@@ -2455,30 +2456,30 @@ cc_library(
      ],
  )
  
@@ -279,7 +279,7 @@ index d893471e6249..7e7dacadeed8 100644
          hdrs = hdrs,
          textual_hdrs = hdrs,
 diff --git a/utils/bazel/llvm-project-overlay/mlir/tblgen.bzl b/utils/bazel/llvm-project-overlay/mlir/tblgen.bzl
-index 8044779b95c0..3d2a3f08049d 100644
+index 89b17735e005..cd3ae39f046d 100644
 --- a/utils/bazel/llvm-project-overlay/mlir/tblgen.bzl
 +++ b/utils/bazel/llvm-project-overlay/mlir/tblgen.bzl
 @@ -4,6 +4,7 @@

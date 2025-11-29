@@ -1,6 +1,7 @@
-load("//toolchain/stage1:declare_toolchains.bzl", "declare_toolchains")
+load("@llvm-project//:vars.bzl", "LLVM_VERSION_MAJOR")
 load("@rules_cc//cc/toolchains:tool.bzl", "cc_tool")
 load("@rules_cc//cc/toolchains:tool_map.bzl", "cc_tool_map")
+load("//toolchain/stage1:declare_toolchains.bzl", "declare_toolchains")
 load(":stage1_binary.bzl", "stage1_binary", "stage1_directory")
 
 COMMON_TOOLS = {
@@ -33,9 +34,9 @@ stage1_binary(
 
 stage1_directory(
     name = "clang_builtin_headers_include_directory",
-    actual = "@llvm-project//clang:builtin_headers_gen",
-    strip_prefix = "staging/include",
-    destination = "lib/clang/21/include",
+    srcs = "@llvm-project//clang:builtin_headers_files",
+    destination = "lib/clang/%s/include" % LLVM_VERSION_MAJOR,
+    strip_prefix = "clang/lib/Headers",
 )
 
 cc_tool(
@@ -46,9 +47,14 @@ cc_tool(
     ],
 )
 
+stage1_binary(
+    name = "bin/clang++",
+    actual = "@llvm-project//clang:clang.stripped",
+)
+
 cc_tool(
     name = "clang++",
-    src = ":bin/clang",
+    src = ":bin/clang++",
     data = [
         ":clang_builtin_headers_include_directory",
     ],
@@ -71,7 +77,7 @@ stage1_binary(
 
 cc_tool(
     name = "lld",
-    src = ":bin/clang",
+    src = ":bin/clang++",
     data = [
         ":bin/ld.lld",
         ":bin/ld64.lld",

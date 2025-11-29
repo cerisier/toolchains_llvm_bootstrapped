@@ -1,3 +1,5 @@
+load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory_bin_action")
+
 def _bootstrap_transition_impl(settings, attr):
     return {
         "//toolchain:bootstrap_setting": False,
@@ -49,71 +51,32 @@ stage1_binary = rule(
     },
 )
 
-def _relative_subpath(path, prefix):
-    prefix = prefix.rstrip("/")
-    marker = prefix + "/"
-    index = path.find(marker)
-    if index == -1:
-        fail("Could not find '{}' inside '{}'".format(prefix, path))
-    return path[index + len(marker):]
-
 def _stage1_directory_impl(ctx):
-    actual = ctx.attr.actual[0][DefaultInfo]
-    files = actual.files.to_list()
+    copy_to_directory_bin = ctx.toolchains["@bazel_lib//lib:copy_to_directory_toolchain_type"].copy_to_directory_info.bin
 
-    destination = ctx.attr.destination.rstrip("/")
-    if not destination:
-        fail("stage1_directory.destination must not be empty")
-    out = ctx.actions.declare_directory(destination)
+    dst = ctx.actions.declare_directory(ctx.attr.destination)
 
-    args = ctx.actions.args()
-    args.add(out.path)
-    for f in files:
-        args.add(f.path)
-        args.add(_relative_subpath(f.short_path, ctx.attr.strip_prefix))
-
-    ctx.actions.run_shell(
-        inputs = files,
-        outputs = [out],
-        command = """
-set -euo pipefail
-out="$1"
-shift 1
-rm -rf "$out"
-while [ "$#" -gt 1 ]; do
-  src="$1"
-  rel="$2"
-  shift 2
-  dst="$out/$rel"
-  mkdir -p "$(dirname "$dst")"
-  cp "$src" "$dst"
-done
-if [ "$#" -ne 0 ]; then
-  echo "stage1_directory received an incomplete src/rel pair" >&2
-  exit 1
-fi
-""",
-        arguments = [args],
+    copy_to_directory_bin_action(
+        ctx,
+        name = ctx.attr.name,
+        copy_to_directory_bin = copy_to_directory_bin,
+        dst = dst,
+        files = ctx.files.srcs,
+        replace_prefixes = {ctx.attr.strip_prefix: ""},
+        include_external_repositories = ["**"],
     )
 
-    runfiles = ctx.runfiles(files = [out])
-
-    return [
-        DefaultInfo(
-            files = depset([out]),
-            data_runfiles = runfiles,
-            default_runfiles = runfiles,
-        ),
-    ]
+    return DefaultInfo(files = depset([dst]))
 
 stage1_directory = rule(
     implementation = _stage1_directory_impl,
     attrs = {
-        "actual": attr.label(
+        "srcs": attr.label(
             cfg = bootstrap_transition,
             mandatory = True,
         ),
         "strip_prefix": attr.string(mandatory = True),
         "destination": attr.string(mandatory = True),
     },
+    toolchains = ["@bazel_lib//lib:copy_to_directory_toolchain_type"],
 )
