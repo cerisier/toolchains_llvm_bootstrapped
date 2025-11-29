@@ -54,6 +54,8 @@ rust.toolchain(
     extra_target_triples = [
         "aarch64-unknown-linux-gnu",
         "x86_64-unknown-linux-gnu",
+        "x86_64-apple-darwin",
+        "aarch64-apple-darwin",
     ],
     versions = [RUST_VERSION],
 )

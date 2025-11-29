@@ -1,75 +1,18 @@
-load("@rules_rust//rust:defs.bzl", "rust_binary")
-load("@rules_shell//shell:sh_test.bzl", "sh_test")
-load("//:rust_binary_hello_world_test.bzl", "rust_binary_hello_world_test")
+load("//:rust_binary_cross_build_test_suite.bzl", "rust_binary_cross_build_test_suite")
 
 package(default_visibility = ["//visibility:public"])
 
-filegroup(
-    name = "all",
-    srcs = [
-        ":hello_world_aarch64",
-        ":hello_world_host",
-        ":hello_world_x86_64",
-    ],
-)
-
-rust_binary_hello_world_test(
-    name = "hello_world_host",
+rust_binary_cross_build_test_suite(
+    name = "hello_world",
     srcs = ["src/main.rs"],
     deps = [
         "@crates//:lz4-sys",
         "@crates//:mimalloc",
     ],
-)
-
-rust_binary_hello_world_test(
-    name = "hello_world_host_cc_common_link",
-    srcs = ["src/main.rs"],
-    deps = [
-        "@crates//:lz4-sys",
-        "@crates//:mimalloc",
-    ],
-    experimental_use_cc_common_link = 1,
-)
-
-rust_binary_hello_world_test(
-    name = "hello_world_x86_64",
-    srcs = ["src/main.rs"],
-    platform = "@toolchains_llvm_bootstrapped//platforms:linux_x86_64",
-    deps = [
-        "@crates//:lz4-sys",
-        "@crates//:mimalloc",
-    ],
-)
-
-rust_binary_hello_world_test(
-    name = "hello_world_x86_64_cc_common_link",
-    srcs = ["src/main.rs"],
-    platform = "@toolchains_llvm_bootstrapped//platforms:linux_x86_64",
-    deps = [
-        "@crates//:lz4-sys",
-        "@crates//:mimalloc",
-    ],
-    experimental_use_cc_common_link = 1,
-)
-
-rust_binary_hello_world_test(
-    name = "hello_world_aarch64",
-    srcs = ["src/main.rs"],
-    platform = "@toolchains_llvm_bootstrapped//platforms:linux_aarch64",
-    deps = [
-        "@crates//:lz4-sys",
-        "@crates//:mimalloc",
-    ],
-)
-
-rust_binary_hello_world_test(
-    name = "hello_world_aarch64_cc_common_link",
-    srcs = ["src/main.rs"],
-    platform = "@toolchains_llvm_bootstrapped//platforms:linux_aarch64",
-    deps = [
-        "@crates//:lz4-sys",
-        "@crates//:mimalloc",
-    ],
-    experimental_use_cc_common_link = 1,
+    platforms = {
+        "@toolchains_llvm_bootstrapped//platforms:linux_x86_64": "x86-64",
+        "@toolchains_llvm_bootstrapped//platforms:linux_aarch64": "aarch64",
+        "@toolchains_llvm_bootstrapped//platforms:macos_x86_64": "x86-64",
+        "@toolchains_llvm_bootstrapped//platforms:macos_aarch64": "aarch64",
+    }
 )
