@@ -21,6 +21,7 @@ def rust_binary_test_suite(name, check, **kwargs):
         deps = [
             "@bazel_tools//tools/bash/runfiles",
         ],
+        # cross compilation to macos doesn't work yet.
         exec_compatible_with = [
             "@platforms//os:macos"
         ] if "macos" in platform else []
