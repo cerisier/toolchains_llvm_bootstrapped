@@ -5,6 +5,8 @@ module(
     compatibility_level = 0,
 )
 
+bazel_dep(name = "buildifier_prebuilt", version = "8.2.1", dev_dependency = True)
+
 bazel_dep(name = "bazel_lib", version = "3.0.0")
 bazel_dep(name = "bazel_skylib", version = "1.8.2")
 bazel_dep(name = "bazel_features", version = "1.34.0")
