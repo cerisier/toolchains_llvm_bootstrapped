@@ -1,0 +1,3 @@
+load("//config:defs.bzl", "config_settings")
+
+config_settings()

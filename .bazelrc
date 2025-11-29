@@ -7,6 +7,8 @@ common          --repo_env=BAZEL_NO_APPLE_CPP_TOOLCHAIN=1
 common          --experimental_cc_static_library
 common          --experimental_platform_in_output_dir
 
+common:stage1   --extra_toolchains=@toolchains_llvm_bootstrapped//toolchain/stage1:all
+
 # TODO: LLVM doesn't compile otherwise due to "zlib.h" vs <zlib.h> usage.
 common:bootstrap  --@llvm_zlib//:llvm_enable_zlib=false
 

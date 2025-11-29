@@ -21,4 +21,9 @@ _builder.set(
     True,
 )
 
+_builder.set(
+    Label("//toolchain:stage1_bootstrap_setting"),
+    True,
+)
+
 cc_stage2_static_library, _cc_stage2_static_library_internal = _builder.build()

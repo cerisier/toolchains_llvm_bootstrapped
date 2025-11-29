@@ -25,6 +25,27 @@ config_setting(
     visibility = ["//visibility:public"],
 )
 
+bool_setting(
+    name = "stage1_bootstrap_setting",
+    build_setting_default = False,
+)
+
+config_setting(
+    name = "stage1_bootstrapped",
+    flag_values = {
+        ":stage1_bootstrap_setting": "0",
+    },
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "stage1_bootstrapping",
+    flag_values = {
+        ":stage1_bootstrap_setting": "1",
+    },
+    visibility = ["//visibility:public"],
+)
+
 cc_args_list(
     name = "default_link_flags",
     args = select({
@@ -128,6 +149,7 @@ cc_args_list(
         ":default_link_flags",
         ":default_libs",
     ],
+    visibility = ["//toolchain:__subpackages__"],
 )
 
 

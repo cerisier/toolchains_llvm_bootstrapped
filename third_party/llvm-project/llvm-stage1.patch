@@ -1,0 +1,33 @@
+diff --git a/utils/bazel/llvm-project-overlay/clang/BUILD.bazel b/utils/bazel/llvm-project-overlay/clang/BUILD.bazel
+index 1e03e59e1dcf..5caac398adf2 100644
+--- a/utils/bazel/llvm-project-overlay/clang/BUILD.bazel
++++ b/utils/bazel/llvm-project-overlay/clang/BUILD.bazel
+@@ -17,6 +17,7 @@ load("//llvm:binary_alias.bzl", "binary_alias")
+ load("//llvm:cc_plugin_library.bzl", "cc_plugin_library")
+ load("//llvm:driver.bzl", "llvm_driver_cc_binary")
+ load("//mlir:tblgen.bzl", "gentbl_cc_library", "td_library")
++load("@toolchains_llvm_bootstrapped//toolchain/stage1:stage1_binary.bzl", "stage1_binary")
+ 
+ package(
+     default_visibility = ["//visibility:public"],
+@@ -26,7 +27,7 @@ package(
+ licenses(["notice"])
+ 
+ cc_binary(
+-    name = "clang-tblgen",
++    name = "_clang-tblgen",
+     srcs = glob([
+         "utils/TableGen/*.cpp",
+         "utils/TableGen/*.h",
+@@ -43,6 +44,11 @@ cc_binary(
+     ],
+ )
+ 
++stage1_binary(
++    name = "clang-tblgen",
++    actual = ":_clang-tblgen",
++)
++
+ gentbl_cc_library(
+     name = "diagnostic_defs_gen",
+     tbl_outs = dict([out for c in [

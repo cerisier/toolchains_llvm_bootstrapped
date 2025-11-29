@@ -1,0 +1,119 @@
+load("//toolchain/stage1:declare_toolchains.bzl", "declare_toolchains")
+load("@rules_cc//cc/toolchains:tool.bzl", "cc_tool")
+load("@rules_cc//cc/toolchains:tool_map.bzl", "cc_tool_map")
+load(":stage1_binary.bzl", "stage1_binary", "stage1_directory")
+
+COMMON_TOOLS = {
+    "@rules_cc//cc/toolchains/actions:assembly_actions": ":clang",
+    "@rules_cc//cc/toolchains/actions:c_compile": ":clang",
+    "@rules_cc//cc/toolchains/actions:cpp_compile_actions": ":clang++",
+    "@rules_cc//cc/toolchains/actions:link_actions": ":lld",
+    "@rules_cc//cc/toolchains/actions:objcopy_embed_data": ":llvm-objcopy",
+    "@rules_cc//cc/toolchains/actions:strip": ":llvm-strip",
+}
+
+cc_tool_map(
+    name = "default_tools",
+    tools = COMMON_TOOLS | {
+        "@rules_cc//cc/toolchains/actions:ar_actions": ":llvm-ar",
+    },
+)
+
+cc_tool_map(
+    name = "tools_with_libtool",
+    tools = COMMON_TOOLS | {
+        "@rules_cc//cc/toolchains/actions:ar_actions": ":llvm-libtool-darwin",
+    },
+)
+
+stage1_binary(
+    name = "bin/clang",
+    actual = "@llvm-project//clang:clang.stripped",
+)
+
+stage1_directory(
+    name = "clang_builtin_headers_include_directory",
+    actual = "@llvm-project//clang:builtin_headers_gen",
+    strip_prefix = "staging/include",
+    destination = "lib/clang/21/include",
+)
+
+cc_tool(
+    name = "clang",
+    src = ":bin/clang",
+    data = [
+        ":clang_builtin_headers_include_directory",
+    ],
+)
+
+cc_tool(
+    name = "clang++",
+    src = ":bin/clang",
+    data = [
+        ":clang_builtin_headers_include_directory",
+    ],
+)
+
+stage1_binary(
+    name = "bin/ld.lld",
+    actual = "@llvm-project//lld:lld.stripped",
+)
+
+stage1_binary(
+    name = "bin/ld64.lld",
+    actual = "@llvm-project//lld:lld.stripped",
+)
+
+stage1_binary(
+    name = "bin/lld",
+    actual = "@llvm-project//lld:lld.stripped",
+)
+
+cc_tool(
+    name = "lld",
+    src = ":bin/clang",
+    data = [
+        ":bin/ld.lld",
+        ":bin/ld64.lld",
+        ":bin/lld",
+    ],
+)
+
+stage1_binary(
+    name = "bin/llvm-ar",
+    actual = "@llvm-project//llvm:llvm-ar.stripped",
+)
+
+cc_tool(
+    name = "llvm-ar",
+    src = ":bin/llvm-ar",
+)
+
+stage1_binary(
+    name = "bin/llvm-libtool-darwin",
+    actual = "@llvm-project//llvm:llvm-libtool-darwin.stripped",
+)
+
+cc_tool(
+    name = "llvm-libtool-darwin",
+    src = ":bin/llvm-libtool-darwin",
+)
+
+stage1_binary(
+    name = "bin/llvm-objcopy",
+    actual = "@llvm-project//llvm:llvm-objcopy.stripped",
+)
+
+cc_tool(
+    name = "llvm-objcopy",
+    src = ":bin/llvm-strip",
+)
+
+cc_tool(
+    name = "llvm-strip",
+    src = ":bin/llvm-strip",
+)
+
+######
+
+declare_toolchains()
