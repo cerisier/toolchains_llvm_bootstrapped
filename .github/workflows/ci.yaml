@@ -55,6 +55,7 @@ jobs:
       - name: bazel test //...
         env:
           USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         working-directory: ${{ matrix.folder }}
         shell: bash
         run: |
@@ -70,6 +71,8 @@ jobs:
             --bazelrc=.bazelrc \
             test \
             --lockfile_mode=off \
+            --config remote \
+            --remote_header=x-buildbuddy-api-key=$BUILDBUDDY_API_KEY \
             $EXTRA_ARGS \
             //...
   # pre-commit:
