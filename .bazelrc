@@ -13,6 +13,8 @@ common:bootstrap  --@llvm_zlib//:llvm_enable_zlib=false
 build:bootstrap   -c opt
 build:bootstrap   --strip=always
 build:bootstrap   --stripopt=--strip-all
+# Use ThinLTO when available (on Linux), but it doesn't work for Darwin targets, so also enable `flto=thin` as fallback.
+build:bootstrap   --features=thin_lto
 build:bootstrap   --copt=-flto=thin
 build:bootstrap   --copt=-fno-exceptions
 build:bootstrap   --copt=-fno-rtti
