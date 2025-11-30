@@ -25,6 +25,7 @@ jobs:
           - "e2e/rules_cc"
           - "e2e/rules_rust"
           - "e2e/cross_compilation"
+          - "e2e/wasm"
     runs-on: ${{ matrix.os }}
 
     # Configure a human readable name for each job
@@ -63,6 +64,9 @@ jobs:
           EXTRA_ARGS=""
           if [[ "${{ matrix.folder }}" == *"rules_rust"* ]]; then
             EXTRA_ARGS="--config=rust"
+          fi
+          if [[ "${{ matrix.folder }}" == *"wasm"* ]]; then
+            EXTRA_ARGS="--config=wasm"
           fi
 
           bazel \

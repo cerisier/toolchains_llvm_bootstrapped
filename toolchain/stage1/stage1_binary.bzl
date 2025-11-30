@@ -1,3 +1,4 @@
+load("@bazel_lib//lib:copy_file.bzl", "COPY_FILE_TOOLCHAINS", "copy_file_action")
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory_bin_action")
 
 def _bootstrap_transition_impl(settings, attr):
@@ -26,10 +27,13 @@ def _stage1_binary_impl(ctx):
 
     out = ctx.actions.declare_file(ctx.label.name)
 
-    ctx.actions.symlink(
-        target_file = exe,
-        output = out,
-    )
+    if ctx.attr.symlink:
+        ctx.actions.symlink(
+            output = out,
+            target_file = exe,
+        )
+    else:
+        copy_file_action(ctx, exe, out)
 
     return [
         DefaultInfo(
@@ -48,7 +52,12 @@ stage1_binary = rule(
             allow_single_file = True,
             mandatory = True,
         ),
+        "symlink": attr.bool(
+            default = True,
+            doc = "If set to False, will copy the tool instead of symlinking",
+        ),
     },
+    toolchains = COPY_FILE_TOOLCHAINS,
 )
 
 def _stage1_directory_impl(ctx):

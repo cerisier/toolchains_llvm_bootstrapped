@@ -32,6 +32,8 @@ cc_args(
         "//platforms/config/libc_aware:linux_aarch64_musl": ["aarch64-linux-musl"],
         "//platforms/config:macos_x86_64": ["x86_64-apple-darwin"],
         "//platforms/config:macos_aarch64": ["aarch64-apple-darwin"],
+        "//platforms/config:none_wasm32": ["wasm32-unknown-unknown"],
+        "//platforms/config:none_wasm64": ["wasm64-unknown-unknown"],
     }, no_match_error = "Unsupported platform"),
 )
 
@@ -78,6 +80,7 @@ cc_args(
         # "--ld-path={lld_path}",
     ] + select({
         "@platforms//os:macos": [],
+        "@platforms//os:none": [],
         #TODO: Put those at the right place, they are applied too early
         "//conditions:default": [
             "-Wl,-no-as-needed",

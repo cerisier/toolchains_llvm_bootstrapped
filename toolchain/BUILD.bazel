@@ -126,6 +126,7 @@ cc_args_list(
         # Platform specific flags.
         "@platforms//os:macos": [":macos_toolchain_args"],
         "@platforms//os:linux": [":linux_toolchain_args"],
+        "@platforms//os:none": [],
         "//conditions:default": [],
     }, no_match_error = "Unsupported platform for xclang"),
 )

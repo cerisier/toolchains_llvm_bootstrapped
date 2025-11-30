@@ -1,7 +1,8 @@
 load("@rules_rust//rust:defs.bzl", "rust_binary")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
+load("@toolchains_llvm_bootstrapped//:defs.bzl", "exec_test")
 
-def rust_binary_test_suite(name, check, file_executable, **kwargs):
+def rust_binary_test_suite(name, check, **kwargs):
     platform = kwargs.get("platform", None)
     rust_binary(
         name = name,
@@ -9,7 +10,8 @@ def rust_binary_test_suite(name, check, file_executable, **kwargs):
     )
 
     # Test if the host binary works.
-    sh_test(
+    exec_test(
+        sh_test,
         name = "test_" + name,
         srcs = ["test_platform.sh"] if platform else ["test_hello_world.sh"],
         args = [
@@ -19,11 +21,11 @@ def rust_binary_test_suite(name, check, file_executable, **kwargs):
             "$(rlocationpath :" + name + ")",
         ],
         env = {
-            "FILE_BINARY": "$(rootpath " + file_executable + ")",
+            "FILE_BINARY": "$(rootpath @libmagic//:file)",
             "MAGIC_FILE": "$(rootpath @libmagic//:magic.mgc)",
         } if platform else {},
         data = ([
-            file_executable,
+            "@libmagic//:file",
             "@libmagic//:magic.mgc",
         ] if platform else []) + [":" + name],
         deps = [
@@ -31,7 +33,7 @@ def rust_binary_test_suite(name, check, file_executable, **kwargs):
         ],
     )
 
-def rust_binary_cross_build_test_suite(name, platforms, file_executable, **kwargs):
+def rust_binary_cross_build_test_suite(name, platforms, **kwargs):
 
     rust_binary(
         name = name,
@@ -47,7 +49,6 @@ def rust_binary_cross_build_test_suite(name, platforms, file_executable, **kwarg
                     "_cc_common_link" if experimental_use_cc_common_link else ""
                 ),
                 check = check,
-                file_executable = file_executable,
                 platform = platform,
                 experimental_use_cc_common_link = experimental_use_cc_common_link,
                 **kwargs,

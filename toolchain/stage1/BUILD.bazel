@@ -50,6 +50,9 @@ cc_tool(
 stage1_binary(
     name = "bin/clang++",
     actual = "@llvm-project//clang:clang.stripped",
+    # Copy instead of symlink so clang's InstalledDir matches the packaged tree.
+    # This is crucial for properly locating the various linkers, since we don't use `-ld-path`.
+    symlink = False,
 )
 
 cc_tool(
@@ -75,6 +78,11 @@ stage1_binary(
     actual = "@llvm-project//lld:lld.stripped",
 )
 
+stage1_binary(
+    name = "bin/wasm-ld",
+    actual = "@llvm-project//lld:lld.stripped",
+)
+
 cc_tool(
     name = "lld",
     src = ":bin/clang++",
@@ -82,6 +90,7 @@ cc_tool(
         ":bin/ld.lld",
         ":bin/ld64.lld",
         ":bin/lld",
+        ":bin/wasm-ld",
     ],
 )
 

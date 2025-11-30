@@ -68,6 +68,7 @@ cc_tool(
         "bin/ld.lld",
         "bin/ld64.lld",
         "bin/lld",
+        "bin/wasm-ld",
     ],
 )
 

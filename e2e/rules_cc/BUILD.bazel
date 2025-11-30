@@ -1,5 +1,6 @@
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
+load("@toolchains_llvm_bootstrapped//:defs.bzl", "exec_test")
 load("//:defs.bzl", "ubsan_cc_binary")
 
 cc_binary(
@@ -21,18 +22,10 @@ ubsan_cc_binary(
     srcs = ["ubsan_fail.cc"],
 )
 
-# Temporary hack to get an exec compatible binary to run inside a sh_test.
-genrule(
-    name = "ubsan_fail_exec",
-    outs = ["ubsan_fail_exec"],
-    cmd = "cp $(execpath :ubsan_fail) $@",
-    tools = [":ubsan_fail"],
-    executable = True,
-)
-
-sh_test(
+exec_test(
+    sh_test,
     name = "ubsan_output_test",
     srcs = ["ubsan_output_test.sh"],
-    data = [":ubsan_fail_exec"],
-    env = {"BINARY": "$(rootpath :ubsan_fail_exec)"},
+    data = [":ubsan_fail"],
+    env = {"BINARY": "$(rootpath :ubsan_fail)"},
 )

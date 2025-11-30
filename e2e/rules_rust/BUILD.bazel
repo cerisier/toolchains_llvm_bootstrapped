@@ -2,15 +2,6 @@ load("//:rust_binary_cross_build_test_suite.bzl", "rust_binary_cross_build_test_
 
 package(default_visibility = ["//visibility:public"])
 
-# Temporary hack to get an exec compatible binary to run inside a sh_test.
-genrule(
-    name = "file_exec",
-    tools = ["@libmagic//:file"],
-    outs = ["file_output_exec"],
-    cmd = "cp $(execpath @libmagic//:file) $@",
-    executable = True,
-)
-
 rust_binary_cross_build_test_suite(
     name = "hello_world",
     srcs = ["src/main.rs"],
@@ -24,5 +15,4 @@ rust_binary_cross_build_test_suite(
         # "@toolchains_llvm_bootstrapped//platforms:macos_x86_64": "x86-64",
         # "@toolchains_llvm_bootstrapped//platforms:macos_aarch64": "aarch64",
     },
-    file_executable = ":file_exec",
 )

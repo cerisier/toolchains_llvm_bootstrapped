@@ -150,6 +150,7 @@ llvm.configure(
     targets = [
         "AArch64",
         "X86",
+        "WebAssembly",
     ],
 )
 use_repo(llvm, "llvm-project")
