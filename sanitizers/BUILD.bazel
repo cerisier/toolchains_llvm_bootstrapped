@@ -1,0 +1,6 @@
+# TODO(zbarsky): This can't be a `exports_files` because rules_cc only accepts labels
+filegroup(
+    name = "ubsan_ignore",
+    srcs = ["ubsan_ignore.txt"],
+    visibility = ["//visibility:public"],
+)
