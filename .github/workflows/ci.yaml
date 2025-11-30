@@ -60,7 +60,7 @@ jobs:
         run: |
           # Bazelisk will download bazel to here, ensure it is cached between runs.
           export XDG_CACHE_HOME="$HOME/.cache/bazel-repo"
-          bazel --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc --bazelrc=.bazelrc --lockfile_mode=off test //...
+          bazel --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc --bazelrc=.bazelrc test --lockfile_mode=off //...
 
   # pre-commit:
   #   runs-on: ubuntu-latest
