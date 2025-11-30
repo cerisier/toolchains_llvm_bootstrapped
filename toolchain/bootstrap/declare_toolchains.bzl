@@ -160,17 +160,25 @@ def declare_tool_map(exec_os, exec_cpu):
         src = prefix + "/bin/llvm-strip",
     )
 
-_supported_execs = [
-    (arch, os)
-    # Any supported target that can run a compiler is a supported exec.
-    # If we can compile a compiler for that target, we can use that compiler
-    # to compile for any other target.
-    for (arch, os) in SUPPORTED_TARGETS
-    if arch != "none" # wasm is no good for us.
-]
 
-def declare_toolchains():
-    for (exec_os, exec_cpu) in _supported_execs:
+def declare_toolchains(*, execs = None, targets = SUPPORTED_TARGETS):
+    """Declares the configured LLVM toolchains.
+
+    Args:
+        execs: List of (os, arch) tuples describing exec platforms.
+        targets: List of (os, arch) tuples describing target platforms.
+    """
+    if not execs:
+        execs = [
+            (arch, os)
+            # Any supported target that can run a compiler is a supported exec.
+            # If we can compile a compiler for that target, we can use that compiler
+            # to compile for any other target.
+            for (arch, os) in targets
+            if arch != "none" # wasm is no good for us.
+        ]
+
+    for (exec_os, exec_cpu) in execs:
         declare_tool_map(exec_os, exec_cpu)
 
         cc_toolchain_name = "bootstrap_{}_{}_cc_toolchain".format(exec_os, exec_cpu)
@@ -186,7 +194,7 @@ def declare_toolchains():
             }),
         )
 
-        for (target_os, target_cpu) in SUPPORTED_TARGETS:
+        for (target_os, target_cpu) in targets:
             native.toolchain(
                 name = "bootstrap_{}_{}_to_{}_{}".format(exec_os, exec_cpu, target_os, target_cpu),
                 exec_compatible_with = [
@@ -198,7 +206,7 @@ def declare_toolchains():
                     "@platforms//os:{}".format(target_os),
                 ],
                 target_settings = [
-                    "//toolchain:bootstrapped_toolchain",
+                    "@toolchains_llvm_bootstrapped//toolchain:bootstrapped_toolchain",
                 ],
                 toolchain = cc_toolchain_name,
                 toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",

@@ -37,7 +37,24 @@ See https://github.com/cerisier/toolchains_llvm_bootstrapped/releases/latest
 
 This will register all toolchains declared by this module for all supported targets.
 
-You can selectively register toolchains for specific targets. The list can be obtained like so:
+If you wish to register only a subset of all possible toolchains, use the `@toolchains_llvm_bootstrapped//toolchain/extension:llvm.bzl` module extension like so:
+
+```sh
+llvm_toolchains = use_extension("@toolchains_llvm_bootstrapped//toolchain/extension:llvm.bzl", "llvm")
+
+llvm_toolchains.exec(arch = "x86_64", os = "linux")
+llvm_toolchains.exec(arch = "aarch64", os = "linux")
+llvm_toolchains.target(arch = "x86_64", os = "linux")
+llvm_toolchains.target(arch = "aarch64", os = "linux")
+
+use_repo(llvm_toolchains, "llvm_toolchains")
+
+register_toolchains("@llvm_toolchains//:all")
+```
+
+This will register the cross-product of the specified exec and target platforms.
+
+If you wish to be more selective than that, you can use `register_toolchain` calls on specific tolchain targets. The list can be obtained like so:
 ```sh
 bazel query 'kind(toolchain, @toolchains_llvm_bootstrapped//toolchain:all)'
 ```
