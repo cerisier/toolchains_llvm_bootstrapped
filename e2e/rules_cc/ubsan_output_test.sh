@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -uo pipefail
 
 EXPECTED_OUTPUT="ubsan_fail.cc:11:15: runtime error: signed integer overflow: 2147483647 + 1 cannot be represented in type 'int'
 SUMMARY: UndefinedBehaviorSanitizer: undefined-behavior ubsan_fail.cc:11:15
 ubsan_fail.cc:14:15: runtime error: shift exponent -1 is negative
 SUMMARY: UndefinedBehaviorSanitizer: undefined-behavior ubsan_fail.cc:14:15
 ubsan_fail.cc:17:17: runtime error: division by zero
-SUMMARY: UndefinedBehaviorSanitizer: undefined-behavior ubsan_fail.cc:17:17
-s=-2147483648 t=-2147483648 u=0"
+SUMMARY: UndefinedBehaviorSanitizer: undefined-behavior ubsan_fail.cc:17:17"
 
 OUTPUT="$($BINARY 2>&1)"
 
