@@ -2,11 +2,15 @@ load("@rules_rust//rust:defs.bzl", "rust_binary")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 
 def rust_binary_test_suite(name, check, **kwargs):
+    platform = kwargs.get("platform", None)
     rust_binary(
         name = name,
         **kwargs,
+        # cross compilation to macos doesn't work yet.
+        exec_compatible_with = [
+            "@platforms//os:macos"
+        ] if "macos" in platform else []
     )
-    platform = kwargs.get("platform", None)
     # Test if the host binary works.
     sh_test(
         name = "test_" + name,
