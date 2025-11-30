@@ -6,8 +6,8 @@ def rust_binary_test_suite(name, check, **kwargs):
     rust_binary(
         name = name,
         # cross compilation to macos doesn't work yet.
-        exec_compatible_with = [
-            "@platforms//os:macos"
+        target_compatible_with = [
+            "@platforms//os:linux"
         ] if "macos" in platform else [],
         **kwargs
     )
@@ -26,9 +26,9 @@ def rust_binary_test_suite(name, check, **kwargs):
             "@bazel_tools//tools/bash/runfiles",
         ],
         # cross compilation to macos doesn't work yet.
-        exec_compatible_with = [
-            "@platforms//os:macos"
-        ] if "macos" in platform else []
+        target_compatible_with = [
+            "@platforms//os:linux"
+        ] if "macos" in platform else [],
     )
 
 def rust_binary_cross_build_test_suite(name, platforms, **kwargs):
