@@ -1,11 +1,10 @@
-load("@rules_cc//cc:cc_shared_library.bzl", "cc_shared_library")
-load("@rules_cc//cc/common:cc_shared_library_info.bzl", "CcSharedLibraryInfo")
-load("@rules_cc//cc/private/rules_impl:cc_shared_library.bzl", "GraphNodeInfo")
 load("@with_cfg.bzl", "with_cfg")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc/private/rules_impl:cc_shared_library.bzl", "GraphNodeInfo")
 
 _builder = with_cfg(
-    cc_shared_library,
-    extra_providers = [CcSharedLibraryInfo, GraphNodeInfo],
+    cc_library,
+    extra_providers = [GraphNodeInfo],
 )
 
 # The problem is that compiler-rt and start libs can only be compiled with
@@ -24,4 +23,9 @@ _builder.set(
     True,
 )
 
-cc_stage2_shared_library, _cc_stage2_shared_library_internal = _builder.build()
+_builder.set(Label("//config:ubsan"), False)
+_builder.set(Label("//config:msan"), False)
+_builder.set(Label("//config:asan"), False)
+
+cc_stage2_unsanitized_library, _cc_stage2_unsanitized_library_internal  = _builder.build()
+
