@@ -35,6 +35,26 @@ def llvm_release(name):
     )
 
     native.genrule(
+        name = "sanitizers_ignorelist_mtree",
+        srcs = [
+            "@llvm-project//compiler-rt:asan_ignorelist",
+            "@llvm-project//compiler-rt:msan_ignorelist",
+        ],
+        cmd = """\
+cat <<EOF > $(@)
+lib/clang/{llvm_major}/share/asan_ignorelist.txt uid=0 gid=0 time=1672560000 mode=0644 type=file content=$(location @llvm-project//compiler-rt:asan_ignorelist)
+lib/clang/{llvm_major}/share/msan_ignorelist.txt uid=0 gid=0 time=1672560000 mode=0644 type=file content=$(location @llvm-project//compiler-rt:msan_ignorelist)
+EOF
+""".format(
+            llvm_major = LLVM_VERSION_MAJOR,
+        ),
+        outs = [
+            "sanitizers_ignorelist.mtree",
+        ],
+        tags = ["manual"],
+    )
+
+    native.genrule(
         name = "bins_mtree",
         srcs = BINS,
         cmd = """\
@@ -72,8 +92,10 @@ EOF
         srcs = [
             ":bins_mtree",
             ":builtin_headers_mtree",
+            ":sanitizers_ignorelist_mtree",
         ],
         cmd = """\
+            cat $(location :sanitizers_ignorelist_mtree) > $(@)
             cat $(location :builtin_headers_mtree) >> $(@)
             cat $(location :bins_mtree) >> $(@)
         """,
@@ -87,6 +109,8 @@ EOF
         name = name,
         srcs = BINS + [
             "@llvm-project//clang:builtin_headers_files",
+            "@llvm-project//compiler-rt:asan_ignorelist",
+            "@llvm-project//compiler-rt:msan_ignorelist",
         ],
         args = [
             "--options",

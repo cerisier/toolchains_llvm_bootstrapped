@@ -11,6 +11,7 @@ def _llvm_raw_impl(mctx):
         patches = [
             "//third_party/llvm-project:llvm-extra.patch",
             "//third_party/llvm-project:llvm-bazel9.patch",
+            "//third_party/llvm-project:llvm-sanitizers-ignorelists.patch",
         ],
         strip_prefix = "llvm-project-{LLVM_VERSION}.src".format(LLVM_VERSION = LLVM_VERSION),
         urls = ["https://github.com/llvm/llvm-project/releases/download/llvmorg-{LLVM_VERSION}/llvm-project-{LLVM_VERSION}.src.tar.xz".format(LLVM_VERSION = LLVM_VERSION)],
