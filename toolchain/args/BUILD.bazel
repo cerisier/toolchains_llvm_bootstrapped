@@ -123,7 +123,12 @@ cc_args(
     args = [
         "-fno-omit-frame-pointer",
         "-fsanitize=undefined",
+        "-fsanitize-ignorelist={ubsan_ignore}",
     ],
+    format = {
+        "ubsan_ignore": "//sanitizers:ubsan_ignore",
+    },
+    data = ["//sanitizers:ubsan_ignore"],
 )
 
 # Note that sanitizers must use `cc_unsanitized_library` on third-party deps
