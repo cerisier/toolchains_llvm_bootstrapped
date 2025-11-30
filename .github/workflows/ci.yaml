@@ -58,10 +58,20 @@ jobs:
         working-directory: ${{ matrix.folder }}
         shell: bash
         run: |
-          # Bazelisk will download bazel to here, ensure it is cached between runs.
           export XDG_CACHE_HOME="$HOME/.cache/bazel-repo"
-          bazel --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc --bazelrc=.bazelrc test --lockfile_mode=off //...
 
+          EXTRA_ARGS=""
+          if [[ "${{ matrix.folder }}" == *"rules_rust"* ]]; then
+            EXTRA_ARGS="--config=rust"
+          fi
+
+          bazel \
+            --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc \
+            --bazelrc=.bazelrc \
+            test \
+            --lockfile_mode=off \
+            $EXTRA_ARGS \
+            //...
   # pre-commit:
   #   runs-on: ubuntu-latest
   #   steps:
