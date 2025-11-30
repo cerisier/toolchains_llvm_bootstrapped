@@ -5,11 +5,11 @@ def rust_binary_test_suite(name, check, **kwargs):
     platform = kwargs.get("platform", None)
     rust_binary(
         name = name,
-        **kwargs,
         # cross compilation to macos doesn't work yet.
         exec_compatible_with = [
             "@platforms//os:macos"
-        ] if "macos" in platform else []
+        ] if "macos" in platform else [],
+        **kwargs
     )
     # Test if the host binary works.
     sh_test(
