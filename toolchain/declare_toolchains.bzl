@@ -1,12 +1,19 @@
 load("@rules_cc//cc/toolchains:toolchain.bzl", "cc_toolchain")
-load("//platforms:common.bzl", _supported_targets = "SUPPORTED_TARGETS", _supported_execs = "SUPPORTED_EXECS")
+load("//platforms:common.bzl", "SUPPORTED_TARGETS", "SUPPORTED_EXECS")
 load("//toolchain:selects.bzl", "platform_cc_tool_map")
 
-def declare_all_toolchains():
-    for (exec_os, exec_cpu) in _supported_execs:
-        _declare_toolchains(exec_os, exec_cpu)
+def declare_toolchains(*, execs = SUPPORTED_EXECS, targets = SUPPORTED_TARGETS):
+    """Declares the configured LLVM toolchains.
 
-def _declare_toolchains(exec_os, exec_cpu):
+    Args:
+        execs: List of (os, arch) tuples describing exec platforms.
+        targets: List of (os, arch) tuples describing target platforms.
+    """
+    for (exec_os, exec_cpu) in execs:
+        _declare_toolchains(exec_os, exec_cpu, targets)
+
+
+def _declare_toolchains(exec_os, exec_cpu, targets):
     cc_toolchain_name = "{}_{}_cc_toolchain".format(exec_os, exec_cpu)
 
     # Even though `tool_map` has an exec transition, Bazel doesn't properly handle
@@ -51,7 +58,7 @@ def _declare_toolchains(exec_os, exec_cpu):
         compiler = "clang",
     )
 
-    for (target_os, target_cpu) in _supported_targets:
+    for (target_os, target_cpu) in targets:
         native.toolchain(
             name = "{}_{}_to_{}_{}".format(exec_os, exec_cpu, target_os, target_cpu),
             exec_compatible_with = [
