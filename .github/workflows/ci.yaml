@@ -65,8 +65,6 @@ jobs:
             EXTRA_ARGS="--config=rust"
           fi
 
-          export XDG_CACHE_HOME="$HOME/.cache/bazel-repo"
-
           bazel \
             --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc \
             --bazelrc=.bazelrc \
