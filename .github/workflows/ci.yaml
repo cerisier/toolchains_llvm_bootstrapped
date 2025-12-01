@@ -72,10 +72,3 @@ jobs:
             --remote_header=x-buildbuddy-api-key=$BUILDBUDDY_API_KEY \
             $EXTRA_ARGS \
             //...
-  # pre-commit:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v5
-  #     - uses: pre-commit/action@v3.0.1
-  # For branch protection settings, this job provides a "stable" name that can be used to gate PR merges
-  # on "all matrix jobs were successful".
