@@ -11,6 +11,16 @@ def rust_binary_test_suite(name, check, **kwargs):
         ] if "macos" in platform else [],
         **kwargs
     )
+
+    # Temporary hack to get an exec compatible binary to run inside a sh_test.
+    native.genrule(
+        name = "file_" + name,
+        tools = ["@libmagic//:file"],
+        outs = ["file_output_" + name],
+        cmd = "cp $(execpath @libmagic//:file) $@",
+        executable = True,
+    )
+
     # Test if the host binary works.
     sh_test(
         name = "test_" + name,
@@ -21,7 +31,14 @@ def rust_binary_test_suite(name, check, **kwargs):
         ] if platform else [
             "$(rlocationpath :" + name + ")",
         ],
-        data = [":" + name],
+        env = {
+            "FILE_BINARY": "$(rlocationpath :file_" + name + ")",
+            "MAGIC_FILE": "$(rlocationpath @libmagic//:magic.mgc)",
+        } if platform else {},
+        data = ([
+            ":file_" + name,
+            "@libmagic//:magic.mgc",
+        ] if platform else []) + [":" + name],
         deps = [
             "@bazel_tools//tools/bash/runfiles",
         ],
