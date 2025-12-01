@@ -1,5 +1,7 @@
 # LLVM cross compilation toolchain for Bazel
 
+[![CI](https://github.com/cerisier/toolchains_llvm_bootstrapped/actions/workflows/ci.yaml/badge.svg)](https://github.com/cerisier/toolchains_llvm_bootstrapped/actions/workflows/ci.yaml)
+
 > ⚠️ **Warning:** This project is still experimental and may break.
 
 ## Description
