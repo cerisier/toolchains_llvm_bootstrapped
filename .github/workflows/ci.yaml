@@ -32,15 +32,18 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
+      - uses: bazel-contrib/setup-bazel@0.15.0
+        with:
+          bazelisk-version: ${{ matrix.bazel_version }}
+          bazelisk-cache: true
+          repository-cache: true
+          module-root: ${{ matrix.folder }}
       - name: bazel test //...
         env:
-          USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         working-directory: ${{ matrix.folder }}
         shell: bash
         run: |
-          export XDG_CACHE_HOME="$HOME/.cache/bazel-repo"
-
           EXTRA_ARGS=""
           if [[ "${{ matrix.folder }}" == *"rules_rust"* ]]; then
             EXTRA_ARGS="--config=rust"
