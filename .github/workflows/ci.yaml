@@ -20,7 +20,7 @@ jobs:
       matrix:
         # only test on linux for now, macos is not ready.
         os: [ubuntu-latest, ubuntu-24.04-arm]
-        bazel_version: [8.x, last_rc]
+        bazel_version: [8.4.2, 9.0.0rc3]
         folder:
           - "e2e/rules_cc"
           - "e2e/rules_rust"
