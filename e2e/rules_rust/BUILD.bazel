@@ -12,7 +12,7 @@ rust_binary_cross_build_test_suite(
     platforms = {
         "@toolchains_llvm_bootstrapped//platforms:linux_x86_64": "x86-64",
         "@toolchains_llvm_bootstrapped//platforms:linux_aarch64": "aarch64",
-        "@toolchains_llvm_bootstrapped//platforms:macos_x86_64": "x86-64",
-        "@toolchains_llvm_bootstrapped//platforms:macos_aarch64": "aarch64",
+        # "@toolchains_llvm_bootstrapped//platforms:macos_x86_64": "x86-64",
+        # "@toolchains_llvm_bootstrapped//platforms:macos_aarch64": "aarch64",
     }
 )

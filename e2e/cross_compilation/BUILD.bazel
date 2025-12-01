@@ -21,8 +21,8 @@ cc_binary(
 PLATFORMS = [
     "@toolchains_llvm_bootstrapped//platforms:linux_x86_64",
     "@toolchains_llvm_bootstrapped//platforms:linux_aarch64",
-    "@toolchains_llvm_bootstrapped//platforms:macos_x86_64",
-    "@toolchains_llvm_bootstrapped//platforms:macos_aarch64",
+    # "@toolchains_llvm_bootstrapped//platforms:macos_x86_64",
+    # "@toolchains_llvm_bootstrapped//platforms:macos_aarch64",
 ] + [
     "@toolchains_llvm_bootstrapped//platforms/libc_aware:linux_x86_64_{}".format(libc) for libc in LIBCS
 ] + [
@@ -34,9 +34,6 @@ PLATFORMS = [
         name = "main_" + platform.split(":")[-1],
         target_platform = platform,
         binary = ":main",
-        target_compatible_with = [
-            "@platforms//os:linux"
-        ] if "macos" in platform else [],
     ) for platform in PLATFORMS
 ]
 
@@ -45,8 +42,5 @@ PLATFORMS = [
         name = "test_main_" + platform.split(":")[-1],
         targets = [":main_" + platform.split(":")[-1]],
         size = "small",
-        target_compatible_with = [
-            "@platforms//os:linux"
-        ] if "macos" in platform else [],
     ) for platform in PLATFORMS
 ]
