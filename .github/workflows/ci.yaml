@@ -20,7 +20,7 @@ jobs:
       matrix:
         # only test on linux for now, macos is not ready.
         os: [ubuntu-latest, ubuntu-24.04-arm]
-        bazel_version: [8.4.2, 9.0.0rc3]
+        bazel_version: [8.x, last_rc]
         folder:
           - "e2e/rules_cc"
           - "e2e/rules_rust"
@@ -34,12 +34,12 @@ jobs:
       - uses: actions/checkout@v6
       - uses: bazel-contrib/setup-bazel@0.15.0
         with:
-          bazelisk-version: ${{ matrix.bazel_version }}
           bazelisk-cache: true
           repository-cache: true
           module-root: ${{ matrix.folder }}
       - name: bazel test //...
         env:
+          USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         working-directory: ${{ matrix.folder }}
         shell: bash
