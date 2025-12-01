@@ -28,8 +28,8 @@ def rust_binary_test_suite(name, check, **kwargs):
             "$(rlocationpath :" + name + ")",
         ],
         env = {
-            "FILE_BINARY": "$(rlocationpath :file_" + name + ")",
-            "MAGIC_FILE": "$(rlocationpath @libmagic//:magic.mgc)",
+            "FILE_BINARY": "$(rootpath :file_" + name + ")",
+            "MAGIC_FILE": "$(rootpath @libmagic//:magic.mgc)",
         } if platform else {},
         data = ([
             ":file_" + name,
