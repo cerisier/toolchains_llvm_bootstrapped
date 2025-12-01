@@ -9,7 +9,7 @@ common --config remote
 # docs: https://bazel.build/reference/command-line-reference#flag--disk_cache
 # build --disk_cache=~/.cache/bazel
 # docs: https://bazel.build/reference/command-line-reference#flag--repository_cache
-# build --repository_cache=~/.cache/bazel-repo
+build --repository_cache=~/.cache/bazel-repo
 
 # docs: https://bazel.build/reference/command-line-reference#flag--remote_download_outputs
 build --remote_download_outputs=toplevel
