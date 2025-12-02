@@ -1,20 +1,11 @@
 load("@rules_rust//rust:defs.bzl", "rust_binary")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 
-def rust_binary_test_suite(name, check, **kwargs):
+def rust_binary_test_suite(name, check, file_executable, **kwargs):
     platform = kwargs.get("platform", None)
     rust_binary(
         name = name,
         **kwargs
-    )
-
-    # Temporary hack to get an exec compatible binary to run inside a sh_test.
-    native.genrule(
-        name = "file_" + name,
-        tools = ["@libmagic//:file"],
-        outs = ["file_output_" + name],
-        cmd = "cp $(execpath @libmagic//:file) $@",
-        executable = True,
     )
 
     # Test if the host binary works.
@@ -28,11 +19,11 @@ def rust_binary_test_suite(name, check, **kwargs):
             "$(rlocationpath :" + name + ")",
         ],
         env = {
-            "FILE_BINARY": "$(rootpath :file_" + name + ")",
+            "FILE_BINARY": "$(rootpath " + file_executable + ")",
             "MAGIC_FILE": "$(rootpath @libmagic//:magic.mgc)",
         } if platform else {},
         data = ([
-            ":file_" + name,
+            file_executable,
             "@libmagic//:magic.mgc",
         ] if platform else []) + [":" + name],
         deps = [
@@ -40,7 +31,7 @@ def rust_binary_test_suite(name, check, **kwargs):
         ],
     )
 
-def rust_binary_cross_build_test_suite(name, platforms, **kwargs):
+def rust_binary_cross_build_test_suite(name, platforms, file_executable, **kwargs):
 
     rust_binary(
         name = name,
@@ -56,6 +47,7 @@ def rust_binary_cross_build_test_suite(name, platforms, **kwargs):
                     "_cc_common_link" if experimental_use_cc_common_link else ""
                 ),
                 check = check,
+                file_executable = file_executable,
                 platform = platform,
                 experimental_use_cc_common_link = experimental_use_cc_common_link,
                 **kwargs,
