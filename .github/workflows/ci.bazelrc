@@ -3,13 +3,8 @@
 common --config=ci
 
 # Enable remote caching and execution on CI by default.
+startup --experimental_remote_repo_contents_cache
 common --config remote
-
-# This directory is configured in GitHub actions to be persisted between runs.
-# docs: https://bazel.build/reference/command-line-reference#flag--disk_cache
-# build --disk_cache=~/.cache/bazel
-# docs: https://bazel.build/reference/command-line-reference#flag--repository_cache
-common --repository_cache=~/.cache/bazel-repo
 
 # docs: https://bazel.build/reference/command-line-reference#flag--remote_download_outputs
 common --remote_download_outputs=minimal
