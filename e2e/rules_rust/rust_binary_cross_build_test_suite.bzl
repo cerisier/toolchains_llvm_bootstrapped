@@ -1,12 +1,13 @@
 load("@rules_rust//rust:defs.bzl", "rust_binary")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 
-def rust_binary_test_suite(name, check, **kwargs):
+def rust_binary_test_suite(name, check, file_executable, **kwargs):
+    platform = kwargs.get("platform", None)
     rust_binary(
         name = name,
-        **kwargs,
+        **kwargs
     )
-    platform = kwargs.get("platform", None)
+
     # Test if the host binary works.
     sh_test(
         name = "test_" + name,
@@ -17,17 +18,20 @@ def rust_binary_test_suite(name, check, **kwargs):
         ] if platform else [
             "$(rlocationpath :" + name + ")",
         ],
-        data = [":" + name],
+        env = {
+            "FILE_BINARY": "$(rootpath " + file_executable + ")",
+            "MAGIC_FILE": "$(rootpath @libmagic//:magic.mgc)",
+        } if platform else {},
+        data = ([
+            file_executable,
+            "@libmagic//:magic.mgc",
+        ] if platform else []) + [":" + name],
         deps = [
             "@bazel_tools//tools/bash/runfiles",
         ],
-        # cross compilation to macos doesn't work yet.
-        exec_compatible_with = [
-            "@platforms//os:macos"
-        ] if "macos" in platform else []
     )
 
-def rust_binary_cross_build_test_suite(name, platforms, **kwargs):
+def rust_binary_cross_build_test_suite(name, platforms, file_executable, **kwargs):
 
     rust_binary(
         name = name,
@@ -43,6 +47,7 @@ def rust_binary_cross_build_test_suite(name, platforms, **kwargs):
                     "_cc_common_link" if experimental_use_cc_common_link else ""
                 ),
                 check = check,
+                file_executable = file_executable,
                 platform = platform,
                 experimental_use_cc_common_link = experimental_use_cc_common_link,
                 **kwargs,
