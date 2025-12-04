@@ -1,0 +1,66 @@
+
+load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
+load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
+
+package(default_visibility = ["//toolchain/stage2:__subpackages__"])
+
+# Passing a sysroot to /dev/null has the side effect of removing all default
+# library search paths.
+cc_args(
+    name = "linux_no_sysroot",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:compile_actions",
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = [
+        "--sysroot=/dev/null",
+    ],
+)
+
+cc_args(
+    name = "hermetic_compile_flags",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:cpp_compile_actions",
+        "@rules_cc//cc/toolchains/actions:c_compile_actions",
+        # -nostdlibinc triggers a warning for assemble (no preprocess)
+        "@rules_cc//cc/toolchains/actions:preprocess_assemble",
+        "@rules_cc//cc/toolchains/actions:objc_compile",
+        "@rules_cc//cc/toolchains/actions:objcpp_compile",
+    ],
+    args = [
+        # We want to disable everything except builtin headers since they are
+        # provided as part of the compiler toolchain repository.
+        "-nostdlibinc",
+    ],
+)
+
+# Differs from normal toolchain which uses -nodefaultlibs
+cc_args(
+    name = "hermetic_link_flags",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = [
+        "-nostdlib",
+    ],
+)
+
+config_setting(
+    name = "empty_sysroot",
+    flag_values = {
+        "//config:empty_sysroot": "True",
+    },
+)
+
+cc_args_list(
+    name = "hermetic_linux_args",
+    args = select({
+        ":empty_sysroot": [
+            ":linux_no_sysroot",
+        ],
+        "//conditions:default": [],
+    }) + [
+        ":hermetic_compile_flags",
+        ":hermetic_link_flags",
+    ],
+)

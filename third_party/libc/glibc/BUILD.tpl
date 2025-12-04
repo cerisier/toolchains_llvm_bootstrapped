@@ -149,6 +149,17 @@ cc_stage2_library(
     visibility = ["//visibility:public"],
 )
 
+cc_stage2_object(
+    name = "glibc_Scrt1.object",
+    srcs = [":glibc_start", ":glibc_init", ":glibc_abi_note"],
+    copts = [
+        "-target",
+    ] + TARGETS,
+    out = "Scrt1.o",
+    visibility = ["//visibility:public"],
+)
+
+
 cc_stage2_static_library(
     name = "glibc_Scrt1.static",
     deps = [":glibc_Scrt1"],
@@ -283,14 +294,5 @@ cc_stage2_static_library(
     deps = [
         ":c_nonshared",
     ],
-    visibility = ["//visibility:public"],
-)
-
-cc_stage2_object(
-    name = "Scrt1",
-    srcs = [":glibc_Scrt1.static"],
-    copts = [
-        "-target",
-    ] + TARGETS,
     visibility = ["//visibility:public"],
 )

@@ -46,13 +46,33 @@ config_setting(
     visibility = ["//visibility:public"],
 )
 
+cc_args(
+    name = "crt_search_directory",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    # clang::driver::Toolchain::GetFilePath("crtn.o") looks for those using
+    # prefix directories (-B).
+    args = [
+        "-B{crt_objects_directory}",
+    ],
+    format = {
+        "crt_objects_directory": "//runtimes:crt_objects_directory",
+    },
+    data = [
+        "//runtimes:crt_objects_directory",
+    ],
+)
+
 cc_args_list(
     name = "default_link_flags",
     args = select({
         "@platforms//os:macos": [
             "//toolchain/args/macos:macos_default_link_flags",
         ],
-        "//conditions:default": [],
+        "//conditions:default": [
+            ":crt_search_directory",
+        ],
     }, no_match_error = "Unsupported platform for default_link_flags"),
 )
 
@@ -63,8 +83,8 @@ cc_args_list(
             "//toolchain/args/macos:macos_default_libs",
         ],
         "@platforms//os:linux": [
-            "//toolchain/args/linux:crt1",
-            "//toolchain/args/linux:crtbegin",
+            # "//toolchain/args/linux:crt1",
+            # "//toolchain/args/linux:crtbegin",
             "//toolchain/args/linux:linux_default_libs",
         ],
         "//conditions:default": [],

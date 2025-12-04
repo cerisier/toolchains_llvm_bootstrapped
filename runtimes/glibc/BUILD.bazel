@@ -136,8 +136,9 @@ alias(
 )
 
 alias(
-    name = "Scrt1",
-    actual = "@glibc//:Scrt1",
+    name = "glibc_Scrt1.object",
+    actual = "@glibc//:glibc_Scrt1.object",
+    visibility = ["//visibility:public"],
 )
 
 alias(

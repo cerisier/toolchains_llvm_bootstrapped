@@ -1,5 +1,7 @@
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_library.bzl", "cc_stage2_library")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_static_library.bzl", "cc_stage2_static_library")
+load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_object.bzl", "cc_stage2_object")
+load("@toolchains_llvm_bootstrapped//toolchain/args:targets.bzl", "TARGETS")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_unsanitized_library.bzl", "cc_unsanitized_library")
 load("@toolchains_llvm_bootstrapped//third_party/llvm-project/20.x/compiler-rt:targets.bzl", "atomic_helper_cc_library")
 load("@toolchains_llvm_bootstrapped//third_party/llvm-project/20.x/compiler-rt:darwin_excludes.bzl", "filter_excludes")
@@ -461,6 +463,18 @@ cc_stage2_library(
     visibility = ["//visibility:public"],
 )
 
+cc_stage2_object(
+    name = "crtbegin_object",
+    srcs = [
+        ":clang_rt.crtbegin",
+    ],
+    copts = [
+        "-target",
+    ] + TARGETS,
+    out = "crtbeginS.o",
+    visibility = ["//visibility:public"],
+)
+
 cc_stage2_static_library(
     name = "clang_rt.crtbegin.static",
     deps = [
@@ -476,6 +490,18 @@ cc_stage2_library(
     ],
     copts = CRT_CFLAGS,
     local_defines = CRT_DEFINES,
+    visibility = ["//visibility:public"],
+)
+
+cc_stage2_object(
+    name = "crtend_object",
+    srcs = [
+        ":clang_rt.crtend",
+    ],
+    copts = [
+        "-target",
+    ] + TARGETS,
+    out = "crtendS.o",
     visibility = ["//visibility:public"],
 )
 

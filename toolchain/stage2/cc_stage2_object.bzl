@@ -15,8 +15,6 @@ bootstrap_transition = transition(
 )
 
 def _cc_stage2_object_impl(ctx):
-    object = ctx.actions.declare_file(ctx.label.name + ".o")
-
     cc_toolchain = find_cc_toolchain(ctx)
 
     feature_configuration = cc_common.configure_features(
@@ -33,27 +31,41 @@ def _cc_stage2_object_impl(ctx):
     arguments.add("-fuse-ld=lld")
     arguments.add_all(ctx.attr.copts)
     arguments.add("-r")
-    arguments.add("-Wl,--whole-archive")
-    arguments.add_all(ctx.files.srcs)
+    for src in ctx.files.srcs:
+        if src.path.endswith(".a"):
+            arguments.add_all(["-Wl,--whole-archive", src.path, "-Wl,--no-whole-archive"])
+        if src.path.endswith(".o"):
+            arguments.add(src.path)
     arguments.add("-o")
-    arguments.add(object)
+    arguments.add(ctx.outputs.out.path)
 
     ctx.actions.run(
         inputs = ctx.files.srcs,
-        outputs = [object],
+        outputs = [ctx.outputs.out],
         arguments = [arguments],
         tools = cc_toolchain.all_files,
         executable = cc_tool,
         mnemonic = "CcStage2Compile",
     )
 
-    return [DefaultInfo(files = depset([object]))]
+    return [DefaultInfo(files = depset([ctx.outputs.out]))]
 
 cc_stage2_object = rule(
+    doc = "A rule that links .o and .a files into a single .o file.",
     implementation = _cc_stage2_object_impl,
     attrs = {
-        "srcs": attr.label_list(allow_files = True),
+        "srcs": attr.label_list(
+            doc = "List of source files (.o or .a) to be linked into a single object file.",
+            allow_files = [".o", ".a"],
+            mandatory = True,
+        ),
         "copts": attr.string_list(
+            doc = "Additional compiler options",
+            default = [],
+            mandatory = True,
+        ),
+        "out": attr.output(
+            doc = "The output object file.",
             mandatory = True,
         ),
     },

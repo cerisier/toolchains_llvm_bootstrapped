@@ -13,7 +13,7 @@ def cc_toolchain(name, tool_map):
             # Should be last. This is a workaround to add those args last.
             # See comment of this target.
             "@platforms//os:linux": [
-                "//toolchain/args/linux:crtend_feature",
+                # "//toolchain/args/linux:crtend_feature",
             ],
             "//conditions:default": [],
         }),
@@ -31,7 +31,7 @@ def cc_toolchain(name, tool_map):
             # Should be last. This is a workaround to add those args last.
             # See comment of this target.
             "@platforms//os:linux": [
-                "//toolchain/args/linux:crtend_feature",
+                # "//toolchain/args/linux:crtend_feature",
             ],
             "//conditions:default": [],
         }),

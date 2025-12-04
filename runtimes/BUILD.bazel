@@ -1,4 +1,8 @@
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("//toolchain:selects.bzl", "platform_llvm_binary")
+load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
+load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_object.bzl", "cc_stage2_object")
+load("@toolchains_llvm_bootstrapped//toolchain/args:targets.bzl", "TARGETS")
 
 alias(
     name = "llvm_ar",
@@ -33,4 +37,53 @@ filegroup(
         "//conditions:default": [],
     }),
     visibility = ["//toolchain:__subpackages__"],
+)
+
+cc_library(
+    name = "empty",
+    srcs = ["empty.c"],
+)
+
+cc_stage2_object(
+    name = "crti_object",
+    srcs = [
+        ":empty",
+    ],
+    copts = [
+        "-target",
+    ] + TARGETS,
+    out = "crti.o",
+    visibility = ["//visibility:public"],
+)
+
+cc_stage2_object(
+    name = "crtn_object",
+    srcs = [
+        ":empty",
+    ],
+    copts = [
+        "-target",
+    ] + TARGETS,
+    out = "crtn.o",
+    visibility = ["//visibility:public"],
+)
+
+copy_to_directory(
+    name = "crt_objects_directory",
+    srcs = [
+        ":crti_object",
+        ":crtn_object",
+        "//runtimes/glibc:glibc_Scrt1.object",
+        "@compiler-rt//:crtbegin_object",
+        "@compiler-rt//:crtend_object",
+    ],
+    verbose = True,
+    include_external_repositories = ["**"],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+    replace_prefixes = {
+        ".*Scrt1.*": "Scrt1.o",
+    },
+    visibility = ["//visibility:public"],
 )
