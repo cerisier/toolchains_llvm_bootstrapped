@@ -22,3 +22,7 @@ alias(
     actual = make_select_glibc_repository_target("@glibc", "glibc_Scrt1.static"),
 )
 
+alias(
+    name = "Scrt1",
+    actual = make_select_glibc_repository_target("@glibc", "Scrt1"),
+)

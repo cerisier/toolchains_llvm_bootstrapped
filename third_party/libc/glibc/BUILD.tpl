@@ -2,6 +2,8 @@ load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@toolchains_llvm_bootstrapped//third_party/libc/glibc:helpers.bzl", "glibc_includes")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_library.bzl", "cc_stage2_library")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_static_library.bzl", "cc_stage2_static_library")
+load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_object.bzl", "cc_stage2_object")
+load("@toolchains_llvm_bootstrapped//toolchain/args:targets.bzl", "TARGETS")
 
 alias(
     name = "gnu_libc_headers",
@@ -281,5 +283,14 @@ cc_stage2_static_library(
     deps = [
         ":c_nonshared",
     ],
+    visibility = ["//visibility:public"],
+)
+
+cc_stage2_object(
+    name = "Scrt1",
+    srcs = [":glibc_Scrt1.static"],
+    copts = [
+        "-target",
+    ] + TARGETS,
     visibility = ["//visibility:public"],
 )
