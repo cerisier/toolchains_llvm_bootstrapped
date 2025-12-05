@@ -159,13 +159,6 @@ cc_stage2_object(
     visibility = ["//visibility:public"],
 )
 
-
-cc_stage2_static_library(
-    name = "glibc_Scrt1.static",
-    deps = [":glibc_Scrt1"],
-    visibility = ["//visibility:public"],
-)
-
 # pub fn compilerRtOptMode(comp: Compilation) std.builtin.OptimizeMode {
 #     if (comp.debug_compiler_runtime_libs) {
 #         return comp.root_mod.optimize_mode;

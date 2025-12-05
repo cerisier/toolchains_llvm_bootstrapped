@@ -53,7 +53,7 @@ cc_args(
         "@rules_cc//cc/toolchains/actions:cpp_link_executable",
     ],
     args = [
-        "-static",
+        "-static-pie",
     ],
 )
 

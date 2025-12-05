@@ -46,6 +46,16 @@ config_setting(
     visibility = ["//visibility:public"],
 )
 
+cc_args_list(
+    name = "default_link_flags",
+    args = select({
+        "@platforms//os:macos": [
+            "//toolchain/args/macos:macos_default_link_flags",
+        ],
+        "//conditions:default": [],
+    }),
+)
+
 cc_args(
     name = "crt_search_directory",
     actions = [
@@ -65,15 +75,14 @@ cc_args(
 )
 
 cc_args_list(
-    name = "default_link_flags",
+    name = "default_startfiles",
     args = select({
-        "@platforms//os:macos": [
-            "//toolchain/args/macos:macos_default_link_flags",
-        ],
-        "//conditions:default": [
+        "@platforms//os:macos": [],
+        "@platforms//os:linux": [
             ":crt_search_directory",
         ],
-    }, no_match_error = "Unsupported platform for default_link_flags"),
+        "//conditions:default": [],
+    }),
 )
 
 cc_args_list(
@@ -83,12 +92,10 @@ cc_args_list(
             "//toolchain/args/macos:macos_default_libs",
         ],
         "@platforms//os:linux": [
-            # "//toolchain/args/linux:crt1",
-            # "//toolchain/args/linux:crtbegin",
             "//toolchain/args/linux:linux_default_libs",
         ],
         "//conditions:default": [],
-    }, no_match_error = "Unsupported platform for default_libs"),
+    }),
 )
 
 cc_args_list(
@@ -148,7 +155,7 @@ cc_args_list(
         "@platforms//os:linux": [":linux_toolchain_args"],
         "@platforms//os:none": [],
         "//conditions:default": [],
-    }, no_match_error = "Unsupported platform for xclang"),
+    }),
 )
 
 cc_args_list(
@@ -168,6 +175,7 @@ cc_args_list(
         # Common default link flags.
         "//toolchain/args:use_lld",
         ":default_link_flags",
+        ":default_startfiles",
         ":default_libs",
     ],
     visibility = ["//toolchain:__subpackages__"],

@@ -70,20 +70,34 @@ cc_stage2_object(
 
 copy_to_directory(
     name = "crt_objects_directory",
-    srcs = [
+    srcs = select({
+        "@toolchains_llvm_bootstrapped//constraints/libc:musl": [
+            # -static-pie is implied
+            "//runtimes/musl:musl_rcrt1.object",
+        ],
+        "//platforms/config/libc_aware:gnu": [
+            "//runtimes/glibc:glibc_Scrt1.object",
+        ],
+        "//constraints/libc:unconstrained": [
+            "//runtimes/glibc:glibc_Scrt1.object",
+        ],
+    }) + [
         ":crti_object",
         ":crtn_object",
-        "//runtimes/glibc:glibc_Scrt1.object",
         "@compiler-rt//:crtbegin_object",
+        "@compiler-rt//:crtbeginS_object",
+        "@compiler-rt//:crtbeginT_object",
         "@compiler-rt//:crtend_object",
+        "@compiler-rt//:crtendS_object",
     ],
     verbose = True,
     include_external_repositories = ["**"],
     target_compatible_with = [
         "@platforms//os:linux",
     ],
-    replace_prefixes = {
-        ".*Scrt1.*": "Scrt1.o",
-    },
+    root_paths = [
+        ".",
+        "runtimes/musl",
+    ],
     visibility = ["//visibility:public"],
 )

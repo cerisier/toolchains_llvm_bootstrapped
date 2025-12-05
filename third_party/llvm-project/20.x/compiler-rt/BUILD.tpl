@@ -471,7 +471,27 @@ cc_stage2_object(
     copts = [
         "-target",
     ] + TARGETS,
+    #TODO(cerisier): Rename to clang_rt.crtbegin.o and expose this with -L.
+    #
+    # This is because clang driver looks for this instead of crtbegin<ST>.o
+    # when --rtlib=compiler-rt is used.
+    out = "crtbegin.o",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "crtbeginS_object",
+    src = ":crtbegin_object",
     out = "crtbeginS.o",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "crtbeginT_object",
+    src = ":crtbegin_object",
+    out = "crtbeginT.o",
+    allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
@@ -501,7 +521,19 @@ cc_stage2_object(
     copts = [
         "-target",
     ] + TARGETS,
+    #TODO(cerisier): Rename to clang_rt.crtend.o and expose this with -L.
+    #
+    # This is because clang driver looks for this instead of crtend<ST>.o
+    # when --rtlib=compiler-rt is used.
+    out = "crtend.o",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "crtendS_object",
+    src = ":crtend_object",
     out = "crtendS.o",
+    allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 

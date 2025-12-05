@@ -1,6 +1,5 @@
 
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
-load("@rules_cc//cc/toolchains:feature.bzl", "cc_feature")
 load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 
 package(default_visibility = ["//visibility:public"])
@@ -101,25 +100,6 @@ cc_args(
 )
 
 cc_args(
-    name = "crt1_gnu",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:link_executable_actions",
-    ],
-    args = [
-        "-L.", # needed to -l:bazel-out/...
-        "-Wl,--whole-archive",
-        "{Scrt1.a}",
-        "-Wl,--no-whole-archive",
-    ],
-    data = [
-        "//runtimes/glibc:glibc_Scrt1.static",
-    ],
-    format = {
-        "Scrt1.a": "//runtimes/glibc:glibc_Scrt1.static",
-    },
-)
-
-cc_args(
     name = "linux_default_libs_gnu",
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
@@ -173,7 +153,6 @@ cc_args(
     },
 )
 
-
 ###
 
 cc_args(
@@ -191,25 +170,6 @@ cc_args(
     data = [
         "//runtimes/musl:musl_headers_include_search_directory",
     ],
-)
-
-cc_args(
-    name = "crt1_musl",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:link_executable_actions",
-    ],
-    args = [
-        "-L.", # needed to -l:bazel-out/...
-        "-Wl,--whole-archive",
-        "{Scrt1.a}",
-        "-Wl,--no-whole-archive",
-    ],
-    data = [
-        "//runtimes/musl:musl_Scrt1.static",
-    ],
-    format = {
-        "Scrt1.a": "//runtimes/musl:musl_Scrt1.static",
-    },
 )
 
 #TODO: Factorize this and gnu
@@ -258,67 +218,6 @@ cc_args(
         "libc_library_search_path": "//runtimes/musl:musl_library_search_directory",
         "libunwind_library_search_path": "//runtimes/libunwind:libunwind_library_search_directory",
     },
-)
-
-alias(
-    name = "crt1",
-    actual = select({
-        "//constraints/libc:musl": ":crt1_musl",
-        "//platforms/config/libc_aware:gnu": ":crt1_gnu",
-        #TODO: Remove once we have set the default glibc for a given target
-        "//constraints/libc:unconstrained": ":crt1_gnu",
-    })
-)
-
-cc_args(
-    name = "crtbegin",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:link_actions",
-    ],
-    args = [
-        "-Wl,--whole-archive",
-        "{crtbegin}",
-        "-Wl,--no-whole-archive",
-    ],
-    format = {
-        "crtbegin": "//runtimes/compiler-rt:clang_rt.crtbegin",
-    },
-    data = [
-        "//runtimes/compiler-rt:clang_rt.crtbegin",
-    ],
-)
-
-#FIXME: Remove this
-# crtbegin and crtend must wrap all libraries_to_link but for now, we can't
-# use libraries_to_link as args because of legacy features not yet ported to args.
-#
-# As soon as it is the case, we can remove this cc_feature and use libraries_to_link
-# as args in the cc_toolchain args attributes, wrapped between crtbegin and crtend.
-cc_feature(
-    name = "crtend_feature",
-    feature_name = "crtend",
-    args = [
-        "//toolchain/args/linux:crtend",
-    ],
-    visibility = ["//visibility:public"],
-)
-
-cc_args(
-    name = "crtend",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:link_actions",
-    ],
-    args = [
-        "-Wl,--whole-archive",
-        "{crtend}",
-        "-Wl,--no-whole-archive",
-    ],
-    format = {
-        "crtend": "//runtimes/compiler-rt:clang_rt.crtend",
-    },
-    data = [
-        "//runtimes/compiler-rt:clang_rt.crtend",
-    ],
 )
 
 alias(

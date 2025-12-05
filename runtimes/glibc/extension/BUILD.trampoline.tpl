@@ -18,11 +18,6 @@ alias(
 )
 
 alias(
-    name = "glibc_Scrt1.static",
-    actual = make_select_glibc_repository_target("@glibc", "glibc_Scrt1.static"),
-)
-
-alias(
     name = "glibc_Scrt1.object",
     actual = make_select_glibc_repository_target("@glibc", "glibc_Scrt1.object"),
 )
