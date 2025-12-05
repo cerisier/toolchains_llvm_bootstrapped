@@ -85,6 +85,22 @@ cc_args_list(
     }),
 )
 
+# For correctness.
+#
+# For later: this makes the clang driver use compiler-rt compliant filenames
+# and paths when resolving compiler runtime libraries from the resource-dir.
+#
+# TODO(cerisier): Generate a custom resource-dir.
+cc_args(
+    name = "rtlib",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = [
+        "-rtlib=compiler-rt",
+    ],
+)
+
 cc_args_list(
     name = "default_libs",
     args = selects.with_or({
@@ -174,6 +190,7 @@ cc_args_list(
 
         # Common default link flags.
         "//toolchain/args:use_lld",
+        ":rtlib",
         ":default_link_flags",
         ":default_startfiles",
         ":default_libs",
