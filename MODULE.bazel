@@ -93,6 +93,9 @@ LLVM_RELEASE_ASSETS_SHA256 = {
 musl = use_extension("//runtimes/musl/extension:musl.bzl", "musl")
 use_repo(musl, "musl_libc")
 
+mingw = use_extension("//runtimes/mingw/extension:mingw.bzl", "mingw")
+use_repo(mingw, "mingw")
+
 http_pkg_archive = use_repo_rule("//:http_pkg_archive.bzl", "http_pkg_archive")
 
 http_pkg_archive(

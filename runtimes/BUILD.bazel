@@ -23,6 +23,8 @@ filegroup(
             "@libcxx//:libcxx.static",
             "@libcxxabi//:libcxxabi.static",
             "@libunwind//:libunwind.static",
+            "//runtimes/mingw:mingw32",
+            "//runtimes/mingw:ucrtbase",
         ],
         "//conditions:default": [],
     }),
