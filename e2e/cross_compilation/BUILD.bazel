@@ -23,6 +23,8 @@ PLATFORMS = [
     "@toolchains_llvm_bootstrapped//platforms:linux_aarch64",
     # "@toolchains_llvm_bootstrapped//platforms:macos_x86_64",
     # "@toolchains_llvm_bootstrapped//platforms:macos_aarch64",
+    "@toolchains_llvm_bootstrapped//platforms:windows_amd64",
+    "@toolchains_llvm_bootstrapped//platforms:windows_arm64",
 ] + [
     "@toolchains_llvm_bootstrapped//platforms/libc_aware:linux_x86_64_{}".format(libc) for libc in LIBCS
 ] + [

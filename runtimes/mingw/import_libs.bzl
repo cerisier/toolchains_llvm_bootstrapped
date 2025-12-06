@@ -1,5 +1,4 @@
 load("@bazel_lib//lib:run_binary.bzl", "run_binary")
-load("@toolchains_llvm_bootstrapped//toolchain:selects.bzl", "platform_llvm_binary")
 
 def _generate_def_impl(ctx):
     out = ctx.outputs.out
@@ -81,7 +80,7 @@ def _collect_definitions(directory):
             src = path,
             include_anchor = "mingw-w64-crt/def-include/func.def.in",
             additional_includes = additional_includes,
-            tool = platform_llvm_binary("bin/clang"),
+            tool = ":clang",
             arch_macro = select({
                 "@platforms//cpu:x86_64": "__x86_64__",
                 "@platforms//cpu:aarch64": "__aarch64__",
@@ -103,7 +102,7 @@ def mingw_import_libraries(name, directory):
             name = target,
             srcs = [src],
             outs = ["lib{}.a".format(lib_name)],
-            tool = platform_llvm_binary("bin/llvm-dlltool"),
+            tool = ":llvm-dlltool",
             args = select({
                 "@platforms//cpu:x86_64": ["-m", "i386:x86-64"],
                 "@platforms//cpu:aarch64": ["-m", "arm64"],

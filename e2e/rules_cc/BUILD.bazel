@@ -1,8 +1,9 @@
 load("@bazel_lib//lib:transitions.bzl", "platform_transition_binary")
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("@toolchains_llvm_bootstrapped//:defs.bzl", "exec_test")
-load("//:defs.bzl", "ubsan_cc_binary")
+load(":defs.bzl", "ubsan_cc_binary")
 
 cc_binary(
     name = "main",
@@ -15,12 +16,20 @@ cc_binary(
         "-lc++abi",
         "-lunwind",
     ],
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
 )
 
 # TODO(zbarsky): Turn more of this into a macro once we have more sanitizers?
 ubsan_cc_binary(
     name = "ubsan_fail",
     srcs = ["ubsan_fail.cc"],
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
 )
 
 exec_test(
@@ -29,6 +38,10 @@ exec_test(
     srcs = ["ubsan_output_test.sh"],
     data = [":ubsan_fail"],
     env = {"BINARY": "$(rootpath :ubsan_fail)"},
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
 )
 
 # Test that this toolchain properly supports the supports_pic capability.
@@ -43,4 +56,21 @@ platform_transition_binary(
     name = "supports_pic",
     binary = ":supports_pic_",
     target_platform = "@toolchains_llvm_bootstrapped//platforms:linux_x86_64",
+)
+
+cc_test(
+    name = "windows_test",
+    srcs = ["windows_test.cc"],
+    # We run CI with `--config=stage1` so we will first compile a Windows-exec-flavored LLVM toolchain from source,
+    # then use that to build this target on the Windows host.
+    exec_compatible_with = [
+        "@platforms//os:windows",
+    ],
+    target_compatible_with = [
+        "@platforms//os:windows",
+    ],
+    linkopts = [
+        "-luuid",
+    ],
+    tags = ["no-remote"],
 )

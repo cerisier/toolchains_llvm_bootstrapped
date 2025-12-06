@@ -8,9 +8,8 @@ SUPPORTED_TARGETS = [
     ("linux", "aarch64"),
     ("macos", "x86_64"),
     ("macos", "aarch64"),
-    # TODO(zbarsky): Not enabling yet as they are not functional
-    # ("windows", "x86_64"),
-    # ("windows", "aarch64"),
+    ("windows", "x86_64"),
+    ("windows", "aarch64"),
     ("none", "wasm32"),
     ("none", "wasm64"),
 ]
