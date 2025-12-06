@@ -5,7 +5,7 @@ def declare_config_settings():
         ("windows", "x86_64"),
         ("windows", "aarch64"),
     ]
-    for (target_os, target_cpu) in targets:
+    for (target_os, target_cpu) in _supported_targets:
         native.config_setting(
             name = "{}_{}".format(target_os, target_cpu),
             constraint_values = [

@@ -26,7 +26,7 @@ common:prebuilt --@llvm_zlib//:llvm_enable_zlib=false
 common:prebuilt  -c opt
 common:prebuilt  --strip=always
 common:prebuilt  --stripopt=--strip-all
-common:prebuilt  --copt=-flto=thin
+#common:prebuilt  --copt=-flto=thin
 common:prebuilt  --copt=-fno-exceptions
 common:prebuilt  --copt=-fno-rtti
 common:prebuilt  --copt=-fomit-frame-pointer

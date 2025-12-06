@@ -52,6 +52,7 @@ cc_args_list(
         "@platforms//os:macos": [
             "//toolchain/args/macos:macos_default_link_flags",
         ],
+        "@platforms//os:windows": [],
         "//conditions:default": [],
     }),
 )

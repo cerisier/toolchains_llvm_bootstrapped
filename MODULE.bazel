@@ -137,6 +137,14 @@ archive_override(
     urls = ["https://github.com/cerisier/libstdcxx-stubs-generator/archive/{}.tar.gz".format(LIBSTDCXX_STUBS_GENERATOR_COMMIT)],
 )
 
+single_version_override(
+    module_name = "rules_cc",
+    patch_strip = 1,
+    patches = ["//third_party/rules_cc:windows_strip.patch"],
+    version = "0.2.14",
+)
+
+bazel_dep(name = "rules_platform", version = "0.1.0")
 bazel_dep(name = "rules_python", version = "1.6.0")
 
 llvm_raw = use_extension("//:llvm_raw.bzl", "llvm_raw")
