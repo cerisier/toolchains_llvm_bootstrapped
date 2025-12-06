@@ -68,10 +68,14 @@ bin/ld.lld uid=0 gid=0 time=1672560000 mode=0755 type=link link=lld
 bin/ld64.lld uid=0 gid=0 time=1672560000 mode=0755 type=link link=lld
 bin/wasm-ld uid=0 gid=0 time=1672560000 mode=0755 type=link link=lld
 bin/llvm-ar uid=0 gid=0 time=1672560000 mode=0755 type=file content=$(location @llvm-project//llvm:llvm-ar.stripped)
+bin/llvm-dlltool uid=0 gid=0 time=1672560000 mode=0755 type=link link=llvm-ar
+bin/llvm-ranlib uid=0 gid=0 time=1672560000 mode=0755 type=link link=llvm-ar
 bin/llvm-as uid=0 gid=0 time=1672560000 mode=0755 type=file content=$(location @llvm-project//llvm:llvm-as.stripped)
 bin/llvm-libtool-darwin uid=0 gid=0 time=1672560000 mode=0755 type=file content=$(location @llvm-project//llvm:llvm-libtool-darwin.stripped)
 bin/llvm-nm uid=0 gid=0 time=1672560000 mode=0755 type=file content=$(location @llvm-project//llvm:llvm-nm.stripped)
 bin/llvm-objcopy uid=0 gid=0 time=1672560000 mode=0755 type=file content=$(location @llvm-project//llvm:llvm-objcopy.stripped)
+bin/llvm-install-name-tool uid=0 gid=0 time=1672560000 mode=0755 type=link link=llvm-objcopy
+bin/llvm-bitcode-strip uid=0 gid=0 time=1672560000 mode=0755 type=link link=llvm-objcopy
 bin/llvm-strip uid=0 gid=0 time=1672560000 mode=0755 type=link link=llvm-objcopy
 bin/clang-tidy uid=0 gid=0 time=1672560000 mode=0755 type=link link=empty
 bin/clang-format uid=0 gid=0 time=1672560000 mode=0755 type=link link=empty
