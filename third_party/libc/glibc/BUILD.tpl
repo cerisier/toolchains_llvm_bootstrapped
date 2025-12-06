@@ -184,6 +184,9 @@ cc_stage2_library(
         "-Wno-unsupported-floating-point-opt", # For targets that don't support -frounding-math.
         "-fno-common",
         "-fmath-errno",
+        # glibc states that c_nonshared can end up in shared libraries, and so
+        # it needs to be compiled with -fPIC.
+        "-fPIC",
         "-ftls-model=initial-exec",
         "-Wno-ignored-attributes",
         "-Qunused-arguments",
@@ -199,7 +202,7 @@ cc_stage2_library(
         "NO_INITFINI",
         "_LIBC_REENTRANT",
         "MODULE_NAME=libc",
-        # "PIC",
+        "PIC",
         "LIBC_NONSHARED=1",
         "TOP_NAMESPACE=glibc",
     ] + select({
