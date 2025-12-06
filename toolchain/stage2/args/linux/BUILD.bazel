@@ -17,23 +17,6 @@ cc_args(
     ],
 )
 
-cc_args(
-    name = "hermetic_compile_flags",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:cpp_compile_actions",
-        "@rules_cc//cc/toolchains/actions:c_compile_actions",
-        # -nostdlibinc triggers a warning for assemble (no preprocess)
-        "@rules_cc//cc/toolchains/actions:preprocess_assemble",
-        "@rules_cc//cc/toolchains/actions:objc_compile",
-        "@rules_cc//cc/toolchains/actions:objcpp_compile",
-    ],
-    args = [
-        # We want to disable everything except builtin headers since they are
-        # provided as part of the compiler toolchain repository.
-        "-nostdlibinc",
-    ],
-)
-
 # Differs from normal toolchain which uses -nodefaultlibs
 cc_args(
     name = "hermetic_link_flags",
@@ -60,7 +43,7 @@ cc_args_list(
         ],
         "//conditions:default": [],
     }) + [
-        ":hermetic_compile_flags",
+        "//toolchain/args:hermetic_compile_flags",
         ":hermetic_link_flags",
     ],
 )

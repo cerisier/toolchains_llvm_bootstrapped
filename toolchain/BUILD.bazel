@@ -1,7 +1,7 @@
 load("@bazel_skylib//rules:common_settings.bzl", "bool_setting")
-load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains:artifacts.bzl", "cc_artifact_name_pattern")
+load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 load(":declare_toolchains.bzl", "declare_all_toolchains")
 
 bool_setting(
@@ -63,7 +63,10 @@ cc_args_list(
         "@platforms//os:linux": [
             "//toolchain/args:crt_search_directory",
         ],
-        "//conditions:default": [],
+        "@platforms//os:windows": [
+            "//toolchain/args:crt_search_directory",
+        ],
+        "@platforms//os:none": [],
     }),
 )
 
@@ -90,7 +93,12 @@ cc_args_list(
             "//toolchain/args/macos:macos_default_libs",
         ],
         "@platforms//os:linux": [
-            "//toolchain/args/linux:linux_default_libs",
+            "//toolchain/args:default_libs",
+            "//toolchain/args/linux:default_libs",
+        ],
+        "@platforms//os:windows": [
+            "//toolchain/args:default_libs",
+            "//toolchain/args/windows:default_libs",
         ],
         "//conditions:default": [],
     }),
@@ -134,6 +142,15 @@ cc_args_list(
     }),
 )
 
+cc_args_list(
+    name = "windows_toolchain_args",
+    args = [
+        "//toolchain/args:hermetic_compile_flags",
+        "//toolchain/args:libcxx_headers_include_search_paths",
+        "//toolchain/args/windows:mingw_headers_include_search_paths",
+    ],
+)
+
 cc_args(
     name = "verbose",
     actions = [
@@ -151,6 +168,7 @@ cc_args_list(
         # Platform specific flags.
         "@platforms//os:macos": [":macos_toolchain_args"],
         "@platforms//os:linux": [":linux_toolchain_args"],
+        "@platforms//os:windows": [":windows_toolchain_args"],
         "@platforms//os:none": [],
         "//conditions:default": [],
     }),

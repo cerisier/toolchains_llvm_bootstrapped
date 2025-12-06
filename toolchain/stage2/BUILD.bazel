@@ -12,6 +12,9 @@ cc_args_list(
         "@platforms//os:linux": [
             "//toolchain/stage2/args/linux:hermetic_linux_args",
         ],
+        "@platforms//os:windows": [
+            "//toolchain/args:hermetic_compile_flags",
+        ],
         "//conditions:default": [],
     }),
 )

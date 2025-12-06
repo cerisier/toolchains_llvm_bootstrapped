@@ -87,6 +87,7 @@ cc_args(
         # "--ld-path={lld_path}",
     ] + select({
         "@platforms//os:macos": [],
+        "@platforms//os:windows": [],
         "@platforms//os:none": [],
         #TODO: Put those at the right place, they are applied too early
         "//conditions:default": [
@@ -176,4 +177,44 @@ cc_args_list(
         ],
         "//conditions:default": [],
     }),
+)
+
+cc_args(
+    name = "hermetic_compile_flags",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:cpp_compile_actions",
+        "@rules_cc//cc/toolchains/actions:c_compile_actions",
+        # -nostdlibinc triggers a warning for assemble (no preprocess)
+        "@rules_cc//cc/toolchains/actions:preprocess_assemble",
+        "@rules_cc//cc/toolchains/actions:objc_compile",
+        "@rules_cc//cc/toolchains/actions:objcpp_compile",
+    ],
+    args = [
+        # We want to disable everything except builtin headers since they are
+        # provided as part of the compiler toolchain repository.
+        "-nostdlibinc",
+    ],
+)
+
+cc_args(
+    name = "default_libs",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = [
+        "-L.", # needed to -l:bazel-out/...
+        "-L{libcxx_library_search_path}",
+        "-L{libunwind_library_search_path}",
+        "{clang_rt.builtins.a}",
+    ],
+    data = [
+        "//runtimes/compiler-rt:clang_rt.builtins.static",
+        "//runtimes/libcxx:libcxx_library_search_directory",
+        "//runtimes/libunwind:libunwind_library_search_directory",
+    ],
+    format = {
+        "clang_rt.builtins.a": "//runtimes/compiler-rt:clang_rt.builtins.static",
+        "libcxx_library_search_path": "//runtimes/libcxx:libcxx_library_search_directory",
+        "libunwind_library_search_path": "//runtimes/libunwind:libunwind_library_search_directory",
+    },
 )
