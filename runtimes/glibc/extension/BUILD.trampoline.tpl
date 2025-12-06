@@ -21,3 +21,8 @@ alias(
     name = "glibc_Scrt1.object",
     actual = make_select_glibc_repository_target("@glibc", "glibc_Scrt1.object"),
 )
+
+alias(
+    name = "glibc_crt1.object",
+    actual = make_select_glibc_repository_target("@glibc", "glibc_crt1.object"),
+)

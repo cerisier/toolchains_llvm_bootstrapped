@@ -136,6 +136,12 @@ alias(
 )
 
 alias(
+    name = "glibc_crt1.object",
+    actual = "@glibc//:glibc_crt1.object",
+    visibility = ["//visibility:public"],
+)
+
+alias(
     name = "glibc_libc_nonshared.static",
     actual = "@glibc//:c_nonshared.static",
     visibility = ["//visibility:public"],

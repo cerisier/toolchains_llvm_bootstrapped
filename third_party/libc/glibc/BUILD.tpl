@@ -1,4 +1,5 @@
 load("@bazel_skylib//lib:selects.bzl", "selects")
+load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
 load("@toolchains_llvm_bootstrapped//third_party/libc/glibc:helpers.bzl", "glibc_includes")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_library.bzl", "cc_stage2_library")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_static_library.bzl", "cc_stage2_static_library")
@@ -156,6 +157,16 @@ cc_stage2_object(
         "-target",
     ] + TARGETS,
     out = "Scrt1.o",
+    visibility = ["//visibility:public"],
+)
+
+#TODO(cerisier): start.o should be compiled without -DSHARED here.
+#TODO(cerisier): Also find out why this is compiled with -DPIC by the glibc
+# even tho it's for -no-pie...
+copy_file(
+    name = "glibc_crt1.object",
+    src = "Scrt1.o",
+    out = "crt1.o",
     visibility = ["//visibility:public"],
 )
 

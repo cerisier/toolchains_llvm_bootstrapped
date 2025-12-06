@@ -77,9 +77,11 @@ copy_to_directory(
         ],
         "//platforms/config/libc_aware:gnu": [
             "//runtimes/glibc:glibc_Scrt1.object",
+            "//runtimes/glibc:glibc_crt1.object",
         ],
         "//constraints/libc:unconstrained": [
             "//runtimes/glibc:glibc_Scrt1.object",
+            "//runtimes/glibc:glibc_crt1.object",
         ],
     }) + [
         ":crti_object",
