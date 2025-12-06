@@ -145,12 +145,7 @@ cc_args(
         # handle varying inclusions.
         "-lm",
         "-lpthread",
-
         "-lc",
-        # In real life, libc_nonshared is added the libc.so linker script right 
-        # after the libc.so.6 library.
-        "{libc_nonshared.a}",
-
         "-ldl",
         "-lrt",
         "-lutil",
@@ -160,14 +155,12 @@ cc_args(
     data = [
         "//runtimes/compiler-rt:clang_rt.builtins.static",
         "//runtimes/libcxx:libcxx_library_search_directory",
-        "//runtimes/glibc:glibc_libc_nonshared.static",
         "//runtimes/glibc:glibc_library_search_directory",
         "//runtimes/libunwind:libunwind_library_search_directory",
     ],
     format = {
         "clang_rt.builtins.a": "//runtimes/compiler-rt:clang_rt.builtins.static",
         "libcxx_library_search_path": "//runtimes/libcxx:libcxx_library_search_directory",
-        "libc_nonshared.a": "//runtimes/glibc:glibc_libc_nonshared.static",
         "libc_library_search_path": "//runtimes/glibc:glibc_library_search_directory",
         "libunwind_library_search_path": "//runtimes/libunwind:libunwind_library_search_directory",
     },

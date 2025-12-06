@@ -174,8 +174,7 @@ cc_stage2_static_library(
 # }
 
 cc_stage2_library(
-    # glibc_c_nonshared
-    name = "c_nonshared",
+    name = "glibc_c_nonshared",
     copts = [
         "-std=gnu11",
         "-fgnu89-inline",
@@ -280,9 +279,9 @@ cc_stage2_library(
 )
 
 cc_stage2_static_library(
-    name = "c_nonshared.static",
+    name = "c_nonshared",
     deps = [
-        ":c_nonshared",
+        ":glibc_c_nonshared",
     ],
     visibility = ["//visibility:public"],
 )
