@@ -3,3 +3,7 @@ alias(
     actual = "//third_party/llvm-project/20.x/libc:libc_headers",
     visibility = ["//visibility:public"],
 )
+
+exports_files([
+    "llvm-write-file.patch",
+])

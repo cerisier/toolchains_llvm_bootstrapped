@@ -94,8 +94,6 @@ cc_tool(
     src = "bin/llvm-strip",
 )
 
-##
-
 # Convenient exports
 exports_files([
     "bin/clang",
@@ -107,6 +105,7 @@ exports_files([
     "bin/wasm-ld",
     "bin/llvm-ar",
     "bin/llvm-as",
+    "bin/llvm-dlltool",
     "bin/llvm-libtool-darwin",
     "bin/llvm-nm",
     "bin/llvm-objcopy",

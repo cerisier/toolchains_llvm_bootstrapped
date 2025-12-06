@@ -26,4 +26,3 @@ mingw = module_extension(
     implementation = _mingw_extension_impl,
     doc = "Extension for downloading and configuring mingw",
 )
-
