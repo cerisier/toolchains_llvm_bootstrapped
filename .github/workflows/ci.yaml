@@ -73,5 +73,6 @@ jobs:
             --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc \
             --bazelrc=.bazelrc \
             test \
+            --remote_header=x-buildbuddy-api-key=$BUILDBUDDY_API_KEY \
             $EXTRA_ARGS \
             //...
