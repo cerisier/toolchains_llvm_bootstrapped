@@ -51,6 +51,7 @@ cc_tool(
     data = [
         ":builtin_headers_include_directory",
     ],
+    allowlist_include_directories = [":builtin_headers_include_directory"],
 )
 
 cc_tool(
@@ -59,6 +60,7 @@ cc_tool(
     data = [
         ":builtin_headers_include_directory",
     ],
+    allowlist_include_directories = [":builtin_headers_include_directory"],
 )
 
 cc_tool(
