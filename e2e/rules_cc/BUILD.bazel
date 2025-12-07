@@ -1,3 +1,4 @@
+load("@bazel_lib//lib:transitions.bzl", "platform_transition_binary")
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("@toolchains_llvm_bootstrapped//:defs.bzl", "exec_test")
@@ -28,4 +29,18 @@ exec_test(
     srcs = ["ubsan_output_test.sh"],
     data = [":ubsan_fail"],
     env = {"BINARY": "$(rootpath :ubsan_fail)"},
+)
+
+# Test that this toolchain properly supports the supports_pic capability.
+cc_binary(
+    name = "supports_pic_",
+    srcs = ["supports_pic.cc"],
+    linkshared = True,
+    tags = ["manual"],
+)
+
+platform_transition_binary(
+    name = "supports_pic",
+    binary = ":supports_pic_",
+    target_platform = "@toolchains_llvm_bootstrapped//platforms:linux_x86_64",
 )

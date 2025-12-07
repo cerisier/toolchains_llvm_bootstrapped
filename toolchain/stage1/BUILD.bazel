@@ -45,6 +45,7 @@ cc_tool(
     data = [
         ":clang_builtin_headers_include_directory",
     ],
+    capabilities = ["@rules_cc//cc/toolchains/capabilities:supports_pic"],
 )
 
 stage1_binary(
@@ -61,6 +62,7 @@ cc_tool(
     data = [
         ":clang_builtin_headers_include_directory",
     ],
+    capabilities = ["@rules_cc//cc/toolchains/capabilities:supports_pic"],
 )
 
 stage1_binary(

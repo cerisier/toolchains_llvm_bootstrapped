@@ -51,6 +51,7 @@ cc_tool(
     data = [
         ":builtin_headers_include_directory",
     ],
+    capabilities = ["@rules_cc//cc/toolchains/capabilities:supports_pic"],
 )
 
 cc_tool(
@@ -59,6 +60,7 @@ cc_tool(
     data = [
         ":builtin_headers_include_directory",
     ],
+    capabilities = ["@rules_cc//cc/toolchains/capabilities:supports_pic"],
 )
 
 cc_tool(
