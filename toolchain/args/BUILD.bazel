@@ -1,6 +1,6 @@
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
-load("//toolchain/args:targets.bzl", "TARGETS")
+load("//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -23,7 +23,7 @@ cc_args(
     ],
     args = [
         "-target",
-    ] + TARGETS,
+    ] + LLVM_TARGET_TRIPLE,
 )
 
 cc_args(
@@ -44,6 +44,24 @@ cc_args(
     data = [
         "//runtimes/libcxx:libcxx_headers_include_search_directory",
         "//runtimes/libcxx:libcxxabi_headers_include_search_directory",
+    ],
+)
+
+cc_args(
+    name = "crt_search_directory",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    # clang::driver::Toolchain::GetFilePath("crtn.o") looks for those using
+    # prefix directories (-B).
+    args = [
+        "-B{crt_objects_directory}",
+    ],
+    format = {
+        "crt_objects_directory": "//runtimes:crt_objects_directory",
+    },
+    data = [
+        "//runtimes:crt_objects_directory",
     ],
 )
 

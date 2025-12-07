@@ -1,7 +1,7 @@
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_library.bzl", "cc_stage2_library")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_static_library.bzl", "cc_stage2_static_library")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_object.bzl", "cc_stage2_object")
-load("@toolchains_llvm_bootstrapped//toolchain/args:targets.bzl", "TARGETS")
+load("@toolchains_llvm_bootstrapped//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_unsanitized_library.bzl", "cc_unsanitized_library")
 load("@toolchains_llvm_bootstrapped//third_party/llvm-project/20.x/compiler-rt:targets.bzl", "atomic_helper_cc_library")
 load("@toolchains_llvm_bootstrapped//third_party/llvm-project/20.x/compiler-rt:darwin_excludes.bzl", "filter_excludes")
@@ -470,7 +470,7 @@ cc_stage2_object(
     ],
     copts = [
         "-target",
-    ] + TARGETS,
+    ] + LLVM_TARGET_TRIPLE,
     #TODO(cerisier): Rename to clang_rt.crtbegin.o and expose this with -L.
     #
     # This is because clang driver looks for this instead of crtbegin<ST>.o
@@ -520,7 +520,7 @@ cc_stage2_object(
     ],
     copts = [
         "-target",
-    ] + TARGETS,
+    ] + LLVM_TARGET_TRIPLE,
     #TODO(cerisier): Rename to clang_rt.crtend.o and expose this with -L.
     #
     # This is because clang driver looks for this instead of crtend<ST>.o

@@ -1,4 +1,3 @@
-load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@bazel_skylib//rules:common_settings.bzl", "bool_setting")
 load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
@@ -56,30 +55,12 @@ cc_args_list(
     }),
 )
 
-cc_args(
-    name = "crt_search_directory",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:link_actions",
-    ],
-    # clang::driver::Toolchain::GetFilePath("crtn.o") looks for those using
-    # prefix directories (-B).
-    args = [
-        "-B{crt_objects_directory}",
-    ],
-    format = {
-        "crt_objects_directory": "//runtimes:crt_objects_directory",
-    },
-    data = [
-        "//runtimes:crt_objects_directory",
-    ],
-)
-
 cc_args_list(
     name = "default_startfiles",
     args = select({
         "@platforms//os:macos": [],
         "@platforms//os:linux": [
-            ":crt_search_directory",
+            "//toolchain/args:crt_search_directory",
         ],
         "//conditions:default": [],
     }),
@@ -103,7 +84,7 @@ cc_args(
 
 cc_args_list(
     name = "default_libs",
-    args = selects.with_or({
+    args = select({
         "@platforms//os:macos": [
             "//toolchain/args/macos:macos_default_libs",
         ],

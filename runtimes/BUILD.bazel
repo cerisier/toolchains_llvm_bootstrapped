@@ -1,8 +1,8 @@
+load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("//toolchain:selects.bzl", "platform_llvm_binary")
-load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
-load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_object.bzl", "cc_stage2_object")
-load("@toolchains_llvm_bootstrapped//toolchain/args:targets.bzl", "TARGETS")
+load("//toolchain/stage2:cc_stage2_object.bzl", "cc_stage2_object")
+load("//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
 
 alias(
     name = "llvm_ar",
@@ -51,7 +51,7 @@ cc_stage2_object(
     ],
     copts = [
         "-target",
-    ] + TARGETS,
+    ] + LLVM_TARGET_TRIPLE,
     out = "crti.o",
     visibility = ["//visibility:public"],
 )
@@ -63,7 +63,7 @@ cc_stage2_object(
     ],
     copts = [
         "-target",
-    ] + TARGETS,
+    ] + LLVM_TARGET_TRIPLE,
     out = "crtn.o",
     visibility = ["//visibility:public"],
 )
@@ -92,7 +92,6 @@ copy_to_directory(
         "@compiler-rt//:crtend_object",
         "@compiler-rt//:crtendS_object",
     ],
-    verbose = True,
     include_external_repositories = ["**"],
     target_compatible_with = [
         "@platforms//os:linux",

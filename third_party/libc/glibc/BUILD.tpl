@@ -4,7 +4,7 @@ load("@toolchains_llvm_bootstrapped//third_party/libc/glibc:helpers.bzl", "glibc
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_library.bzl", "cc_stage2_library")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_static_library.bzl", "cc_stage2_static_library")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_object.bzl", "cc_stage2_object")
-load("@toolchains_llvm_bootstrapped//toolchain/args:targets.bzl", "TARGETS")
+load("@toolchains_llvm_bootstrapped//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
 
 alias(
     name = "gnu_libc_headers",
@@ -155,7 +155,7 @@ cc_stage2_object(
     srcs = [":glibc_start", ":glibc_init", ":glibc_abi_note"],
     copts = [
         "-target",
-    ] + TARGETS,
+    ] + LLVM_TARGET_TRIPLE,
     out = "Scrt1.o",
     visibility = ["//visibility:public"],
 )

@@ -33,11 +33,11 @@ def _cc_stage2_object_impl(ctx):
     arguments.add("-r")
     for src in ctx.files.srcs:
         if src.path.endswith(".a"):
-            arguments.add_all(["-Wl,--whole-archive", src.path, "-Wl,--no-whole-archive"])
+            arguments.add_all(["-Wl,--whole-archive", src, "-Wl,--no-whole-archive"])
         if src.path.endswith(".o"):
-            arguments.add(src.path)
+            arguments.add(src)
     arguments.add("-o")
-    arguments.add(ctx.outputs.out.path)
+    arguments.add(ctx.outputs.out)
 
     ctx.actions.run(
         inputs = ctx.files.srcs,
@@ -45,6 +45,7 @@ def _cc_stage2_object_impl(ctx):
         arguments = [arguments],
         tools = cc_toolchain.all_files,
         executable = cc_tool,
+        execution_requirements = {"supports-path-mapping": "1"},
         mnemonic = "CcStage2Compile",
     )
 

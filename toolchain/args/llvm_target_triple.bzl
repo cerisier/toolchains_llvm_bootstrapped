@@ -1,4 +1,4 @@
-TARGETS = select({
+LLVM_TARGET_TRIPLE = select({
     #TODO: Generate this automatically
     "@toolchains_llvm_bootstrapped//platforms/config/libc_aware:linux_x86_64": ["x86_64-linux-gnu"],
     "@toolchains_llvm_bootstrapped//platforms/config/libc_aware:linux_aarch64": ["aarch64-linux-gnu"],

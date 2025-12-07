@@ -4,7 +4,7 @@ load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 
 package(default_visibility = ["//toolchain/stage2:__subpackages__"])
 
-# Passing a sysroot to /dev/null has the side effect of removing all default
+# Passing `/dev/null` as sysroot has the side effect of removing all default
 # library search paths.
 cc_args(
     name = "linux_no_sysroot",
