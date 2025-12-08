@@ -32,6 +32,10 @@ def _cc_stage2_object_impl(ctx):
     arguments.add_all(ctx.attr.copts)
     arguments.add("-r")
     for src in ctx.files.srcs:
+        #TODO(cerisier): extract pic objects CC info instead of this.
+        # PICness from stage2 objects is defined in copts, not by the pic feature.
+        if src.path.endswith(".pic.a"):
+            continue
         if src.path.endswith(".a"):
             arguments.add_all(["-Wl,--whole-archive", src, "-Wl,--no-whole-archive"])
         if src.path.endswith(".o"):
