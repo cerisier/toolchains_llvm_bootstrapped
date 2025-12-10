@@ -19,6 +19,7 @@ GLIBC_RELEASE_COMMITS = {
     "2.39": "68f3f1a1d08f7f3e0fb74391461699717efbb4bc", # release/2.39/master
     "2.40": "8d3dd23e3de8b4c6e4b94f8bbfab971c3b8a55be", # release/2.40/master
     "2.41": "5cf17ebc659c875aff3c49d2a59ce15f46167389", # release/2.41/master
+    "2.42": "8aaf4b732d7650c2db3beb4dc8bb70eab5b022c3", # release/2.42/master
 }
 
 GLIBC_RELEASE_INTEGRITY = {
@@ -36,6 +37,7 @@ GLIBC_RELEASE_INTEGRITY = {
     "2.39": "b3d0acbe514fec5352bc195a91513be9de26740b086700135e7528356f8a38cc",
     "2.40": "80d4e3a0846423a536a14da79d7b527a84b0f73df3f1d5beadf63c8d16fc2429",
     "2.41": "ae2ef9d50a04e5f4e7eece46455a21bf4e4e69518ed31496fdb4c0895f7e18fd",
+    "2.42": "0a1427b902e6fe666508162d92d5be3eaff4d410fe66f3426ccaa9848ed90f05",
 }
 
 def _glibc_trampoline_repository_impl(repository_ctx):
