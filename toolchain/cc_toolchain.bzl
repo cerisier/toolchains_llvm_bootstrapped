@@ -4,6 +4,12 @@ def cc_toolchain(name, tool_map):
     _cc_toolchain(
         name = name,
         args = ["//toolchain:toolchain_args"],
+        artifact_name_patterns = select({
+            "@platforms//os:windows": [
+                "//toolchain:windows_executable_pattern",
+            ],
+            "//conditions:default": [],
+        }),
         known_features = [
             "//toolchain/features:static_link_cpp_runtimes",
             "@rules_cc//cc/toolchains/args:experimental_replace_legacy_action_config_features",

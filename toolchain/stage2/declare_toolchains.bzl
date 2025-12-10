@@ -6,6 +6,9 @@ def declare_toolchains():
     for (exec_os, exec_cpu) in _supported_execs:
         cc_toolchain_name = "{}_{}_cc_toolchain".format(exec_os, exec_cpu)
 
+        # Even though `tool_map` has an exec transition, Bazel doesn't properly handle
+        # binding a single `cc_toolchain` to multiple toolchains with different `exec_compatible_with`.
+        # See https://github.com/bazelbuild/rules_cc/issues/299#issuecomment-2660340534
         cc_toolchain(
             name = cc_toolchain_name,
             args = [
@@ -17,6 +20,12 @@ def declare_toolchains():
                 "//toolchain/stage2/args:default_link_flags",
                 "//toolchain/stage2/args:ubsan_flags",
             ],
+            artifact_name_patterns = select({
+                "@platforms//os:windows": [
+                    "//toolchain:windows_executable_pattern",
+                ],
+                "//conditions:default": [],
+            }),
             enabled_features = ["@rules_cc//cc/toolchains/args:experimental_replace_legacy_action_config_features"],
             known_features = ["@rules_cc//cc/toolchains/args:experimental_replace_legacy_action_config_features"],
             tool_map = platform_cc_tool_map(exec_os, exec_cpu),
@@ -41,4 +50,3 @@ def declare_toolchains():
                 ],
                 visibility = ["//visibility:public"],
             )
-
