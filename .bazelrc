@@ -3,6 +3,8 @@
 try-import %workspace%/tools/preset.bazelrc
 try-import %workspace%/../../tools/preset.bazelrc
 
+common --toolchain_resolution_debug=
+
 # Don’t want to push a rules author to update their deps if not needed.
 # https://bazel.build/reference/command-line-reference#flag--check_direct_dependencies
 # https://bazelbuild.slack.com/archives/C014RARENH0/p1691158021917459?thread_ts=1691156601.420349&cid=C014RARENH0
