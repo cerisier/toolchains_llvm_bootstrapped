@@ -133,4 +133,4 @@ cc_tool(
 
 ######
 
-# declare_toolchains()
+declare_toolchains()
