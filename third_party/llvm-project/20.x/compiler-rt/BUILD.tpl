@@ -442,7 +442,7 @@ cc_stage2_library(
             "@kernel_headers//:kernel_headers",
         ],
         "@platforms//os:windows": [
-            # "@mingw//:mingw_headers",
+            "@mingw//:mingw_headers",
         ],
     }) + select({
         "@toolchains_llvm_bootstrapped//constraints/libc:musl": [

@@ -21,6 +21,9 @@ def cc_toolchain(name, tool_map):
                 "//toolchain/features:static_link_cpp_runtimes",
             ],
             "@platforms//os:macos": [],
+            "@platforms//os:windows": [
+                "//toolchain/features:static_link_cpp_runtimes",
+            ],
             "@platforms//os:none": [],
         }) + [
             "@rules_cc//cc/toolchains/args:experimental_replace_legacy_action_config_features",

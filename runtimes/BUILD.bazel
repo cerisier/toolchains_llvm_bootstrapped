@@ -19,6 +19,11 @@ filegroup(
             ## only if libcxx on linux
             "@libunwind//:libunwind.static",
         ],
+        "@platforms//os:windows": [
+            "@libcxx//:libcxx.static",
+            "@libcxxabi//:libcxxabi.static",
+            "@libunwind//:libunwind.static",
+        ],
         "//conditions:default": [],
     }),
     visibility = ["//toolchain:__subpackages__"],
@@ -34,6 +39,7 @@ filegroup(
             # TODO(zbarsky): Enable this? libunwind depends on a another shared lib which loses GraphNodeInfo provider
             #"@libunwind//:libunwind.shared",
         ],
+        # TODO(zbarsky): windows?
         "//conditions:default": [],
     }),
     visibility = ["//toolchain:__subpackages__"],
@@ -69,7 +75,7 @@ cc_stage2_object(
 )
 
 copy_to_directory(
-    name = "crt_objects_directory",
+    name = "crt_objects_directory_linux",
     srcs = select({
         "@toolchains_llvm_bootstrapped//constraints/libc:musl": [
             # -static-pie is implied
@@ -100,5 +106,14 @@ copy_to_directory(
         ".",
         "runtimes/musl",
     ],
+    visibility = ["//visibility:public"],
+)
+
+
+alias(
+    name = "crt_objects_directory",
+    actual = select({
+        "@platforms//os:linux": ":crt_objects_directory_linux",
+    }),
     visibility = ["//visibility:public"],
 )

@@ -117,12 +117,17 @@ cc_library(
         "@platforms//os:linux": [
             "@kernel_headers//:kernel_headers",
         ],
+        "@platforms//os:windows": [
+            "@mingw//:mingw_headers",
+        ],
     }) + [
         "@toolchains_llvm_bootstrapped//third_party/llvm-project:libc_headers",
     ] + select({
         "@toolchains_llvm_bootstrapped//constraints/libc:musl": [
             "@musl_libc//:musl_libc_headers",
         ],
+        "@platforms//os:windows": [],
+        "@platforms//os:macos": [],
         "//conditions:default": [
             "@glibc//:gnu_libc_headers",
         ],
