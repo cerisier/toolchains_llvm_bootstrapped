@@ -64,7 +64,13 @@ cc_library(
         "-Wno-covered-switch-default",
         "-Wno-suggest-override",
         "-funwind-tables", # if exceptions
-    ],
+    ] + select({
+        "@platforms//os:windows": [
+            "-Wno-pragma-pack",
+            "-Wno-unused-value",
+        ],
+        "//conditions:default": [],
+    }),
     includes = [
         "include",
         "src",

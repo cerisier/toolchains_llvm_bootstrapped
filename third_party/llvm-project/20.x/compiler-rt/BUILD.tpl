@@ -367,6 +367,10 @@ cc_stage2_library(
             # TODO(zbarsky): This is spammy, but we should do a real fix.
             # "-Wno-macro-redefined",
          ],
+        "@platforms//os:windows": [
+            "-Wno-missing-declarations",
+            "-Wno-pragma-pack",
+        ],
         "//conditions:default": [],
     }),
     local_defines = selects.with_or({

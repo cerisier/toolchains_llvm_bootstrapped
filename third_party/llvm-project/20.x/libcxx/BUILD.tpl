@@ -1242,7 +1242,13 @@ cc_library(
         "-Wno-user-defined-literals",
         "-Wno-covered-switch-default",
         "-Wno-suggest-override",
-    ],
+    ] + select({
+        "@platforms//os:windows": [
+            "-Wno-pragma-pack",
+            "-Wno-unused-value",
+        ],
+        "//conditions:default": [],
+    }),
     includes = [
         "include",
         "src",

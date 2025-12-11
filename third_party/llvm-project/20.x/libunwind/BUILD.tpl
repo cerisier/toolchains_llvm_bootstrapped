@@ -15,7 +15,16 @@ cc_stage2_library(
         "-Wno-visibility",
         "-Wno-incompatible-pointer-types",
         "-Wno-dll-attribute-on-redeclaration",
-    ],
+    ] + select({
+        "@platforms//os:windows": [
+            "-Wno-macro-redefined", # TODO(zbarsky): Is this masking a real issue?
+            "-Wno-missing-declarations",
+            "-Wno-pragma-pack",
+            "-Wno-typedef-redefinition",
+            "-Wno-unused-value",
+        ],
+        "//conditions:default": [],
+    }),
     conlyopts = [
         "-std=c99",
         "-fexceptions",
