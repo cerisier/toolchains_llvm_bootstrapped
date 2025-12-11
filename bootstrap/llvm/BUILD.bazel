@@ -1,7 +1,6 @@
 load("@bazel_lib//lib:transitions.bzl", "platform_transition_filegroup")
 load("//bootstrap:platforms.bzl", "PLATFORMS")
 load("//bootstrap/llvm:llvm_release.bzl", "llvm_release")
-load("@llvm-project//:vars.bzl", "LLVM_VERSION_MAJOR", "LLVM_VERSION_MINOR", "LLVM_VERSION_PATCH")
 
 llvm_release(name = "llvm_release")
 
