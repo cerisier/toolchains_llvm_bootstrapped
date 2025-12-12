@@ -110,10 +110,6 @@ alias(
 
 define_mingw_imports(
     name = "x86_64",
-    dlltool_flags = [
-        "-m",
-        "i386:x86-64",
-    ],
     directories = [
         "mingw-w64-crt/lib64",
         "mingw-w64-crt/lib-common",
@@ -122,10 +118,6 @@ define_mingw_imports(
 
 define_mingw_imports(
     name = "aarch64",
-    dlltool_flags = [
-        "-m",
-        "arm64",
-    ],
     directories = [
         "mingw-w64-crt/libarm64",
         "mingw-w64-crt/lib-common",

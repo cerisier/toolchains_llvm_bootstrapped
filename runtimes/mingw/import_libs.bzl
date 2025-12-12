@@ -24,12 +24,9 @@ _SKIP_DEF_SUBSTRINGS = [
     "-common",
 ]
 
-_SKIP_DEF_BASENAMES = {
-    "crt-aliases.def.in": True,
-}
-
 def _generate_def_impl(ctx):
     out = ctx.outputs.out
+
     args = ctx.actions.args()
     args.add_all(["-E", "-P", "-xc"])
     args.add("-D{}=1".format(ctx.attr.arch_macro))
@@ -45,8 +42,8 @@ def _generate_def_impl(ctx):
     # 1800 | F_LD64(_o_remainderl) ; Can't use long double functions from the CRT on x86
     args.add("-Wno-invalid-pp-token")
 
-    args.add("-o", out.path)
-    args.add(ctx.file.src.path)
+    args.add("-o", out)
+    args.add(ctx.file.src)
 
     inputs = [ctx.file.src, ctx.file.include_anchor] + ctx.files.additional_includes
 
@@ -56,6 +53,7 @@ def _generate_def_impl(ctx):
         executable = ctx.executable.tool,
         arguments = [args],
         mnemonic = "MingwGenerateDef",
+        execution_requirements = {"supports-path-mapping": "1"},
     )
 
 _generate_def = rule(
@@ -94,6 +92,7 @@ def _ensure_processed_def(path, arch):
 
     if not native.existing_rule(target):
         directory = path.rsplit("/", 1)[0]
+        print(directory)
         additional_includes = [
             f
             for f in native.glob(["%s/*.def.in" % directory], allow_empty = True)
@@ -123,16 +122,17 @@ def _collect_definitions(preferred_dirs, arch):
                     name = name,
                     src = path,
                 )
+            else:
+                fail("Already there")
         for path in sorted(native.glob(["%s/*.def.in" % directory], allow_empty = True)):
             base = path.rsplit("/", 1)[1]
             skip = False
             for substr in _SKIP_DEF_SUBSTRINGS:
                 if substr in base:
                     skip = True
+                    print("SKIP", base)
                     break
             if skip:
-                continue
-            if base in _SKIP_DEF_BASENAMES:
                 continue
             processed = _ensure_processed_def(path, arch)
             name = path.rsplit("/", 1)[1][:-len(".def.in")]
@@ -142,9 +142,11 @@ def _collect_definitions(preferred_dirs, arch):
                     name = name,
                     src = processed,
                 )
+            else:
+                fail("Already there")
     return mappings
 
-def define_mingw_imports(name, dlltool_flags, directories):
+def define_mingw_imports(name, directories):
     defs = _collect_definitions(directories, name)
     import_targets = []
 
@@ -157,7 +159,10 @@ def define_mingw_imports(name, dlltool_flags, directories):
             srcs = [info.src],
             outs = [out],
             tool = ":dlltool",
-            args = dlltool_flags + [
+            args = select({
+                "@platforms//cpu:x86_64": ["-m", "i386:x86-64"],
+                "@platforms//cpu:aarch64": ["-m", "arm64"],
+            }) + [
                 "-d",
                 "$(location %s)" % info.src,
                 "-l",

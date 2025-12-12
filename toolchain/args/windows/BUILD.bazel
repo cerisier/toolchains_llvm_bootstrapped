@@ -39,95 +39,6 @@ cc_args(
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
     args = [
-        "-nodefaultlibs",
-        "-rtlib=compiler-rt",
-        "{clang_rt.builtins.a}",
-    ],
-    format = {
-        "clang_rt.builtins.a": "//runtimes/compiler-rt:clang_rt.builtins.static",
-    },
-    data = [
-        "//runtimes/compiler-rt:clang_rt.builtins.static",
-    ],
-)
-
-cc_args(
-    name = "mingw_built_crt_library_search_paths",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:link_actions",
-    ],
-    args = [
-        "-L{mingw_crt_library_search_path}",
-    ],
-    format = {
-        "mingw_crt_library_search_path": "//runtimes/mingw:mingw_crt_library_search_directory",
-    },
-    data = [
-        "//runtimes/mingw:mingw_crt_library_search_directory",
-    ],
-)
-
-cc_args(
-    name = "libcxx_library_search_paths_windows",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:link_actions",
-    ],
-    args = [
-        "-L{libcxx_library_search_path}",
-    ],
-    format = {
-        "libcxx_library_search_path": "//runtimes/libcxx:libcxx_library_search_directory",
-    },
-    data = [
-        "//runtimes/libcxx:libcxx_library_search_directory",
-    ],
-    target_compatible_with = [
-        "@platforms//os:windows",
-    ],
-)
-
-cc_args(
-    name = "libunwind_library_search_paths_windows",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:link_actions",
-    ],
-    args = [
-        "-L{libunwind_library_search_path}",
-    ],
-    format = {
-        "libunwind_library_search_path": "//runtimes/libunwind:libunwind_library_search_directory",
-    },
-    data = [
-        "//runtimes/libunwind:libunwind_library_search_directory",
-    ],
-    target_compatible_with = [
-        "@platforms//os:windows",
-    ],
-)
-
-cc_args(
-    name = "mingw_library_search_paths",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:link_actions",
-    ],
-    args = [
-        "-L{mingw_library_search_path}",
-    ],
-    format = {
-        "mingw_library_search_path": "@mingw//:mingw_import_libraries_subdirectory",
-    },
-    allowlist_include_directories = [
-        "@mingw//:mingw_import_libraries_subdirectory",
-    ],
-    data = [
-        "@mingw//:mingw_import_libraries_subdirectory",
-    ],
-)
-
-cc_args_list(
-    name = "mingw_built_crt_library_search_args",
-    args = [
-        ":mingw_built_crt_library_search_paths",
     ],
 )
 
@@ -135,7 +46,7 @@ cc_args_list(
     name = "windows_library_search_args",
     args = [
         ":mingw_library_search_paths",
-        ":mingw_built_crt_library_search_args",
+        ":mingw_built_crt_library_search_paths",
     ] + select({
         "@platforms//os:windows": [
             ":libcxx_library_search_paths_windows",
@@ -151,6 +62,13 @@ cc_args(
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
     args = [
+        "-L{mingw_import_library_search_path}",
+        "-L{mingw_crt_library_search_path}",
+
+        "-nodefaultlibs",
+        "-rtlib=compiler-rt",
+
+        "-lmingw32",
         "-lmoldname",
         "-lmsvcrt",
         "-lmingwex",
@@ -161,12 +79,13 @@ cc_args(
         "-lshell32",
         "-luser32",
         "-lkernel32",
-        "-L{mingw_library_search_path}",
     ],
     format = {
-        "mingw_library_search_path": "//runtimes/mingw:mingw_crt_library_search_directory",
+        "mingw_crt_library_search_path": "//runtimes/mingw:mingw_crt_library_search_directory",
+        "mingw_import_library_search_path": "@mingw//:mingw_import_libraries_subdirectory",
     },
     data = [
         "//runtimes/mingw:mingw_crt_library_search_directory",
+        "@mingw//:mingw_import_libraries_subdirectory",
     ],
 )
