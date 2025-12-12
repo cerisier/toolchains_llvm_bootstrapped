@@ -109,11 +109,27 @@ copy_to_directory(
     visibility = ["//visibility:public"],
 )
 
+copy_to_directory(
+    name = "crt_objects_directory_windows",
+    srcs = [
+        "//runtimes/mingw:crtbegin.o",
+        "//runtimes/mingw:crtend.o",
+        "//runtimes/mingw:crt2.o",
+    ],
+    target_compatible_with = [
+        "@platforms//os:windows",
+    ],
+    root_paths = [
+        "runtimes/mingw",
+    ],
+    visibility = ["//visibility:public"],
+)
 
 alias(
     name = "crt_objects_directory",
     actual = select({
         "@platforms//os:linux": ":crt_objects_directory_linux",
+        "@platforms//os:windows": ":crt_objects_directory_windows",
     }),
     visibility = ["//visibility:public"],
 )

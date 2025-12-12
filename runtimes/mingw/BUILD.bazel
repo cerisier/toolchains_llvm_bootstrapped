@@ -2,6 +2,7 @@ load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_library.bzl", "cc_stage2_library")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_static_library.bzl", "cc_stage2_static_library")
 load("//runtimes:defs.bzl", "stub_library")
+load(":crt_object.bzl", "crt_object")
 
 MINGW_CRT_COMMON_COPTS = [
     "-D_CRTBLD",
@@ -62,7 +63,6 @@ cc_stage2_static_library(
     name = "mingwex",
     deps = [":mingwex_crt_lib"],
 )
-
 
 cc_stage2_library(
     name = "ucrtbase_crt_lib",
@@ -135,4 +135,39 @@ copy_to_directory(
         ".",
         "windows",
     ],
+)
+
+MINGW_CRT_OBJECT_COPTS = MINGW_CRT_COMMON_COPTS + [
+    "-D_SYSCRT=1",
+]
+
+crt_object(
+    name = "mingw_crtbegin",
+    out = "crtbegin.o",
+    srcs = ["@mingw//:mingw-w64-crt/crt/crtbegin.c"],
+    copts = MINGW_CRT_OBJECT_COPTS,
+    visibility = ["//visibility:public"],
+)
+
+crt_object(
+    name = "mingw_crtend",
+    srcs = ["@mingw//:mingw-w64-crt/crt/crtend.c"],
+    out = "crtend.o",
+    textual_hdrs = [
+        "@mingw//:mingw_headers",
+    ],
+    copts = MINGW_CRT_OBJECT_COPTS,
+    visibility = ["//visibility:public"],
+)
+
+crt_object(
+    name = "mingw_crt2",
+    out = "crt2.o",
+    srcs = ["@mingw//:mingw-w64-crt/crt/crtexe.c"],
+    implementation_deps = [
+        "@mingw//:mingw_headers",
+        "@mingw//:mingw_crt_headers",
+    ],
+    copts = MINGW_CRT_OBJECT_COPTS,
+    visibility = ["//visibility:public"],
 )
