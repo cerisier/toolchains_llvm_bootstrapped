@@ -57,7 +57,7 @@ LLVM_TOOLCHAIN_EXTRAS_SHA256 = {
 [
     http_archive(
         name = "static-extras-toolchain-artifacts-{target}".format(target = target.replace("-musl", "")),
-        build_file = "//bootstrap/extras:BUILD.extras.tpl",
+        build_file = "//prebuilt/extras:BUILD.extras.tpl",
         sha256 = sha256,
         urls = ["https://github.com/cerisier/toolchains_llvm_bootstrapped/releases/download/bootstrap%2Fextras%2F20250505/toolchain-extra-prebuilts-20250505-{target}.tar.zst".format(target = target)],
     )

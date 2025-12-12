@@ -1,6 +1,6 @@
 load("@bazel_lib//lib:transitions.bzl", "platform_transition_filegroup")
-load("//bootstrap:platforms.bzl", "PLATFORMS")
-load("//bootstrap/extras:extra_bins_release.bzl", "extra_bins_release")
+load("//prebuilt:platforms.bzl", "PLATFORMS")
+load("//prebuilt/extras:extra_bins_release.bzl", "extra_bins_release")
 
 [
     extra_bins_release(name = platform.split(":")[1])

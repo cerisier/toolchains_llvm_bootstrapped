@@ -22,18 +22,17 @@ common:wasm       --@rules_go//go/config:pure
 common:wasm       --config=stage1
 
 # TODO: LLVM doesn't compile otherwise due to "zlib.h" vs <zlib.h> usage.
-common:bootstrap  --@llvm_zlib//:llvm_enable_zlib=false
-
-common:bootstrap   -c opt
-common:bootstrap   --strip=always
-common:bootstrap   --stripopt=--strip-all
-common:bootstrap   --copt=-flto=thin
-common:bootstrap   --copt=-fno-exceptions
-common:bootstrap   --copt=-fno-rtti
-common:bootstrap   --copt=-fomit-frame-pointer
-common:bootstrap   --dynamic_mode=off
-common:bootstrap   --extra_toolchains=//toolchain/...
-common:bootstrap   --@rules_python//python/config_settings:bootstrap_impl=script
+common:prebuilt --@llvm_zlib//:llvm_enable_zlib=false
+common:prebuilt  -c opt
+common:prebuilt  --strip=always
+common:prebuilt  --stripopt=--strip-all
+common:prebuilt  --copt=-flto=thin
+common:prebuilt  --copt=-fno-exceptions
+common:prebuilt  --copt=-fno-rtti
+common:prebuilt  --copt=-fomit-frame-pointer
+common:prebuilt  --dynamic_mode=off
+common:prebuilt  --extra_toolchains=//toolchain/...
+common:prebuilt  --@rules_python//python/config_settings:bootstrap_impl=script
 
 common:rust    --@toolchains_llvm_bootstrapped//config:experimental_stub_libgcc_s=True
 common:rust    --@rules_cc//cc/toolchains/args/archiver_flags:use_libtool_on_macos=False
