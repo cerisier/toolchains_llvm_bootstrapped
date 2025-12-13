@@ -3,7 +3,7 @@ load("@bazel_skylib//rules/directory:subdirectory.bzl", "subdirectory")
 load("@bazel_skylib//rules:expand_template.bzl", "expand_template")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@toolchains_llvm_bootstrapped//toolchain:selects.bzl", "platform_llvm_binary")
-load("@toolchains_llvm_bootstrapped//runtimes/mingw:import_libs.bzl", "define_mingw_imports")
+load("@toolchains_llvm_bootstrapped//runtimes/mingw:import_libs.bzl", "mingw_import_libraries")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_library.bzl", "cc_stage2_library")
 load(
     "@toolchains_llvm_bootstrapped//runtimes/mingw:crt_sources.bzl",
@@ -108,22 +108,6 @@ alias(
     actual = platform_llvm_binary("bin/clang"),
 )
 
-define_mingw_imports(
-    name = "x86_64",
-    directories = [
-        "mingw-w64-crt/lib64",
-        "mingw-w64-crt/lib-common",
-    ],
-)
-
-define_mingw_imports(
-    name = "aarch64",
-    directories = [
-        "mingw-w64-crt/libarm64",
-        "mingw-w64-crt/lib-common",
-    ],
-)
-
 cc_stage2_library(
     name = "mingw_headers",
     hdrs = glob([
@@ -209,21 +193,24 @@ subdirectory(
     visibility = ["//visibility:public"],
 )
 
+mingw_import_libraries(
+    name = "mingw_import_libraries_common",
+    directory = "mingw-w64-crt/lib-common",
+)
+
+mingw_import_libraries(
+    name = "mingw_import_libraries_x86_64",
+    directory = "mingw-w64-crt/lib64",
+)
+
 directory(
     name = "mingw_import_libraries_directory",
     srcs = [
-        ":mingw_import_libraries_x86_64",
-        ":mingw_import_libraries_aarch64",
-    ],
-    visibility = ["//visibility:public"],
-)
-
-subdirectory(
-    name = "mingw_import_libraries_subdirectory",
-    parent = ":mingw_import_libraries_directory",
-    path = select({
-        "@platforms//cpu:x86_64": "import-libs/x86_64",
-        "@platforms//cpu:aarch64": "import-libs/aarch64",
+        ":mingw_import_libraries_common",
+    ] + select({
+        "@platforms//cpu:x86_64": [":mingw_import_libraries_x86_64"],
+        # Aarch64 are fully templatized in .def.in files, x86_64 have not been merged yet.
+        "@platforms//cpu:aarch64": [],
     }),
     visibility = ["//visibility:public"],
 )

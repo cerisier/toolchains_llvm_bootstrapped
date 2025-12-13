@@ -1,29 +1,5 @@
 load("@bazel_lib//lib:run_binary.bzl", "run_binary")
 
-def _sanitize_label(segment):
-    result = []
-    for idx in range(len(segment)):
-        c = segment[idx:idx + 1].lower()
-        if (("a" <= c) and (c <= "z")) or (("0" <= c) and (c <= "9")):
-            result.append(c)
-        else:
-            result.append("_")
-    value = "".join(result)
-    if not value:
-        fail("Cannot sanitize empty label segment")
-    if ("0" <= value[0]) and (value[0] <= "9"):
-        value = "_" + value
-    return value
-
-_ARCH_MACROS = {
-    "x86_64": "__x86_64__",
-    "aarch64": "__aarch64__",
-}
-
-_SKIP_DEF_SUBSTRINGS = [
-    "-common",
-]
-
 def _generate_def_impl(ctx):
     out = ctx.outputs.out
 
@@ -35,8 +11,7 @@ def _generate_def_impl(ctx):
         ctx.file.include_anchor.dirname,
         ctx.file.src.dirname,
     ]
-    for include_dir in include_dirs:
-        args.add("-I", include_dir)
+    args.add_all(include_dirs, before_each = "-I")
 
     # ucrtbase-common.def.in:1800:28: warning: missing terminating ' character [-Winvalid-pp-token]
     # 1800 | F_LD64(_o_remainderl) ; Can't use long double functions from the CRT on x86
@@ -81,99 +56,66 @@ _generate_def = rule(
     },
 )
 
-def _ensure_processed_def(path, arch):
-    if arch not in _ARCH_MACROS:
-        fail("Unsupported architecture {} for {}".format(arch, path))
+def _collect_definitions(directory):
+    mappings = {}
 
-    base = path.rsplit("/", 1)[1][:-len(".def.in")]
-    out = "generated-defs/{}/{}.def".format(arch, base)
-    target = "generate_def_{}_{}".format(arch, _sanitize_label(base))
-    macro = _ARCH_MACROS[arch]
+    for path in sorted(native.glob([directory + "/*.def"])):
+        name = path[path.rfind("/") + 1:-len(".def")]
+        mappings[name] = path
 
-    if not native.existing_rule(target):
-        directory = path.rsplit("/", 1)[0]
-        print(directory)
-        additional_includes = [
-            f
-            for f in native.glob(["%s/*.def.in" % directory], allow_empty = True)
-            if f != path
-        ]
+    def_ins = native.glob([directory + "/*.def.in"], allow_empty = True)
+
+    for path in def_ins:
+        base = path[path.rfind("/") + 1:-len(".def.in")]
+
+        if "-common" in base:
+            continue
+
+        out = base + ".def"
+
         _generate_def(
-            name = target,
+            name = "generate_def_{}".format(base),
             src = path,
             include_anchor = "mingw-w64-crt/def-include/func.def.in",
             additional_includes = [
                 "mingw-w64-crt/def-include/crt-aliases.def.in",
-            ] + additional_includes,
+            ] + def_ins,
             tool = ":clang_for_def",
-            arch_macro = macro,
+            arch_macro = select({
+                "@platforms//cpu:x86_64": "__x86_64__",
+                "@platforms//cpu:aarch64": "__aarch64__",
+            }),
             out = out,
         )
-    return out
 
-def _collect_definitions(preferred_dirs, arch):
-    mappings = {}
-    for directory in preferred_dirs:
-        for path in sorted(native.glob(["%s/*.def" % directory], allow_empty = True)):
-            name = path.rsplit("/", 1)[1][:-4]
-            key = _sanitize_label(name)
-            if key not in mappings:
-                mappings[key] = struct(
-                    name = name,
-                    src = path,
-                )
-            else:
-                fail("Already there")
-        for path in sorted(native.glob(["%s/*.def.in" % directory], allow_empty = True)):
-            base = path.rsplit("/", 1)[1]
-            skip = False
-            for substr in _SKIP_DEF_SUBSTRINGS:
-                if substr in base:
-                    skip = True
-                    print("SKIP", base)
-                    break
-            if skip:
-                continue
-            processed = _ensure_processed_def(path, arch)
-            name = path.rsplit("/", 1)[1][:-len(".def.in")]
-            key = _sanitize_label(name)
-            if key not in mappings:
-                mappings[key] = struct(
-                    name = name,
-                    src = processed,
-                )
-            else:
-                fail("Already there")
+        mappings[base] = out
+
     return mappings
 
-def define_mingw_imports(name, directories):
-    defs = _collect_definitions(directories, name)
+def mingw_import_libraries(name, directory):
+    defs = _collect_definitions(directory)
     import_targets = []
 
-    for key in sorted(defs.keys()):
-        info = defs[key]
-        out = "import-libs/{}/lib{}.a".format(name, info.name)
-        target = "import_lib_{}_{}".format(name, key)
+    for lib_name, src in defs.items():
+        target = "import_lib_" + lib_name
         run_binary(
             name = target,
-            srcs = [info.src],
-            outs = [out],
+            srcs = [src],
+            outs = ["lib{}.a".format(lib_name)],
             tool = ":dlltool",
             args = select({
                 "@platforms//cpu:x86_64": ["-m", "i386:x86-64"],
                 "@platforms//cpu:aarch64": ["-m", "arm64"],
             }) + [
                 "-d",
-                "$(location %s)" % info.src,
+                "$(location %s)" % src,
                 "-l",
                 "$@",
             ],
-            visibility = ["//visibility:public"],
         )
         import_targets.append(target)
 
     native.filegroup(
-        name = "mingw_import_libraries_{}".format(name),
+        name = name,
         srcs = import_targets,
-        visibility = ["//visibility:public"],
     )
