@@ -1,4 +1,5 @@
 load("@bazel_skylib//rules/directory:directory.bzl", "directory")
+load("@bazel_skylib//rules/directory:subdirectory.bzl", "subdirectory")
 load("@bazel_skylib//rules:expand_template.bzl", "expand_template")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@toolchains_llvm_bootstrapped//runtimes/mingw:import_libs.bzl", "mingw_import_libraries")
@@ -131,6 +132,29 @@ expand_template(
     out = "mingw-w64-headers/crt/_mingw.h",
 )
 
+directory(
+    name = "mingw_headers_directory",
+    srcs = glob([
+        "mingw-w64-headers/include/**",
+        "mingw-w64-headers/crt/**",
+    ]),
+    visibility = ["//visibility:public"],
+)
+
+subdirectory(
+    name = "mingw_w64_headers_include_directory",
+    parent = ":mingw_headers_directory",
+    path = "mingw-w64-headers/include",
+    visibility = ["//visibility:public"],
+)
+
+subdirectory(
+    name = "mingw_w64_headers_crt_directory",
+    parent = ":mingw_headers_directory",
+    path = "mingw-w64-headers/crt",
+    visibility = ["//visibility:public"],
+)
+
 write_file(
     name = "gen_mingw_ddk.h",
     out = "mingw-w64-headers/crt/sdks/_mingw_ddk.h",
@@ -140,6 +164,22 @@ write_file(
         "",
         "#endif /* _MINGW_DDK_H_ */",
     ],
+)
+
+directory(
+    name = "mingw_generated_headers_directory",
+    srcs = [
+        "mingw-w64-headers/crt/_mingw.h",
+        "mingw-w64-headers/crt/sdks/_mingw_ddk.h",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+subdirectory(
+    name = "mingw_generated_headers_crt_directory",
+    parent = ":mingw_generated_headers_directory",
+    path = "mingw-w64-headers/crt",
+    visibility = ["//visibility:public"],
 )
 
 mingw_import_libraries(
