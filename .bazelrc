@@ -14,6 +14,9 @@ common --repo_env=BAZEL_NO_APPLE_CPP_TOOLCHAIN=1
 common --experimental_cc_static_library
 common --experimental_platform_in_output_dir
 
+# TODO(zbarsky): Remove this one we upgrade llvm
+common --incompatible_autoload_externally=@rules_shell,@com_google_protobuf,java_binary,+JavaInfo,+@rules_cc
+
 common:stage1   --extra_toolchains=@toolchains_llvm_bootstrapped//toolchain/stage1:all
 
 # Workaround lack of cgo support for now
@@ -26,7 +29,7 @@ common:prebuilt --@llvm_zlib//:llvm_enable_zlib=false
 common:prebuilt  -c opt
 common:prebuilt  --strip=always
 common:prebuilt  --stripopt=--strip-all
-common:prebuilt  --copt=-flto=thin
+#common:prebuilt  --copt=-flto=thin
 common:prebuilt  --copt=-fno-exceptions
 common:prebuilt  --copt=-fno-rtti
 common:prebuilt  --copt=-fomit-frame-pointer

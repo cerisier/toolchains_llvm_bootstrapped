@@ -1,5 +1,10 @@
 # See https://github.com/mingw-w64/mingw-w64/blob/c2167bc6da600f7fdbd131734767a67ffb9e970e/mingw-w64-crt/Makefile.am
 
+MINGW32_TEXTUAL_HDRS = [
+    "crt/dll_argv.c",
+    "crt/dllargv.c",
+]
+
 MINGW32_SRCS = [
     "crt/CRT_fp8.c",
     "crt/dll_argv.c",
@@ -30,6 +35,7 @@ MINGW32_SRCS = [
     "crt/cxa_atexit.c",
     "crt/cxa_thread_atexit.c",
     "crt/tls_atexit.c",
+    "revstamp.h",
 ]
 
 MINGW32_HDRS = [
@@ -270,13 +276,21 @@ MINGWEX_SRCS = [
     "stdio/mingw_vsscanf.c",
     "stdio/mingw_sformat.c",
     "stdio/mingw_swformat.c",
+    "stdio/swprintf.c",
+    "stdio/snprintf_alias.c",
     "stdio/snprintf.c",
+    "stdio/snwprintf_alias.c",
     "stdio/snwprintf.c",
+    "stdio/swprintf_alias.c",
+    "stdio/vsnprintf_alias.c",
     "stdio/truncate.c",
+    "stdio/vsnprintf.c",
+    "stdio/vsnwprintf_alias.c",
     "stdio/ulltoa.c",
     "stdio/ulltow.c",
     "stdio/vasprintf.c",
-    "stdio/vsnprintf.c",
+    "stdio/vswprintf.c",
+    "stdio/vswprintf_alias.c",
     "stdio/vsnwprintf.c",
     "stdio/wtoll.c",
     "stdio/mingw_asprintf.c",

@@ -1,0 +1,407 @@
+commit 2d283616a2b81dacc0b9e9c1d26eba36c77d23ac
+Author: David Zbarsky <dzbarsky@gmail.com>
+Date:   Mon Dec 8 13:55:15 2025 -0500
+
+    No more genrules
+
+diff --git a/llvm/lib/Support/BLAKE3/blake3_avx2_x86-64_unix.S b/llvm/lib/Support/BLAKE3/blake3_avx2_x86-64_unix.S
+index e98893c7ef8b..d6fa51638da3 100644
+--- a/llvm/lib/Support/BLAKE3/blake3_avx2_x86-64_unix.S
++++ b/llvm/lib/Support/BLAKE3/blake3_avx2_x86-64_unix.S
+@@ -16,15 +16,17 @@
+ #define _CET_ENDBR
+ #endif
+ 
+-#ifdef __APPLE__
+-#define HIDDEN .private_extern
++#if defined(__APPLE__)
++#define HIDDEN(symbol) .private_extern symbol
++#elif defined(__ELF__)
++#define HIDDEN(symbol) .hidden symbol
+ #else
+-#define HIDDEN .hidden
++#define HIDDEN(symbol)
+ #endif
+ 
+ .intel_syntax noprefix
+-HIDDEN _blake3_hash_many_avx2
+-HIDDEN blake3_hash_many_avx2
++HIDDEN(_blake3_hash_many_avx2)
++HIDDEN(blake3_hash_many_avx2)
+ .global _blake3_hash_many_avx2
+ .global blake3_hash_many_avx2
+ #ifdef __APPLE__
+diff --git a/llvm/lib/Support/BLAKE3/blake3_avx512_x86-64_unix.S b/llvm/lib/Support/BLAKE3/blake3_avx512_x86-64_unix.S
+index b4b14946de10..cf2c88329af5 100644
+--- a/llvm/lib/Support/BLAKE3/blake3_avx512_x86-64_unix.S
++++ b/llvm/lib/Support/BLAKE3/blake3_avx512_x86-64_unix.S
+@@ -16,21 +16,23 @@
+ #define _CET_ENDBR
+ #endif
+ 
+-#ifdef __APPLE__
+-#define HIDDEN .private_extern
++#if defined(__APPLE__)
++#define HIDDEN(symbol) .private_extern symbol
++#elif defined(__ELF__)
++#define HIDDEN(symbol) .hidden symbol
+ #else
+-#define HIDDEN .hidden
++#define HIDDEN(symbol)
+ #endif
+ 
+ .intel_syntax noprefix
+-HIDDEN _blake3_hash_many_avx512
+-HIDDEN blake3_hash_many_avx512
+-HIDDEN blake3_compress_in_place_avx512
+-HIDDEN _blake3_compress_in_place_avx512
+-HIDDEN blake3_compress_xof_avx512
+-HIDDEN _blake3_compress_xof_avx512
+-HIDDEN blake3_xof_many_avx512
+-HIDDEN _blake3_xof_many_avx512
++HIDDEN(_blake3_hash_many_avx512)
++HIDDEN(blake3_hash_many_avx512)
++HIDDEN(blake3_compress_in_place_avx512)
++HIDDEN(_blake3_compress_in_place_avx512)
++HIDDEN(blake3_compress_xof_avx512)
++HIDDEN(_blake3_compress_xof_avx512)
++HIDDEN(blake3_xof_many_avx512)
++HIDDEN(_blake3_xof_many_avx512)
+ .global _blake3_hash_many_avx512
+ .global blake3_hash_many_avx512
+ .global blake3_compress_in_place_avx512
+diff --git a/llvm/lib/Support/BLAKE3/blake3_sse2_x86-64_unix.S b/llvm/lib/Support/BLAKE3/blake3_sse2_x86-64_unix.S
+index d69a1706fefe..5563fc3b5ba0 100644
+--- a/llvm/lib/Support/BLAKE3/blake3_sse2_x86-64_unix.S
++++ b/llvm/lib/Support/BLAKE3/blake3_sse2_x86-64_unix.S
+@@ -16,19 +16,21 @@
+ #define _CET_ENDBR
+ #endif
+ 
+-#ifdef __APPLE__
+-#define HIDDEN .private_extern
++#if defined(__APPLE__)
++#define HIDDEN(symbol) .private_extern symbol
++#elif defined(__ELF__)
++#define HIDDEN(symbol) .hidden symbol
+ #else
+-#define HIDDEN .hidden
++#define HIDDEN(symbol)
+ #endif
+ 
+ .intel_syntax noprefix
+-HIDDEN blake3_hash_many_sse2
+-HIDDEN _blake3_hash_many_sse2
+-HIDDEN blake3_compress_in_place_sse2
+-HIDDEN _blake3_compress_in_place_sse2
+-HIDDEN blake3_compress_xof_sse2
+-HIDDEN _blake3_compress_xof_sse2
++HIDDEN(blake3_hash_many_sse2)
++HIDDEN(_blake3_hash_many_sse2)
++HIDDEN(blake3_compress_in_place_sse2)
++HIDDEN(_blake3_compress_in_place_sse2)
++HIDDEN(blake3_compress_xof_sse2)
++HIDDEN(_blake3_compress_xof_sse2)
+ .global blake3_hash_many_sse2
+ .global _blake3_hash_many_sse2
+ .global blake3_compress_in_place_sse2
+diff --git a/llvm/lib/Support/BLAKE3/blake3_sse41_x86-64_unix.S b/llvm/lib/Support/BLAKE3/blake3_sse41_x86-64_unix.S
+index c5b103af61c4..5866bfb7ae46 100644
+--- a/llvm/lib/Support/BLAKE3/blake3_sse41_x86-64_unix.S
++++ b/llvm/lib/Support/BLAKE3/blake3_sse41_x86-64_unix.S
+@@ -16,19 +16,21 @@
+ #define _CET_ENDBR
+ #endif
+ 
+-#ifdef __APPLE__
+-#define HIDDEN .private_extern
++#if defined(__APPLE__)
++#define HIDDEN(symbol) .private_extern symbol
++#elif defined(__ELF__)
++#define HIDDEN(symbol) .hidden symbol
+ #else
+-#define HIDDEN .hidden
++#define HIDDEN(symbol)
+ #endif
+ 
+ .intel_syntax noprefix
+-HIDDEN blake3_hash_many_sse41
+-HIDDEN _blake3_hash_many_sse41
+-HIDDEN blake3_compress_in_place_sse41
+-HIDDEN _blake3_compress_in_place_sse41
+-HIDDEN blake3_compress_xof_sse41
+-HIDDEN _blake3_compress_xof_sse41
++HIDDEN(blake3_hash_many_sse41)
++HIDDEN(_blake3_hash_many_sse41)
++HIDDEN(blake3_compress_in_place_sse41)
++HIDDEN(_blake3_compress_in_place_sse41)
++HIDDEN(blake3_compress_xof_sse41)
++HIDDEN(_blake3_compress_xof_sse41)
+ .global blake3_hash_many_sse41
+ .global _blake3_hash_many_sse41
+ .global blake3_compress_in_place_sse41
+diff --git a/utils/bazel/llvm-project-overlay/clang/BUILD.bazel b/utils/bazel/llvm-project-overlay/clang/BUILD.bazel
+index 9500eaea31cc..794c74908f62 100644
+--- a/utils/bazel/llvm-project-overlay/clang/BUILD.bazel
++++ b/utils/bazel/llvm-project-overlay/clang/BUILD.bazel
+@@ -2,9 +2,11 @@
+ # See https://llvm.org/LICENSE.txt for license information.
+ # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+ 
++load("@aspect_rules_py//py:defs.bzl", "py_binary")
++load("@bazel_lib//lib:run_binary.bzl", "run_binary")
+ load("@bazel_skylib//rules/directory:directory.bzl", "directory")
+ load("@bazel_skylib//rules/directory:subdirectory.bzl", "subdirectory")
+-load("@rules_python//python:defs.bzl", "py_binary")
++load("@bazel_skylib//rules:write_file.bzl", "write_file")
+ load(
+     "//:vars.bzl",
+     "LLVM_VERSION_MAJOR",
+@@ -563,23 +565,18 @@ exports_files(
+     glob(["include/**/*.td"]),
+ )
+ 
+-genrule(
++write_file(
+     name = "basic_version_gen",
+-    outs = ["include/clang/Basic/Version.inc"],
+-    cmd = (
+-        "echo '#define CLANG_VERSION {vers}' >> $@\n" +
+-        "echo '#define CLANG_VERSION_MAJOR {major}' >> $@\n" +
+-        "echo '#define CLANG_VERSION_MAJOR_STRING \"{major}\"' >> $@\n" +
+-        "echo '#define CLANG_VERSION_MINOR {minor}' >> $@\n" +
+-        "echo '#define CLANG_VERSION_PATCHLEVEL {patch}' >> $@\n" +
+-        "echo '#define MAX_CLANG_ABI_COMPAT_VERSION {major}' >> $@\n" +
+-        "echo '#define CLANG_VERSION_STRING \"{vers}\"' >> $@\n"
+-    ).format(
+-        major = LLVM_VERSION_MAJOR,
+-        minor = LLVM_VERSION_MINOR,
+-        patch = LLVM_VERSION_PATCH,
+-        vers = PACKAGE_VERSION,
+-    ),
++    out = "include/clang/Basic/Version.inc",
++    content = [
++        "#define CLANG_VERSION {}".format(PACKAGE_VERSION),
++        "#define CLANG_VERSION_MAJOR {}".format(LLVM_VERSION_MAJOR),
++        "#define CLANG_VERSION_MAJOR_STRING \"{}\"".format(LLVM_VERSION_MAJOR),
++        "#define CLANG_VERSION_MINOR {}".format(LLVM_VERSION_MINOR),
++        "#define CLANG_VERSION_PATCHLEVEL {}".format(LLVM_VERSION_PATCH),
++        "#define MAX_CLANG_ABI_COMPAT_VERSION {}".format(LLVM_VERSION_MAJOR),
++        "#define CLANG_VERSION_STRING \"{}\"".format(PACKAGE_VERSION),
++    ],
+ )
+ 
+ cc_library(
+@@ -597,13 +594,15 @@ cc_library(
+ 
+ # TODO: This should get replaced with something that actually generates the
+ # correct version number.
+-genrule(
++write_file(
+     name = "vcs_version_gen",
+     # This should be under lib/Basic, but because of how the include paths
+     # are passed through bazel, it's easier to drop generated files next to
+     # the other includes.
+-    outs = ["include/VCSVersion.inc"],
+-    cmd = "echo '#undef CLANG_REVISION' > $@",
++    out = "include/VCSVersion.inc",
++    content = [
++        "#undef CLANG_REVISION",
++    ],
+ )
+ 
+ py_binary(
+@@ -965,16 +964,86 @@ cc_library(
+     ],
+ )
+ 
+-genrule(
++write_file(
++    name = "write_bundle_resources_cc",
++    out = "bundle_resources.cc",
++    content = ["""
++#include <filesystem>
++#include <fstream>
++#include <iostream>
++#include <string>
++
++namespace fs = std::filesystem;
++
++// Turn "path/to/a.js" into "a_js"
++static std::string make_varname(const std::string &path) {
++    std::string base = fs::path(path).filename().string();
++    for (char &ch : base) {
++        if (ch == '.')
++            ch = '_';
++    }
++    return base;
++}
++
++int main(int argc, char **argv) {
++    if (argc < 3) {
++        std::cerr << "Usage: " << argv[0] << " OUTFILE INFILES...\\n";
++        return 1;
++    }
++
++    const char *outfile = argv[1];
++    std::ofstream out(outfile);
++    if (!out) {
++        std::cerr << "Error: cannot open output file '" << outfile << "'\\n";
++        return 1;
++    }
++
++    // For each input file
++    for (int i = 2; i < argc; ++i) {
++        const std::string filename = argv[i];
++        std::ifstream in(filename);
++        if (!in) {
++            std::cerr << "Error: cannot open input file '" << filename << "'\\n";
++            return 1;
++        }
++
++        const std::string varname = make_varname(filename);
++        out << "const char " << varname << "[] = \\n";
++
++        std::string line;
++        while (std::getline(in, line)) {
++            // Emit:   R"x(<line>)x" "\\n"
++            out << "  R\\\"x(" << line << ")x\\\" \\\"\\\\n\\\"\\n";
++        }
++
++        out << "  ;\\n";
++    }
++
++    return 0;
++}
++"""],
++)
++
++cc_binary(
++    name = "bundle_resources_cc",
++    srcs = ["bundle_resources.cc"],
++)
++
++run_binary(
+     name = "analysis_htmllogger_gen",
++    tool = ":bundle_resources_cc",
+     srcs = [
+         "lib/Analysis/FlowSensitive/HTMLLogger.html",
+         "lib/Analysis/FlowSensitive/HTMLLogger.css",
+         "lib/Analysis/FlowSensitive/HTMLLogger.js",
+     ],
+     outs = ["lib/Analysis/FlowSensitive/HTMLLogger.inc"],
+-    cmd = "$(location :bundle_resources) $@ $(SRCS)",
+-    tools = [":bundle_resources"],
++    args = [
++        "$@",
++        "$(execpath lib/Analysis/FlowSensitive/HTMLLogger.html)",
++        "$(execpath lib/Analysis/FlowSensitive/HTMLLogger.css)",
++        "$(execpath lib/Analysis/FlowSensitive/HTMLLogger.js)",
++    ],
+ )
+ 
+ cc_library(
+@@ -1512,7 +1581,7 @@ cc_library(
+         "lib/Driver",
+     ],
+     linkopts = select({
+-        "@platforms//os:windows": ["version.lib"],
++        "@platforms//os:windows": ["-lversion"],
+         "//conditions:default": [],
+     }),
+     textual_hdrs = glob([
+diff --git a/utils/bazel/llvm-project-overlay/lld/BUILD.bazel b/utils/bazel/llvm-project-overlay/lld/BUILD.bazel
+index 76957a95a544..dbb26737603c 100644
+--- a/utils/bazel/llvm-project-overlay/lld/BUILD.bazel
++++ b/utils/bazel/llvm-project-overlay/lld/BUILD.bazel
+@@ -9,6 +9,7 @@ load(
+ load("//llvm:binary_alias.bzl", "binary_alias")
+ load("//llvm:driver.bzl", "llvm_driver_cc_binary")
+ load("//mlir:tblgen.bzl", "gentbl_cc_library")
++load("@bazel_skylib//rules:write_file.bzl", "write_file")
+ 
+ package(
+     default_visibility = ["//visibility:public"],
+@@ -18,17 +19,21 @@ package(
+ licenses(["notice"])
+ 
+ # TODO: Actually compute version info
+-genrule(
++write_file(
+     name = "config_version_gen",
+-    outs = ["include/lld/Common/Version.inc"],
+-    cmd = "echo '#define LLD_VERSION_STRING \"{}\"' > $@".format(LLVM_VERSION),
++    out = "include/lld/Common/Version.inc",
++    content = [
++        "#define LLD_VERSION_STRING \"{}\"".format(LLVM_VERSION),
++    ],
+ )
+ 
+-genrule(
++write_file(
+     name = "vcs_version_gen",
+-    outs = ["Common/VCSVersion.inc"],
+-    cmd = "echo '#undef LLD_REVISION' >> $@\n" +
+-          "echo '#undef LLD_REPOSITORY' >> $@\n",
++    out = "Common/VCSVersion.inc",
++    content = [
++        "#undef LLD_REVISION",
++        "#undef LLD_REPOSITORY",
++    ],
+ )
+ 
+ # See https://github.com/bazelbuild/bazel/issues/13803
+diff --git a/utils/bazel/llvm-project-overlay/llvm/BUILD.bazel b/utils/bazel/llvm-project-overlay/llvm/BUILD.bazel
+index 37e79db376b4..d3a0053890c3 100644
+--- a/utils/bazel/llvm-project-overlay/llvm/BUILD.bazel
++++ b/utils/bazel/llvm-project-overlay/llvm/BUILD.bazel
+@@ -4,6 +4,7 @@
+ 
+ load("@bazel_skylib//rules:common_settings.bzl", "string_flag")
+ load("@bazel_skylib//rules:expand_template.bzl", "expand_template")
++load("@bazel_skylib//rules:write_file.bzl", "write_file")
+ load("@rules_python//python:defs.bzl", "py_binary")
+ load("//mlir:tblgen.bzl", "gentbl_cc_library", "gentbl_filegroup", "td_library")
+ load(":binary_alias.bzl", "binary_alias")
+@@ -206,18 +207,22 @@ cc_library(
+     deps = [":config"],
+ )
+ 
+-genrule(
++write_file(
+     name = "generate_vcs_revision",
+-    outs = ["include/llvm/Support/VCSRevision.h"],
+-    cmd = "echo '#undef LLVM_REVISION' >> $@\n" +
+-          "echo '#undef LLVM_REPOSITORY' >> $@\n",
++    out = "include/llvm/Support/VCSRevision.h",
++    content = [
++        "#undef LLVM_REVISION",
++        "#undef LLVM_REPOSITORY",
++    ],
+ )
+ 
+-genrule(
++write_file(
+     name = "generate_static_extension_registry",
+-    outs = ["include/llvm/Support/Extension.def"],
+-    cmd = "echo -e '// extension handlers' >> $@\n" +
+-          "echo -e '#undef HANDLE_EXTENSION' >> $@\n",
++    out = "include/llvm/Support/Extension.def",
++    content = [
++        "// extension handlers",
++        "#undef HANDLE_EXTENSION",
++    ],
+ )
+ 
+ cc_library(
+@@ -295,8 +300,8 @@ cc_library(
+     includes = ["include"],
+     linkopts = select({
+         "@platforms//os:windows": [
+-            "ws2_32.lib",
+-            "ntdll.lib",
++            "-lws2_32",
++            "-lntdll",
+         ],
+         "@platforms//os:freebsd": [
+             "-pthread",

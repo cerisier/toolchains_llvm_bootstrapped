@@ -18,23 +18,6 @@ cc_args(
 )
 
 cc_args(
-    name = "hermetic_compile_flags",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:cpp_compile_actions",
-        "@rules_cc//cc/toolchains/actions:c_compile_actions",
-        # -nostdlibinc triggers a warning for assemble (no preprocess)
-        "@rules_cc//cc/toolchains/actions:preprocess_assemble",
-        "@rules_cc//cc/toolchains/actions:objc_compile",
-        "@rules_cc//cc/toolchains/actions:objcpp_compile",
-    ],
-    args = [
-        # We want to disable everything except builtin headers since they are
-        # provided as part of the compiler toolchain repository.
-        "-nostdlibinc",
-    ],
-)
-
-cc_args(
     name = "hermetic_link_flags",
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
@@ -59,7 +42,7 @@ cc_args_list(
         ],
         "//conditions:default": [],
     }) + [
-        ":hermetic_compile_flags",
+        "//toolchain/args:hermetic_compile_flags",
         ":hermetic_link_flags",
     ],
 )
@@ -106,12 +89,7 @@ cc_args(
     ],
     args = [
         # We need to support copts like -lc -ldl etc...
-        "-L{libcxx_library_search_path}",
         "-L{libc_library_search_path}",
-        "-L{libunwind_library_search_path}",
-        "-L.", # needed to -l:bazel-out/...
-
-        "{clang_rt.builtins.a}",
 
         # In prevention of when all of those can be shared libraries.
         "-Wl,--push-state",
@@ -133,16 +111,10 @@ cc_args(
         "-Wl,--pop-state",
     ],
     data = [
-        "//runtimes/compiler-rt:clang_rt.builtins.static",
-        "//runtimes/libcxx:libcxx_library_search_directory",
         "//runtimes/glibc:glibc_library_search_directory",
-        "//runtimes/libunwind:libunwind_library_search_directory",
     ],
     format = {
-        "clang_rt.builtins.a": "//runtimes/compiler-rt:clang_rt.builtins.static",
-        "libcxx_library_search_path": "//runtimes/libcxx:libcxx_library_search_directory",
         "libc_library_search_path": "//runtimes/glibc:glibc_library_search_directory",
-        "libunwind_library_search_path": "//runtimes/libunwind:libunwind_library_search_directory",
     },
 )
 
@@ -173,12 +145,7 @@ cc_args(
     ],
     args = [
         # We need to support copts like -lc -ldl etc...
-        "-L{libcxx_library_search_path}",
         "-L{libc_library_search_path}",
-        "-L{libunwind_library_search_path}",
-        "-L.", # needed to -l:bazel-out/...
-
-        "{clang_rt.builtins.a}",
 
         # In prevention of when all of those can be shared libraries.
         "-Wl,--push-state",
@@ -200,16 +167,10 @@ cc_args(
         "-Wl,--pop-state",
     ],
     data = [
-        "//runtimes/compiler-rt:clang_rt.builtins.static",
-        "//runtimes/libcxx:libcxx_library_search_directory",
         "//runtimes/musl:musl_library_search_directory",
-        "//runtimes/libunwind:libunwind_library_search_directory",
     ],
     format = {
-        "clang_rt.builtins.a": "//runtimes/compiler-rt:clang_rt.builtins.static",
-        "libcxx_library_search_path": "//runtimes/libcxx:libcxx_library_search_directory",
         "libc_library_search_path": "//runtimes/musl:musl_library_search_directory",
-        "libunwind_library_search_path": "//runtimes/libunwind:libunwind_library_search_directory",
     },
 )
 
