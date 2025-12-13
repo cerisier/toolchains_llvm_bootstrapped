@@ -1,8 +1,14 @@
-load("//platforms:common.bzl", _supported_targets = "SUPPORTED_TARGETS", _supported_execs = "SUPPORTED_EXECS")
+load("//platforms:common.bzl", "SUPPORTED_TARGETS")
 load("//toolchain:cc_toolchain.bzl", "cc_toolchain")
 
 def declare_toolchains():
-    for (exec_os, exec_cpu) in _supported_execs:
+    supported_execs = [
+        (arch, os)
+        for (arch, os) in SUPPORTED_TARGETS
+        if arch != "none" # wasm is no good for us.
+    ]
+
+    for (exec_os, exec_cpu) in supported_execs:
         cc_toolchain_name = "{}_{}_cc_toolchain".format(exec_os, exec_cpu)
 
         # Even though `tool_map` has an exec transition, Bazel doesn't properly handle
@@ -16,7 +22,7 @@ def declare_toolchains():
             }),
         )
 
-        for (target_os, target_cpu) in _supported_targets:
+        for (target_os, target_cpu) in SUPPORTED_TARGETS:
             native.toolchain(
                 name = "{}_{}_to_{}_{}".format(exec_os, exec_cpu, target_os, target_cpu),
                 exec_compatible_with = [
