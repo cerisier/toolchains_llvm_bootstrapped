@@ -1,0 +1,78 @@
+name: CI
+# Controls when the action will run.
+on:
+  # Triggers the workflow on push or pull request events but only for the main branch
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+concurrency:
+  # Cancel previous actions from the same PR or branch except 'main' branch.
+  # See https://docs.github.com/en/actions/using-jobs/using-concurrency and https://docs.github.com/en/actions/learn-github-actions/contexts for more info.
+  group: concurrency-group::${{ github.workflow }}::${{ github.event.pull_request.number > 0 && format('pr-{0}', github.event.pull_request.number) || github.ref_name }}${{ github.ref_name == 'main' && format('::{0}', github.run_id) || ''}}
+  cancel-in-progress: ${{ github.ref_name != 'main' }}
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        # only test on linux for now, macos is not ready.
+        os: [ubuntu-latest, ubuntu-24.04-arm]
+        bazel_version: [8.x, last_rc]
+        folder:
+          - "e2e/rules_cc"
+          - "e2e/rules_rust"
+          - "e2e/cross_compilation"
+          - "e2e/wasm"
+    runs-on: ${{ matrix.os }}
+
+    # Configure a human readable name for each job
+    name: Test ${{ matrix.folder }} with Bazel ${{ matrix.bazel_version }} on ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      # Cache build and external artifacts so that the next ci build is incremental.
+      # Because github action caches cannot be updated after a build, we need to
+      # store the contents of each build in a unique cache key, then fall back to loading
+      # it on the next ci run. We use hashFiles(...) in the key and restore-keys- with
+      # the prefix to load the most recent cache for the branch on a cache miss. You
+      # should customize the contents of hashFiles to capture any bazel input sources,
+      # although this doesn't need to be perfect. If none of the input sources change
+      # then a cache hit will load an existing cache and bazel won't have to do any work.
+      # In the case of a cache miss, you want the fallback cache to contain most of the
+      # previously built artifacts to minimize build time. The more precise you are with
+      # hashFiles sources the less work bazel will have to do.
+      - name: Mount bazel caches
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/bazel-repo
+          key: bazel-cache-${{ matrix.os }}-${{ matrix.bazel_version }}-${{ matrix.folder }}-${{ hashFiles('**/BUILD.bazel', '**/*.bzl', 'MODULE.bazel') }}
+          restore-keys: |
+            bazel-cache-${{ matrix.os }}-${{ matrix.bazel_version }}-${{ matrix.folder }}
+
+      - name: bazel test //...
+        env:
+          USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        working-directory: ${{ matrix.folder }}
+        shell: bash
+        run: |
+          EXTRA_ARGS=""
+          if [[ "${{ matrix.folder }}" == *"rules_rust"* ]]; then
+            EXTRA_ARGS="--config=rust"
+          fi
+          if [[ "${{ matrix.folder }}" == *"wasm"* ]]; then
+            EXTRA_ARGS="--config=wasm"
+          fi
+
+          bazel \
+            --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc \
+            --bazelrc=.bazelrc \
+            test \
+            --remote_header=x-buildbuddy-api-key=$BUILDBUDDY_API_KEY \
+            $EXTRA_ARGS \
+            //...

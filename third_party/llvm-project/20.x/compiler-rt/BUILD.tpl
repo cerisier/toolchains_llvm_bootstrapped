@@ -1,5 +1,7 @@
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_library.bzl", "cc_stage2_library")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_static_library.bzl", "cc_stage2_static_library")
+load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_object.bzl", "cc_stage2_object")
+load("@toolchains_llvm_bootstrapped//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_unsanitized_library.bzl", "cc_unsanitized_library")
 load("@toolchains_llvm_bootstrapped//third_party/llvm-project/20.x/compiler-rt:targets.bzl", "atomic_helper_cc_library")
 load("@toolchains_llvm_bootstrapped//third_party/llvm-project/20.x/compiler-rt:darwin_excludes.bzl", "filter_excludes")
@@ -235,7 +237,7 @@ filegroup(
         "lib/builtins/fixunsxfti.c",
         "lib/builtins/floatdixf.c", # if not android
         "lib/builtins/floattixf.c",
-        "lib/builtins/floatundixf.c", # if not win32
+        "lib/builtins/floatundixf.c",
         "lib/builtins/floatuntixf.c",
         "lib/builtins/mulxc3.c",
         "lib/builtins/powixf2.c",
@@ -252,12 +254,17 @@ filter_builtin_sources(
     ] + filter_excludes([
         "lib/builtins/x86_64/floatdidf.c",
         "lib/builtins/x86_64/floatdisf.c",
-        "lib/builtins/x86_64/floatundidf.S", # if not WIN32
-        "lib/builtins/x86_64/floatundisf.S", # if not WIN32
         "lib/builtins/x86_64/floatdixf.c",  # if not ANDROID
-        "lib/builtins/x86_64/floatundixf.S",  # if not ANDROID and not WIN32
-        # "x86_64/chkstk.S" # if WIN32
-    ]),
+    ]) + select({
+        "@platforms//os:windows": [
+            "lib/builtins/x86_64/chkstk.S",
+        ],
+        "//conditions:default": [
+            "lib/builtins/x86_64/floatundidf.S",
+            "lib/builtins/x86_64/floatundisf.S",
+            "lib/builtins/x86_64/floatundixf.S",  # if not ANDROID
+        ],
+    }),
 )
 
 filegroup(
@@ -274,8 +281,12 @@ filter_builtin_sources(
         ":builtins_generic_srcs",
         ":builtins_generic_tf_sources",
         ":builtins_aarch64_arch_sources",
-        # "aarch64/chkstk.S", # if MINGW
-    ],
+    ] + select({
+        "@platforms//os:windows": [
+            "lib/builtins/aarch64/chkstk.S", # if MINGW
+        ],
+        "//conditions:default": [],
+    }),
 )
 
 builtins_aarch64_atomic_deps = [
@@ -304,6 +315,8 @@ cc_stage2_library(
         "@toolchains_llvm_bootstrapped//platforms/config:linux_aarch64": [":builtins_aarch64_sources"],
         "@toolchains_llvm_bootstrapped//platforms/config:macos_x86_64": [":builtins_x86_64_sources"],
         "@toolchains_llvm_bootstrapped//platforms/config:macos_aarch64": [":builtins_aarch64_sources"],
+        "@toolchains_llvm_bootstrapped//platforms/config:windows_x86_64": [":builtins_x86_64_sources"],
+        "@toolchains_llvm_bootstrapped//platforms/config:windows_aarch64": [":builtins_aarch64_sources"],
     }, no_match_error = """
         Platform not supported for compiler-rt.builtins.
         It is likely that we are just missing the filegroups for that platform.
@@ -354,6 +367,10 @@ cc_stage2_library(
             # TODO(zbarsky): This is spammy, but we should do a real fix.
             # "-Wno-macro-redefined",
          ],
+        "@platforms//os:windows": [
+            "-Wno-missing-declarations",
+            "-Wno-pragma-pack",
+        ],
         "//conditions:default": [],
     }),
     local_defines = selects.with_or({
@@ -398,12 +415,20 @@ cc_stage2_library(
         ],
         "//conditions:default": [],
     }) + select({
+        "@toolchains_llvm_bootstrapped//platforms/config:windows_aarch64": [
+            "lib/builtins/cpu_model/aarch64/lse_atomics/windows.inc",
+        ],
+        "//conditions:default": [],
+    }) + select({
         "@toolchains_llvm_bootstrapped//platforms/config:linux_aarch64": [
             "lib/builtins/cpu_model/aarch64/fmv/mrs.inc",
             "lib/builtins/cpu_model/aarch64/fmv/getauxval.inc",
         ],
         "@toolchains_llvm_bootstrapped//platforms/config:macos_aarch64": [
             "lib/builtins/cpu_model/aarch64/fmv/apple.inc",
+        ],
+        "@toolchains_llvm_bootstrapped//platforms/config:windows_aarch64": [
+            "lib/builtins/cpu_model/aarch64/fmv/windows.inc",
         ],
         "//conditions:default": [],
     }),
@@ -420,6 +445,9 @@ cc_stage2_library(
         "@platforms//os:linux": [
             "@kernel_headers//:kernel_headers",
         ],
+        "@platforms//os:windows": [
+            "@mingw//:mingw_headers",
+        ],
     }) + select({
         "@toolchains_llvm_bootstrapped//constraints/libc:musl": [
             "@musl_libc//:musl_libc_headers",
@@ -427,6 +455,7 @@ cc_stage2_library(
         "@platforms//os:macos": [
             # on macOS we implicitly use SDK provided headers
         ],
+        "@platforms//os:windows": [],
         "//conditions:default": [
             "@glibc//:gnu_libc_headers",
         ],
@@ -461,6 +490,38 @@ cc_stage2_library(
     visibility = ["//visibility:public"],
 )
 
+cc_stage2_object(
+    name = "crtbegin_object",
+    srcs = [
+        ":clang_rt.crtbegin",
+    ],
+    copts = [
+        "-target",
+    ] + LLVM_TARGET_TRIPLE,
+    #TODO(cerisier): Rename to clang_rt.crtbegin.o and expose this with -L.
+    #
+    # This is because clang driver looks for this instead of crtbegin<ST>.o
+    # when --rtlib=compiler-rt is used.
+    out = "crtbegin.o",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "crtbeginS_object",
+    src = ":crtbegin_object",
+    out = "crtbeginS.o",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "crtbeginT_object",
+    src = ":crtbegin_object",
+    out = "crtbeginT.o",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
 cc_stage2_static_library(
     name = "clang_rt.crtbegin.static",
     deps = [
@@ -476,6 +537,30 @@ cc_stage2_library(
     ],
     copts = CRT_CFLAGS,
     local_defines = CRT_DEFINES,
+    visibility = ["//visibility:public"],
+)
+
+cc_stage2_object(
+    name = "crtend_object",
+    srcs = [
+        ":clang_rt.crtend",
+    ],
+    copts = [
+        "-target",
+    ] + LLVM_TARGET_TRIPLE,
+    #TODO(cerisier): Rename to clang_rt.crtend.o and expose this with -L.
+    #
+    # This is because clang driver looks for this instead of crtend<ST>.o
+    # when --rtlib=compiler-rt is used.
+    out = "crtend.o",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "crtendS_object",
+    src = ":crtend_object",
+    out = "crtendS.o",
+    allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 

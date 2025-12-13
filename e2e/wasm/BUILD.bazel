@@ -1,0 +1,60 @@
+load("@gazelle//:def.bzl", "gazelle")
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_go//go:def.bzl", "go_test")
+load("@rules_platform//platform_data:defs.bzl", "platform_data")
+load("@toolchains_llvm_bootstrapped//:defs.bzl", "exec_test")
+
+gazelle(name = "gazelle")
+
+cc_binary(
+    name = "wasm",
+    srcs = ["wasm.c"],
+    linkopts = [
+        "-nostdlib",
+        "-Wl,--allow-undefined",
+        "-Wl,--export=add",
+        "-Wl,--no-entry",
+    ],
+    tags = ["manual"],
+)
+
+platform_data(
+    name = "wasm_blob",
+    platform = "@toolchains_llvm_bootstrapped//platforms:none_wasm32",
+    target = ":wasm",
+)
+
+cc_binary(
+    name = "wasm64",
+    srcs = ["wasm64.c"],
+    linkopts = [
+        "-nostdlib",
+        "-Wl,--allow-undefined",
+        "-Wl,--export=add64",
+        "-Wl,--export=pointer_size_bits",
+        "-Wl,--export=high_address_marker",
+        "-Wl,--no-entry",
+    ],
+    tags = ["manual"],
+)
+
+platform_data(
+    name = "wasm64_blob",
+    platform = "@toolchains_llvm_bootstrapped//platforms:none_wasm64",
+    target = ":wasm64",
+)
+
+# TODO: Add a wasm64 test once wazero gains memory64 support.
+exec_test(
+    go_test,
+    name = "wasm_test",
+    srcs = ["wasm_test.go"],
+    data = [":wasm_blob"],
+    deps = [
+        "@com_github_tetratelabs_wazero//:wazero",
+        "@rules_go//go/runfiles",
+    ],
+    x_defs = {
+        "wasmBlobRlocationpath": "$(rlocationpath :wasm_blob)",
+    },
+)

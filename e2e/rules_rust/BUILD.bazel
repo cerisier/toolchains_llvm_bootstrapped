@@ -1,0 +1,18 @@
+load("//:rust_binary_cross_build_test_suite.bzl", "rust_binary_cross_build_test_suite")
+
+package(default_visibility = ["//visibility:public"])
+
+rust_binary_cross_build_test_suite(
+    name = "hello_world",
+    srcs = ["src/main.rs"],
+    deps = [
+        "@crates//:lz4-sys",
+        "@crates//:mimalloc",
+    ],
+    platforms = {
+        "@toolchains_llvm_bootstrapped//platforms:linux_x86_64": "x86-64",
+        "@toolchains_llvm_bootstrapped//platforms:linux_aarch64": "aarch64",
+        # "@toolchains_llvm_bootstrapped//platforms:macos_x86_64": "x86-64",
+        # "@toolchains_llvm_bootstrapped//platforms:macos_aarch64": "aarch64",
+    },
+)

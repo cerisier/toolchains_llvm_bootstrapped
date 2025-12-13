@@ -1,16 +1,17 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-LLVM_VERSION = "21.1.4"
+LLVM_VERSION = "21.1.7"
 
 def _llvm_raw_impl(mctx):
     http_archive(
         name = "llvm-raw",
         build_file_content = "# EMPTY",
-        sha256 = "a01ad7e5167780c945871d75c0413081d12067607a6de5cf71dc3e8d1a82112c",
+        sha256 = "e5b65fd79c95c343bb584127114cb2d252306c1ada1e057899b6aacdd445899e",
         patch_args = ["-p1"],
         patches = [
             "//third_party/llvm-project:llvm-extra.patch",
             "//third_party/llvm-project:llvm-bazel9.patch",
+            "//third_party/llvm-project:llvm-sanitizers-ignorelists.patch",
         ],
         strip_prefix = "llvm-project-{LLVM_VERSION}.src".format(LLVM_VERSION = LLVM_VERSION),
         urls = ["https://github.com/llvm/llvm-project/releases/download/llvmorg-{LLVM_VERSION}/llvm-project-{LLVM_VERSION}.src.tar.xz".format(LLVM_VERSION = LLVM_VERSION)],

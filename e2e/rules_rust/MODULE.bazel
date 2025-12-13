@@ -1,0 +1,76 @@
+# Derived from bazelbuild/rules_rust (cross_compile example)
+# Copyright (c) The Bazel Authors, licensed under Apache-2.0
+# Modifications © 2025 Corentin Kerisit
+
+module(
+    name = "hello_cross",
+    version = "0.0.0",
+)
+
+###############################################################################
+# Bazel Dependencies # https://registry.bazel.build/
+###############################################################################
+# Get latest rules_rust release from:
+# https://github.com/bazelbuild/rules_rust/releases
+bazel_dep(name = "rules_rust", version = "0.68.1")
+
+# https://github.com/bazelbuild/platforms/releases
+bazel_dep(name = "platforms", version = "1.0.0")
+
+# https://github.com/bazelbuild/rules_shell/releases
+bazel_dep(name = "rules_shell", version = "0.6.1")
+
+# https://github.com/bazelbuild/rules_cc/releases
+bazel_dep(name = "rules_cc", version = "0.2.14")
+
+# https://registry.bazel.build/modules/libmagic
+bazel_dep(name = "libmagic", version = "5.46.bcr.4")
+
+# https://github.com/cerisier/toolchains_llvm_bootstrapped/releases
+bazel_dep(name = "toolchains_llvm_bootstrapped", version = "0.0.0", dev_dependency = True)
+local_path_override(
+    module_name = "toolchains_llvm_bootstrapped",
+    path = "../..",
+)
+
+register_toolchains(
+    "@toolchains_llvm_bootstrapped//toolchain:all",
+    dev_dependency = True,
+)
+
+###############################################################################
+# Rust Toolchain #
+###############################################################################
+RUST_EDITION = "2021"  # NOTE: 2024 will be released with Rust 1.86.0
+
+RUST_VERSION = "1.81.0"
+
+rust = use_extension("@rules_rust//rust:extensions.bzl", "rust")
+rust.toolchain(
+    edition = RUST_EDITION,
+    extra_target_triples = [
+        "aarch64-unknown-linux-gnu",
+        "x86_64-unknown-linux-gnu",
+        "x86_64-apple-darwin",
+        "aarch64-apple-darwin",
+    ],
+    versions = [RUST_VERSION],
+)
+use_repo(rust, "rust_toolchains")
+
+register_toolchains("@rust_toolchains//:all")
+
+###############################################################################
+# Rust Dependencies #
+###############################################################################
+crate = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
+crate.spec(
+    package = "mimalloc",
+    version = "0.1.43",
+)
+crate.spec(
+    package = "lz4-sys",
+    version = "1.11.1",
+)
+crate.from_specs()
+use_repo(crate, "crates")

@@ -1,0 +1,46 @@
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@toolchains_llvm_bootstrapped//constraints/libc:libc_versions.bzl", "LIBCS")
+load("@bazel_lib//lib:transitions.bzl", "platform_transition_binary")
+load("@bazel_skylib//rules:build_test.bzl", "build_test")
+
+cc_library(
+    name = "add",
+    srcs = ["add.c"],
+    hdrs = ["add.h"],
+    visibility = ["//visibility:public"],
+)
+
+cc_binary(
+    name = "main",
+    deps = [":add"],
+    srcs = ["test.cc"],
+)
+
+#TODO(cerisier): should the toolchain provide its own list ?
+PLATFORMS = [
+    "@toolchains_llvm_bootstrapped//platforms:linux_x86_64",
+    "@toolchains_llvm_bootstrapped//platforms:linux_aarch64",
+    # "@toolchains_llvm_bootstrapped//platforms:macos_x86_64",
+    # "@toolchains_llvm_bootstrapped//platforms:macos_aarch64",
+] + [
+    "@toolchains_llvm_bootstrapped//platforms/libc_aware:linux_x86_64_{}".format(libc) for libc in LIBCS
+] + [
+    "@toolchains_llvm_bootstrapped//platforms/libc_aware:linux_aarch64_{}".format(libc) for libc in LIBCS
+]
+
+[
+    platform_transition_binary(
+        name = "main_" + platform.split(":")[-1],
+        target_platform = platform,
+        binary = ":main",
+    ) for platform in PLATFORMS
+]
+
+[
+    build_test(
+        name = "test_main_" + platform.split(":")[-1],
+        targets = [":main_" + platform.split(":")[-1]],
+        size = "small",
+    ) for platform in PLATFORMS
+]

@@ -4,7 +4,7 @@ def _glibc_stubs_impl(ctx):
 
     version_script = ctx.actions.declare_file("build/all.map")
 
-    output_files = [
+    outputs = [
         ctx.actions.declare_file("build/c.s"),
         ctx.actions.declare_file("build/dl.s"),
         ctx.actions.declare_file("build/ld.s"),
@@ -13,6 +13,7 @@ def _glibc_stubs_impl(ctx):
         ctx.actions.declare_file("build/resolv.s"),
         ctx.actions.declare_file("build/rt.s"),
         ctx.actions.declare_file("build/util.s"),
+        version_script,
     ]
 
     args = ctx.actions.args()
@@ -20,16 +21,16 @@ def _glibc_stubs_impl(ctx):
     args.add(target)
     args.add("-o")
     args.add(version_script.dirname)
-    args.add(ctx.files.abilist[0].path)
+    args.add(ctx.files.abilist[0])
 
     ctx.actions.run(
         executable = ctx.executable._generator,
         inputs = [ctx.files.abilist[0]],
         arguments = [args],
-        outputs = output_files + [version_script],
+        outputs = outputs,
     )
     return [
-        DefaultInfo(files = depset(output_files + [version_script])),
+        DefaultInfo(files = depset(outputs)),
     ]
 
 glibc_stubs_assembly_files = rule(

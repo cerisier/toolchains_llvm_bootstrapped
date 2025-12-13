@@ -1,4 +1,5 @@
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
+load("@bazel_lib//lib:copy_file.bzl", "copy_file")
 load("@bazel_skylib//rules:select_file.bzl", "select_file")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("//toolchain:selects.bzl", "platform_extra_binary")
@@ -114,12 +115,25 @@ LINKER_SCRIPTS = [
         name = "lib%s_linker_script" % lib,
         lib_name = lib,
         lib_version = version,
+        additional_linker_inputs = [
+            # we make it available in the search directory sibling to the libc.so
+            "libc_nonshared.a",
+        ] if lib == "c" else [],
     ) for (lib, version) in LIBC_SO_VERSIONS.items()
 ]
 
+copy_file(
+    name = "glibc_libc_nonshared.static",
+    src = "@glibc//:glibc_c_nonshared.static",
+    out = "libc_nonshared.a",
+    allow_symlink = True,
+)
+
 copy_to_directory(
     name = "glibc_library_search_directory",
-    srcs = LIBS + LINKER_SCRIPTS,
+    srcs = LIBS + LINKER_SCRIPTS + [
+        "libc_nonshared.a",
+    ],
     visibility = ["//visibility:public"],
 )
 
@@ -130,13 +144,13 @@ alias(
 )
 
 alias(
-    name = "glibc_Scrt1.static",
-    actual = "@glibc//:glibc_Scrt1.static",
+    name = "glibc_Scrt1.object",
+    actual = "@glibc//:glibc_Scrt1.object",
     visibility = ["//visibility:public"],
 )
 
 alias(
-    name = "glibc_libc_nonshared.static",
-    actual = "@glibc//:c_nonshared.static",
+    name = "glibc_crt1.object",
+    actual = "@glibc//:glibc_crt1.object",
     visibility = ["//visibility:public"],
 )

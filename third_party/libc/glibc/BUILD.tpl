@@ -1,7 +1,10 @@
 load("@bazel_skylib//lib:selects.bzl", "selects")
+load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
 load("@toolchains_llvm_bootstrapped//third_party/libc/glibc:helpers.bzl", "glibc_includes")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_library.bzl", "cc_stage2_library")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_static_library.bzl", "cc_stage2_static_library")
+load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_object.bzl", "cc_stage2_object")
+load("@toolchains_llvm_bootstrapped//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
 
 alias(
     name = "gnu_libc_headers",
@@ -147,9 +150,23 @@ cc_stage2_library(
     visibility = ["//visibility:public"],
 )
 
-cc_stage2_static_library(
-    name = "glibc_Scrt1.static",
-    deps = [":glibc_Scrt1"],
+cc_stage2_object(
+    name = "glibc_Scrt1.object",
+    srcs = [":glibc_start", ":glibc_init", ":glibc_abi_note"],
+    copts = [
+        "-target",
+    ] + LLVM_TARGET_TRIPLE,
+    out = "Scrt1.o",
+    visibility = ["//visibility:public"],
+)
+
+#TODO(cerisier): start.o should be compiled without -DSHARED here.
+#TODO(cerisier): Also find out why this is compiled with -DPIC by the glibc
+# even tho it's for -no-pie...
+copy_file(
+    name = "glibc_crt1.object",
+    src = "Scrt1.o",
+    out = "crt1.o",
     visibility = ["//visibility:public"],
 )
 
@@ -174,8 +191,7 @@ cc_stage2_static_library(
 # }
 
 cc_stage2_library(
-    # glibc_c_nonshared
-    name = "c_nonshared",
+    name = "glibc_c_nonshared",
     copts = [
         "-std=gnu11",
         "-fgnu89-inline",
@@ -184,6 +200,9 @@ cc_stage2_library(
         "-Wno-unsupported-floating-point-opt", # For targets that don't support -frounding-math.
         "-fno-common",
         "-fmath-errno",
+        # glibc states that c_nonshared can end up in shared libraries, and so
+        # it needs to be compiled with -fPIC.
+        "-fPIC",
         "-ftls-model=initial-exec",
         "-Wno-ignored-attributes",
         "-Qunused-arguments",
@@ -199,7 +218,7 @@ cc_stage2_library(
         "NO_INITFINI",
         "_LIBC_REENTRANT",
         "MODULE_NAME=libc",
-        # "PIC",
+        "PIC",
         "LIBC_NONSHARED=1",
         "TOP_NAMESPACE=glibc",
     ] + select({
@@ -277,9 +296,9 @@ cc_stage2_library(
 )
 
 cc_stage2_static_library(
-    name = "c_nonshared.static",
+    name = "c_nonshared",
     deps = [
-        ":c_nonshared",
+        ":glibc_c_nonshared",
     ],
     visibility = ["//visibility:public"],
 )

@@ -1,4 +1,8 @@
+load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("//toolchain:selects.bzl", "platform_llvm_binary")
+load("//toolchain/stage2:cc_stage2_object.bzl", "cc_stage2_object")
+load("//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
 
 alias(
     name = "llvm_ar",
@@ -13,6 +17,11 @@ filegroup(
             "@libcxx//:libcxx.static",
             "@libcxxabi//:libcxxabi.static",
             ## only if libcxx on linux
+            "@libunwind//:libunwind.static",
+        ],
+        "@platforms//os:windows": [
+            "@libcxx//:libcxx.static",
+            "@libcxxabi//:libcxxabi.static",
             "@libunwind//:libunwind.static",
         ],
         "//conditions:default": [],
@@ -30,7 +39,97 @@ filegroup(
             # TODO(zbarsky): Enable this? libunwind depends on a another shared lib which loses GraphNodeInfo provider
             #"@libunwind//:libunwind.shared",
         ],
+        # TODO(zbarsky): windows?
         "//conditions:default": [],
     }),
     visibility = ["//toolchain:__subpackages__"],
+)
+
+cc_library(
+    name = "empty",
+    srcs = ["empty.c"],
+)
+
+cc_stage2_object(
+    name = "crti_object",
+    srcs = [
+        ":empty",
+    ],
+    copts = [
+        "-target",
+    ] + LLVM_TARGET_TRIPLE,
+    out = "crti.o",
+    visibility = ["//visibility:public"],
+)
+
+cc_stage2_object(
+    name = "crtn_object",
+    srcs = [
+        ":empty",
+    ],
+    copts = [
+        "-target",
+    ] + LLVM_TARGET_TRIPLE,
+    out = "crtn.o",
+    visibility = ["//visibility:public"],
+)
+
+copy_to_directory(
+    name = "crt_objects_directory_linux",
+    srcs = select({
+        "@toolchains_llvm_bootstrapped//constraints/libc:musl": [
+            # -static-pie is implied
+            "//runtimes/musl:musl_rcrt1.object",
+        ],
+        "//platforms/config/libc_aware:gnu": [
+            "//runtimes/glibc:glibc_Scrt1.object",
+            "//runtimes/glibc:glibc_crt1.object",
+        ],
+        "//constraints/libc:unconstrained": [
+            "//runtimes/glibc:glibc_Scrt1.object",
+            "//runtimes/glibc:glibc_crt1.object",
+        ],
+    }) + [
+        ":crti_object",
+        ":crtn_object",
+        "@compiler-rt//:crtbegin_object",
+        "@compiler-rt//:crtbeginS_object",
+        "@compiler-rt//:crtbeginT_object",
+        "@compiler-rt//:crtend_object",
+        "@compiler-rt//:crtendS_object",
+    ],
+    include_external_repositories = ["**"],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+    root_paths = [
+        ".",
+        "runtimes/musl",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+copy_to_directory(
+    name = "crt_objects_directory_windows",
+    srcs = [
+        "//runtimes/mingw:crtbegin.o",
+        "//runtimes/mingw:crtend.o",
+        "//runtimes/mingw:crt2.o",
+    ],
+    target_compatible_with = [
+        "@platforms//os:windows",
+    ],
+    root_paths = [
+        "runtimes/mingw",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "crt_objects_directory",
+    actual = select({
+        "@platforms//os:linux": ":crt_objects_directory_linux",
+        "@platforms//os:windows": ":crt_objects_directory_windows",
+    }),
+    visibility = ["//visibility:public"],
 )

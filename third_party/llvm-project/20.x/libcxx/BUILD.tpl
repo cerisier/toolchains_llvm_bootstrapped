@@ -1,5 +1,6 @@
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_library.bzl", "cc_stage2_library")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_static_library.bzl", "cc_stage2_static_library")
@@ -1103,76 +1104,69 @@ filegroup(
     ],
 )
 
-genrule(
-    name = "__config_site_musl",
-    srcs = [],
-    outs = ["include/__config_site_musl"],
-    cmd = """cat<<EOF > $@
-#define _LIBCPP_HAS_MUSL_LIBC 1
-EOF"""
-)
+_CONFIG_SITE_MUSL_LINES = [
+    "#define _LIBCPP_HAS_MUSL_LIBC 1",
+]
 
-genrule(
-    name = "__config_site_no_musl",
-    srcs = [],
-    outs = ["include/__config_site_no_musl"],
-    cmd = """cat<<EOF > $@
-#define _LIBCPP_HAS_MUSL_LIBC 0
-EOF"""
-)
+_CONFIG_SITE_NO_MUSL_LINES = [
+    "#define _LIBCPP_HAS_MUSL_LIBC 0",
+]
 
-genrule(
-    name = "__config_site_generic",
-    srcs = [],
-    outs = ["include/__config_site_generic"],
-    cmd = """cat<<EOF > $@
-#define _LIBCPP_ABI_VERSION             1
-#define _LIBCPP_ABI_NAMESPACE           __1
-#define _LIBCPP_ABI_FORCE_ITANIUM       0
-#define _LIBCPP_ABI_FORCE_MICROSOFT     0
-#define _LIBCPP_HAS_THREADS             1 // TODO: Handle no threads
-#define _LIBCPP_HAS_MONOTONIC_CLOCK     1
-#define _LIBCPP_HAS_TERMINAL            1
-#define _LIBCPP_HAS_THREAD_API_PTHREAD  1
-#define _LIBCPP_HAS_THREAD_API_EXTERNAL 0
-#define _LIBCPP_HAS_THREAD_API_WIN32    0
-#define _LIBCPP_HAS_THREAD_API_C11      0 // FIXME: Is this guarding dead code?
-// #define _LIBCPP_NO_VCRUNTIME
-// #define _LIBCPP_TYPEINFO_COMPARISON_IMPLEMENTATION @_LIBCPP_TYPEINFO_COMPARISON_IMPLEMENTATION@
-#define _LIBCPP_HAS_FILESYSTEM          1
-#define _LIBCPP_HAS_RANDOM_DEVICE       1
-#define _LIBCPP_HAS_LOCALIZATION        1
-#define _LIBCPP_HAS_UNICODE             1
-#define _LIBCPP_HAS_WIDE_CHARACTERS     1
-#define _LIBCPP_HAS_STD_MODULES         0
-#define _LIBCPP_HAS_TIME_ZONE_DATABASE  1
-#define _LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS     
-#define _LIBCPP_HAS_VENDOR_AVAILABILITY_ANNOTATIONS 0
-#define _LIBCPP_INSTRUMENTED_WITH_ASAN  0
+_CONFIG_SITE_THREAD_API_WIN32_LINES = [
+    "#define _LIBCPP_HAS_THREAD_API_PTHREAD 0",
+    "#define _LIBCPP_HAS_THREAD_API_WIN32   1",
+]
 
-#define _LIBCPP_PSTL_BACKEND_SERIAL
-// #define _LIBCPP_PSTL_BACKEND_STD_THREAD
-// #define _LIBCPP_PSTL_BACKEND_LIBDISPATCH
+_CONFIG_SITE_THREAD_API_PTHREAD_LINES = [
+    "#define _LIBCPP_HAS_THREAD_API_PTHREAD 1",
+    "#define _LIBCPP_HAS_THREAD_API_WIN32   0",
+]
 
-# // Hardening.
-#define _LIBCPP_HARDENING_MODE_DEFAULT _LIBCPP_HARDENING_MODE_NONE
+_CONFIG_SITE_GENERIC_LINES = [
+    "#define _LIBCPP_ABI_VERSION             1",
+    "#define _LIBCPP_ABI_NAMESPACE           __1",
+    "#define _LIBCPP_ABI_FORCE_ITANIUM       0",
+    "#define _LIBCPP_ABI_FORCE_MICROSOFT     0",
+    "#define _LIBCPP_HAS_THREADS             1 // TODO: Handle no threads",
+    "#define _LIBCPP_HAS_MONOTONIC_CLOCK     1",
+    "#define _LIBCPP_HAS_TERMINAL            1",
+    "#define _LIBCPP_HAS_THREAD_API_EXTERNAL 0",
+    "#define _LIBCPP_HAS_THREAD_API_C11      0 // FIXME: Is this guarding dead code?",
+    "// #define _LIBCPP_NO_VCRUNTIME",
+    "// #define _LIBCPP_TYPEINFO_COMPARISON_IMPLEMENTATION @_LIBCPP_TYPEINFO_COMPARISON_IMPLEMENTATION@",
+    "#define _LIBCPP_HAS_FILESYSTEM          1",
+    "#define _LIBCPP_HAS_RANDOM_DEVICE       1",
+    "#define _LIBCPP_HAS_LOCALIZATION        1",
+    "#define _LIBCPP_HAS_UNICODE             1",
+    "#define _LIBCPP_HAS_WIDE_CHARACTERS     1",
+    "#define _LIBCPP_HAS_STD_MODULES         0",
+    "#define _LIBCPP_HAS_TIME_ZONE_DATABASE  1",
+    "#define _LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS     ",
+    "#define _LIBCPP_HAS_VENDOR_AVAILABILITY_ANNOTATIONS 0",
+    "#define _LIBCPP_INSTRUMENTED_WITH_ASAN  0",
+    "",
+    "#define _LIBCPP_PSTL_BACKEND_SERIAL",
+    "// #define _LIBCPP_PSTL_BACKEND_STD_THREAD",
+    "// #define _LIBCPP_PSTL_BACKEND_LIBDISPATCH",
+    "",
+    "# // Hardening.",
+    "#define _LIBCPP_HARDENING_MODE_DEFAULT _LIBCPP_HARDENING_MODE_NONE",
+    "",
+    "// \"_LIBCPP_HAS_NO_LIBRARY_ALIGNED_ALLOCATION\", # GLIBC < 2.16",
+]
 
-// "_LIBCPP_HAS_NO_LIBRARY_ALIGNED_ALLOCATION", # GLIBC < 2.16
-EOF""",
-)
-
-genrule(
+write_file(
     name = "__config_site",
-    srcs = [
-        ":__config_site_generic",
-    ] + select({
-        "@toolchains_llvm_bootstrapped//constraints/libc:musl": [":__config_site_musl"],
-        "//conditions:default": [":__config_site_no_musl"],
-    }),
-    outs = ["include/__config_site"],
-    cmd = """
-        cat $(SRCS) > $@
-    """,
+    out = "include/__config_site",
+    content = _CONFIG_SITE_GENERIC_LINES +
+              select({
+                  "@toolchains_llvm_bootstrapped//constraints/libc:musl": _CONFIG_SITE_MUSL_LINES,
+                  "//conditions:default": _CONFIG_SITE_NO_MUSL_LINES,
+              }) +
+              select({
+                  "@platforms//os:windows": _CONFIG_SITE_THREAD_API_WIN32_LINES,
+                  "//conditions:default": _CONFIG_SITE_THREAD_API_PTHREAD_LINES,
+              }),
     visibility = ["//visibility:public"],
 )
 
@@ -1248,7 +1242,13 @@ cc_library(
         "-Wno-user-defined-literals",
         "-Wno-covered-switch-default",
         "-Wno-suggest-override",
-    ],
+    ] + select({
+        "@platforms//os:windows": [
+            "-Wno-pragma-pack",
+            "-Wno-unused-value",
+        ],
+        "//conditions:default": [],
+    }),
     includes = [
         "include",
         "src",
@@ -1333,14 +1333,19 @@ cc_library(
         "src/mutex_destructor.cpp",
         "src/mutex.cpp",
         "src/shared_mutex.cpp",
-        # "src/support/win32/thread_win32.cpp",
         "src/thread.cpp",
     ] + [
         # LIBCXX_ENABLE_RANDOM_DEVICE
         "src/random.cpp",
-    ] + [
-        #TODO(win32)
-    ] + [
+    ] + select({
+        "@platforms//os:windows": [
+            "src/support/win32/compiler_rt_shims.cpp",
+            "src/support/win32/locale_win32.cpp",
+            "src/support/win32/support.cpp",
+            "src/support/win32/thread_win32.cpp",
+        ],
+        "//conditions:default": [],
+    }) + [
         # LIBCXX_ENABLE_LOCALIZATION
         "src/fstream.cpp",
         "src/include/sso_allocator.h",
@@ -1372,6 +1377,9 @@ cc_library(
         "@libcxxabi//:headers",
     ] + select({
         "@platforms//os:macos": [],
+        "@platforms//os:windows": [
+            "@mingw//:mingw_headers",
+        ],
         "@platforms//os:linux": [
             "@kernel_headers//:kernel_headers",
         ],
@@ -1381,6 +1389,8 @@ cc_library(
         "@toolchains_llvm_bootstrapped//constraints/libc:musl": [
             "@musl_libc//:musl_libc_headers",
         ],
+        "@platforms//os:windows": [],
+        "@platforms//os:macos": [],
         "//conditions:default": [
             "@glibc//:gnu_libc_headers",
         ],

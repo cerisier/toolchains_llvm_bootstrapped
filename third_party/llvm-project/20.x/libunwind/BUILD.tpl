@@ -15,7 +15,16 @@ cc_stage2_library(
         "-Wno-visibility",
         "-Wno-incompatible-pointer-types",
         "-Wno-dll-attribute-on-redeclaration",
-    ],
+    ] + select({
+        "@platforms//os:windows": [
+            "-Wno-macro-redefined", # TODO(zbarsky): Is this masking a real issue?
+            "-Wno-missing-declarations",
+            "-Wno-pragma-pack",
+            "-Wno-typedef-redefinition",
+            "-Wno-unused-value",
+        ],
+        "//conditions:default": [],
+    }),
     conlyopts = [
         "-std=c99",
         "-fexceptions",
@@ -68,10 +77,15 @@ cc_stage2_library(
         "@platforms//os:linux": [
             "@kernel_headers//:kernel_headers",
         ],
+        "@platforms//os:windows": [
+            "@mingw//:mingw_headers",
+        ],
     }) + select({
         "@toolchains_llvm_bootstrapped//constraints/libc:musl": [
             "@musl_libc//:musl_libc_headers",
         ],
+        "@platforms//os:windows": [],
+        "@platforms//os:macos": [],
         "//conditions:default": [
             "@glibc//:gnu_libc_headers",
         ],

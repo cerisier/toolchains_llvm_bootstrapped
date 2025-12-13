@@ -10,7 +10,7 @@ cc_args_list(
             "//toolchain/args/macos:macos_sdk_sysroot",
         ],
         "@platforms//os:linux": [
-            "//toolchain/args/linux:hermetic_linux_args",
+            "//toolchain/stage2/args/linux:hermetic_linux_args",
         ],
         "//conditions:default": [],
     }),

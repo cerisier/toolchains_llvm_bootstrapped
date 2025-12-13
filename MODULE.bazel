@@ -14,14 +14,17 @@ bazel_dep(name = "rules_shell", version = "0.6.1")
 bazel_dep(name = "with_cfg.bzl", version = "0.12.0")
 bazel_dep(name = "tar.bzl", version = "0.6.0")
 
+bazel_dep(name = "buildifier_prebuilt", version = "8.2.1", dev_dependency = True)
+bazel_dep(name = "bazelrc-preset.bzl", version = "1.6.0", dev_dependency = True)
+
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-LLVM_VERSION = "21.1.4"
+LLVM_VERSION = "21.1.7"
 
 LLVM_TOOLCHAIN_MINIMAL_SHA256 = {
-    "darwin-arm64": "419f4d4b9893ac2658a41665e2adbcbb3147cfc8c010f8811097a04f586d33fe",
-    "linux-amd64-musl": "e1fdddcd40f654941aac1acb59f0dcc54f15c0be3c0dd9d487ce8d66c0cef00d",
-    "linux-arm64-musl": "9ebac95e671f4abeacc1f85b77e6882fc9307210543b0f4440182bf61c70145b",
+    "darwin-arm64": "5d345bcf07a9dbf3bedb2aae1c8e0c7ac3e8ccf078fd487df4c846816490fe74",
+    "linux-amd64-musl": "80a4891adafa15cfd0e04ee35d8339e85ff02e71620a472a07e122c0cf505eac",
+    "linux-arm64-musl": "36e374ba32e1df7a353f317d986624cef94435f828cdfb8b3cf00931f501ba48",
 }
 
 [
@@ -54,7 +57,7 @@ LLVM_TOOLCHAIN_EXTRAS_SHA256 = {
 [
     http_archive(
         name = "static-extras-toolchain-artifacts-{target}".format(target = target.replace("-musl", "")),
-        build_file = "//bootstrap/extras:BUILD.extras.tpl",
+        build_file = "//prebuilt/extras:BUILD.extras.tpl",
         sha256 = sha256,
         urls = ["https://github.com/cerisier/toolchains_llvm_bootstrapped/releases/download/bootstrap%2Fextras%2F20250505/toolchain-extra-prebuilts-20250505-{target}.tar.zst".format(target = target)],
     )
@@ -62,10 +65,10 @@ LLVM_TOOLCHAIN_EXTRAS_SHA256 = {
 ]
 
 LLVM_RELEASE_ASSETS_SHA256 = {
-    "compiler-rt": "84fed7aa95bfac348642a753d332afd303a0847b1fe1e76acf13fe98f8760d5f",
-    "libcxx": "5d0af8cc8a387074bdac8587bbf3421addfcdf5b7cc05af9e3fbc9f5961e5a7e",
-    "libcxxabi": "df0005d6f2238ed6d0c236cf02271de4e08719d0fe1f63454037734af527ad87",
-    "libunwind": "fc3ca27e1094b5fd4b7c1879e83705d89e9a2632b9a43426eb96c0536ace5345",
+    "compiler-rt": "4358e4476ab89b6ca9e4174f05f4a2c2c10e4a41c3c7febd25afe96bc27b5758",
+    "libcxx": "80492b5dfad966638779ac87890a8c5ee8495a8275c4ad04c8a3ae3076980b04",
+    "libcxxabi": "379e5cf58b3db42ad490d4129d6c5643a73b284ebf331ab075e079381edf5b4c",
+    "libunwind": "ac6ac43b6d54c6f6725a286ce36acff7a94123a8f2a54c161f866b94fcaa3a9b",
 }
 
 [
@@ -147,6 +150,7 @@ llvm.configure(
     targets = [
         "AArch64",
         "X86",
+        "WebAssembly",
     ],
 )
 use_repo(llvm, "llvm-project")
