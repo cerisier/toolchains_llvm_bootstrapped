@@ -1,32 +1,24 @@
 load("@tar.bzl", "tar")
+load("//prebuilt:mtree.bzl", "mtree")
 
 def extra_bins_release(name):
-    BINS = [
-        "@glibc-stubs-generator//:glibc-stubs-generator",
-        "@libstdcxx-stubs-generator//:libstdc++-stubs-generator"
-    ]
+    files = {
+        "@glibc-stubs-generator//:glibc-stubs-generator": "bin/glibc-stubs-generator",
+        "@libstdcxx-stubs-generator//:libstdc++-stubs-generator": "bin/libstdcxx-stubs-generator",
+    }
 
-    native.genrule(
-        name = "{}_mtree".format(name),
-        srcs = BINS,
-        cmd = """\
-cat <<EOF > $(@)
-bin/glibc-stubs-generator uid=0 gid=0 time=1672560000 mode=0755 type=file content=$(location @glibc-stubs-generator//:glibc-stubs-generator)
-bin/libstdcxx-stubs-generator uid=0 gid=0 time=1672560000 mode=0755 type=file content=$(location @libstdcxx-stubs-generator//:libstdc++-stubs-generator)
-EOF
-""",
-        outs = [
-            "{}.mtree".format(name),
-        ],
+    mtree(
+        name = name + "_mtree",
+        files = files,
     )
 
     tar(
         name = name,
-        srcs = BINS,
+        srcs = files.keys(),
         args = [
             "--options",
             "zstd:compression-level=22",
         ],
         compress = "zstd",
-        mtree = "{}_mtree".format(name),
+        mtree = name + "_mtree",
     )
