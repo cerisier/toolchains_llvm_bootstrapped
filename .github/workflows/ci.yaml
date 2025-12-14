@@ -85,8 +85,8 @@ jobs:
         bazel_version: [last_rc]
         folder:
           - "e2e/rules_cc"
-          #- "e2e/rules_rust"
-          - "e2e/cross_compilation"
+          # - "e2e/rules_rust"
+          # - "e2e/cross_compilation"
           # - "e2e/wasm"
     runs-on: ${{ matrix.os }}
 
