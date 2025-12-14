@@ -69,5 +69,8 @@ cc_test(
     target_compatible_with = [
         "@platforms//os:windows",
     ],
+    linkopts = [
+        "-luuid",
+    ],
     tags = ["no-remote", "no-cache", "manual"],
 )
