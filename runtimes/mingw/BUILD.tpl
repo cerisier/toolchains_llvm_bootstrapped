@@ -20,7 +20,6 @@ load(
     "UCRT_BASE_SRCS",
     "UCRT_BASE_X86_64_ADDITIONAL_SRCS",
 )
-load("@toolchains_llvm_bootstrapped//toolchain:selects.bzl", "platform_llvm_binary")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -181,16 +180,6 @@ subdirectory(
     parent = ":mingw_generated_headers_directory",
     path = "mingw-w64-headers/crt",
     visibility = ["//visibility:public"],
-)
-
-alias(
-    name = "clang",
-    actual = platform_llvm_binary("bin/clang"),
-)
-
-alias(
-    name = "llvm-dlltool",
-    actual = platform_llvm_binary("bin/llvm-dlltool"),
 )
 
 mingw_import_libraries(

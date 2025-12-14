@@ -1,14 +1,7 @@
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
-load("//toolchain:selects.bzl", "platform_llvm_binary")
 load("//toolchain/stage2:cc_stage2_object.bzl", "cc_stage2_object")
 load("//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
-
-alias(
-    name = "llvm_ar",
-    actual = platform_llvm_binary("bin/llvm-ar"),
-    visibility = ["//runtimes:__subpackages__"],
-)
 
 filegroup(
     name = "static_runtime_lib",

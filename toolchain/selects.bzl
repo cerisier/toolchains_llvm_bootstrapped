@@ -14,13 +14,6 @@ def platform_extra_binary(binary):
         "@toolchains_llvm_bootstrapped//platforms/config:linux_aarch64": "@static-extras-toolchain-artifacts-linux-arm64//:%s" % binary,
     })
 
-def platform_llvm_binaries(binaries):
-    return select({
-        "@toolchains_llvm_bootstrapped//platforms/config:macos_aarch64": ["@llvm-toolchain-minimal-%s-darwin-arm64//:%s" % (LLVM_VERSION, binary) for binary in binaries],
-        "@toolchains_llvm_bootstrapped//platforms/config:linux_x86_64": ["@llvm-toolchain-minimal-%s-linux-amd64//:%s" % (LLVM_VERSION, binary) for binary in binaries],
-        "@toolchains_llvm_bootstrapped//platforms/config:linux_aarch64": ["@llvm-toolchain-minimal-%s-linux-arm64//:%s" % (LLVM_VERSION, binary) for binary in binaries],
-    })
-
 def platform_cc_tool_map(exec_os, exec_cpu):
     if exec_os == "macos":
         tool_repo = "@llvm-toolchain-minimal-%s-darwin-arm64//" % LLVM_VERSION
