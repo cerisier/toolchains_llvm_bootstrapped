@@ -137,5 +137,6 @@ jobs:
             test \
             --remote_header=x-buildbuddy-api-key=$BUILDBUDDY_API_KEY \
             --config=stage1 \
+            --action_env=ZOO=baz \
             $EXTRA_ARGS \
             //...
