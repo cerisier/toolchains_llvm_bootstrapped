@@ -4,7 +4,6 @@ load(":stage1_binary.bzl", "stage1_binary", "stage1_directory")
 load("@llvm-project//:vars.bzl", "LLVM_VERSION_MAJOR")
 load("@rules_cc//cc/toolchains:tool.bzl", "cc_tool")
 load("@rules_cc//cc/toolchains:tool_map.bzl", "cc_tool_map")
-load("@rules_platform//platform_data:defs.bzl", "platform_data")
 
 def declare_tool_map(exec_os, exec_cpu):
     prefix = exec_os + "_" + exec_cpu

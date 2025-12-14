@@ -144,7 +144,6 @@ single_version_override(
     version = "0.2.14",
 )
 
-bazel_dep(name = "rules_platform", version = "0.1.0")
 bazel_dep(name = "rules_python", version = "1.6.0")
 
 llvm_raw = use_extension("//:llvm_raw.bzl", "llvm_raw")
