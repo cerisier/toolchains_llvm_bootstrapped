@@ -2,6 +2,7 @@ load("@bazel_skylib//rules/directory:directory.bzl", "directory")
 load("@bazel_skylib//rules/directory:subdirectory.bzl", "subdirectory")
 load("@rules_cc//cc/toolchains:tool.bzl", "cc_tool")
 load("@rules_cc//cc/toolchains:tool_map.bzl", "cc_tool_map")
+load("@toolchains_llvm_bootstrapped//tools:defs.bzl", "TOOLCHAIN_BINARIES")
 
 ## 
 
@@ -97,27 +98,4 @@ cc_tool(
 ##
 
 # Convenient exports
-exports_files([
-    "bin/clang",
-    "bin/clang++",
-    "bin/clang-cpp",
-    "bin/lld",
-    "bin/ld.lld",
-    "bin/ld64.lld",
-    "bin/wasm-ld",
-    "bin/llvm-ar",
-    "bin/llvm-as",
-    "bin/llvm-dlltool",
-    "bin/llvm-libtool-darwin",
-    "bin/llvm-nm",
-    "bin/llvm-objcopy",
-    "bin/llvm-strip",
-    # "bin/clang-tidy",
-    # "bin/clang-format",
-    "bin/clangd",
-    # "bin/llvm-symbolizer",
-    # "bin/llvm-profdata",
-    # "bin/llvm-cov",
-    # "bin/llvm-dwp",
-    # "bin/llvm-objdump",
-])
+exports_files(["bin/" + tool for tool in TOOLCHAIN_BINARIES])

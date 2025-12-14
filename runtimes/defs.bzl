@@ -5,7 +5,7 @@ def stub_library(name, out = None, visibility = None):
     run_binary(
         name = name,
         outs = [out],
-        tool = "//runtimes:llvm_ar",
+        tool = "//tools:llvm_ar",
         args = ["rc", "$@"],
         visibility = visibility,
     )

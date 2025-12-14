@@ -1,4 +1,6 @@
 # In code review, collapse generated files
 docs/*.md linguist-generated=true
 
-tools export-ignore
+internal_tools export-ignore
+e2e export-ignore
+

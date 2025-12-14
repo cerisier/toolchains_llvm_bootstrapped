@@ -1,30 +1,12 @@
-load("@bazelrc-preset.bzl", "bazelrc_preset")
-load("@buildifier_prebuilt//:rules.bzl", "buildifier", "buildifier_test")
+load("@toolchains_llvm_bootstrapped//toolchain:selects.bzl", "platform_llvm_binary")
+load("@toolchains_llvm_bootstrapped//tools:defs.bzl", "TOOLCHAIN_BINARIES")
 
-buildifier(
-    name = "buildifier.fix",
-    diff_command = "diff",
-    exclude_patterns = ["./.git/*"],
-    lint_mode = "fix",
-    mode = "fix",
-)
+package(default_visibility = ["//visibility:public"])
 
-buildifier_test(
-    name = "buildifier.check",
-    size = "small",
-    diff_command = "diff",
-    exclude_patterns = ["./.git/*"],
-    lint_mode = "warn",
-    mode = "diff",
-    no_sandbox = True,
-    tags = [
-        "manual",
-        "no-remote-exec",
-    ],
-    workspace = "//:MODULE.bazel",
-)
-
-bazelrc_preset(
-    name = "preset",
-    doc_link_template = "https://registry.build/flag/bazel?filter={flag}",
-)
+[
+    alias(
+        name = tool,
+        actual = platform_llvm_binary("bin/" + tool),
+    )
+    for tool in TOOLCHAIN_BINARIES
+]
