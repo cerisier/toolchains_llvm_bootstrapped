@@ -15,6 +15,23 @@ package(default_visibility = ["//visibility:public"])
 
 # -mcpu for arm assembly 
 
+cc_args(
+    name = "resource_dir",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+        # We may need it for other actions too?
+    ],
+    args = [
+        "-resource-dir",
+        "{resource_dir}",
+    ],
+    format = {
+        "resource_dir": "//runtimes:resource_directory",
+    },
+    data = [
+        "//runtimes:resource_directory",
+    ],
+)
 
 cc_args(
     name = "llvm_target_for_platform",
@@ -217,18 +234,15 @@ cc_args(
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
     args = [
-        "-L.", # needed to -l:bazel-out/...
+        # "-L.", # needed to -l:bazel-out/...
         "-L{libcxx_library_search_path}",
         "-L{libunwind_library_search_path}",
-        "{clang_rt.builtins.a}",
     ],
     data = [
-        "//runtimes/compiler-rt:clang_rt.builtins.static",
         "//runtimes/libcxx:libcxx_library_search_directory",
         "//runtimes/libunwind:libunwind_library_search_directory",
     ],
     format = {
-        "clang_rt.builtins.a": "//runtimes/compiler-rt:clang_rt.builtins.static",
         "libcxx_library_search_path": "//runtimes/libcxx:libcxx_library_search_directory",
         "libunwind_library_search_path": "//runtimes/libunwind:libunwind_library_search_directory",
     },

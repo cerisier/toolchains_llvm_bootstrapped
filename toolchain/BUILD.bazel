@@ -88,6 +88,16 @@ cc_args(
 )
 
 cc_args_list(
+    name = "resource_dir",
+    args = select({
+        "@platforms//os:macos": [],
+        "//conditions:default": [
+            "//toolchain/args:resource_dir",
+        ],
+    }),
+)
+
+cc_args_list(
     name = "default_libs",
     args = select({
         "@platforms//os:macos": [
@@ -147,17 +157,6 @@ cc_args_list(
     ],
 )
 
-cc_args(
-    name = "verbose",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:compile_actions",
-        "@rules_cc//cc/toolchains/actions:link_actions",
-    ],
-    args = [
-        # "-v",
-    ],
-)
-
 cc_args_list(
     name = "platform_specific_args",
     args = select({
@@ -177,7 +176,6 @@ cc_args_list(
         "//toolchain/args:llvm_target_for_platform",
         "//toolchain/args:no_absolute_paths_for_builtins",
         "//toolchain/args:deterministic_compile_flags",
-        # ":verbose",
 
         ":platform_specific_args",
 
@@ -187,8 +185,9 @@ cc_args_list(
         # Common default link flags.
         "//toolchain/args:use_lld",
         ":rtlib",
+        ":resource_dir",
         ":default_link_flags",
-        ":default_startfiles",
+        ":default_startfiles", # Needs to stay out of resource_dir since clang does not always search for crtstuff for all targets.
         ":default_libs",
     ],
     visibility = ["//toolchain:__subpackages__"],

@@ -2,6 +2,7 @@ load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("//toolchain/stage2:cc_stage2_object.bzl", "cc_stage2_object")
 load("//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
+load(":copy_to_resource_directory.bzl", "copy_to_resource_directory")
 
 filegroup(
     name = "static_runtime_lib",
@@ -122,5 +123,14 @@ alias(
         "@platforms//os:linux": ":crt_objects_directory_linux",
         "@platforms//os:windows": ":crt_objects_directory_windows",
     }),
+    visibility = ["//visibility:public"],
+)
+
+copy_to_resource_directory(
+    name = "resource_directory",
+    srcs = {
+        "//runtimes/compiler-rt:clang_rt.builtins.static": "libclang_rt.builtins.a",
+        # "@compiler-rt//:ubsan.static": "libclang_rt.ubsan_standalone.a",
+    },
     visibility = ["//visibility:public"],
 )
