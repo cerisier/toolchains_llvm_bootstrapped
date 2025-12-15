@@ -314,7 +314,7 @@ cc_stage2_library(
         "@platforms//cpu:x86_64": [":builtins_x86_64_sources"],
         "@platforms//cpu:aarch64": [":builtins_aarch64_sources"],
     }, no_match_error = """
-        Platform not supported for compiler-rt.builtins.
+        Architecture not supported for compiler-rt.builtins.
         It is likely that we are just missing the filegroups for that platform.
         Please file an issue.
     """) + [
