@@ -8,7 +8,6 @@ def _bootstrap_transition_impl(settings, attr):
         "//toolchain:stage1_bootstrap_setting": True,
         # Some flags to make LLVM build sanely.
         "@llvm_zlib//:llvm_enable_zlib": False,
-        "@rules_python//python/config_settings:bootstrap_impl": "script",
     }
 
 bootstrap_transition = transition(
@@ -19,7 +18,6 @@ bootstrap_transition = transition(
         "//toolchain:bootstrap_setting",
         "//toolchain:stage1_bootstrap_setting",
         "@llvm_zlib//:llvm_enable_zlib",
-        "@rules_python//python/config_settings:bootstrap_impl",
     ],
 )
 
