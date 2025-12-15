@@ -131,11 +131,6 @@ BUILTINS_GENERIC_SRCS = [
     "lib/builtins/umodsi3.c",
     "lib/builtins/umodti3.c",
 
-    # Not Fuchsia and not a bare-metal build.
-    "lib/builtins/emutls.c",
-    "lib/builtins/enable_execute_stack.c",
-    "lib/builtins/eprintf.c",
-
     # Not sure whether we want atomic in this or separately.
     "lib/builtins/atomic.c",
 
@@ -205,6 +200,14 @@ filegroup(
             "lib/builtins/atomic_thread_fence.c",
         ],
         "//conditions:default": [],
+    }) + select({
+        "@platforms//os:none": [],
+        "//conditions:default": [
+            # Not Fuchsia and not a bare-metal build.
+            "lib/builtins/emutls.c",
+            "lib/builtins/enable_execute_stack.c",
+            "lib/builtins/eprintf.c",
+        ],
     }),
 )
 
@@ -289,6 +292,22 @@ filter_builtin_sources(
     }),
 )
 
+filter_builtin_sources(
+    name = "builtins_wasm32_sources",
+    srcs = [
+        ":builtins_generic_srcs",
+        ":builtins_generic_tf_sources",
+    ],
+)
+
+filter_builtin_sources(
+    name = "builtins_wasm64_sources",
+    srcs = [
+        ":builtins_generic_srcs",
+        ":builtins_generic_tf_sources",
+    ],
+)
+
 builtins_aarch64_atomic_deps = [
     atomic_helper_cc_library(
         name = "builtins_atomic_helper_{}_{}_{}".format(pat, size, model),
@@ -313,6 +332,8 @@ cc_stage2_library(
     srcs = select({
         "@platforms//cpu:x86_64": [":builtins_x86_64_sources"],
         "@platforms//cpu:aarch64": [":builtins_aarch64_sources"],
+        "@platforms//cpu:wasm32": [":builtins_wasm32_sources"],
+        "@platforms//cpu:wasm64": [":builtins_wasm64_sources"],
     }, no_match_error = """
         Architecture not supported for compiler-rt.builtins.
         It is likely that we are just missing the filegroups for that platform.
@@ -444,6 +465,7 @@ cc_stage2_library(
         "@platforms//os:windows": [
             "@mingw//:mingw_headers",
         ],
+        "@platforms//os:none": [],
     }) + select({
         "@toolchains_llvm_bootstrapped//constraints/libc:musl": [
             "@musl_libc//:musl_libc_headers",
@@ -452,6 +474,7 @@ cc_stage2_library(
             # on macOS we implicitly use SDK provided headers
         ],
         "@platforms//os:windows": [],
+        "@platforms//os:none": [],
         "//conditions:default": [
             "@glibc//:gnu_libc_headers",
         ],
