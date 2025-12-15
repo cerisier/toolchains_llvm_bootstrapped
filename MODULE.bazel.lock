@@ -183,6 +183,8 @@
     "https://bcr.bazel.build/modules/rules_swift/3.1.2/source.json": "e85761f3098a6faf40b8187695e3de6d97944e98abd0d8ce579cb2daf6319a66",
     "https://bcr.bazel.build/modules/rules_zig/0.12.2/MODULE.bazel": "09d2ca5486c5c3bbcaa61057958d35f9b4e1e981e08a5a28ad516bab87e8c4ef",
     "https://bcr.bazel.build/modules/rules_zig/0.12.2/source.json": "4cef85ce1b625967ce9c063b8716920e8e7067c38321981a7bfd581ad588f4ba",
+    "https://bcr.bazel.build/modules/sed/4.9.bcr.3/MODULE.bazel": "3aca45895b85b6ef65366cc12a45217ba6870f8931d2d62e09c99c772d9736ab",
+    "https://bcr.bazel.build/modules/sed/4.9.bcr.3/source.json": "31c0cf4c135ed3fa58298cd7bcfd4301c54ea4cf59d7c4e2ea0a180ce68eb34f",
     "https://bcr.bazel.build/modules/stardoc/0.5.1/MODULE.bazel": "1a05d92974d0c122f5ccf09291442580317cdd859f07a8655f1db9a60374f9f8",
     "https://bcr.bazel.build/modules/stardoc/0.5.3/MODULE.bazel": "c7f6948dae6999bf0db32c1858ae345f112cacf98f174c7a8bb707e41b974f1c",
     "https://bcr.bazel.build/modules/stardoc/0.5.6/MODULE.bazel": "c43dabc564990eeab55e25ed61c07a1aadafe9ece96a4efabb3f8bf9063b71ef",

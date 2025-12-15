@@ -150,6 +150,8 @@ archive_override(
     urls = ["https://github.com/cerisier/libstdcxx-stubs-generator/archive/{}.tar.gz".format(LIBSTDCXX_STUBS_GENERATOR_COMMIT)],
 )
 
+bazel_dep(name = "sed", version = "4.9.bcr.3", dev_dependency = True)
+
 bazel_dep(name = "rules_python", version = "1.6.0")
 
 llvm_raw = use_extension("//:llvm_raw.bzl", "llvm_raw")
