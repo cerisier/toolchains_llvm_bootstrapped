@@ -462,22 +462,22 @@ cc_stage2_library(
         "@platforms//os:linux": [
             "@kernel_headers//:kernel_headers",
         ],
-        "@platforms//os:windows": [
-            "@mingw//:mingw_headers",
-        ],
+        "@platforms//os:windows": [],
         "@platforms//os:none": [],
     }) + select({
-        "@toolchains_llvm_bootstrapped//constraints/libc:musl": [
+        "@toolchains_llvm_bootstrapped//platforms/config:musl": [
             "@musl_libc//:musl_libc_headers",
+        ],
+        "@toolchains_llvm_bootstrapped//platforms/config:gnu": [
+            "@glibc//:gnu_libc_headers",
         ],
         "@platforms//os:macos": [
             # on macOS we implicitly use SDK provided headers
         ],
-        "@platforms//os:windows": [],
-        "@platforms//os:none": [],
-        "//conditions:default": [
-            "@glibc//:gnu_libc_headers",
+        "@platforms//os:windows": [
+            "@mingw//:mingw_headers",
         ],
+        "@platforms//os:none": [],
     }),
 )
 
