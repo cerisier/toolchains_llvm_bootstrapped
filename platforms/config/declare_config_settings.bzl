@@ -2,8 +2,6 @@ load("//platforms:common.bzl", "SUPPORTED_TARGETS", "LIBC_SUPPORTED_TARGETS")
 load("@bazel_skylib//lib:selects.bzl", "selects")
 load("//constraints/libc:libc_versions.bzl", _libc_versions = "LIBCS", _glibc_versions = "GLIBCS")
 
-struct(os = str, cpu = str)
-
 def declare_config_settings():
     for (target_os, target_cpu) in SUPPORTED_TARGETS:
         native.config_setting(
