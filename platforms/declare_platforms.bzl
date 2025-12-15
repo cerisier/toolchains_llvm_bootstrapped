@@ -1,33 +1,36 @@
 
 load("//platforms:common.bzl", "ARCH_ALIASES", "SUPPORTED_TARGETS", "LIBC_SUPPORTED_TARGETS")
-load("//constraints/libc:libc_versions.bzl", "LIBCS")
+load("//constraints/libc:libc_versions.bzl", "LIBCS", "DEFAULT_LIBC")
 
 def declare_platforms():
     for (target_os, target_cpu) in SUPPORTED_TARGETS:
+
+        constraints = [
+            "@platforms//cpu:{}".format(target_cpu),
+            "@platforms//os:{}".format(target_os),
+        ]
+
+        if target_os == "linux":
+            # We add a default glibc constraint for linux platforms.
+            #
+            # This is needed because some toolchains require a libc constraint
+            # to be present on the platform in order to select the right
+            # toolchain implementation.
+            #
+            # Users can still create their own platforms without a libc
+            # constraint if they want to.
+            constraints.append("//constraints/libc:{}".format(DEFAULT_LIBC))
+
         native.platform(
             name = "{}_{}".format(target_os, target_cpu),
-            constraint_values = [
-                "@platforms//cpu:{}".format(target_cpu),
-                "@platforms//os:{}".format(target_os),
-                # TODO(cerisier): Use the right default glibc version for the target architecture.
-                #
-                # We choose 2.28 as the default which is ok because we only support
-                # x86_64 and aarch64, but loongarch, risc and csky were introduced later.
-                #
-                # We should choose the minimum version of the glibc that supports the
-                # target architecture.
-                "//constraints/libc:gnu.2.28",
-            ],
+            constraint_values = constraints,
             visibility = ["//visibility:public"],
         )
 
         for alias in ARCH_ALIASES.get(target_cpu, []):
             native.platform(
                 name = "{}_{}".format(target_os, alias),
-                constraint_values = [
-                    "@platforms//cpu:{}".format(target_cpu),
-                    "@platforms//os:{}".format(target_os),
-                ],
+                constraint_values = constraints,
                 visibility = ["//visibility:public"],
             )
 

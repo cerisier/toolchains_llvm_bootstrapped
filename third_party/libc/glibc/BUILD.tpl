@@ -246,6 +246,10 @@ cc_stage2_library(
     ] + selects.with_or({
         (
             # For now the minimum version of all supported platforms is glibc 2.28
+            #
+            # unconstrained defaults to 2.28
+            # TODO(cerisier): Make a is_at_least_gnu_version macro helper.
+            "@toolchains_llvm_bootstrapped//constraints/libc:unconstrained",
             "@toolchains_llvm_bootstrapped//constraints/libc:gnu.2.28",
             "@toolchains_llvm_bootstrapped//constraints/libc:gnu.2.29",
             "@toolchains_llvm_bootstrapped//constraints/libc:gnu.2.30",

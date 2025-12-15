@@ -1,6 +1,6 @@
 load("//platforms:common.bzl", "SUPPORTED_TARGETS", "LIBC_SUPPORTED_TARGETS")
 load("@bazel_skylib//lib:selects.bzl", "selects")
-load("//constraints/libc:libc_versions.bzl", _libc_versions = "LIBCS", _glibc_versions = "GLIBCS")
+load("//constraints/libc:libc_versions.bzl", "LIBCS", "GLIBCS")
 
 def declare_config_settings():
     for (target_os, target_cpu) in SUPPORTED_TARGETS:
@@ -17,7 +17,7 @@ def declare_config_settings():
 
 def declare_config_settings_libc_aware():
     for (target_os, target_cpu) in LIBC_SUPPORTED_TARGETS:
-        for libc in _libc_versions:
+        for libc in LIBCS + ["unconstrained"]:
             native.config_setting(
                 name = "{}_{}_{}".format(target_os, target_cpu, libc),
                 constraint_values = [
@@ -41,7 +41,10 @@ def declare_config_settings_libc_aware():
     selects.config_setting_group(
         name = "gnu",
         match_any = [
-            "//constraints/libc:{}".format(libc) for libc in _glibc_versions
+            "//constraints/libc:{}".format(libc) for libc in GLIBCS
+        ] + [
+            "{}_{}_unconstrained".format(target_os, target_cpu)
+            for (target_os, target_cpu) in LIBC_SUPPORTED_TARGETS
         ],
         visibility = ["//visibility:public"],
     )
