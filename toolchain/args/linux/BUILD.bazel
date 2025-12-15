@@ -196,9 +196,7 @@ cc_args(
 alias(
     name = "default_libs",
     actual = select({
-        "//constraints/libc:musl": ":default_libs_musl",
-        "//platforms/config/libc_aware:gnu": ":default_libs_gnu",
-        #TODO: Remove once we have set the default glibc for a given target
-        "//constraints/libc:unconstrained": ":default_libs_gnu",
+        "//platforms/config:musl": ":default_libs_musl",
+        "//platforms/config:gnu": ":default_libs_gnu",
     }),
 )

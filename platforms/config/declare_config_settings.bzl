@@ -1,4 +1,8 @@
-load("//platforms:common.bzl", "SUPPORTED_TARGETS")
+load("//platforms:common.bzl", "SUPPORTED_TARGETS", "LIBC_SUPPORTED_TARGETS")
+load("@bazel_skylib//lib:selects.bzl", "selects")
+load("//constraints/libc:libc_versions.bzl", _libc_versions = "LIBCS", _glibc_versions = "GLIBCS")
+
+struct(os = str, cpu = str)
 
 def declare_config_settings():
     for (target_os, target_cpu) in SUPPORTED_TARGETS:
@@ -10,3 +14,44 @@ def declare_config_settings():
             ],
             visibility = ["//visibility:public"],
         )
+
+    declare_config_settings_libc_aware()
+
+def declare_config_settings_libc_aware():
+    for (target_os, target_cpu) in LIBC_SUPPORTED_TARGETS:
+        for libc in _libc_versions:
+            native.config_setting(
+                name = "{}_{}_{}".format(target_os, target_cpu, libc),
+                constraint_values = [
+                    "@platforms//cpu:{}".format(target_cpu),
+                    "@platforms//os:{}".format(target_os),
+                    "//constraints/libc:{}".format(libc),
+                ],
+                visibility = ["//visibility:public"],
+            )
+
+        selects.config_setting_group(
+            name = "{}_{}_gnu".format(target_os, target_cpu),
+            match_all = [
+                "@platforms//cpu:{}".format(target_cpu),
+                "@platforms//os:{}".format(target_os),
+                ":gnu",
+            ],
+            visibility = ["//visibility:public"],
+        )
+
+    selects.config_setting_group(
+        name = "gnu",
+        match_any = [
+            "//constraints/libc:{}".format(libc) for libc in _glibc_versions
+        ],
+        visibility = ["//visibility:public"],
+    )
+
+    native.config_setting(
+        name = "musl",
+        constraint_values = [
+            "//constraints/libc:musl",
+        ],
+        visibility = ["//visibility:public"],
+    )

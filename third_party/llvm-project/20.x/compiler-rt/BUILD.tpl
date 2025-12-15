@@ -311,12 +311,8 @@ cc_stage2_library(
     name = "builtins",
     includes = ["lib/builtins"],
     srcs = select({
-        "@toolchains_llvm_bootstrapped//platforms/config:linux_x86_64": [":builtins_x86_64_sources"],
-        "@toolchains_llvm_bootstrapped//platforms/config:linux_aarch64": [":builtins_aarch64_sources"],
-        "@toolchains_llvm_bootstrapped//platforms/config:macos_x86_64": [":builtins_x86_64_sources"],
-        "@toolchains_llvm_bootstrapped//platforms/config:macos_aarch64": [":builtins_aarch64_sources"],
-        "@toolchains_llvm_bootstrapped//platforms/config:windows_x86_64": [":builtins_x86_64_sources"],
-        "@toolchains_llvm_bootstrapped//platforms/config:windows_aarch64": [":builtins_aarch64_sources"],
+        "@platforms//cpu:x86_64": [":builtins_x86_64_sources"],
+        "@platforms//cpu:aarch64": [":builtins_aarch64_sources"],
     }, no_match_error = """
         Platform not supported for compiler-rt.builtins.
         It is likely that we are just missing the filegroups for that platform.

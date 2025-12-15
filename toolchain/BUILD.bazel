@@ -119,22 +119,17 @@ cc_args_list(
         "//toolchain/args/linux:hermetic_linux_args",
         "//toolchain/args:libcxx_headers_include_search_paths",
     ] + select({
-        "//platforms/config/libc_aware:musl": [
+        "//platforms/config:musl": [
             "//toolchain/args/linux:kernel_headers_include_search_paths",
             "//toolchain/args/linux:musl_libc_headers_include_search_paths",
         ],
-        "//platforms/config/libc_aware:gnu": [
-            "//toolchain/args/linux:kernel_headers_include_search_paths",
-            "//toolchain/args/linux:glibc_headers_include_search_paths",
-        ],
-        #TODO: Remove once we have set the default glibc for a given target
-        "//constraints/libc:unconstrained": [
+        "//platforms/config:gnu": [
             "//toolchain/args/linux:kernel_headers_include_search_paths",
             "//toolchain/args/linux:glibc_headers_include_search_paths",
         ],
         "//conditions:default": [],
     }) + select({
-        "//platforms/config/libc_aware:musl": [
+        "//platforms/config:musl": [
             #TODO: Handle musl dynamic linking
             # musl implies static linking for now
             "//toolchain/args:static_link_executable",

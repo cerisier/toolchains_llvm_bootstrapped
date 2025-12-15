@@ -91,8 +91,8 @@ cc_stage2_library(
     includes = [
         "csu",
     ] + select({
-        "@toolchains_llvm_bootstrapped//platforms/config:linux_x86_64": glibc_includes("x86_64"),
-        "@toolchains_llvm_bootstrapped//platforms/config:linux_aarch64": glibc_includes("aarch64"),
+        "@platforms//cpu:x86_64": glibc_includes("x86_64"),
+        "@platforms//cpu:aarch64": glibc_includes("aarch64"),
     }),
     visibility = ["//visibility:public"],
 )
@@ -100,8 +100,8 @@ cc_stage2_library(
 cc_stage2_library(
     name = "glibc_start",
     srcs = select({
-        "@toolchains_llvm_bootstrapped//platforms/config:linux_x86_64": ["sysdeps/x86_64/start.S"],
-        "@toolchains_llvm_bootstrapped//platforms/config:linux_aarch64": ["sysdeps/aarch64/start.S"],
+        "@platforms//cpu:x86_64": ["sysdeps/x86_64/start.S"],
+        "@platforms//cpu:aarch64": ["sysdeps/aarch64/start.S"],
     }, no_match_error = "Unsupported platform"),
     copts = [
         # Normally, we would pass -nostdinc, but since we pass -nostdlibinc
@@ -134,8 +134,8 @@ cc_stage2_library(
     ],
     hdrs = HDRS,
     includes = select({
-        "@toolchains_llvm_bootstrapped//platforms/config:linux_x86_64": glibc_includes("x86_64"),
-        "@toolchains_llvm_bootstrapped//platforms/config:linux_aarch64": glibc_includes("aarch64"),
+        "@platforms//cpu:x86_64": glibc_includes("x86_64"),
+        "@platforms//cpu:aarch64": glibc_includes("aarch64"),
     }),
     implementation_deps = [
         ":kernel_headers",
@@ -222,7 +222,7 @@ cc_stage2_library(
         "LIBC_NONSHARED=1",
         "TOP_NAMESPACE=glibc",
     ] + select({
-        "@toolchains_llvm_bootstrapped//platforms/config:linux_x86_64": [
+        "@platforms//cpu:x86_64": [
             "CAN_USE_REGISTER_ASM_EBP",
         ],
         "//conditions:default": [],
@@ -232,8 +232,8 @@ cc_stage2_library(
     includes = [
         "csu",
     ] + select({
-        "@toolchains_llvm_bootstrapped//platforms/config:linux_x86_64": glibc_includes("x86_64"),
-        "@toolchains_llvm_bootstrapped//platforms/config:linux_aarch64": glibc_includes("aarch64"),
+        "@platforms//cpu:x86_64": glibc_includes("x86_64"),
+        "@platforms//cpu:aarch64": glibc_includes("aarch64"),
     }),
     srcs = [
         # From stdlib/Makefile
@@ -246,7 +246,6 @@ cc_stage2_library(
     ] + selects.with_or({
         (
             # For now the minimum version of all supported platforms is glibc 2.28
-            "@toolchains_llvm_bootstrapped//constraints/libc:unconstrained",
             "@toolchains_llvm_bootstrapped//constraints/libc:gnu.2.28",
             "@toolchains_llvm_bootstrapped//constraints/libc:gnu.2.29",
             "@toolchains_llvm_bootstrapped//constraints/libc:gnu.2.30",

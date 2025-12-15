@@ -4,12 +4,9 @@ package(default_visibility = ["//visibility:public"])
 
 constraint_setting(
     name = "variant",
-    default_constraint_value = "unconstrained",
-)
-
-constraint_value(
-    name = "unconstrained",
-    constraint_setting = "variant",
+    # This is a hard default for users of this toolchain using their own
+    # platforms that do not specify a libc variant.
+    default_constraint_value = "gnu.2.28",
 )
 
 declare_libcs_constraints()

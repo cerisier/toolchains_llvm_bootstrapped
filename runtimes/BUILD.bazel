@@ -72,15 +72,11 @@ cc_stage2_object(
 copy_to_directory(
     name = "crt_objects_directory_linux",
     srcs = select({
-        "@toolchains_llvm_bootstrapped//constraints/libc:musl": [
+        "//platforms/config:musl": [
             # -static-pie is implied
             "//runtimes/musl:musl_rcrt1.object",
         ],
-        "//platforms/config/libc_aware:gnu": [
-            "//runtimes/glibc:glibc_Scrt1.object",
-            "//runtimes/glibc:glibc_crt1.object",
-        ],
-        "//constraints/libc:unconstrained": [
+        "//platforms/config:gnu": [
             "//runtimes/glibc:glibc_Scrt1.object",
             "//runtimes/glibc:glibc_crt1.object",
         ],
