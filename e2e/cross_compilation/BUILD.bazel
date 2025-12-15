@@ -1,8 +1,10 @@
+load("@bazel_lib//lib:transitions.bzl", "platform_transition_binary")
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("@toolchains_llvm_bootstrapped//constraints/libc:libc_versions.bzl", "LIBCS")
-load("@bazel_lib//lib:transitions.bzl", "platform_transition_binary")
-load("@bazel_skylib//rules:build_test.bzl", "build_test")
 
 cc_library(
     name = "add",
@@ -39,10 +41,37 @@ PLATFORMS = [
     ) for platform in PLATFORMS
 ]
 
-[
-    build_test(
-        name = "test_main_" + platform.split(":")[-1],
-        targets = [":main_" + platform.split(":")[-1]],
-        size = "small",
-    ) for platform in PLATFORMS
-]
+##################################
+
+# Make sure we have at least 1 test in the repository.
+# `build_test` requires genrule, do not use!
+
+# cc_test does not work because dynamic linking is broken
+# cc_test(
+#     name = "cc_test",
+#     deps = [":add"],
+#     srcs = ["test.cc"],
+# )
+
+write_file(
+    name = "write_dummy_sh",
+    out = "dummy.sh",
+    # Generate the xml_output so we don't run a followup split xml action...
+    content = [
+        "#!/usr/bin/env bash",
+        "set -euxo pipefail",
+        'mkdir -p "$(dirname "${XML_OUTPUT_FILE}")"',
+        'cat >"${XML_OUTPUT_FILE}" <<\'EOF\'',
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<testsuite name="dummy_test" tests="1" failures="0" errors="0" skipped="0">',
+        '  <testcase name="dummy"/>',
+        '</testsuite>',
+        'EOF',
+    ],
+    is_executable = True,
+)
+
+sh_test(
+    name = "dummy_test",
+    srcs = ["dummy.sh"],
+)

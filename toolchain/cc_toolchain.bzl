@@ -37,6 +37,7 @@ def cc_toolchain(name, tool_map):
         ],
         tool_map = tool_map,
         static_runtime_lib = "//runtimes:static_runtime_lib",
-        dynamic_runtime_lib = "//runtimes:dynamic_runtime_lib",
+        # TODO(zbarsky): Terrible hack! dynamic runtime libs don't work correctly so we force static ones.
+        dynamic_runtime_lib = "//runtimes:static_runtime_lib",
         compiler = "clang",
     )

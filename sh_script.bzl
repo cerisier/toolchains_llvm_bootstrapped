@@ -11,6 +11,7 @@ def sh_script(name, cmd, **kwargs):
             "set -euo pipefail",
             cmd,
         ],
+        is_executable = True,
     )
 
     sh_binary(
@@ -21,6 +22,13 @@ def sh_script(name, cmd, **kwargs):
     run_binary(
         name = name,
         tool = name + "_bin",
+        env = {
+            # Some default paths that are likely to be needed for genrule-type scripts.
+            # We must specify this because otherwise we leak the host's PATH, which may
+            # not be compatible with the execution platform...
+            # See https://github.com/bazelbuild/bazel/issues/28065
+            "PATH": "/usr/bin:/bin:/usr/sbin:/sbin",
+        },
         **kwargs
     )
 
