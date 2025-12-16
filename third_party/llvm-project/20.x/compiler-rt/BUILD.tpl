@@ -4,7 +4,6 @@ load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_object.bzl", "cc
 load("@toolchains_llvm_bootstrapped//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_unsanitized_library.bzl", "cc_unsanitized_library")
 load("@toolchains_llvm_bootstrapped//third_party/llvm-project/20.x/compiler-rt:targets.bzl", "atomic_helper_cc_library")
-load("@toolchains_llvm_bootstrapped//third_party/llvm-project/20.x/compiler-rt:darwin_excludes.bzl", "filter_excludes")
 load("@toolchains_llvm_bootstrapped//third_party/llvm-project/20.x/compiler-rt:filter_builtin_sources.bzl", "filter_builtin_sources")
 load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
@@ -190,7 +189,7 @@ copy_file(
 # buildifier: disable=constant-glob
 filegroup(
     name = "builtins_generic_srcs",
-    srcs = filter_excludes(BUILTINS_GENERIC_SRCS) + select({
+    srcs = BUILTINS_GENERIC_SRCS + select({
         "@platforms//os:macos": [
             "lib/builtins/atomic_flag_clear.c",
             "lib/builtins/atomic_flag_clear_explicit.c",
@@ -213,12 +212,12 @@ filegroup(
 
 filegroup(
     name = "builtins_bf16_sources",
-    srcs = filter_excludes(BF16_SOURCES),
+    srcs = BF16_SOURCES,
 )
 
 filegroup(
     name = "builtins_generic_tf_sources",
-    srcs = filter_excludes(BUILTINS_GENERIC_TF_SRCS),
+    srcs = BUILTINS_GENERIC_TF_SRCS,
 )
 
 filegroup(
@@ -231,7 +230,7 @@ filegroup(
 
 filegroup(
     name = "builtins_x86_80_bit_sources",
-    srcs = filter_excludes([
+    srcs = [
         "lib/builtins/divxc3.c",
         "lib/builtins/fixxfdi.c",
         "lib/builtins/fixxfti.c",
@@ -244,7 +243,7 @@ filegroup(
         "lib/builtins/floatuntixf.c",
         "lib/builtins/mulxc3.c",
         "lib/builtins/powixf2.c",
-    ]),
+    ],
 )
 
 filter_builtin_sources(
@@ -254,11 +253,10 @@ filter_builtin_sources(
         ":builtins_generic_tf_sources",
         ":builtins_x86_arch_sources",
         ":builtins_x86_80_bit_sources",
-    ] + filter_excludes([
         "lib/builtins/x86_64/floatdidf.c",
         "lib/builtins/x86_64/floatdisf.c",
         "lib/builtins/x86_64/floatdixf.c",  # if not ANDROID
-    ]) + select({
+    ] + select({
         "@platforms//os:windows": [
             "lib/builtins/x86_64/chkstk.S",
         ],
