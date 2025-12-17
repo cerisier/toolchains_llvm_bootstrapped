@@ -22,6 +22,12 @@ bazel_dep(name = "rules_shell", version = "0.6.1")
 
 # https://github.com/bazelbuild/rules_cc/releases
 bazel_dep(name = "rules_cc", version = "0.2.14")
+single_version_override(
+    module_name = "rules_cc",
+    patch_strip = 1,
+    patches = ["//:windows_strip.patch"],
+    version = "0.2.14",
+)
 
 # https://registry.bazel.build/modules/libmagic
 bazel_dep(name = "libmagic", version = "5.46.bcr.4")
