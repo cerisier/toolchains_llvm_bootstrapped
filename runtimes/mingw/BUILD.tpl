@@ -106,6 +106,7 @@ cc_stage2_library(
         "mingw-w64-headers/crt/_mingw.h",
         "mingw-w64-headers/crt/sdks/_mingw_ddk.h",
     ],
+    features = ["system_include_paths"],
     includes = [
         "mingw-w64-headers/include",
         "mingw-w64-headers/crt",

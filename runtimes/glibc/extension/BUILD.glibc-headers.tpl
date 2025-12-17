@@ -10,6 +10,7 @@ cc_library(
     includes = [
         "include",
     ],
+    features = ["system_include_paths"],
     visibility = ["//visibility:public"],
 )
 

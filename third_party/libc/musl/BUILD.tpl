@@ -176,6 +176,7 @@ filegroup(
             "arch/generic",
             "include",
         ],
+        features = ["system_include_paths"],
         hdrs = [":headers_{arch}".format(arch = arch)],
         visibility = ["//visibility:public"],
     ) for arch in MUSL_SUPPORTED_ARCHS
