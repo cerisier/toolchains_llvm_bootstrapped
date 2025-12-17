@@ -3,12 +3,12 @@ load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
 
 # echo 'int main() {}' | bazel run //tools:clang -- -x c - -fuse-ld=lld -v --rtlib=compiler-rt -### --target=<triple> 
 TRIPLE_SELECT_DICT = {
-    "@toolchains_llvm_bootstrapped//platforms/config/libc_aware:linux_x86_64": "x86_64-unknown-linux-gnu",
-    "@toolchains_llvm_bootstrapped//platforms/config/libc_aware:linux_aarch64": "aarch64-unknown-linux-gnu",
-    "@toolchains_llvm_bootstrapped//platforms/config/libc_aware:linux_x86_64_gnu": "x86_64-unknown-linux-gnu",
-    "@toolchains_llvm_bootstrapped//platforms/config/libc_aware:linux_aarch64_gnu": "aarch64-unknown-linux-gnu",
-    "@toolchains_llvm_bootstrapped//platforms/config/libc_aware:linux_x86_64_musl": "x86_64-unknown-linux-musl",
-    "@toolchains_llvm_bootstrapped//platforms/config/libc_aware:linux_aarch64_musl": "aarch64-unknown-linux-musl",
+    "@toolchains_llvm_bootstrapped//platforms/config:linux_x86_64": "x86_64-unknown-linux-gnu",
+    "@toolchains_llvm_bootstrapped//platforms/config:linux_aarch64": "aarch64-unknown-linux-gnu",
+    "@toolchains_llvm_bootstrapped//platforms/config:linux_x86_64_gnu": "x86_64-unknown-linux-gnu",
+    "@toolchains_llvm_bootstrapped//platforms/config:linux_aarch64_gnu": "aarch64-unknown-linux-gnu",
+    "@toolchains_llvm_bootstrapped//platforms/config:linux_x86_64_musl": "x86_64-unknown-linux-musl",
+    "@toolchains_llvm_bootstrapped//platforms/config:linux_aarch64_musl": "aarch64-unknown-linux-musl",
     "@toolchains_llvm_bootstrapped//platforms/config:macos_x86_64": "darwin",
     "@toolchains_llvm_bootstrapped//platforms/config:macos_aarch64": "darwin",
     "@toolchains_llvm_bootstrapped//platforms/config:windows_x86_64": "x86_64-w64-windows-gnu",
