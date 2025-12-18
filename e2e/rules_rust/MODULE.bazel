@@ -13,6 +13,11 @@ module(
 # Get latest rules_rust release from:
 # https://github.com/bazelbuild/rules_rust/releases
 bazel_dep(name = "rules_rust", version = "0.68.1")
+single_version_override(
+    module_name = "rules_rust",
+    patch_strip = 1,
+    patches = ["//:rust_output.patch"],
+)
 
 # https://github.com/bazelbuild/platforms/releases
 bazel_dep(name = "platforms", version = "1.0.0")
