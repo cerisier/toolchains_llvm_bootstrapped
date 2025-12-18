@@ -129,8 +129,12 @@ alias(
 copy_to_resource_directory(
     name = "resource_directory",
     srcs = {
-        "//runtimes/compiler-rt:clang_rt.builtins.static": "libclang_rt.builtins.a",
-        # "@compiler-rt//:ubsan.static": "libclang_rt.ubsan_standalone.a",
-    },
+        "//runtimes/compiler-rt:clang_rt.builtins.static": "libclang_rt.builtins",
+    } | select({
+        "//config:ubsan_enabled": {
+            "//runtimes/compiler-rt:clang_rt.ubsan.static": "libclang_rt.ubsan_standalone",
+        },
+        "//conditions:default": {},
+    }),
     visibility = ["//visibility:public"],
 )

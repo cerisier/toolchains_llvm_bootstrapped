@@ -1,5 +1,5 @@
-load("@bazel_lib//lib:copy_file.bzl", "copy_file")
-load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
+load("@bazel_lib//lib:copy_file.bzl", "copy_file_action", "COPY_FILE_TOOLCHAINS")
+load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory_bin_action")
 
 # echo 'int main() {}' | bazel run //tools:clang -- -x c - -fuse-ld=lld -v --rtlib=compiler-rt -### --target=<triple> 
 TRIPLE_SELECT_DICT = {
@@ -17,45 +17,65 @@ TRIPLE_SELECT_DICT = {
     "@toolchains_llvm_bootstrapped//platforms/config:none_wasm64": "wasm64-unknown-unknown",
 }
 
-def copy_to_resource_directory(name, srcs, **kwargs):
-    """Copies the given srcs into a resource directory layout under lib/<triple>/.
-
-    Args:
-      name: target name producing the output directory (TreeArtifact).
-      srcs: dict(label -> basename). Each value is the filename to appear under lib/<triple>/.
-      **kwargs: forwarded to copy_to_directory (e.g. tags, testonly, etc).
-    """
-
+def _copy_to_resource_directory_rule_impl(ctx):
     # Private staging folder inside the output-dir layout before we rewrite prefixes.
-    staging_prefix = "_%s_staging" % name
+    staging_prefix = "_%s_staging" % ctx.label.name
 
     staged = []
-    for src_label, out_basename in sorted(srcs.items()):
-        t = "%s__staged" % (out_basename.replace(".", "_").replace("/", "_"))
-        copy_file(
-            name = t,
-            src = src_label,
-            out = "%s/%s" % (staging_prefix, out_basename),
-            allow_symlink = True,
-            visibility = ["//visibility:private"],
+    for src_label, out_basename in ctx.attr.srcs.items():
+        src = src_label.files.to_list()[0]
+        extension_src = src.path.split(".")[-1]
+        # we need to respect the extension since it may differ between platforms.
+        out_filename = "%s.%s" % (out_basename, extension_src)
+        out = ctx.actions.declare_file("%s/%s" % (staging_prefix, out_filename))
+        copy_file_action(ctx,
+            src = src,
+            dst = out,
         )
-        staged.append(":" + t)
+        staged.append(out)
 
-    # Build a select() that rewrites "_<name>_staging/..." to "lib/<triple>/..."
-    replace_prefixes_by_cfg = {}
-    for cfg, triple in TRIPLE_SELECT_DICT.items():
-        replace_prefixes_by_cfg[cfg] = { staging_prefix: "lib/%s" % triple }
-
-    # if "//conditions:default" not in replace_prefixes_by_cfg:
-    #     replace_prefixes_by_cfg["//conditions:default"] = { staging_prefix: "lib/unknown-unknown-unknown" }
-
-    copy_to_directory(
-        name = name,
-        srcs = staged,
-        # Keep paths relative to this package (default behavior is root_paths=["."]).
+    copy_to_directory_bin = ctx.toolchains["@bazel_lib//lib:copy_to_directory_toolchain_type"].copy_to_directory_info.bin
+    out_dir = ctx.actions.declare_directory(ctx.label.name)
+    copy_to_directory_bin_action(
+        ctx,
+        name = ctx.attr.name,
+        copy_to_directory_bin = copy_to_directory_bin,
+        dst = out_dir,
+        files = staged,
+        replace_prefixes = {staging_prefix: "lib/%s" % ctx.attr.target_triple},
+        include_external_repositories = ["**"],
         root_paths = ["."],
-        # Final layout rewrite step.
-        replace_prefixes = select(replace_prefixes_by_cfg),
-        **kwargs
     )
 
+    return [DefaultInfo(files = depset([out_dir]))]
+
+copy_to_resource_directory_rule = rule(
+    doc = "Copies the given srcs into a resource directory layout under lib/<triple>/.",
+    implementation = _copy_to_resource_directory_rule_impl,
+    attrs = {
+        "srcs": attr.label_keyed_string_dict(
+            doc = "Dict of label -> basename. Each value is the filename to appear under lib/<triple>/",
+            mandatory = True,
+            allow_files = True,
+        ),
+        "target_triple": attr.string(
+            doc = "The target triple to use for placing the files.",
+        ),
+    },
+    toolchains = COPY_FILE_TOOLCHAINS + [
+        "@bazel_lib//lib:copy_to_directory_toolchain_type",
+    ],
+)
+
+def _copy_to_resource_directory_macro_impl(name, srcs, target_triple, **kwargs):
+    return copy_to_resource_directory_rule(
+        name = name,
+        srcs = srcs,
+        target_triple = target_triple if target_triple else select(TRIPLE_SELECT_DICT),
+        **kwargs,
+    )
+
+copy_to_resource_directory = macro(
+    implementation = _copy_to_resource_directory_macro_impl,
+    inherit_attrs = copy_to_resource_directory_rule,
+)

@@ -5,6 +5,12 @@ alias(
 )
 
 alias(
+    name = "clang_rt.ubsan.static",
+    actual = "@compiler-rt//:ubsan.static",
+    visibility = ["//visibility:public"],
+)
+
+alias(
     name = "clang_rt.crtbegin",
     actual = "@compiler-rt//:clang_rt.crtbegin.static",
     visibility = ["//visibility:public"],
