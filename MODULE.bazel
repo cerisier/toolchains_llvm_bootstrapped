@@ -9,14 +9,7 @@ bazel_dep(name = "bazel_lib", version = "3.0.0")
 bazel_dep(name = "bazel_skylib", version = "1.8.2")
 bazel_dep(name = "bazel_features", version = "1.34.0")
 bazel_dep(name = "platforms", version = "1.0.0")
-bazel_dep(name = "rules_cc", version = "0.2.14")
-archive_override(
-    module_name = "rules_cc",
-    integrity = "sha256-f742fIS/MFn2UbiRo4nbGtcyxAq6jftr3B5tlRmZyjo=",
-    strip_prefix = "rules_cc-2e5f7b7e5aeb51313d1e40ff712d1b158d2bb385",
-    urls = ["https://github.com/bazelbuild/rules_cc/archive/2e5f7b7e5aeb51313d1e40ff712d1b158d2bb385.tar.gz"],
-)
-
+bazel_dep(name = "rules_cc", version = "0.2.16")
 bazel_dep(name = "rules_shell", version = "0.6.1")
 bazel_dep(name = "with_cfg.bzl", version = "0.12.0")
 bazel_dep(name = "tar.bzl", version = "0.6.0")

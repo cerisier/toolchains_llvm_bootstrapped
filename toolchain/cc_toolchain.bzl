@@ -17,8 +17,7 @@ def cc_toolchain(name, tool_map):
             "//toolchain/features/legacy:all_legacy_builtin_features",
         ] + select({
             "@platforms//os:linux": [
-                # TODO(zbarsky): Enable this once rules_cc cuts a release.
-                # "@rules_cc//cc/toolchains/args/thin_lto:feature",
+                "@rules_cc//cc/toolchains/args/thin_lto:feature",
             ],
             "//conditions:default": [],
         }),
