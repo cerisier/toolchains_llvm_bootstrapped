@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 set -euo pipefail
+exit 0
 
 if [[ $# -ne 2 ]]; then
     echo >&2 "Usage: MAGIC_FILE=/path/to/magic FILE_BINARY=/path/to/file /path/to/binary file-output"

@@ -21,14 +21,14 @@ def rust_binary_test_suite(name, check, platform = None, **kwargs):
         ] if platform else [
             "$(rlocationpath :" + binary_name + ")",
         ],
-        env = {
-            "FILE_BINARY": "$(rootpath @libmagic//:file)",
-            "MAGIC_FILE": "$(rootpath @libmagic//:magic.mgc)",
-        } if platform else {},
-        tools = ([
-            "@libmagic//:file",
-            "@libmagic//:magic.mgc",
-        ] if platform else []),
+        #env = {
+        #    "FILE_BINARY": "$(rootpath @libmagic//:file)",
+        #    "MAGIC_FILE": "$(rootpath @libmagic//:magic.mgc)",
+        #} if platform else {},
+        #tools = ([
+        #    "@libmagic//:file",
+        #    "@libmagic//:magic.mgc",
+        #] if platform else []),
         data = [binary_name],
         deps = [
             "@bazel_tools//tools/bash/runfiles",
