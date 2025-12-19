@@ -22,9 +22,9 @@ def platform_cc_tool_map(exec_os, exec_cpu):
     if exec_os == "macos":
         tool_repo = "@llvm-toolchain-minimal-%s-darwin-arm64//" % LLVM_VERSION
     elif exec_cpu == "x86_64":
-        tool_repo = "@llvm-toolchain-minimal-%s-linux-amd64//" % LLVM_VERSION
+        tool_repo = "@llvm-toolchain-minimal-%s-%s-amd64//" % (LLVM_VERSION, exec_os)
     else:
-        tool_repo = "@llvm-toolchain-minimal-%s-linux-arm64//" % LLVM_VERSION
+        tool_repo = "@llvm-toolchain-minimal-%s-%s-arm64//" % (LLVM_VERSION, exec_os)
 
     # Even though `tool_map` is exec-configured, this `select` happens under the target configuration.
     # That's because Bazel resolves the select before applying the exec transition, but if these targets
