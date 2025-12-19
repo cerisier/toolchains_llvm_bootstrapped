@@ -458,6 +458,8 @@ cc_stage2_library(
     implementation_deps = select({
         "@platforms//os:macos": [],
         "@platforms//os:linux": [
+            # TODO(cerisier): Provide only a subset of linux UAPI headers for musl.
+            # https://github.com/cerisier/toolchains_llvm_bootstrapped/issues/146
             "@kernel_headers//:kernel_headers",
         ],
         "@platforms//os:windows": [],
@@ -608,23 +610,22 @@ cc_unsanitized_library(
 )
 
 # TODO(zbarsky): It would be nice to not have to jam everything into a single BUILD file
-
-# TODO(cerisier): This should be exposed from //runtimes in some way since it is needed in several places.
-
 cc_stage2_library(
     name = "linux_libc_headers",
     deps = [
-        # Order matter. Search path should have C++ headers before any lib C headers.
+        # linux UAPI headers are needed even for musl here because sanitizers include <sys/vt.h>
+        # TODO(cerisier): Provide only a subset of linux UAPI headers for musl.
+        # https://github.com/cerisier/toolchains_llvm_bootstrapped/issues/146
         "@kernel_headers//:kernel_headers",
-        "@toolchains_llvm_bootstrapped//third_party/llvm-project:libc_headers",
+        # Order matter. Search path should have C++ headers before any lib C headers.
     ] + select({
-        "@toolchains_llvm_bootstrapped//constraints/libc:musl": [
+        "@toolchains_llvm_bootstrapped//platforms/config:musl": [
             "@musl_libc//:musl_libc_headers",
         ],
-        "//conditions:default": [
+        "@toolchains_llvm_bootstrapped//platforms/config:gnu": [
             "@glibc//:gnu_libc_headers",
         ],
-    })
+    }),
 )
 
 cc_stage2_library(
