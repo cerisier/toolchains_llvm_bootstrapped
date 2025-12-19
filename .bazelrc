@@ -47,6 +47,8 @@ common:remote --noexperimental_throttle_remote_action_building
 common:remote --experimental_remote_execution_keepalive
 common:remote --grpc_keepalive_time=30s
 common:remote --jobs=800
+common:remote --remote_retries=20
+common:remote --remote_retry_max_delay=15s
 common:remote --extra_execution_platforms=@toolchains_llvm_bootstrapped//:rbe_platform
 
 # Load any settings specific to the current user.

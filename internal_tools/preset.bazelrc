@@ -132,7 +132,7 @@ common:ci --remote_download_outputs="minimal"
 
 # On CI, fall back to standalone local execution strategy if remote execution fails.
 # Otherwise, when a grpc remote cache connection fails, it would fail the build.
-common:ci --remote_local_fallback
+# common:ci --remote_local_fallback
 # Docs: https://registry.build/flag/bazel?filter=remote_local_fallback
 
 # On CI, extend the maximum amount of time to wait for remote execution and cache calls.

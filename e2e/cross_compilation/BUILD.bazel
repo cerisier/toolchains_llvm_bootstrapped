@@ -1,9 +1,7 @@
 load("@bazel_lib//lib:transitions.bzl", "platform_transition_binary")
-load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@rules_cc//cc:cc_test.bzl", "cc_test")
-load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("@toolchains_llvm_bootstrapped//constraints/libc:libc_versions.bzl", "LIBCS")
 load("@toolchains_llvm_bootstrapped//:defs.bzl", "exec_test")
 
@@ -47,22 +45,11 @@ PLATFORMS = [
 # Make sure we have at least 1 test in the repository.
 # `build_test` requires genrule, do not use!
 
-# cc_test does not work because dynamic linking is broken
-# cc_test(
-#     name = "cc_test",
-#     deps = [":add"],
-#     srcs = ["test.cc"],
-# )
-
-write_file(
-    name = "write_dummy_sh",
-    out = "dummy.sh",
-    content = [],
-    is_executable = True,
-)
-
 exec_test(
-    sh_test,
-    name = "dummy_test",
-    srcs = ["dummy.sh"],
+    cc_test,
+    name = "cc_test",
+    deps = [":add"],
+    srcs = ["test.cc"],
+    linkstatic = True,
+    tags = ["no-remote"],
 )
