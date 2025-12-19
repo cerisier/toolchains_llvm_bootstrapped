@@ -61,6 +61,8 @@ platform_transition_binary(
 cc_test(
     name = "windows_test",
     srcs = ["windows_test.cc"],
+    # We run CI with `--config=stage1` so we will first compile a Windows-exec-flavored LLVM toolchain from source,
+    # then use that to build this target on the Windows host.
     exec_compatible_with = [
         "@platforms//os:windows",
     ],

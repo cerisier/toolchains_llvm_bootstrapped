@@ -18,6 +18,8 @@ common:stage1   --extra_toolchains=@toolchains_llvm_bootstrapped//toolchain/stag
 
 # Workaround lack of cgo support for now
 common:wasm       --@rules_go//go/config:pure
+# Force stage1 because Wasm support is not in released binaries yet.
+common:wasm       --config=stage1
 
 # TODO: LLVM doesn't compile otherwise due to "zlib.h" vs <zlib.h> usage.
 common:prebuilt --@llvm_zlib//:llvm_enable_zlib=false
