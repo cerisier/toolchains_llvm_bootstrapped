@@ -119,6 +119,5 @@ jobs:
             --repository_cache= \
             --repo_contents_cache= \
             --remote_header=x-buildbuddy-api-key=$BUILDBUDDY_API_KEY \
-            --config=stage1 \
             $EXTRA_ARGS \
             //...
