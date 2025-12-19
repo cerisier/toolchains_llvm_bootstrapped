@@ -19,19 +19,21 @@ bazel_dep(name = "bazelrc-preset.bzl", version = "1.6.0", dev_dependency = True)
 
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
-LLVM_VERSION = "21.1.7"
+LLVM_VERSION = "21.1.8"
 
 LLVM_TOOLCHAIN_MINIMAL_SHA256 = {
-    "darwin-arm64": "5d345bcf07a9dbf3bedb2aae1c8e0c7ac3e8ccf078fd487df4c846816490fe74",
-    "linux-amd64-musl": "80a4891adafa15cfd0e04ee35d8339e85ff02e71620a472a07e122c0cf505eac",
-    "linux-arm64-musl": "36e374ba32e1df7a353f317d986624cef94435f828cdfb8b3cf00931f501ba48",
+    "darwin-arm64": "7285997ec103266b70296e1511a3ba461a8f084a647b08f11eb6d6720574da1f",
+    "linux-amd64-musl": "e0babfd4a44e548283b35ab307ed27dcdfce974f882514e927c94e54812e8bbc",
+    "linux-arm64-musl": "d825c030d0342620b384eca9901d96d1272a3ab19270b2730c1ad87d608c450d",
+    "windows-amd64-gnu": "95c2d359472ada0609d699345f2b50b406ea5343284cb2cc5afbd68dc09d154c",
+    "windows-arm64-gnu": "f1ccbb6f90e96f1c243b288dd1f9ea4cefb6542a0bc96c862bb5018abf7bba98",
 }
 
 [
     http_archive(
         name = "llvm-toolchain-minimal-{llvm_version}-{target}".format(
             llvm_version = LLVM_VERSION,
-            target = target.replace("-musl", ""),
+            target = target.replace("-musl", "").replace("-gnu", ""),
         ),
         build_file = "//toolchain/llvm:BUILD.llvm_release.tpl",
         sha256 = sha256,
@@ -65,10 +67,10 @@ LLVM_TOOLCHAIN_EXTRAS_SHA256 = {
 ]
 
 LLVM_RELEASE_ASSETS_SHA256 = {
-    "compiler-rt": "4358e4476ab89b6ca9e4174f05f4a2c2c10e4a41c3c7febd25afe96bc27b5758",
-    "libcxx": "80492b5dfad966638779ac87890a8c5ee8495a8275c4ad04c8a3ae3076980b04",
-    "libcxxabi": "379e5cf58b3db42ad490d4129d6c5643a73b284ebf331ab075e079381edf5b4c",
-    "libunwind": "ac6ac43b6d54c6f6725a286ce36acff7a94123a8f2a54c161f866b94fcaa3a9b",
+    "compiler-rt": "dd54ae21aee1780fac59445b51ebff601ad016b31ac3a7de3b21126fd3ccb229",
+    "libcxx": "6422a58a5c29b7f4fda224cfdc07842be8a208a61301bbba7a219116e3351809",
+    "libcxxabi": "709c9a63bde1e36a80d8675becc38073b85f0fa1b4111e34542b885c9e1239da",
+    "libunwind": "03e8adc6c3bdde657dcaedc94886ea70d1f7d551d622fcd8a36a8300e5c36cbc"
 }
 
 [
