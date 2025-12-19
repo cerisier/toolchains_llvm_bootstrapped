@@ -35,7 +35,7 @@ LLVM_TOOLCHAIN_MINIMAL_SHA256 = {
             llvm_version = LLVM_VERSION,
             target = target.replace("-musl", "").replace("-gnu", ""),
         ),
-        build_file = "//toolchain/llvm:BUILD.llvm_release.tpl",
+        build_file = "//toolchain/llvm:BUILD.llvm_release.tpl" if "windows" not in target else "//toolchain/llvm:BUILD.llvm_release_windows.tpl",
         sha256 = sha256,
         urls = ["https://github.com/cerisier/toolchains_llvm_bootstrapped/releases/download/llvm-{llvm_version}/llvm-toolchain-minimal-{llvm_version}-{target}.tar.zst".format(
             llvm_version = LLVM_VERSION,
