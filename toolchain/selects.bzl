@@ -1,10 +1,12 @@
-LLVM_VERSION = "21.1.7"
+LLVM_VERSION = "21.1.8"
 
 def platform_llvm_binary(binary):
     return select({
         "@toolchains_llvm_bootstrapped//platforms/config:macos_aarch64": "@llvm-toolchain-minimal-%s-darwin-arm64//:%s" % (LLVM_VERSION, binary),
         "@toolchains_llvm_bootstrapped//platforms/config:linux_x86_64": "@llvm-toolchain-minimal-%s-linux-amd64//:%s" % (LLVM_VERSION, binary),
         "@toolchains_llvm_bootstrapped//platforms/config:linux_aarch64": "@llvm-toolchain-minimal-%s-linux-arm64//:%s" % (LLVM_VERSION, binary),
+        "@toolchains_llvm_bootstrapped//platforms/config:windows_aarch64": "@llvm-toolchain-minimal-%s-windows-arm64//:%s" % (LLVM_VERSION, binary),
+        "@toolchains_llvm_bootstrapped//platforms/config:windows_x86_64": "@llvm-toolchain-minimal-%s-windows-amd64//:%s" % (LLVM_VERSION, binary),
     })
 
 def platform_extra_binary(binary):
