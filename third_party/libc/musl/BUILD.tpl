@@ -1,5 +1,6 @@
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@toolchains_llvm_bootstrapped//:sh_script.bzl", "sh_script")
 
 MUSL_SUPPORTED_ARCHS = ["x86_64", "aarch64"]
 
@@ -31,16 +32,15 @@ filegroup(
 
 ## INTERNAL HEADERS
 
-genrule(
+sh_script(
     name = "version_h",
-    srcs = [
-        "VERSION",
-        "tools/version.sh",
-    ],
+    srcs = ["VERSION"],
     outs = ["obj/src/internal/version.h"],
-    cmd = """
-        printf '#define VERSION \"%s\"\\n' "$$(cat $(location VERSION))" > $@
-    """,
+    cmd = """printf '#define VERSION \"%s\"\\n' "$(cat $1)" > $2""",
+    args = [
+       "$(location VERSION)",
+       "$(location obj/src/internal/version.h)",
+    ],
 )
 
 [
@@ -103,7 +103,7 @@ filegroup(
 
 
 [
-    genrule(
+    sh_script(
         name = "alltypes_h_{arch}".format(arch = arch),
         srcs = [
             "arch/{arch}/bits/alltypes.h.in".format(arch = arch),
@@ -111,28 +111,32 @@ filegroup(
             "tools/mkalltypes.sed",
         ],
         outs = ["obj/{arch}/include/bits/alltypes.h".format(arch = arch)],
-        cmd = """
-            sed -f $(location tools/mkalltypes.sed) $(location arch/{arch}/bits/alltypes.h.in) $(location include/alltypes.h.in) > $@
-        """.format(arch = arch),
+        cmd = "sed -f $1 $2 $3 > $4",
+        args = [
+            "$(location tools/mkalltypes.sed)",
+            "$(location arch/{arch}/bits/alltypes.h.in)".format(arch = arch),
+            "$(location include/alltypes.h.in)",
+            "$(location obj/{arch}/include/bits/alltypes.h)".format(arch = arch),
+        ],
         visibility = ["//visibility:public"],
     ) for arch in MUSL_SUPPORTED_ARCHS
 ]
 
 [
-    genrule(
+    sh_script(
         name = "syscall_h_{arch}".format(arch = arch),
         srcs = [
             "arch/{arch}/bits/syscall.h.in".format(arch = arch),
         ],
         outs = ["obj/{arch}/include/bits/syscall.h".format(arch = arch)],
-        cmd = """
-            cp $(location arch/{arch}/bits/syscall.h.in) $@ && \
-            sed -n -e 's/__NR_/SYS_/p' $(location arch/{arch}/bits/syscall.h.in) >> $@
-        """.format(arch = arch),
+        cmd = "cp $1 $2 && sed -n -e 's/__NR_/SYS_/p' $1 >> $2",
+        args = [
+            "$(location arch/{arch}/bits/syscall.h.in)".format(arch = arch),
+            "$(location obj/{arch}/include/bits/syscall.h)".format(arch = arch),
+        ],
         visibility = ["//visibility:public"],
     ) for arch in MUSL_SUPPORTED_ARCHS
 ]
-
 
 [
     filegroup(
