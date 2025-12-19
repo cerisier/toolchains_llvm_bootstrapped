@@ -166,6 +166,7 @@ filegroup(
     ) for arch in MUSL_SUPPORTED_ARCHS
 ]
 
+# For use when building user code that links against musl
 [
     cc_library(
         name = "musl_libc_headers_{arch}".format(arch = arch),
@@ -176,7 +177,29 @@ filegroup(
             "arch/generic",
             "include",
         ],
+        # user code should always get musl headers as -isystem
         features = ["system_include_paths"],
+        hdrs = [":headers_{arch}".format(arch = arch)],
+        visibility = ["//visibility:public"],
+    ) for arch in MUSL_SUPPORTED_ARCHS
+]
+
+# For use when building musl itself
+#
+# The difference is just the `system_include_paths` feature
+# so that musl headers are not passed as -isystem only when building musl
+#
+# TODO(cerisier): figure out a way to avoid this duplication
+[
+    cc_library(
+        name = "musl_libc_headers_{arch}_for_musl".format(arch = arch),
+        includes = [
+            "obj/src/internal",
+            "obj/{arch}/include".format(arch = arch),
+            "arch/{arch}".format(arch = arch),
+            "arch/generic",
+            "include",
+        ],
         hdrs = [":headers_{arch}".format(arch = arch)],
         visibility = ["//visibility:public"],
     ) for arch in MUSL_SUPPORTED_ARCHS
@@ -187,6 +210,15 @@ alias(
     actual = select({
         "@platforms//cpu:x86_64": ":musl_libc_headers_x86_64",
         "@platforms//cpu:aarch64": ":musl_libc_headers_aarch64",
+    }),
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "musl_libc_headers_for_musl",
+    actual = select({
+        "@platforms//cpu:x86_64": ":musl_libc_headers_x86_64_for_musl",
+        "@platforms//cpu:aarch64": ":musl_libc_headers_aarch64_for_musl",
     }),
     visibility = ["//visibility:public"],
 )
