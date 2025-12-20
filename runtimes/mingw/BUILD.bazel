@@ -1,5 +1,6 @@
 load("@bazel_lib//lib:copy_file.bzl", "copy_file")
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
+load("@bazel_lib//lib:run_binary.bzl", "run_binary")
 load("@bazel_skylib//rules:common_settings.bzl", "bool_setting")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_library.bzl", "cc_stage2_library")
@@ -84,8 +85,45 @@ cc_stage2_library(
 )
 
 cc_stage2_static_library(
-    name = "ucrtbase",
+    name = "ucrtbase_extra",
     deps = [":ucrtbase_crt_lib"],
+)
+
+# Mirror mingw-w64's libucrtbase import lib assembly: merge the DEF-based
+# import library with the extra object archive. Using llvm-ar directly matches
+# the MRI result for this simple merge.
+run_binary(
+    name = "ucrtbase",
+    srcs = [
+        "@mingw//:import_lib_ucrtbase",
+        ":ucrtbase_extra",
+    ],
+    outs = ["libucrtbase.a"],
+    tool = "//tools:llvm-ar",
+    args = [
+        "qcsDL",
+        "$(location libucrtbase.a)",
+        "$(location @mingw//:import_lib_ucrtbase)",
+        "$(location ucrtbase_extra)",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+# Debug-flavor import library assembled the same way as upstream (ucrtbased.mri).
+run_binary(
+    name = "ucrtbased",
+    srcs = [
+        "@mingw//:import_lib_ucrtbased",
+        ":ucrtbase_extra",
+    ],
+    outs = ["libucrtbased.a"],
+    tool = "//tools:llvm-ar",
+    args = [
+        "qcsDL",
+        "$(location libucrtbased.a)",
+        "$(location @mingw//:import_lib_ucrtbased)",
+        "$(location ucrtbase_extra)",
+    ],
     visibility = ["//visibility:public"],
 )
 
@@ -128,13 +166,13 @@ copy_to_directory(
         ":moldname",
         ":stdc++",
         ":ucrtbase",
+        ":ucrtbased",
         ":uuid",
     ],
     replace_prefixes = {
         "mingw32_": "",
         "mingwex_": "",
         "moldname_": "",
-        "ucrtbase_": "",
         "uuid_": "",
     },
     visibility = ["//visibility:public"],

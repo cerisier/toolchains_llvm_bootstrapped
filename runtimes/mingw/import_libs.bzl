@@ -113,7 +113,12 @@ def mingw_import_libraries(name, directory):
                 "$@",
             ],
         )
-        import_targets.append(target)
+
+        # ucrtbase / ucrtbased are merged with extra objects elsewhere; keep
+        # the generated targets available for direct deps, but do not expose
+        # them via the directory filegroup to avoid shadowing the merged libs.
+        if lib_name not in ["ucrtbase", "ucrtbased"]:
+            import_targets.append(target)
 
     native.filegroup(
         name = name,
