@@ -234,7 +234,6 @@ cc_args(
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
     args = [
-        # "-L.", # needed to -l:bazel-out/...
         "-L{libcxx_library_search_path}",
         "-L{libunwind_library_search_path}",
     ],
