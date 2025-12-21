@@ -119,22 +119,12 @@ cc_args(
         "-Wl,--push-state",
         "-Wl,--as-needed",
 
-        # In newer versions of glibc various libs such as libm, librt are
-        # normally included in libc and not available as separate libraries.
-        #
-        # But in the way we handle generating libc stubs, we chose to generate
-        # empty libs for those that have been removed so that we do not have to
-        # handle varying inclusions.
-        # "-lm",
         # Since libunwind is linked statically, we need to link pthread as well.
         "-lpthread",
-        # "-lc",
         # Since libunwind is linked statically, we need to link dl as well.
         "-ldl",
-        # "-lrt",
-        # "-lutil",
 
-        # "-Wl,--pop-state",
+        "-Wl,--pop-state",
     ],
     data = [
         "//runtimes/glibc:glibc_library_search_directory",
@@ -177,20 +167,10 @@ cc_args(
         "-Wl,--push-state",
         "-Wl,--as-needed",
 
-        # In newer versions of musl_libc various libs such as libm, librt are
-        # normally included in libc and not available as separate libraries.
-        #
-        # But in the way we handle generating libc stubs, we chose to generate
-        # empty libs for those that have been removed so that we do not have to
-        # handle varying inclusions.
-        # "-lm",
         # Since libunwind is linked statically, we need to link pthread as well.
         "-lpthread",
-        # "-lc",
         # Since libunwind is linked statically, we need to link dl as well.
         "-ldl",
-        # "-lrt",
-        # "-lutil",
 
         "-Wl,--pop-state",
     ],
