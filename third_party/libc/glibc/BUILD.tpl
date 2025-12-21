@@ -287,12 +287,8 @@ cc_stage2_library(
         "include/libc-modules.h",
         "include/libc-symbols.h",
     ],
-    implementation_deps = select({
-        "@platforms//os:macos": [],
-        "@platforms//os:linux": [
-            ":kernel_headers",
-        ],
-    }) + [
+    implementation_deps = [
+        ":kernel_headers",
         ":gnu_libc_headers",
     ],
     visibility = ["//visibility:public"],

@@ -106,6 +106,8 @@ cc_stage2_library(
         "mingw-w64-headers/crt/_mingw.h",
         "mingw-w64-headers/crt/sdks/_mingw_ddk.h",
     ],
+    # user code should always get mingw headers as -isystem
+    # but it seems mingw itself includes as <...>
     features = ["system_include_paths"],
     includes = [
         "mingw-w64-headers/include",

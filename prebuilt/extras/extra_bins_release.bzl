@@ -5,7 +5,6 @@ def extra_bins_release(name):
     files = {
         "@glibc-stubs-generator//:glibc-stubs-generator": "bin/glibc-stubs-generator",
         "@libstdcxx-stubs-generator//:libstdc++-stubs-generator": "bin/libstdcxx-stubs-generator",
-        "@sed": "bin/sed",
     }
 
     mtree(

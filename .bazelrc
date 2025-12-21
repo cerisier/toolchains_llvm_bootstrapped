@@ -18,8 +18,6 @@ common:stage1   --extra_toolchains=@toolchains_llvm_bootstrapped//toolchain/stag
 
 # Workaround lack of cgo support for now
 common:wasm       --@rules_go//go/config:pure
-# Force stage1 because Wasm support is not in released binaries yet.
-common:wasm       --config=stage1
 
 # TODO: LLVM doesn't compile otherwise due to "zlib.h" vs <zlib.h> usage.
 common:prebuilt --@llvm_zlib//:llvm_enable_zlib=false
@@ -33,7 +31,7 @@ common:prebuilt  --copt=-fno-exceptions
 common:prebuilt  --copt=-fno-rtti
 common:prebuilt  --copt=-fomit-frame-pointer
 common:prebuilt  --dynamic_mode=off
-common:prebuilt  --extra_toolchains=//toolchain/...
+common:prebuilt  --extra_toolchains=//toolchain:all
 
 common:rust    --@toolchains_llvm_bootstrapped//config:experimental_stub_libgcc_s=True
 common:rust    --@rules_cc//cc/toolchains/args/archiver_flags:use_libtool_on_macos=False
