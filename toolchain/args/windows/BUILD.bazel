@@ -41,19 +41,13 @@ cc_args(
         "-L{mingw_import_library_search_path}",
         "-L{mingw_crt_library_search_path}",
 
-        "-nodefaultlibs",
+        "-nostdlib++",
 
-        # These libs come from a stock mingw clang invocation.
-        "-lucrtbase",
-        "-lmingw32",
-        #"-lgcc",     - we use libcxx
-        #"-lgcc_eh"   - we use libunwind
-        "-lmoldname",
-        "-lmingwex",
-        "-ladvapi32",
-        "-lshell32",
-        "-luser32",
-        "-lkernel32",
+        # Clang will respect the user's chosen crt variant.
+        # It defaults on -lmsvcrt if it doesn't find any -l<crt> option
+        # For now, we force on ucrt.
+        # TODO(cerisier): make this either a constraint or a build setting
+        "-lucrt",
     ],
     format = {
         "mingw_crt_library_search_path": "//runtimes/mingw:mingw_crt_library_search_directory",
