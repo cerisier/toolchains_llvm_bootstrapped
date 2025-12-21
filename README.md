@@ -2,105 +2,72 @@
 
 [![CI](https://github.com/cerisier/toolchains_llvm_bootstrapped/actions/workflows/ci.yaml/badge.svg)](https://github.com/cerisier/toolchains_llvm_bootstrapped/actions/workflows/ci.yaml)
 
-> ⚠️ **Warning:** This project is still experimental and may break.
+> ⚠️ **Warning:** This project is still experimental and its behaviour may change.
 
 ## Description
 
 This toolchain brings a zero sysroot, fully hermetic C/C++ cross compilation toolchain to Bazel based on LLVM.
 
-It can cross compile out of the box without any kind of extra configuration.
+Cross-compilation works out of the box, including with sanitizers, and requires no additional configuration. <br />
+Remote execution also works out of the box since the toolchain is fully hermetic.
 
-It is based on the new `rules_cc` rule base toolchain API and will work out of the box
-for the entire `rules_cc` ruleset.
-
-## Installation
-
-See instructions in the [releases](https://github.com/cerisier/toolchains_llvm_bootstrapped/releases) for installation.
-
-## How does it work ?
+### How does it work ?
 
 Cross compilation usually requires 2 main components:
 1. **A cross-compiler and cross-linker** capable of generating and linking binaries for the target platform.
 2. **Target-specific headers and libraries** such as the C runtime (CRT files), libc (glibc, musl, etc.), C++ standard library (libstdc++, libc++), compiler runtimes (libgcc, compiler-rt), and optional components like profilers or sanitizers.
 
-Usually, this is done by providing a sysroot for each target platform that contains
-all the target-specific components that match that of the deployment target.
+Usually, this is done by providing a sysroot for each target platform that contains all the target-specific components that match that of the deployment target.
 
-This toolchain simplifies the process by requiring only the cross-compiler and cross-linker.
-It builds all the target-specific components from source.
-
-To build programs, this toolchain is composed of 2 bazel toolchains:
-1. A raw toolchain used to compile the target-specific components.
-2. A final toolchain used to compile user programs, including the components built by the 1st.
-
-> TODO: Write about the differences with the approach of building against sysroots.
-
-> TODO: Write about stubs generation for the glibc.
+This toolchain simplifies the process by cross-compiling all the target-specific components from source, and then cross-compiling and cross-linking user programs against those.
 
 ## Usage
 
 Add this to your `MODULE.bazel`:
 
 ```starlark
-bazel_dep(name = "toolchains_llvm_bootstrapped", version = "0.1.5")
+bazel_dep(name = "toolchains_llvm_bootstrapped", version = "0.3.1")
 
 register_toolchains(
     "@toolchains_llvm_bootstrapped//toolchain:all",
 )
 ```
 
+See https://github.com/cerisier/toolchains_llvm_bootstrapped/releases/latest
+
 This will register all toolchains declared by this module for all supported targets.
 
-You can also register toolchains selectively per target:
-```starlark
-register_toolchains(
-    "@toolchains_llvm_bootstrapped//toolchain:linux_aarch64",
-)
-```
-
-To list all available toolchains, you can run the following bazel query command:
+You can selectively register toolchains for specific targets. The list can be obtained like so:
 ```sh
-bazel query 'kind(toolchain, @toolchains_llvm_bootstrapped//toolchain:all) except kind(cc_toolchain, @toolchains_llvm_bootstrapped//toolchain:all)'
-```
-
-## Examples
-
-If you clone this repository, you can test this toolchain for all the registered platforms:
-
-See all supported platforms:
-```sh
-bazel query 'kind(platform, @toolchains_llvm_bootstrapped//platforms/...)'
-```
-
-Build a simple C++ program to play with the toolchain:
-```sh
-cd examples/rules_cc
-bazel build :main --platforms=@toolchains_llvm_bootstrapped//platforms:linux_amd64
-```
-
-Or just verify that it runs on your current platform:
-```sh
-cd examples/rules_cc
-bazel run :main
+bazel query 'kind(toolchain, @toolchains_llvm_bootstrapped//toolchain:all)'
 ```
 
 ## Supported platforms
 
 ✅ Currently supports cross-compilation between all combinations of the following platforms:
 
-| From ↓ / To → | macOS arm64 | macOS amd64 | Linux arm64 | Linux amd64 |
-|---------------|-------------|-------------|-------------|-------------|
-| **macOS arm64**  | ✅          | ✅          | ✅          | ✅          |
-| **macOS amd64**  | ✅          | ✅          | ✅          | ✅          |
-| **Linux arm64**  | 🚧 In Progress   | 🚧 In Progress   | ✅          | ✅          |
-| **Linux amd64**  | 🚧 In Progress   | 🚧 In Progress   | ✅          | ✅          |
+| To ↓ / From → | macOS aarch64 | Linux aarch64 | Linux x86_64 | Windows aarch64 | Windows x86_64 |
+|---------------|---------------|--------------|---------------|--------------|-----------------|
+| **aarch64-apple-darwin** | ✅ | 🚧 In Progress | 🚧 In Progress | 🚧 In Progress | 🚧 In Progress |
+| **x86_64-apple-darwin**  | ✅ | 🚧 In Progress | 🚧 In Progress | 🚧 In Progress | 🚧 In Progress |
+| **aarch64-linux-gnu ¹**    | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **x86_64-linux-gnu ¹**     | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **aarch64-linux-musl**    | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **x86_64-linux-musl**     | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **aarch64-windows-gnu ²**    | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **x86_64-windows-gnu ²**     | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **wasm32-unknown-unknown**  | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **wasm64-unknown-unknown**  | ✅ | ✅ | ✅ | ✅ | ✅ |
+
+¹ See "GNU C Library" section for glibc version selection.
+
+² See "Windows" section.
 
 ### musl
 
-Compiling and linking against musl on linux is supported, but only statically.
-For now, this toolchain uses the latest available musl version.
+Only static linking against the latest version of musl is supported for now.
 
-To target musl, use:
+To target musl:
 `--platforms @toolchains_llvm_bootstrapped//platforms:linux_aarch64_musl`
 
 > By default, the binary will be fully statically link (no dynamic linker at all).
@@ -120,58 +87,35 @@ the symbols available in that version.
 This guarantees that your program will run on any system with that exact glibc
 version or newer, since it never relies on symbols introduced in later versions.
 
+### Windows
+
+Windows is supported only via MinGW-w64 with UCRT.
+MSVCRT-based MinGW and native MSVC targets are not supported.
+
 ### macOS notes
 
-🚧 Cross-compiling to macOS from non-macOS hosts is nearly ready.
-
-It will support two modes:
-
-1.	**libSystem-only**: Compiling against a libSystem-compatible libc headers (no SDK or Apple frameworks).
-2.	**macOS SDK**: Compiling against the official macOS SDK for full framework and system support.
-
+🚧 Cross-compiling to macOS from non-macOS hosts is not currently available. <br />
 ✅ Compilation from macOS to macOS is supported.
 
-By default, it uses a hermetic SDK, ensuring reproducibility and isolation from the host system.
-The SDK is the official macOS SDK and is downloaded from apple CDN directly.
-
-I'm planning on supporting the local SDK, opt-in.
+By default, the official macOS SDK is downlaoded from apple CDN and used hermetically.
 
 ### Other platforms
 
-In theory, this toolchain enables cross compilation to the entire set of LLVM supported toolchains.
-
-I have early validation of the most popular targets and os, and will progressively add support for them as time allows.
-
-## Prior art
-
-- https://andrewkelley.me/post/zig-cc-powerful-drop-in-replacement-gcc-clang.html I was heavily inspired by (and heavily rely on) the work of [Andrew Kelley](https://github.com/andrewrk) on the [zig](https://github.com/ziglang/zig) programming language compiler.
-
-- https://github.com/bazel-contrib/toolchains_llvm which provides a cross compilation toolchain based on user-provided `sysroot`.
-
-- https://github.com/uber/hermetic_cc_toolchain which prodives a Bazel cross compilation toolchain built around the `zig` binary and it's `cc` subcommand.
-
-- https://github.com/dzbarsky/static-clang which provides stripped subset of llvm binaries for lighter dependencies, as well as a starting point for missing llvm targets build file authoring (compiler-rt, etc.).
+In theory, this toolchain can target all LLVM-supported targets. We prioritize adding support based on demand.
 
 ## Roadmap
 
-- Allow configuration with the same granularity as `toolchains_llvm`
-  (custom LLVM release, user-provided sysroot, static/dynamic linking option for the c++ standard library, libunwind etc.).
-- [IN PROGRESS] Support linking against libstd++ (`libstdcxx` branch).
-- Support for asan/tsan/ubsan.
-- Support `rules_foreign_cc` and `rules_go` out of the box.
-- Support easy LLVM targets (arm, loongarch, mips, riscv, sparc, spirv, thumb).
-- Support WASM targets.
-- Support Windows.
-- Support Objective C.
-- Support **cross-compilation** to macOS (Requires unpacking the SDK on linux).
-- Tests and hardening.
+See https://github.com/cerisier/toolchains_llvm_bootstrapped/milestone/1
 
-### Known issues
+## Prior art
 
-- The C Library is always compiled and linked.
-- The C++ standard library is always compiled and linked (with -as-needed).
-- The final toolchain makes `-nostdinc`, `-nostdlib` family of flags unapplicable.
-  (One idea would be to expose different toolchains for this usecase, or `config_settings`)
+https://andrewkelley.me/post/zig-cc-powerful-drop-in-replacement-gcc-clang.html I was heavily inspired by (and heavily rely on) the work of [Andrew Kelley](https://github.com/andrewrk) on the [zig](https://github.com/ziglang/zig) programming language compiler.
+
+https://github.com/bazel-contrib/toolchains_llvm which provides a cross compilation toolchain based on user-provided `sysroot`.
+
+https://github.com/uber/hermetic_cc_toolchain which prodives a Bazel cross compilation toolchain built around the `zig` binary and it's `cc` subcommand.
+
+https://github.com/dzbarsky/static-clang which provides stripped subset of llvm binaries for lighter dependencies, as well as a starting point for missing llvm targets build file authoring (compiler-rt, etc.).
 
 # Thanks
 
