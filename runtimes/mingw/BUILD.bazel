@@ -85,7 +85,7 @@ cc_stage2_library(
 )
 
 cc_stage2_static_library(
-    name = "ucrtbase_extra",
+    name = "ucrt_extra",
     deps = [":ucrtbase_crt_lib"],
 )
 
@@ -96,7 +96,7 @@ run_binary(
     name = "ucrtbase",
     srcs = [
         "@mingw//:import_lib_ucrtbase",
-        ":ucrtbase_extra",
+        ":ucrt_extra",
     ],
     outs = ["libucrtbase.a"],
     tool = "//tools:llvm-ar",
@@ -104,7 +104,7 @@ run_binary(
         "qcsDL",
         "$(location libucrtbase.a)",
         "$(location @mingw//:import_lib_ucrtbase)",
-        "$(location ucrtbase_extra)",
+        "$(location ucrt_extra)",
     ],
     visibility = ["//visibility:public"],
 )
@@ -114,7 +114,7 @@ run_binary(
     name = "ucrtbased",
     srcs = [
         "@mingw//:import_lib_ucrtbased",
-        ":ucrtbase_extra",
+        ":ucrt_extra",
     ],
     outs = ["libucrtbased.a"],
     tool = "//tools:llvm-ar",
@@ -122,7 +122,7 @@ run_binary(
         "qcsDL",
         "$(location libucrtbased.a)",
         "$(location @mingw//:import_lib_ucrtbased)",
-        "$(location ucrtbase_extra)",
+        "$(location ucrt_extra)",
     ],
     visibility = ["//visibility:public"],
 )
