@@ -1,5 +1,5 @@
 bcr_test_module:
-  module_path: examples/rules_cc
+  module_path: .
   matrix:
     bazel: [7.x, 8.x]
     # Add macos_arm64 back when we support sdk discovery

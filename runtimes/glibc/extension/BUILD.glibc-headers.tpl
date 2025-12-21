@@ -10,6 +10,9 @@ cc_library(
     includes = [
         "include",
     ],
+    # user code should always get glibc headers as -isystem
+    # but it seems glibc itself includes as <...>
+    features = ["system_include_paths"],
     visibility = ["//visibility:public"],
 )
 

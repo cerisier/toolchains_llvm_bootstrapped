@@ -1,7 +1,7 @@
 ########################
 # Import bazelrc presets
-try-import %workspace%/tools/preset.bazelrc
-try-import %workspace%/../../tools/preset.bazelrc
+try-import %workspace%/internal_tools/preset.bazelrc
+try-import %workspace%/../../internal_tools/preset.bazelrc
 
 # Don’t want to push a rules author to update their deps if not needed.
 # https://bazel.build/reference/command-line-reference#flag--check_direct_dependencies
@@ -18,21 +18,20 @@ common:stage1   --extra_toolchains=@toolchains_llvm_bootstrapped//toolchain/stag
 
 # Workaround lack of cgo support for now
 common:wasm       --@rules_go//go/config:pure
-# Force stage1 because Wasm support is not in released binaries yet.
-common:wasm       --config=stage1
 
 # TODO: LLVM doesn't compile otherwise due to "zlib.h" vs <zlib.h> usage.
 common:prebuilt --@llvm_zlib//:llvm_enable_zlib=false
 common:prebuilt  -c opt
 common:prebuilt  --strip=always
 common:prebuilt  --stripopt=--strip-all
+# Use ThinLTO when available (on Linux), but it doesn't work for Darwin targets, so also enable `flto=thin` as fallback.
+common:prebuilt   --features=thin_lto
 common:prebuilt  --copt=-flto=thin
 common:prebuilt  --copt=-fno-exceptions
 common:prebuilt  --copt=-fno-rtti
 common:prebuilt  --copt=-fomit-frame-pointer
 common:prebuilt  --dynamic_mode=off
-common:prebuilt  --extra_toolchains=//toolchain/...
-common:prebuilt  --@rules_python//python/config_settings:bootstrap_impl=script
+common:prebuilt  --extra_toolchains=//toolchain:all
 
 common:rust    --@toolchains_llvm_bootstrapped//config:experimental_stub_libgcc_s=True
 common:rust    --@rules_cc//cc/toolchains/args/archiver_flags:use_libtool_on_macos=False

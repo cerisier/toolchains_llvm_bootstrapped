@@ -1,14 +1,8 @@
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
-load("//toolchain:selects.bzl", "platform_llvm_binary")
 load("//toolchain/stage2:cc_stage2_object.bzl", "cc_stage2_object")
 load("//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
-
-alias(
-    name = "llvm_ar",
-    actual = platform_llvm_binary("bin/llvm-ar"),
-    visibility = ["//runtimes:__subpackages__"],
-)
+load(":copy_to_resource_directory.bzl", "copy_to_resource_directory")
 
 filegroup(
     name = "static_runtime_lib",
@@ -77,15 +71,11 @@ cc_stage2_object(
 copy_to_directory(
     name = "crt_objects_directory_linux",
     srcs = select({
-        "@toolchains_llvm_bootstrapped//constraints/libc:musl": [
+        "//platforms/config:musl": [
             # -static-pie is implied
             "//runtimes/musl:musl_rcrt1.object",
         ],
-        "//platforms/config/libc_aware:gnu": [
-            "//runtimes/glibc:glibc_Scrt1.object",
-            "//runtimes/glibc:glibc_crt1.object",
-        ],
-        "//constraints/libc:unconstrained": [
+        "//platforms/config:gnu": [
             "//runtimes/glibc:glibc_Scrt1.object",
             "//runtimes/glibc:glibc_crt1.object",
         ],
@@ -130,6 +120,19 @@ alias(
     actual = select({
         "@platforms//os:linux": ":crt_objects_directory_linux",
         "@platforms//os:windows": ":crt_objects_directory_windows",
+    }),
+    visibility = ["//visibility:public"],
+)
+
+copy_to_resource_directory(
+    name = "resource_directory",
+    srcs = {
+        "//runtimes/compiler-rt:clang_rt.builtins.static": "libclang_rt.builtins",
+    } | select({
+        "//config:ubsan_enabled": {
+            "//runtimes/compiler-rt:clang_rt.ubsan.static": "libclang_rt.ubsan_standalone",
+        },
+        "//conditions:default": {},
     }),
     visibility = ["//visibility:public"],
 )

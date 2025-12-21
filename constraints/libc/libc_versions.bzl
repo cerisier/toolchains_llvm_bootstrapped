@@ -20,3 +20,4 @@ GLIBCS = ["gnu.{}".format(glibc) for glibc in GLIBC_VERSIONS]
 
 LIBCS = ["musl"] + GLIBCS
 
+DEFAULT_LIBC = "gnu.2.28"

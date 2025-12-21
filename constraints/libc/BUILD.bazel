@@ -4,6 +4,7 @@ package(default_visibility = ["//visibility:public"])
 
 constraint_setting(
     name = "variant",
+    # For linux, this maps to a default gnu.2.28
     default_constraint_value = "unconstrained",
 )
 

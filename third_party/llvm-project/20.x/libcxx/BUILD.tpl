@@ -1377,23 +1377,28 @@ cc_library(
         "@libcxxabi//:headers",
     ] + select({
         "@platforms//os:macos": [],
-        "@platforms//os:windows": [
-            "@mingw//:mingw_headers",
-        ],
+        "@platforms//os:windows": [],
         "@platforms//os:linux": [
+            # TODO(cerisier): Provide only a subset of linux UAPI headers for musl.
+            # https://github.com/cerisier/toolchains_llvm_bootstrapped/issues/146
             "@kernel_headers//:kernel_headers",
         ],
     }) + [
+        # libcxx depends on a set of internal llvm-libc headers. (libc/shared)
+        # See project hand-in-hand.
+        # https://discourse.llvm.org/t/rfc-project-hand-in-hand-llvm-libc-libc-code-sharing/77701
         "@toolchains_llvm_bootstrapped//third_party/llvm-project:libc_headers",
     ] + select({
-        "@toolchains_llvm_bootstrapped//constraints/libc:musl": [
+        "@toolchains_llvm_bootstrapped//platforms/config:musl": [
             "@musl_libc//:musl_libc_headers",
         ],
-        "@platforms//os:windows": [],
-        "@platforms//os:macos": [],
-        "//conditions:default": [
+        "@toolchains_llvm_bootstrapped//platforms/config:gnu": [
             "@glibc//:gnu_libc_headers",
         ],
+        "@platforms//os:windows": [
+            "@mingw//:mingw_headers",
+        ],
+        "@platforms//os:macos": [],
     }),
 )
 

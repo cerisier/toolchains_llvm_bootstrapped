@@ -1,3 +1,0 @@
-load(":declare_config_settings_libc_aware.bzl", "declare_config_settings_libc_aware")
-
-declare_config_settings_libc_aware()

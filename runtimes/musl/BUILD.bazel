@@ -11,8 +11,8 @@ libc_musl_srcs_filegroup(
     name = "musl_arch_compile_srcs",
     srcs = ["@musl_libc//:compile_srcs"],
     arch = select({
-        "@toolchains_llvm_bootstrapped//platforms/config:linux_x86_64": "x86_64",
-        "@toolchains_llvm_bootstrapped//platforms/config:linux_aarch64": "aarch64",
+        "@platforms//cpu:x86_64": "x86_64",
+        "@platforms//cpu:aarch64": "aarch64",
     }, no_match_error = "Unsupported platform"),
     visibility = ["//visibility:public"],
 )
@@ -66,7 +66,7 @@ cc_stage2_library(
     textual_hdrs = ["@musl_libc//:compile_srcs"],
     implementation_deps = [
         "@musl_libc//:musl_internal_headers",
-        "@musl_libc//:musl_libc_headers",
+        "@musl_libc//:musl_libc_headers_for_musl",
     ],
     visibility = ["//visibility:public"],
 )
@@ -83,7 +83,7 @@ cc_stage2_library(
     copts = CFLAGS_ALL + ["-DCRT"] + CFLAGS_NOSSP,
     implementation_deps = [
         "@musl_libc//:musl_internal_headers",
-        "@musl_libc//:musl_libc_headers",
+        "@musl_libc//:musl_libc_headers_for_musl",
     ],
     visibility = ["//visibility:public"],
 )
@@ -94,7 +94,7 @@ cc_stage2_library(
     copts = CFLAGS_ALL + ["-DCRT"] + CFLAGS_NOSSP + ["-fPIC"],
     implementation_deps = [
         "@musl_libc//:musl_internal_headers",
-        "@musl_libc//:musl_libc_headers",
+        "@musl_libc//:musl_libc_headers_for_musl",
     ],
     visibility = ["//visibility:public"],
 )
@@ -108,7 +108,7 @@ cc_stage2_library(
     ],
     implementation_deps = [
         "@musl_libc//:musl_internal_headers",
-        "@musl_libc//:musl_libc_headers",
+        "@musl_libc//:musl_libc_headers_for_musl",
     ],
     visibility = ["//visibility:public"],
 )

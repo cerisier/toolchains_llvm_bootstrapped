@@ -1,8 +1,27 @@
 
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
+load("@rules_cc//cc/toolchains:actions.bzl", "cc_action_type_set")
 
 package(default_visibility = ["//visibility:public"])
+
+# TODO(zbarsky): Remove this when ugprading rules_cc
+cc_action_type_set(
+    name = "source_compile_actions",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:linkstamp_compile",
+        "@rules_cc//cc/toolchains/actions:cpp_compile",
+        "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
+        "@rules_cc//cc/toolchains/actions:cpp_module_compile",
+        "@rules_cc//cc/toolchains/actions:cpp_module_codegen",
+        "@rules_cc//cc/toolchains/actions:clif_match",
+        "@rules_cc//cc/toolchains/actions:objcpp_compile",
+        "@rules_cc//cc/toolchains/actions:preprocess_assemble",
+        "@rules_cc//cc/toolchains/actions:c_compile_actions",
+        "@rules_cc//cc/toolchains/actions:assembly_actions",
+        "@rules_cc//cc/toolchains/actions:objc_compile",
+    ],
+)
 
 # Passing a sysroot to /dev/null has the side effect of removing all default
 # library search paths.
@@ -18,29 +37,17 @@ cc_args(
 )
 
 cc_args(
-    name = "hermetic_compile_flags",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:cpp_compile_actions",
-        "@rules_cc//cc/toolchains/actions:c_compile_actions",
-        # -nostdlibinc triggers a warning for assemble (no preprocess)
-        "@rules_cc//cc/toolchains/actions:preprocess_assemble",
-        "@rules_cc//cc/toolchains/actions:objc_compile",
-        "@rules_cc//cc/toolchains/actions:objcpp_compile",
-    ],
-    args = [
-        # We want to disable everything except builtin headers since they are
-        # provided as part of the compiler toolchain repository.
-        "-nostdlibinc",
-    ],
-)
-
-cc_args(
+    # We provide the libc++ and libunwind ourselves through static_runtime_libs
+    # and dynamic_runtime_libs.
     name = "hermetic_link_flags",
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
     args = [
-        "-nodefaultlibs",
+        # will prevent clang to choose which libunwind to link against
+        "--unwindlib=none",
+        # will prevent clang to choose which libc++ to link against
+        "-nostdlib++",
     ],
 )
 
@@ -59,7 +66,7 @@ cc_args_list(
         ],
         "//conditions:default": [],
     }) + [
-        ":hermetic_compile_flags",
+        "//toolchain/args:hermetic_compile_flags",
         ":hermetic_link_flags",
     ],
 )
@@ -67,7 +74,7 @@ cc_args_list(
 cc_args(
     name = "kernel_headers_include_search_paths",
     actions = [
-        "@rules_cc//cc/toolchains/actions:compile_actions",
+        ":source_compile_actions",
     ],
     args = [
         "-isystem",
@@ -84,7 +91,7 @@ cc_args(
 cc_args(
     name = "glibc_headers_include_search_paths",
     actions = [
-        "@rules_cc//cc/toolchains/actions:compile_actions",
+        ":source_compile_actions",
     ],
     args = [
         # "__GLIBC_MINOR__={d}", version.minor
@@ -100,49 +107,30 @@ cc_args(
 )
 
 cc_args(
-    name = "linux_default_libs_gnu",
+    name = "default_libs_gnu",
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
     args = [
         # We need to support copts like -lc -ldl etc...
-        "-L{libcxx_library_search_path}",
         "-L{libc_library_search_path}",
-        "-L{libunwind_library_search_path}",
-        "-L.", # needed to -l:bazel-out/...
-
-        "{clang_rt.builtins.a}",
 
         # In prevention of when all of those can be shared libraries.
         "-Wl,--push-state",
         "-Wl,--as-needed",
 
-        # In newer versions of glibc various libs such as libm, librt are
-        # normally included in libc and not available as separate libraries.
-        #
-        # But in the way we handle generating libc stubs, we chose to generate
-        # empty libs for those that have been removed so that we do not have to
-        # handle varying inclusions.
-        "-lm",
+        # Since libunwind is linked statically, we need to link pthread as well.
         "-lpthread",
-        "-lc",
+        # Since libunwind is linked statically, we need to link dl as well.
         "-ldl",
-        "-lrt",
-        "-lutil",
 
         "-Wl,--pop-state",
     ],
     data = [
-        "//runtimes/compiler-rt:clang_rt.builtins.static",
-        "//runtimes/libcxx:libcxx_library_search_directory",
         "//runtimes/glibc:glibc_library_search_directory",
-        "//runtimes/libunwind:libunwind_library_search_directory",
     ],
     format = {
-        "clang_rt.builtins.a": "//runtimes/compiler-rt:clang_rt.builtins.static",
-        "libcxx_library_search_path": "//runtimes/libcxx:libcxx_library_search_directory",
         "libc_library_search_path": "//runtimes/glibc:glibc_library_search_directory",
-        "libunwind_library_search_path": "//runtimes/libunwind:libunwind_library_search_directory",
     },
 )
 
@@ -151,7 +139,7 @@ cc_args(
 cc_args(
     name = "musl_libc_headers_include_search_paths",
     actions = [
-        "@rules_cc//cc/toolchains/actions:compile_actions",
+        ":source_compile_actions",
     ],
     args = [
         "-isystem",
@@ -167,58 +155,37 @@ cc_args(
 
 #TODO: Factorize this and gnu
 cc_args(
-    name = "linux_default_libs_musl",
+    name = "default_libs_musl",
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
     args = [
         # We need to support copts like -lc -ldl etc...
-        "-L{libcxx_library_search_path}",
         "-L{libc_library_search_path}",
-        "-L{libunwind_library_search_path}",
-        "-L.", # needed to -l:bazel-out/...
-
-        "{clang_rt.builtins.a}",
 
         # In prevention of when all of those can be shared libraries.
         "-Wl,--push-state",
         "-Wl,--as-needed",
 
-        # In newer versions of musl_libc various libs such as libm, librt are
-        # normally included in libc and not available as separate libraries.
-        #
-        # But in the way we handle generating libc stubs, we chose to generate
-        # empty libs for those that have been removed so that we do not have to
-        # handle varying inclusions.
-        "-lm",
+        # Since libunwind is linked statically, we need to link pthread as well.
         "-lpthread",
-        "-lc",
+        # Since libunwind is linked statically, we need to link dl as well.
         "-ldl",
-        "-lrt",
-        "-lutil",
 
         "-Wl,--pop-state",
     ],
     data = [
-        "//runtimes/compiler-rt:clang_rt.builtins.static",
-        "//runtimes/libcxx:libcxx_library_search_directory",
         "//runtimes/musl:musl_library_search_directory",
-        "//runtimes/libunwind:libunwind_library_search_directory",
     ],
     format = {
-        "clang_rt.builtins.a": "//runtimes/compiler-rt:clang_rt.builtins.static",
-        "libcxx_library_search_path": "//runtimes/libcxx:libcxx_library_search_directory",
         "libc_library_search_path": "//runtimes/musl:musl_library_search_directory",
-        "libunwind_library_search_path": "//runtimes/libunwind:libunwind_library_search_directory",
     },
 )
 
 alias(
-    name = "linux_default_libs",
+    name = "default_libs",
     actual = select({
-        "//constraints/libc:musl": ":linux_default_libs_musl",
-        "//platforms/config/libc_aware:gnu": ":linux_default_libs_gnu",
-        #TODO: Remove once we have set the default glibc for a given target
-        "//constraints/libc:unconstrained": ":linux_default_libs_gnu",
+        "//platforms/config:musl": ":default_libs_musl",
+        "//platforms/config:gnu": ":default_libs_gnu",
     }),
 )

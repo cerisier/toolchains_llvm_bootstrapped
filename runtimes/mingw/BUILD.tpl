@@ -1,10 +1,14 @@
+load("@bazel_skylib//rules/directory:directory.bzl", "directory")
+load("@bazel_skylib//rules/directory:subdirectory.bzl", "subdirectory")
 load("@bazel_skylib//rules:expand_template.bzl", "expand_template")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("@toolchains_llvm_bootstrapped//runtimes/mingw:import_libs.bzl", "mingw_import_libraries")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_library.bzl", "cc_stage2_library")
 load(
     "@toolchains_llvm_bootstrapped//runtimes/mingw:crt_sources.bzl",
     "MINGW32_HDRS",
     "MINGW32_SRCS",
+    "MINGW32_TEXTUAL_HDRS",
     "MINGW32_X86_EXTRA_SRCS",
     "MINGWEX_HDRS",
     "MINGWEX_SRCS",
@@ -19,6 +23,12 @@ load(
 
 package(default_visibility = ["//visibility:public"])
 
+exports_files([
+    "mingw-w64-crt/crt/crtbegin.c",
+    "mingw-w64-crt/crt/crtexe.c",
+    "mingw-w64-crt/crt/crtend.c",
+])
+
 write_file(
     name = "libm_dummy_source",
     out = "mingw-w64-crt/_libm_dummy.c",
@@ -29,17 +39,17 @@ write_file(
 
 filegroup(
     name = "mingw32_crt_textual_hdrs",
-    srcs = ["mingw-w64-crt/%s" % path for path in MINGW32_HDRS],
+    srcs = ["mingw-w64-crt/%s" % path for path in MINGW32_TEXTUAL_HDRS],
 )
 
 filegroup(
     name = "mingw32_crt_x86_64_srcs",
-    srcs = ["mingw-w64-crt/%s" % path for path in MINGW32_SRCS + MINGW32_X86_EXTRA_SRCS],
+    srcs = ["mingw-w64-crt/%s" % path for path in MINGW32_SRCS + MINGW32_HDRS + MINGW32_X86_EXTRA_SRCS],
 )
 
 filegroup(
     name = "mingw32_crt_aarch64_srcs",
-    srcs = ["mingw-w64-crt/%s" % path for path in MINGW32_SRCS],
+    srcs = ["mingw-w64-crt/%s" % path for path in MINGW32_SRCS + MINGW32_HDRS],
 )
 
 filegroup(
@@ -96,6 +106,9 @@ cc_stage2_library(
         "mingw-w64-headers/crt/_mingw.h",
         "mingw-w64-headers/crt/sdks/_mingw_ddk.h",
     ],
+    # user code should always get mingw headers as -isystem
+    # but it seems mingw itself includes as <...>
+    features = ["system_include_paths"],
     includes = [
         "mingw-w64-headers/include",
         "mingw-w64-headers/crt",
@@ -122,6 +135,29 @@ expand_template(
     out = "mingw-w64-headers/crt/_mingw.h",
 )
 
+directory(
+    name = "mingw_headers_directory",
+    srcs = glob([
+        "mingw-w64-headers/include/**",
+        "mingw-w64-headers/crt/**",
+    ]),
+    visibility = ["//visibility:public"],
+)
+
+subdirectory(
+    name = "mingw_w64_headers_include_directory",
+    parent = ":mingw_headers_directory",
+    path = "mingw-w64-headers/include",
+    visibility = ["//visibility:public"],
+)
+
+subdirectory(
+    name = "mingw_w64_headers_crt_directory",
+    parent = ":mingw_headers_directory",
+    path = "mingw-w64-headers/crt",
+    visibility = ["//visibility:public"],
+)
+
 write_file(
     name = "gen_mingw_ddk.h",
     out = "mingw-w64-headers/crt/sdks/_mingw_ddk.h",
@@ -131,4 +167,42 @@ write_file(
         "",
         "#endif /* _MINGW_DDK_H_ */",
     ],
+)
+
+directory(
+    name = "mingw_generated_headers_directory",
+    srcs = [
+        "mingw-w64-headers/crt/_mingw.h",
+        "mingw-w64-headers/crt/sdks/_mingw_ddk.h",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+subdirectory(
+    name = "mingw_generated_headers_crt_directory",
+    parent = ":mingw_generated_headers_directory",
+    path = "mingw-w64-headers/crt",
+    visibility = ["//visibility:public"],
+)
+
+mingw_import_libraries(
+    name = "mingw_import_libraries_common",
+    directory = "mingw-w64-crt/lib-common",
+)
+
+mingw_import_libraries(
+    name = "mingw_import_libraries_x86_64",
+    directory = "mingw-w64-crt/lib64",
+)
+
+directory(
+    name = "mingw_import_libraries_directory",
+    srcs = [
+        ":mingw_import_libraries_common",
+    ] + select({
+        "@platforms//cpu:x86_64": [":mingw_import_libraries_x86_64"],
+        # Aarch64 are fully templatized in .def.in files, x86_64 have not been merged yet.
+        "@platforms//cpu:aarch64": [],
+    }),
+    visibility = ["//visibility:public"],
 )

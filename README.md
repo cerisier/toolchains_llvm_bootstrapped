@@ -101,7 +101,7 @@ Compiling and linking against musl on linux is supported, but only statically.
 For now, this toolchain uses the latest available musl version.
 
 To target musl, use:
-`--platforms @toolchains_llvm_bootstrapped//platforms/libc_aware:linux_aarch64_musl`
+`--platforms @toolchains_llvm_bootstrapped//platforms:linux_aarch64_musl`
 
 > By default, the binary will be fully statically link (no dynamic linker at all).
 
@@ -111,7 +111,7 @@ Compiling and linking dynamically against an arbitrary version of the glibc is s
 By default, the earliest glibc version that supports your target is used (2.28 in most case).
 
 To target a specific version, use:
-`--platforms @toolchains_llvm_bootstrapped//platforms/libc_aware:linux_x86_64_gnu.2.28`
+`--platforms @toolchains_llvm_bootstrapped//platforms:linux_x86_64_gnu.2.28`
 
 Behind the scenes, your code is compiled using the appropriate headers for the
 target version, and dynamically linked against a stub glibc that includes only

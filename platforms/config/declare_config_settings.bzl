@@ -1,11 +1,9 @@
-load("//platforms:common.bzl", _supported_targets = "SUPPORTED_TARGETS")
+load("//platforms:common.bzl", "SUPPORTED_TARGETS", "LIBC_SUPPORTED_TARGETS")
+load("@bazel_skylib//lib:selects.bzl", "selects")
+load("//constraints/libc:libc_versions.bzl", "LIBCS", "GLIBCS")
 
 def declare_config_settings():
-    targets = _supported_targets + [
-        ("windows", "x86_64"),
-        ("windows", "aarch64"),
-    ]
-    for (target_os, target_cpu) in targets:
+    for (target_os, target_cpu) in SUPPORTED_TARGETS:
         native.config_setting(
             name = "{}_{}".format(target_os, target_cpu),
             constraint_values = [
@@ -14,3 +12,47 @@ def declare_config_settings():
             ],
             visibility = ["//visibility:public"],
         )
+
+    declare_config_settings_libc_aware()
+
+def declare_config_settings_libc_aware():
+    for (target_os, target_cpu) in LIBC_SUPPORTED_TARGETS:
+        for libc in LIBCS + ["unconstrained"]:
+            native.config_setting(
+                name = "{}_{}_{}".format(target_os, target_cpu, libc),
+                constraint_values = [
+                    "@platforms//cpu:{}".format(target_cpu),
+                    "@platforms//os:{}".format(target_os),
+                    "//constraints/libc:{}".format(libc),
+                ],
+                visibility = ["//visibility:public"],
+            )
+
+        selects.config_setting_group(
+            name = "{}_{}_gnu".format(target_os, target_cpu),
+            match_all = [
+                "@platforms//cpu:{}".format(target_cpu),
+                "@platforms//os:{}".format(target_os),
+                ":gnu",
+            ],
+            visibility = ["//visibility:public"],
+        )
+
+    selects.config_setting_group(
+        name = "gnu",
+        match_any = [
+            "//constraints/libc:{}".format(libc) for libc in GLIBCS
+        ] + [
+            "{}_{}_unconstrained".format(target_os, target_cpu)
+            for (target_os, target_cpu) in LIBC_SUPPORTED_TARGETS
+        ],
+        visibility = ["//visibility:public"],
+    )
+
+    native.config_setting(
+        name = "musl",
+        constraint_values = [
+            "//constraints/libc:musl",
+        ],
+        visibility = ["//visibility:public"],
+    )

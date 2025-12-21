@@ -12,7 +12,6 @@ def _reset_sanitizers_impl(settings, attr):
 
         # And LLVM uses <zlib.h> instead of "zlib.h" so we disable it here too.
         "@llvm_zlib//:llvm_enable_zlib": False,
-        "@rules_python//python/config_settings:bootstrap_impl": "script",
     }
 
 _reset_sanitizers = transition(
@@ -24,7 +23,6 @@ _reset_sanitizers = transition(
         "//toolchain:bootstrap_setting",
         "//toolchain:stage1_bootstrap_setting",
         "@llvm_zlib//:llvm_enable_zlib",
-        "@rules_python//python/config_settings:bootstrap_impl",
     ],
 )
 

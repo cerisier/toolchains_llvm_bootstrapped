@@ -76,3 +76,48 @@ jobs:
             --remote_header=x-buildbuddy-api-key=$BUILDBUDDY_API_KEY \
             $EXTRA_ARGS \
             //...
+
+  test_windows:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, windows-2022-arm64]
+        bazel_version: [last_rc]
+        folder:
+          - "e2e/rules_cc"
+          # - "e2e/rules_rust" - Need to fix rules_rust artifact_name_patterns
+          # - "e2e/cross_compilation"
+          # - "e2e/wasm"
+    runs-on: ${{ matrix.os }}
+
+    # Configure a human readable name for each job
+    name: Test ${{ matrix.folder }} with Bazel ${{ matrix.bazel_version }} on ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: bazel test //...
+        env:
+          USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        working-directory: ${{ matrix.folder }}
+        shell: bash
+        run: |
+          EXTRA_ARGS=""
+          if [[ "${{ matrix.folder }}" == *"rules_rust"* ]]; then
+            EXTRA_ARGS="--config=rust"
+          fi
+          if [[ "${{ matrix.folder }}" == *"wasm"* ]]; then
+            EXTRA_ARGS="--config=wasm"
+          fi
+
+          bazel \
+            --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc \
+            --bazelrc=.bazelrc \
+            --experimental_remote_repo_contents_cache \
+            test \
+            --repository_cache= \
+            --repo_contents_cache= \
+            --remote_header=x-buildbuddy-api-key=$BUILDBUDDY_API_KEY \
+            $EXTRA_ARGS \
+            //...

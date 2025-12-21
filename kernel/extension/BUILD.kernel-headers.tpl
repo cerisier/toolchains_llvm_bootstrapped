@@ -10,6 +10,8 @@ cc_library(
     includes = [
         "include",
     ],
+    # Any code should always get passed linux UAPI headers as -isystem
+    features = ["system_include_paths"],
     visibility = ["//visibility:public"],
 )
 

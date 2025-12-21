@@ -3,21 +3,21 @@ load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory_bin_action")
 
 def _bootstrap_transition_impl(settings, attr):
     return {
+        "//command_line_option:platforms": str(attr.platform),
         "//toolchain:bootstrap_setting": False,
         "//toolchain:stage1_bootstrap_setting": True,
         # Some flags to make LLVM build sanely.
         "@llvm_zlib//:llvm_enable_zlib": False,
-        "@rules_python//python/config_settings:bootstrap_impl": "script",
     }
 
 bootstrap_transition = transition(
     implementation = _bootstrap_transition_impl,
     inputs = [],
     outputs = [
+        "//command_line_option:platforms",
         "//toolchain:bootstrap_setting",
         "//toolchain:stage1_bootstrap_setting",
         "@llvm_zlib//:llvm_enable_zlib",
-        "@rules_python//python/config_settings:bootstrap_impl",
     ],
 )
 
@@ -52,6 +52,9 @@ stage1_binary = rule(
             allow_single_file = True,
             mandatory = True,
         ),
+        "platform": attr.label(
+            mandatory = True,
+        ),
         "symlink": attr.bool(
             default = True,
             doc = "If set to False, will copy the tool instead of symlinking",
@@ -82,6 +85,9 @@ stage1_directory = rule(
     attrs = {
         "srcs": attr.label(
             cfg = bootstrap_transition,
+            mandatory = True,
+        ),
+        "platform": attr.label(
             mandatory = True,
         ),
         "strip_prefix": attr.string(mandatory = True),

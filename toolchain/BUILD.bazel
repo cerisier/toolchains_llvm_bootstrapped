@@ -1,7 +1,7 @@
 load("@bazel_skylib//rules:common_settings.bzl", "bool_setting")
-load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains:artifacts.bzl", "cc_artifact_name_pattern")
+load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 load(":declare_toolchains.bzl", "declare_all_toolchains")
 
 bool_setting(
@@ -52,6 +52,7 @@ cc_args_list(
         "@platforms//os:macos": [
             "//toolchain/args/macos:macos_default_link_flags",
         ],
+        "@platforms//os:windows": [],
         "//conditions:default": [],
     }),
 )
@@ -63,7 +64,10 @@ cc_args_list(
         "@platforms//os:linux": [
             "//toolchain/args:crt_search_directory",
         ],
-        "//conditions:default": [],
+        "@platforms//os:windows": [
+            "//toolchain/args:crt_search_directory",
+        ],
+        "@platforms//os:none": [],
     }),
 )
 
@@ -84,13 +88,28 @@ cc_args(
 )
 
 cc_args_list(
+    name = "resource_dir",
+    args = select({
+        "@platforms//os:macos": [],
+        "//conditions:default": [
+            "//toolchain/args:resource_dir",
+        ],
+    }),
+)
+
+cc_args_list(
     name = "default_libs",
     args = select({
         "@platforms//os:macos": [
             "//toolchain/args/macos:macos_default_libs",
         ],
         "@platforms//os:linux": [
-            "//toolchain/args/linux:linux_default_libs",
+            "//toolchain/args:default_libs",
+            "//toolchain/args/linux:default_libs",
+        ],
+        "@platforms//os:windows": [
+            "//toolchain/args:default_libs",
+            "//toolchain/args/windows:default_libs",
         ],
         "//conditions:default": [],
     }),
@@ -110,22 +129,17 @@ cc_args_list(
         "//toolchain/args/linux:hermetic_linux_args",
         "//toolchain/args:libcxx_headers_include_search_paths",
     ] + select({
-        "//platforms/config/libc_aware:musl": [
+        "//platforms/config:musl": [
             "//toolchain/args/linux:kernel_headers_include_search_paths",
             "//toolchain/args/linux:musl_libc_headers_include_search_paths",
         ],
-        "//platforms/config/libc_aware:gnu": [
-            "//toolchain/args/linux:kernel_headers_include_search_paths",
-            "//toolchain/args/linux:glibc_headers_include_search_paths",
-        ],
-        #TODO: Remove once we have set the default glibc for a given target
-        "//constraints/libc:unconstrained": [
+        "//platforms/config:gnu": [
             "//toolchain/args/linux:kernel_headers_include_search_paths",
             "//toolchain/args/linux:glibc_headers_include_search_paths",
         ],
         "//conditions:default": [],
     }) + select({
-        "//platforms/config/libc_aware:musl": [
+        "//platforms/config:musl": [
             #TODO: Handle musl dynamic linking
             # musl implies static linking for now
             "//toolchain/args:static_link_executable",
@@ -134,14 +148,12 @@ cc_args_list(
     }),
 )
 
-cc_args(
-    name = "verbose",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:compile_actions",
-        "@rules_cc//cc/toolchains/actions:link_actions",
-    ],
+cc_args_list(
+    name = "windows_toolchain_args",
     args = [
-        # "-v",
+        "//toolchain/args:hermetic_compile_flags",
+        "//toolchain/args:libcxx_headers_include_search_paths",
+        "//toolchain/args/windows:mingw_headers_include_search_paths",
     ],
 )
 
@@ -151,6 +163,7 @@ cc_args_list(
         # Platform specific flags.
         "@platforms//os:macos": [":macos_toolchain_args"],
         "@platforms//os:linux": [":linux_toolchain_args"],
+        "@platforms//os:windows": [":windows_toolchain_args"],
         "@platforms//os:none": [],
         "//conditions:default": [],
     }),
@@ -163,7 +176,6 @@ cc_args_list(
         "//toolchain/args:llvm_target_for_platform",
         "//toolchain/args:no_absolute_paths_for_builtins",
         "//toolchain/args:deterministic_compile_flags",
-        # ":verbose",
 
         ":platform_specific_args",
 
@@ -173,8 +185,9 @@ cc_args_list(
         # Common default link flags.
         "//toolchain/args:use_lld",
         ":rtlib",
+        ":resource_dir",
         ":default_link_flags",
-        ":default_startfiles",
+        ":default_startfiles", # Needs to stay out of resource_dir since clang does not always search for crtstuff for all targets.
         ":default_libs",
     ],
     visibility = ["//toolchain:__subpackages__"],

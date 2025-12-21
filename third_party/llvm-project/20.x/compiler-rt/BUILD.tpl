@@ -4,7 +4,6 @@ load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_object.bzl", "cc
 load("@toolchains_llvm_bootstrapped//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_unsanitized_library.bzl", "cc_unsanitized_library")
 load("@toolchains_llvm_bootstrapped//third_party/llvm-project/20.x/compiler-rt:targets.bzl", "atomic_helper_cc_library")
-load("@toolchains_llvm_bootstrapped//third_party/llvm-project/20.x/compiler-rt:darwin_excludes.bzl", "filter_excludes")
 load("@toolchains_llvm_bootstrapped//third_party/llvm-project/20.x/compiler-rt:filter_builtin_sources.bzl", "filter_builtin_sources")
 load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
@@ -131,11 +130,6 @@ BUILTINS_GENERIC_SRCS = [
     "lib/builtins/umodsi3.c",
     "lib/builtins/umodti3.c",
 
-    # Not Fuchsia and not a bare-metal build.
-    "lib/builtins/emutls.c",
-    "lib/builtins/enable_execute_stack.c",
-    "lib/builtins/eprintf.c",
-
     # Not sure whether we want atomic in this or separately.
     "lib/builtins/atomic.c",
 
@@ -195,7 +189,7 @@ copy_file(
 # buildifier: disable=constant-glob
 filegroup(
     name = "builtins_generic_srcs",
-    srcs = filter_excludes(BUILTINS_GENERIC_SRCS) + select({
+    srcs = BUILTINS_GENERIC_SRCS + select({
         "@platforms//os:macos": [
             "lib/builtins/atomic_flag_clear.c",
             "lib/builtins/atomic_flag_clear_explicit.c",
@@ -205,17 +199,25 @@ filegroup(
             "lib/builtins/atomic_thread_fence.c",
         ],
         "//conditions:default": [],
+    }) + select({
+        "@platforms//os:none": [],
+        "//conditions:default": [
+            # Not Fuchsia and not a bare-metal build.
+            "lib/builtins/emutls.c",
+            "lib/builtins/enable_execute_stack.c",
+            "lib/builtins/eprintf.c",
+        ],
     }),
 )
 
 filegroup(
     name = "builtins_bf16_sources",
-    srcs = filter_excludes(BF16_SOURCES),
+    srcs = BF16_SOURCES,
 )
 
 filegroup(
     name = "builtins_generic_tf_sources",
-    srcs = filter_excludes(BUILTINS_GENERIC_TF_SRCS),
+    srcs = BUILTINS_GENERIC_TF_SRCS,
 )
 
 filegroup(
@@ -228,7 +230,7 @@ filegroup(
 
 filegroup(
     name = "builtins_x86_80_bit_sources",
-    srcs = filter_excludes([
+    srcs = [
         "lib/builtins/divxc3.c",
         "lib/builtins/fixxfdi.c",
         "lib/builtins/fixxfti.c",
@@ -241,7 +243,7 @@ filegroup(
         "lib/builtins/floatuntixf.c",
         "lib/builtins/mulxc3.c",
         "lib/builtins/powixf2.c",
-    ]),
+    ],
 )
 
 filter_builtin_sources(
@@ -251,11 +253,10 @@ filter_builtin_sources(
         ":builtins_generic_tf_sources",
         ":builtins_x86_arch_sources",
         ":builtins_x86_80_bit_sources",
-    ] + filter_excludes([
         "lib/builtins/x86_64/floatdidf.c",
         "lib/builtins/x86_64/floatdisf.c",
         "lib/builtins/x86_64/floatdixf.c",  # if not ANDROID
-    ]) + select({
+    ] + select({
         "@platforms//os:windows": [
             "lib/builtins/x86_64/chkstk.S",
         ],
@@ -289,6 +290,22 @@ filter_builtin_sources(
     }),
 )
 
+filter_builtin_sources(
+    name = "builtins_wasm32_sources",
+    srcs = [
+        ":builtins_generic_srcs",
+        ":builtins_generic_tf_sources",
+    ],
+)
+
+filter_builtin_sources(
+    name = "builtins_wasm64_sources",
+    srcs = [
+        ":builtins_generic_srcs",
+        ":builtins_generic_tf_sources",
+    ],
+)
+
 builtins_aarch64_atomic_deps = [
     atomic_helper_cc_library(
         name = "builtins_atomic_helper_{}_{}_{}".format(pat, size, model),
@@ -311,14 +328,12 @@ cc_stage2_library(
     name = "builtins",
     includes = ["lib/builtins"],
     srcs = select({
-        "@toolchains_llvm_bootstrapped//platforms/config:linux_x86_64": [":builtins_x86_64_sources"],
-        "@toolchains_llvm_bootstrapped//platforms/config:linux_aarch64": [":builtins_aarch64_sources"],
-        "@toolchains_llvm_bootstrapped//platforms/config:macos_x86_64": [":builtins_x86_64_sources"],
-        "@toolchains_llvm_bootstrapped//platforms/config:macos_aarch64": [":builtins_aarch64_sources"],
-        "@toolchains_llvm_bootstrapped//platforms/config:windows_x86_64": [":builtins_x86_64_sources"],
-        "@toolchains_llvm_bootstrapped//platforms/config:windows_aarch64": [":builtins_aarch64_sources"],
+        "@platforms//cpu:x86_64": [":builtins_x86_64_sources"],
+        "@platforms//cpu:aarch64": [":builtins_aarch64_sources"],
+        "@platforms//cpu:wasm32": [":builtins_wasm32_sources"],
+        "@platforms//cpu:wasm64": [":builtins_wasm64_sources"],
     }, no_match_error = """
-        Platform not supported for compiler-rt.builtins.
+        Architecture not supported for compiler-rt.builtins.
         It is likely that we are just missing the filegroups for that platform.
         Please file an issue.
     """) + [
@@ -443,22 +458,26 @@ cc_stage2_library(
     implementation_deps = select({
         "@platforms//os:macos": [],
         "@platforms//os:linux": [
+            # TODO(cerisier): Provide only a subset of linux UAPI headers for musl.
+            # https://github.com/cerisier/toolchains_llvm_bootstrapped/issues/146
             "@kernel_headers//:kernel_headers",
         ],
-        "@platforms//os:windows": [
-            "@mingw//:mingw_headers",
-        ],
+        "@platforms//os:windows": [],
+        "@platforms//os:none": [],
     }) + select({
-        "@toolchains_llvm_bootstrapped//constraints/libc:musl": [
+        "@toolchains_llvm_bootstrapped//platforms/config:musl": [
             "@musl_libc//:musl_libc_headers",
+        ],
+        "@toolchains_llvm_bootstrapped//platforms/config:gnu": [
+            "@glibc//:gnu_libc_headers",
         ],
         "@platforms//os:macos": [
             # on macOS we implicitly use SDK provided headers
         ],
-        "@platforms//os:windows": [],
-        "//conditions:default": [
-            "@glibc//:gnu_libc_headers",
+        "@platforms//os:windows": [
+            "@mingw//:mingw_headers",
         ],
+        "@platforms//os:none": [],
     }),
 )
 
@@ -591,23 +610,22 @@ cc_unsanitized_library(
 )
 
 # TODO(zbarsky): It would be nice to not have to jam everything into a single BUILD file
-
-# TODO(cerisier): This should be exposed from //runtimes in some way since it is needed in several places.
-
 cc_stage2_library(
     name = "linux_libc_headers",
     deps = [
-        # Order matter. Search path should have C++ headers before any lib C headers.
+        # linux UAPI headers are needed even for musl here because sanitizers include <sys/vt.h>
+        # TODO(cerisier): Provide only a subset of linux UAPI headers for musl.
+        # https://github.com/cerisier/toolchains_llvm_bootstrapped/issues/146
         "@kernel_headers//:kernel_headers",
-        "@toolchains_llvm_bootstrapped//third_party/llvm-project:libc_headers",
+        # Order matter. Search path should have C++ headers before any lib C headers.
     ] + select({
-        "@toolchains_llvm_bootstrapped//constraints/libc:musl": [
+        "@toolchains_llvm_bootstrapped//platforms/config:musl": [
             "@musl_libc//:musl_libc_headers",
         ],
-        "//conditions:default": [
+        "@toolchains_llvm_bootstrapped//platforms/config:gnu": [
             "@glibc//:gnu_libc_headers",
         ],
-    })
+    }),
 )
 
 cc_stage2_library(

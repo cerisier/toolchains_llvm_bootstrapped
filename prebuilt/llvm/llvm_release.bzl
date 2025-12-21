@@ -1,25 +1,11 @@
 
 load("@tar.bzl", "tar", "mtree_spec", "mtree_mutate")
 load("@llvm-project//:vars.bzl", "LLVM_VERSION_MAJOR")
+load("//prebuilt:mtree.bzl", "mtree")
 
-def llvm_release(name):
-    BINS = [
-        "@llvm-project//clang:clang.stripped",
-        "@llvm-project//lld:lld.stripped",
-        "@llvm-project//llvm:llvm-ar.stripped",
-        "@llvm-project//llvm:llvm-as.stripped",
-        "@llvm-project//llvm:llvm-libtool-darwin.stripped",
-        "@llvm-project//llvm:llvm-nm.stripped",
-        "@llvm-project//llvm:llvm-objcopy.stripped",
-    ] + [
-        # "@llvm-project//llvm-cov:llvm-cov",
-        # "@llvm-project//llvm-dwp:llvm-dwp",
-        # "@llvm-project//llvm-objdump:llvm-objdump",
-        # "@llvm-project//llvm-profdata:llvm-profdata",
-    ]
-
+def llvm_release(name, bin_suffix = ""):
     mtree_spec(
-        name = "builtin_headers_mtree_",
+        name = name + "_builtin_headers_mtree_",
         srcs = [
             "@llvm-project//clang:builtin_headers_files",
         ],
@@ -27,100 +13,81 @@ def llvm_release(name):
     )
 
     mtree_mutate(
-        name = "builtin_headers_mtree",
-        mtree = "builtin_headers_mtree_",
+        name = name + "_builtin_headers_mtree",
+        mtree = name + "_builtin_headers_mtree_",
         strip_prefix = "clang/lib/Headers",
         package_dir = "lib/clang/{}/include".format(LLVM_VERSION_MAJOR),
         tags = ["manual"],
     )
 
-    native.genrule(
-        name = "sanitizers_ignorelist_mtree",
-        srcs = [
-            "@llvm-project//compiler-rt:asan_ignorelist",
-            "@llvm-project//compiler-rt:msan_ignorelist",
-        ],
-        cmd = """\
-cat <<EOF > $(@)
-lib/clang/{llvm_major}/share/asan_ignorelist.txt uid=0 gid=0 time=1672560000 mode=0644 type=file content=$(location @llvm-project//compiler-rt:asan_ignorelist)
-lib/clang/{llvm_major}/share/msan_ignorelist.txt uid=0 gid=0 time=1672560000 mode=0644 type=file content=$(location @llvm-project//compiler-rt:msan_ignorelist)
-EOF
-""".format(
-            llvm_major = LLVM_VERSION_MAJOR,
-        ),
-        outs = [
-            "sanitizers_ignorelist.mtree",
-        ],
+    bin_files = {
+        "@llvm-project//clang:clang.stripped": "bin/clang" + bin_suffix,
+        "@llvm-project//lld:lld.stripped": "bin/lld" + bin_suffix,
+        "@llvm-project//llvm:llvm-ar.stripped": "bin/llvm-ar" + bin_suffix,
+        "@llvm-project//llvm:llvm-as.stripped": "bin/llvm-as" + bin_suffix,
+        "@llvm-project//llvm:llvm-libtool-darwin.stripped": "bin/llvm-libtool-darwin" + bin_suffix,
+        "@llvm-project//llvm:llvm-nm.stripped": "bin/llvm-nm" + bin_suffix,
+        "@llvm-project//llvm:llvm-objcopy.stripped": "bin/llvm-objcopy" + bin_suffix,
+        # "@llvm-project//llvm-cov:llvm-cov",
+        # "@llvm-project//llvm-dwp:llvm-dwp",
+        # "@llvm-project//llvm-objdump:llvm-objdump",
+        # "@llvm-project//llvm-profdata:llvm-profdata",
+        "@llvm-project//compiler-rt:asan_ignorelist": "lib/clang/{llvm_major}/share/asan_ignorelist.txt",
+        "@llvm-project//compiler-rt:msan_ignorelist": "lib/clang/{llvm_major}/share/msan_ignorelist.txt",
+    }
+
+    mtree(
+        name = name + "_bins_mtree",
+        files = bin_files,
+        symlinks = {
+            "bin/clang-{llvm_major}" + bin_suffix: "clang" + bin_suffix,
+            "bin/clang++" + bin_suffix: "clang" + bin_suffix,
+            "bin/clang-cpp" + bin_suffix: "clang" + bin_suffix,
+            "bin/ld.lld" + bin_suffix: "lld" + bin_suffix,
+            "bin/ld64.lld" + bin_suffix: "lld" + bin_suffix,
+            "bin/wasm-ld" + bin_suffix: "lld" + bin_suffix,
+            "bin/llvm-dlltool" + bin_suffix: "llvm-ar" + bin_suffix,
+            "bin/llvm-ranlib" + bin_suffix: "llvm-ar"+ bin_suffix,
+            "bin/llvm-install-name-tool" + bin_suffix: "llvm-objcopy" + bin_suffix,
+            "bin/llvm-bitcode-strip" + bin_suffix: "llvm-objcopy" + bin_suffix,
+            "bin/llvm-strip" + bin_suffix: "llvm-objcopy" + bin_suffix,
+            # TODO(zbarsky): Consider adding these?
+            "bin/clang-tidy" + bin_suffix: "empty",
+            "bin/clang-format" + bin_suffix: "empty",
+            "bin/clangd" + bin_suffix: "empty",
+            "bin/llvm-symbolizer" + bin_suffix: "empty",
+        },
+        format = {
+            "llvm_major": LLVM_VERSION_MAJOR,
+        },
         tags = ["manual"],
     )
 
     native.genrule(
-        name = "bins_mtree",
-        srcs = BINS,
-        cmd = """\
-cat <<EOF > $(@)
-bin/clang uid=0 gid=0 time=1672560000 mode=0755 type=file content=$(location @llvm-project//clang:clang.stripped)
-bin/clang-{llvm_major} uid=0 gid=0 time=1672560000 mode=0755 type=link link=clang
-bin/clang++ uid=0 gid=0 time=1672560000 mode=0755 type=link link=clang
-bin/clang-cpp uid=0 gid=0 time=1672560000 mode=0755 type=link link=clang
-bin/lld uid=0 gid=0 time=1672560000 mode=0755 type=file content=$(location @llvm-project//lld:lld.stripped)
-bin/ld.lld uid=0 gid=0 time=1672560000 mode=0755 type=link link=lld
-bin/ld64.lld uid=0 gid=0 time=1672560000 mode=0755 type=link link=lld
-bin/wasm-ld uid=0 gid=0 time=1672560000 mode=0755 type=link link=lld
-bin/llvm-ar uid=0 gid=0 time=1672560000 mode=0755 type=file content=$(location @llvm-project//llvm:llvm-ar.stripped)
-bin/llvm-dlltool uid=0 gid=0 time=1672560000 mode=0755 type=link link=llvm-ar
-bin/llvm-ranlib uid=0 gid=0 time=1672560000 mode=0755 type=link link=llvm-ar
-bin/llvm-as uid=0 gid=0 time=1672560000 mode=0755 type=file content=$(location @llvm-project//llvm:llvm-as.stripped)
-bin/llvm-libtool-darwin uid=0 gid=0 time=1672560000 mode=0755 type=file content=$(location @llvm-project//llvm:llvm-libtool-darwin.stripped)
-bin/llvm-nm uid=0 gid=0 time=1672560000 mode=0755 type=file content=$(location @llvm-project//llvm:llvm-nm.stripped)
-bin/llvm-objcopy uid=0 gid=0 time=1672560000 mode=0755 type=file content=$(location @llvm-project//llvm:llvm-objcopy.stripped)
-bin/llvm-install-name-tool uid=0 gid=0 time=1672560000 mode=0755 type=link link=llvm-objcopy
-bin/llvm-bitcode-strip uid=0 gid=0 time=1672560000 mode=0755 type=link link=llvm-objcopy
-bin/llvm-strip uid=0 gid=0 time=1672560000 mode=0755 type=link link=llvm-objcopy
-bin/clang-tidy uid=0 gid=0 time=1672560000 mode=0755 type=link link=empty
-bin/clang-format uid=0 gid=0 time=1672560000 mode=0755 type=link link=empty
-bin/clangd uid=0 gid=0 time=1672560000 mode=0755 type=link link=empty
-bin/llvm-symbolizer uid=0 gid=0 time=1672560000 mode=0755 type=link link=empty
-EOF
-""".format(
-            llvm_major = LLVM_VERSION_MAJOR,
-        ),
-        outs = [
-            "bins.mtree",
-        ],
-        tags = ["manual"],
-    )
-
-    native.genrule(
-        name = "mtree",
+        name = name + "_mtree",
         srcs = [
-            ":bins_mtree",
-            ":builtin_headers_mtree",
-            ":sanitizers_ignorelist_mtree",
+            name + "_bins_mtree",
+            name + "_builtin_headers_mtree",
         ],
         cmd = """\
-            cat $(location :sanitizers_ignorelist_mtree) > $(@)
-            cat $(location :builtin_headers_mtree) >> $(@)
-            cat $(location :bins_mtree) >> $(@)
+            cat $(SRCS) > $(@)
         """,
         outs = [
-            "mtree_spec.mtree",
+            name + "_mtree_spec.mtree",
         ],
         tags = ["manual"],
     )
 
     tar(
         name = name,
-        srcs = BINS + [
+        srcs = bin_files.keys() + [
             "@llvm-project//clang:builtin_headers_files",
-            "@llvm-project//compiler-rt:asan_ignorelist",
-            "@llvm-project//compiler-rt:msan_ignorelist",
         ],
         args = [
             "--options",
             "zstd:compression-level=22",
         ],
         compress = "zstd",
-        mtree = ":mtree",
+        mtree = name + "_mtree",
         tags = ["manual"],
     )

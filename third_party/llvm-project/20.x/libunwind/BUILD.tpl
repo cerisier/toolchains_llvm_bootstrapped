@@ -74,21 +74,23 @@ cc_stage2_library(
     ],
     implementation_deps = select({
         "@platforms//os:macos": [],
+        "@platforms//os:windows": [],
         "@platforms//os:linux": [
+            # TODO(cerisier): Provide only a subset of linux UAPI headers for musl.
+            # https://github.com/cerisier/toolchains_llvm_bootstrapped/issues/146
             "@kernel_headers//:kernel_headers",
+        ],
+    }) + select({
+        "@toolchains_llvm_bootstrapped//platforms/config:musl": [
+            "@musl_libc//:musl_libc_headers",
+        ],
+        "@toolchains_llvm_bootstrapped//platforms/config:gnu": [
+            "@glibc//:gnu_libc_headers",
         ],
         "@platforms//os:windows": [
             "@mingw//:mingw_headers",
         ],
-    }) + select({
-        "@toolchains_llvm_bootstrapped//constraints/libc:musl": [
-            "@musl_libc//:musl_libc_headers",
-        ],
-        "@platforms//os:windows": [],
         "@platforms//os:macos": [],
-        "//conditions:default": [
-            "@glibc//:gnu_libc_headers",
-        ],
     }),
     visibility = ["//visibility:public"],
 )

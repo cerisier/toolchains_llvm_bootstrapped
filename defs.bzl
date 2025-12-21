@@ -1,4 +1,4 @@
-def exec_test(rule, name, tags=[], args=[], env={}, data = [], **kwargs):
+def exec_test(rule, name, tags=[], args=[], env={}, data = [], tools = [], **kwargs):
     rule(
         name = name + "_",
         tags = tags + (["manual"] if "manual" not in tags else []),
@@ -13,6 +13,7 @@ def exec_test(rule, name, tags=[], args=[], env={}, data = [], **kwargs):
         args = args,
         env = env,
         data = data,
+        tools = tools,
     )
 
 def _exec_test_impl(ctx):
@@ -24,9 +25,9 @@ def _exec_test_impl(ctx):
         output = out,
     )
 
-    runfiles = ctx.runfiles(ctx.files.data)
+    runfiles = ctx.runfiles(ctx.files.data + ctx.files.tools)
 
-    data = ctx.attr.data
+    data = ctx.attr.data + ctx.attr.tools
 
     return [
         DefaultInfo(
@@ -52,6 +53,11 @@ _exec_test = rule(
         ),
         "data": attr.label_list(
             doc = "The service manager will merge these variables into the environment when spawning the underlying binary.",
+            allow_files = True,
+        ),
+        "tools": attr.label_list(
+            doc = "The service manager will merge these variables into the environment when spawning the underlying binary.",
+            cfg = "exec",
             allow_files = True,
         ),
         "env": attr.string_dict(

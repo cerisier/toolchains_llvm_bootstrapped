@@ -4,11 +4,13 @@ load("//prebuilt/llvm:llvm_release.bzl", "llvm_release")
 
 llvm_release(name = "llvm_release")
 
+llvm_release(name = "windows_llvm_release", bin_suffix = ".exe")
+
 [
     platform_transition_filegroup(
         name = "for_" + platform.split(":")[1],
         srcs = [
-            ":llvm_release",
+            ":windows_llvm_release" if "windows" in platform else ":llvm_release",
         ],
         target_platform = platform,
     )

@@ -129,6 +129,12 @@ copy_file(
     allow_symlink = True,
 )
 
+# In newer versions of glibc various libs such as libm, librt are
+# normally included in libc and not available as separate libraries.
+#
+# But in the way we handle generating libc stubs, we chose to generate
+# empty libs for those that have been removed so that we do not have to
+# handle varying inclusions.
 copy_to_directory(
     name = "glibc_library_search_directory",
     srcs = LIBS + LINKER_SCRIPTS + [
