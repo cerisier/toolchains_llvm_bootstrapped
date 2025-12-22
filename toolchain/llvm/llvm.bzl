@@ -53,6 +53,7 @@ def declare_llvm_targets(*, suffix = ""):
             ":builtin_headers_include_directory",
         ],
         capabilities = ["@rules_cc//cc/toolchains/capabilities:supports_pic"],
+        allowlist_include_directories = [":builtin_headers_include_directory"],
     )
 
     cc_tool(
@@ -62,6 +63,7 @@ def declare_llvm_targets(*, suffix = ""):
             ":builtin_headers_include_directory",
         ],
         capabilities = ["@rules_cc//cc/toolchains/capabilities:supports_pic"],
+        allowlist_include_directories = [":builtin_headers_include_directory"],
     )
 
     cc_tool(
