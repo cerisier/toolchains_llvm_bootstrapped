@@ -52,26 +52,42 @@ def declare_llvm_targets(*, suffix = ""):
         data = [
             ":builtin_headers_include_directory",
         ],
-        capabilities = ["@rules_cc//cc/toolchains/capabilities:supports_pic"],
+        capabilities = [
+            "@rules_cc//cc/toolchains/capabilities:supports_pic",
+            "@rules_cc//cc/toolchains/capabilities:supports_dynamic_linker",
+            "@rules_cc//cc/toolchains/capabilities:supports_interface_shared_libraries",
+        ],
     )
 
     cc_tool(
         name = "clang++",
-        src = "bin/clang++" + suffix,
+        src = "@toolchains_llvm_bootstrapped//toolchain/llvm:clang-wrapper.sh",
+        # src = "bin/clang++" + suffix,
         data = [
+            "bin/clang++" + suffix,
             ":builtin_headers_include_directory",
         ],
-        capabilities = ["@rules_cc//cc/toolchains/capabilities:supports_pic"],
+        capabilities = [
+            "@rules_cc//cc/toolchains/capabilities:supports_pic",
+            "@rules_cc//cc/toolchains/capabilities:supports_dynamic_linker",
+            "@rules_cc//cc/toolchains/capabilities:supports_interface_shared_libraries",
+        ],
     )
 
     cc_tool(
         name = "lld",
-        src = "bin/clang++" + suffix,
+        # src = "bin/clang++" + suffix,
+        src = "@toolchains_llvm_bootstrapped//toolchain/llvm:clang-wrapper.sh",
         data = [
+            "bin/clang++" + suffix,
             "bin/ld.lld" + suffix,
             "bin/ld64.lld" + suffix,
             "bin/lld" + suffix,
             "bin/wasm-ld" + suffix,
+        ],
+        capabilities = [
+            "@rules_cc//cc/toolchains/capabilities:supports_dynamic_linker",
+            "@rules_cc//cc/toolchains/capabilities:supports_interface_shared_libraries",
         ],
     )
 
