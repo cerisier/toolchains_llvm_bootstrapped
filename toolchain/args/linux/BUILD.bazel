@@ -44,10 +44,12 @@ cc_args(
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
     args = [
+        # will tell clang to request -lc++ instead of -lstdc++
+        "--stdlib=libc++",
         # will prevent clang to choose which libunwind to link against
         "--unwindlib=none",
         # will prevent clang to choose which libc++ to link against
-        "-nostdlib++",
+        # "-nostdlib++",
     ],
 )
 
