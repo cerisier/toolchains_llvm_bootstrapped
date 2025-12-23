@@ -85,7 +85,7 @@ jobs:
         bazel_version: [last_rc]
         folder:
           - "e2e/rules_cc"
-          # - "e2e/rules_rust" - Need to fix rules_rust artifact_name_patterns
+          # - "e2e/rules_rust" - Need a bazel nightly with https://github.com/bazelbuild/bazel/pull/28038
           # - "e2e/cross_compilation"
           # - "e2e/wasm"
     runs-on: ${{ matrix.os }}

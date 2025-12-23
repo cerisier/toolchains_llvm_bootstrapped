@@ -228,6 +228,23 @@ copy_to_directory(
     ],
 )
 
+copy_to_directory(
+    name = "mingw_import_libraries_directory",
+    srcs = [
+        "@mingw//:mingw_import_libraries_common",
+    ] + select({
+        "@platforms//cpu:x86_64": ["@mingw//:mingw_import_libraries_x86_64"],
+        # Aarch64 are fully templatized in .def.in files, x86_64 have not been merged yet.
+        "@platforms//cpu:aarch64": [],
+    }),
+    include_external_repositories = ["**"],
+    root_paths = [
+        ".",
+        "windows",
+    ],
+    visibility = ["//visibility:public"],
+)
+
 MINGW_CRT_OBJECT_COPTS = MINGW_CRT_COMMON_COPTS + [
     "-D_SYSCRT=1",
 ]

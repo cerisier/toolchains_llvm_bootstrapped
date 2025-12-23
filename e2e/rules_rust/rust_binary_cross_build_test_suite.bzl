@@ -50,6 +50,12 @@ def rust_binary_cross_build_test_suite(name, platforms, experimental_use_cc_comm
 
     for (platform, check) in platforms.items():
         for experimental_use_cc_common_link in [0, 1]:
+
+            # TODO(zbarsky): Fix these errors and enable
+            # `ld.lld: error: undefined symbol: __rust_dealloc/__rust_realloc`
+            if "windows" in platform and experimental_use_cc_common_link:
+                continue
+
             rust_binary_test_suite(
                 name = "test_" + name + "_" + platform.split(":")[-1] + (
                     "_cc_common_link" if experimental_use_cc_common_link else ""

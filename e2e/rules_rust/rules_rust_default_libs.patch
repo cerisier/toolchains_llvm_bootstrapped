@@ -1,0 +1,44 @@
+diff --git a/rust/platform/triple_mappings.bzl b/rust/platform/triple_mappings.bzl
+index 6070591e6..5a2651d8d 100644
+--- a/rust/platform/triple_mappings.bzl
++++ b/rust/platform/triple_mappings.bzl
+@@ -279,7 +279,11 @@ _SYSTEM_TO_STDLIB_LINKFLAGS = {
+     "wasi": [],
+     "wasip1": [],
+     "wasip2": [],
+-    "windows": ["advapi32.lib", "ws2_32.lib", "userenv.lib", "Bcrypt.lib"],
++    "windows": {
++        "msvc": ["advapi32.lib", "ws2_32.lib", "userenv.lib", "Bcrypt.lib"],
++        "gnu": ["-lws2_32", "-luserenv", "-lbcrypt", "-lntdll"],
++        "gnullvm": ["-lws2_32", "-luserenv", "-lbcrypt", "-lntdll"],
++    },
+ }
+ 
+ def cpu_arch_to_constraints(cpu_arch, *, system = None):
+@@ -404,8 +408,11 @@ def system_to_staticlib_ext(system):
+ def system_to_binary_ext(system):
+     return _SYSTEM_TO_BINARY_EXT[system]
+ 
+-def system_to_stdlib_linkflags(system):
+-    return _SYSTEM_TO_STDLIB_LINKFLAGS[system]
++def system_to_stdlib_linkflags(target_triple):
++    val = _SYSTEM_TO_STDLIB_LINKFLAGS[target_triple.system]
++    if type(val) == "list":
++        return val
++    return val[target_triple.abi]
+ 
+ def triple_to_constraint_set(target_triple):
+     """Returns a set of constraints for a given platform triple
+diff --git a/rust/private/repository_utils.bzl b/rust/private/repository_utils.bzl
+index 05b741947..5547269d1 100644
+--- a/rust/private/repository_utils.bzl
++++ b/rust/private/repository_utils.bzl
+@@ -393,7 +393,7 @@ def BUILD_for_rust_toolchain(
+         str: A rendered template of a `rust_toolchain` declaration
+     """
+     if stdlib_linkflags == None:
+-        stdlib_linkflags = ", ".join(['"%s"' % x for x in system_to_stdlib_linkflags(target_triple.system)])
++        stdlib_linkflags = ", ".join(['"%s"' % x for x in system_to_stdlib_linkflags(target_triple)])
+ 
+     rustfmt_label = None
+     if include_rustfmt:

@@ -1,0 +1,12 @@
+diff --git a/rust/private/rustc.bzl b/rust/private/rustc.bzl
+index a28ad50b78..8820750265 100644
+--- a/rust/private/rustc.bzl
++++ b/rust/private/rustc.bzl
+@@ -1638,6 +1638,7 @@ def rustc_compile_action(
+             compilation_outputs = compilation_outputs,
+             name = output_relative_to_package,
+             stamp = ctx.attr.stamp,
++            main_output = crate_info.output,
+             output_type = "executable" if crate_info.type == "bin" else "dynamic_library",
+             additional_outputs = additional_linker_outputs,
+         )

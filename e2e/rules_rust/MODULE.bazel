@@ -8,12 +8,38 @@ module(
 )
 
 bazel_dep(name = "bazel_lib", version = "3.0.0")
+
+###############################################################################
+# Bazel Dependencies # https://registry.bazel.build/
+###############################################################################
 bazel_dep(name = "rules_rust", version = "0.68.1")
+single_version_override(
+    module_name = "rules_rust",
+    patch_strip = 1,
+    patches = [
+        "//:rules_rust_artifact_names.patch",
+        "//:rules_rust_windows1.patch",
+        "//:rules_rust_windows2.patch",
+        "//:rules_rust_default_libs.patch",
+    ],
+)
+
 bazel_dep(name = "platforms", version = "1.0.0")
 bazel_dep(name = "rules_shell", version = "0.6.1")
 bazel_dep(name = "rules_cc", version = "0.2.16")
 
 bazel_dep(name = "libmagic", version = "5.46.bcr.4")
+
+single_version_override(
+    module_name = "libmagic",
+    version = "5.46.bcr.4",
+    patches = [
+        # TODO(zbarsky): This patch is incorrect, it confuses target and exec for the magic binary.
+        # We need to write a genrule.bzl rule...
+        "//:libmagic_sh_script.patch",
+    ],
+    patch_strip = 1,
+)
 
 bazel_dep(name = "toolchains_llvm_bootstrapped", version = "0.0.0", dev_dependency = True)
 local_path_override(
@@ -29,15 +55,16 @@ register_toolchains(
 ###############################################################################
 # Rust Toolchain #
 ###############################################################################
-
 rust = use_extension("@rules_rust//rust:extensions.bzl", "rust")
 rust.toolchain(
     edition = "2021",
     extra_target_triples = [
-        "aarch64-unknown-linux-gnu",
-        "x86_64-unknown-linux-gnu",
-        "x86_64-apple-darwin",
+        "aarch64-unknown-linux-musl",
         "aarch64-apple-darwin",
+        "aarch64-pc-windows-gnullvm",
+        "x86_64-unknown-linux-musl",
+        "x86_64-apple-darwin",
+        "x86_64-pc-windows-gnullvm",
     ],
     versions = ["1.81.0"],
 )

@@ -1,0 +1,56 @@
+diff --git a/BUILD.bazel b/BUILD.bazel
+--- a/BUILD.bazel
++++ b/BUILD.bazel
+@@ -1,5 +1,6 @@
+ load("@bazel_lib//lib:expand_template.bzl", "expand_template")
+ load("@rules_cc//cc:defs.bzl", "cc_library", "cc_binary", "cc_shared_library")
++load("@toolchains_llvm_bootstrapped//:sh_script.bzl", "sh_script")
+ 
+ expand_template(
+     name = "gen_magic_h",
+@@ -67,12 +68,33 @@ cc_binary(
+     deps = [":lib_bootstrap"],
+ )
+ 
+-genrule(
+-    name = "gen_magic",
+-    tools = [":file_bootstrap"],
++filegroup(
++    name = "magdir_files",
+     srcs = glob(["magic/Magdir/*"]),
+-    cmd = """cat $(SRCS) > combined_magic && $(execpath :file_bootstrap) -C -m combined_magic 2>/dev/null && mv combined_magic.mgc $@ && rm combined_magic""",
++)
++
++sh_script(
++    name = "gen_magic",
++    srcs = [
++        ":file_bootstrap",
++        ":magdir_files",
++    ],
+     outs = ["magic.mgc"],
++    cmd = """out="$1"
++file_bootstrap="$2"
++shift 2
++combined=combined_magic
++
++cat "$@" > "$combined"
++"$file_bootstrap" -C -m "$combined" 2>/dev/null
++mv "${combined}.mgc" "$out"
++rm -f "$combined" "${combined}.mgc"
++""",
++    args = [
++        "$@",
++        "$(location :file_bootstrap)",
++        "$(locations :magdir_files)",
++    ],
+     visibility = ["//visibility:public"],
+ )
+ 
+diff --git a/MODULE.bazel b/MODULE.bazel
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -7,3 +7,4 @@ module(
+ bazel_dep(name = "bazel_lib", version = "3.0.0")
+ bazel_dep(name = "platforms", version = "0.0.11")
+ bazel_dep(name = "rules_cc", version = "0.2.14")
++bazel_dep(name = "toolchains_llvm_bootstrapped", version = "0.0.0")

@@ -51,10 +51,10 @@ cc_args(
     ],
     format = {
         "mingw_crt_library_search_path": "//runtimes/mingw:mingw_crt_library_search_directory",
-        "mingw_import_library_search_path": "@mingw//:mingw_import_libraries_directory",
+        "mingw_import_library_search_path": "//runtimes/mingw:mingw_import_libraries_directory",
     },
     data = [
         "//runtimes/mingw:mingw_crt_library_search_directory",
-        "@mingw//:mingw_import_libraries_directory",
+        "//runtimes/mingw:mingw_import_libraries_directory",
     ],
 )

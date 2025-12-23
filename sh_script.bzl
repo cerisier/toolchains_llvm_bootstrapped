@@ -2,7 +2,7 @@ load("@bazel_lib//lib:run_binary.bzl", "run_binary")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 
-def sh_script(name, cmd, **kwargs):
+def sh_script(name, cmd, env = {}, **kwargs):
     write_file(
         name = name + "_sh",
         out = name + ".sh",
@@ -21,6 +21,13 @@ def sh_script(name, cmd, **kwargs):
     run_binary(
         name = name,
         tool = name + "_bin",
+        env = {
+            # Some default paths that are likely to be needed for genrule-type scripts.
+            # We must specify this because otherwise we leak the host's PATH, which may
+            # not be compatible with the execution platform...
+            # See https://github.com/bazelbuild/bazel/issues/28065
+            "PATH": "/usr/bin:/bin:/usr/sbin:/sbin",
+        } | env,
         **kwargs
     )
 

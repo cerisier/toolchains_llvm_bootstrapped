@@ -1,7 +1,18 @@
 load("@bazel_lib//lib:run_binary.bzl", "run_binary")
 
 def _generate_def_impl(ctx):
-    out = ctx.outputs.out
+    # The templates have `@N` decorations which are only relevant to i386
+    # and cause "symbol not found" on 64-bit, so we convert them to comments.
+    # Ideally `llvm-dlltool --kill-at` would work, but it is ignored on non-i386.
+    # TODO(zbarsky): Fix llvm-dlltool upstream.
+    undecorated = ctx.actions.declare_file(ctx.file.src.path + "_undecorated")
+    ctx.actions.expand_template(
+        template = ctx.file.src,
+        output = undecorated,
+        substitutions = {
+            "@": ";",
+        },
+    )
 
     args = ctx.actions.args()
     args.add_all(["-E", "-P", "-xc"])
@@ -18,13 +29,13 @@ def _generate_def_impl(ctx):
     # 1800 | F_LD64(_o_remainderl) ; Can't use long double functions from the CRT on x86
     args.add("-Wno-invalid-pp-token")
 
-    args.add("-o", out)
-    args.add(ctx.file.src)
+    args.add("-o", ctx.outputs.out)
+    args.add(undecorated)
 
-    inputs = [ctx.file.src, ctx.file.include_anchor] + ctx.files.additional_includes
+    inputs = [undecorated, ctx.file.include_anchor] + ctx.files.additional_includes
 
     ctx.actions.run(
-        outputs = [out],
+        outputs = [ctx.outputs.out],
         inputs = inputs,
         executable = ctx.executable.tool,
         arguments = [args],
@@ -107,6 +118,10 @@ def mingw_import_libraries(name, directory):
                 "@platforms//cpu:x86_64": ["-m", "i386:x86-64"],
                 "@platforms//cpu:aarch64": ["-m", "arm64"],
             }) + [
+                # The mingw def.in files are still decorated with stdcall @N suffixes;
+                # strip them for 64-bit import libs so the symbols match Rust/LLVM output.
+                # TODO(zbarsky): This doesn't actually work; fix llvm-dlltool upstream.
+                #"--kill-at",
                 "-d",
                 "$(location %s)" % src,
                 "-l",

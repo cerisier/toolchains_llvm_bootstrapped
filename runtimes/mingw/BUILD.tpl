@@ -195,15 +195,3 @@ mingw_import_libraries(
     name = "mingw_import_libraries_x86_64",
     directory = "mingw-w64-crt/lib64",
 )
-
-directory(
-    name = "mingw_import_libraries_directory",
-    srcs = [
-        ":mingw_import_libraries_common",
-    ] + select({
-        "@platforms//cpu:x86_64": [":mingw_import_libraries_x86_64"],
-        # Aarch64 are fully templatized in .def.in files, x86_64 have not been merged yet.
-        "@platforms//cpu:aarch64": [],
-    }),
-    visibility = ["//visibility:public"],
-)

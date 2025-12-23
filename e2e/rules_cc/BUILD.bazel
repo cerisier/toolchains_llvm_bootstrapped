@@ -70,5 +70,6 @@ cc_test(
     linkopts = [
         "-luuid",
     ],
+    # TODO(zbarsky): Tests can't execute remotely from Windows hosts
     tags = ["no-remote"],
 )

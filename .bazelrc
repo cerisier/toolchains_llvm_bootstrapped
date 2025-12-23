@@ -33,19 +33,20 @@ common:prebuilt  --copt=-fomit-frame-pointer
 common:prebuilt  --dynamic_mode=off
 common:prebuilt  --extra_toolchains=//toolchain:all
 
-common:rust    --@toolchains_llvm_bootstrapped//config:experimental_stub_libgcc_s=True
 common:rust    --@rules_cc//cc/toolchains/args/archiver_flags:use_libtool_on_macos=False
+common:rust    --@rules_rust//rust/settings:experimental_use_sh_toolchain_for_bootstrap_process_wrapper
+common:rust    --@toolchains_llvm_bootstrapped//config:experimental_stub_libgcc_s=True
 
-common:remote --bes_results_url=https://app.buildbuddy.io/invocation/
-common:remote --bes_backend=grpcs://remote.buildbuddy.io
-common:remote --remote_cache=grpcs://remote.buildbuddy.io
-common:remote --remote_download_toplevel
-common:remote --nobuild_runfile_links
-common:remote --remote_timeout=3600
+common --bes_results_url=https://app.buildbuddy.io/invocation/
+common --bes_backend=grpcs://remote.buildbuddy.io
+common --remote_cache=grpcs://remote.buildbuddy.io
+common --remote_download_toplevel
+common --nobuild_runfile_links
+common --remote_timeout=3600
+common --noexperimental_throttle_remote_action_building
+common --experimental_remote_execution_keepalive
+common --grpc_keepalive_time=30s
 common:remote --remote_executor=grpcs://remote.buildbuddy.io
-common:remote --noexperimental_throttle_remote_action_building
-common:remote --experimental_remote_execution_keepalive
-common:remote --grpc_keepalive_time=30s
 common:remote --jobs=800
 common:remote --extra_execution_platforms=@toolchains_llvm_bootstrapped//:rbe_platform
 
