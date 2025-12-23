@@ -25,6 +25,7 @@ package(default_visibility = ["//visibility:public"])
 
 exports_files([
     "mingw-w64-crt/crt/crtbegin.c",
+    "mingw-w64-crt/crt/crtdll.c",
     "mingw-w64-crt/crt/crtexe.c",
     "mingw-w64-crt/crt/crtend.c",
 ])

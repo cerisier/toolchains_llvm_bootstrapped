@@ -263,6 +263,18 @@ crt_object(
     visibility = ["//visibility:public"],
 )
 
+crt_object(
+    name = "mingw_dllcrt2",
+    out = "dllcrt2.o",
+    srcs = ["@mingw//:mingw-w64-crt/crt/crtdll.c"],
+    implementation_deps = [
+        "@mingw//:mingw_headers",
+        "@mingw//:mingw_crt_headers",
+    ],
+    copts = MINGW_CRT_OBJECT_COPTS,
+    visibility = ["//visibility:public"],
+)
+
 copy_file(
     name = "version_lib",
     src = select({

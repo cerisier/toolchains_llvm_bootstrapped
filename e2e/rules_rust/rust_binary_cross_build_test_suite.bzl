@@ -1,3 +1,4 @@
+load("@bazel_lib//lib:transitions.bzl", "platform_transition_binary")
 load("@rules_rust//rust:defs.bzl", "rust_binary")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("@toolchains_llvm_bootstrapped//:defs.bzl", "exec_test")
@@ -6,8 +7,14 @@ def rust_binary_test_suite(name, check, platform = None, **kwargs):
     binary_name = name + "_binary"
 
     rust_binary(
-        name = binary_name,
+        name = binary_name + "_raw",
         **kwargs
+    )
+
+    platform_transition_binary(
+        name = binary_name,
+        target_platform = platform,
+        binary = binary_name + "_raw",
     )
 
     # Test if the host binary works.

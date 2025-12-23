@@ -105,6 +105,7 @@ copy_to_directory(
         "//runtimes/mingw:crtbegin.o",
         "//runtimes/mingw:crtend.o",
         "//runtimes/mingw:crt2.o",
+        "//runtimes/mingw:dllcrt2.o",
     ],
     target_compatible_with = [
         "@platforms//os:windows",
