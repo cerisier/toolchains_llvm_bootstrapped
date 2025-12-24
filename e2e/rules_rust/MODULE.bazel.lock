@@ -356,7 +356,7 @@
     },
     "@@rules_rust+//crate_universe:extensions.bzl%crate": {
       "general": {
-        "bzlTransitiveDigest": "AlQ/Wa90eCsHX1fT+Awn+TKsvt/1dux9dhC7Oj2vcoQ=",
+        "bzlTransitiveDigest": "IHBmmmb6zEsaQopVYusSLxIib8iDlSs2g8VRt7zroRc=",
         "usagesDigest": "cNpgFKFLEAaNyfhhBDnTzt3h9+xUHpkqb+599ZHW0pE=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},

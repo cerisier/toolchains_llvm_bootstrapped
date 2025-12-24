@@ -2,6 +2,7 @@ load("@bazel_skylib//rules/directory:directory.bzl", "directory")
 load("@bazel_skylib//rules/directory:subdirectory.bzl", "subdirectory")
 load("@bazel_skylib//rules:expand_template.bzl", "expand_template")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("@bazel_lib//lib:run_binary.bzl", "run_binary")
 load("@toolchains_llvm_bootstrapped//runtimes/mingw:import_libs.bzl", "mingw_import_libraries")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_library.bzl", "cc_stage2_library")
 load(
@@ -187,8 +188,30 @@ subdirectory(
 )
 
 mingw_import_libraries(
-    name = "mingw_import_libraries_common",
+    name = "mingw_import_libraries_common_base",
     directory = "mingw-w64-crt/lib-common",
+)
+
+run_binary(
+    name = "libsynchronization",
+    srcs = [
+        ":import_lib_api-ms-win-core-synch-l1-2-0",
+    ],
+    outs = ["libsynchronization.a"],
+    tool = "@toolchains_llvm_bootstrapped//tools:llvm-ar",
+    args = [
+        "qcsDL",
+        "$(location libsynchronization.a)",
+        "$(location import_lib_api-ms-win-core-synch-l1-2-0)",
+    ],
+)
+
+filegroup(
+    name = "mingw_import_libraries_common",
+    srcs = [
+        ":mingw_import_libraries_common_base",
+        ":libsynchronization",
+    ],
 )
 
 mingw_import_libraries(

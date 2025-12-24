@@ -9,8 +9,8 @@ index 6070591e6..5a2651d8d 100644
 -    "windows": ["advapi32.lib", "ws2_32.lib", "userenv.lib", "Bcrypt.lib"],
 +    "windows": {
 +        "msvc": ["advapi32.lib", "ws2_32.lib", "userenv.lib", "Bcrypt.lib"],
-+        "gnu": ["-lws2_32", "-luserenv", "-lbcrypt", "-lntdll"],
-+        "gnullvm": ["-lws2_32", "-luserenv", "-lbcrypt", "-lntdll"],
++        "gnu": ["-lws2_32", "-luserenv", "-lbcrypt", "-lntdll", "-lsynchronization"],
++        "gnullvm": ["-lws2_32", "-luserenv", "-lbcrypt", "-lntdll", "-lsynchronization"],
 +    },
  }
  
