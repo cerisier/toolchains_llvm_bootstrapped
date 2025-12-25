@@ -20,6 +20,7 @@ load(
     "UUID_SRCS",
     "UCRT_BASE_SRCS",
     "UCRT_BASE_X86_64_ADDITIONAL_SRCS",
+    "WS2_32_SRCS",
 )
 
 package(default_visibility = ["//visibility:public"])
@@ -87,6 +88,11 @@ filegroup(
 filegroup(
     name = "ucrt_base_crt_aarch64_srcs",
     srcs = ["mingw-w64-crt/%s" % path for path in UCRT_BASE_SRCS],
+)
+
+filegroup(
+    name = "ws2_32_srcs",
+    srcs = ["mingw-w64-crt/%s" % path for path in WS2_32_SRCS],
 )
 
 filegroup(
@@ -188,30 +194,8 @@ subdirectory(
 )
 
 mingw_import_libraries(
-    name = "mingw_import_libraries_common_base",
-    directory = "mingw-w64-crt/lib-common",
-)
-
-run_binary(
-    name = "libsynchronization",
-    srcs = [
-        ":import_lib_api-ms-win-core-synch-l1-2-0",
-    ],
-    outs = ["libsynchronization.a"],
-    tool = "@toolchains_llvm_bootstrapped//tools:llvm-ar",
-    args = [
-        "qcsDL",
-        "$(location libsynchronization.a)",
-        "$(location import_lib_api-ms-win-core-synch-l1-2-0)",
-    ],
-)
-
-filegroup(
     name = "mingw_import_libraries_common",
-    srcs = [
-        ":mingw_import_libraries_common_base",
-        ":libsynchronization",
-    ],
+    directory = "mingw-w64-crt/lib-common",
 )
 
 mingw_import_libraries(

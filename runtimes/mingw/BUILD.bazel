@@ -184,6 +184,51 @@ cc_stage2_static_library(
     deps = [":moldname_crt_lib"],
 )
 
+run_binary(
+    name = "libsynchronization",
+    srcs = [
+        "@mingw//:import_lib_api-ms-win-core-synch-l1-2-0",
+    ],
+    outs = ["libsynchronization.a"],
+    tool = "@toolchains_llvm_bootstrapped//tools:llvm-ar",
+    args = [
+        "qcsDL",
+        "$(location :libsynchronization.a)",
+        "$(location @mingw//:import_lib_api-ms-win-core-synch-l1-2-0)",
+    ],
+)
+
+cc_stage2_library(
+    name = "ws2_32_lib",
+    srcs = ["@mingw//:ws2_32_srcs"],
+    implementation_deps = [
+        "@mingw//:mingw_headers",
+        "@mingw//:mingw_crt_headers",
+    ],
+    copts = MINGW_CRT_COMMON_COPTS,
+)
+
+cc_stage2_static_library(
+    name = "ws2_32",
+    deps = [":ws2_32_lib"],
+)
+
+run_binary(
+    name = "libws2_32",
+    srcs = [
+        "@mingw//:import_lib_ws2_32",
+        ":ws2_32",
+    ],
+    outs = ["libws2_32.a"],
+    tool = "@toolchains_llvm_bootstrapped//tools:llvm-ar",
+    args = [
+        "qcsDL",
+        "$(location :libws2_32.a)",
+        "$(location @mingw//:import_lib_ws2_32)",
+        "$(location :ws2_32)",
+    ],
+)
+
 cc_stage2_library(
     name = "uuid_lib",
     srcs = ["@mingw//:mingw_uuid_srcs"],
@@ -232,6 +277,8 @@ copy_to_directory(
     name = "mingw_import_libraries_directory",
     srcs = [
         "@mingw//:mingw_import_libraries_common",
+        ":libsynchronization.a",
+        ":libws2_32.a",
     ] + select({
         "@platforms//cpu:x86_64": ["@mingw//:mingw_import_libraries_x86_64"],
         # Aarch64 are fully templatized in .def.in files, x86_64 have not been merged yet.
