@@ -13,6 +13,8 @@ def cc_toolchain(name, tool_map):
         known_features = [
             "//toolchain/features:static_link_cpp_runtimes",
             "@rules_cc//cc/toolchains/args:experimental_replace_legacy_action_config_features",
+            # Those features are enabled internally by --compilation_mode flags family.
+            # We add them to the list of known_features but not in the list of enabled_features.
             "//toolchain/features:all_non_legacy_builtin_features",
             "//toolchain/features/legacy:all_legacy_builtin_features",
         ] + select({
@@ -32,7 +34,6 @@ def cc_toolchain(name, tool_map):
             "@platforms//os:none": [],
         }) + [
             "@rules_cc//cc/toolchains/args:experimental_replace_legacy_action_config_features",
-            # Do not enable this manually. Those features are enabled internally by --compilation_mode flags family.
             "//toolchain/features/legacy:all_legacy_builtin_features",
         ],
         tool_map = tool_map,
