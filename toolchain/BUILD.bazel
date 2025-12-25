@@ -2,7 +2,7 @@ load("@bazel_skylib//rules:common_settings.bzl", "bool_setting")
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains:artifacts.bzl", "cc_artifact_name_pattern")
 load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
-load(":declare_toolchains.bzl", "declare_all_toolchains")
+load(":declare_toolchains.bzl", "declare_toolchains")
 
 bool_setting(
     name = "bootstrap_setting",
@@ -201,4 +201,4 @@ cc_artifact_name_pattern(
     visibility = ["//toolchain:__subpackages__"],
 )
 
-declare_all_toolchains()
+declare_toolchains()

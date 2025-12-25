@@ -160,17 +160,17 @@ def declare_tool_map(exec_os, exec_cpu):
         src = prefix + "/bin/llvm-strip",
     )
 
-def declare_toolchains():
-    supported_execs = [
-        (arch, os)
-        # Any supported target that can run a compiler is a supported exec.
-        # If we can compile a compiler for that target, we can use that compiler
-        # to compile for any other target.
-        for (arch, os) in SUPPORTED_TARGETS
-        if arch != "none" # wasm is no good for us.
-    ]
+_supported_execs = [
+    (arch, os)
+    # Any supported target that can run a compiler is a supported exec.
+    # If we can compile a compiler for that target, we can use that compiler
+    # to compile for any other target.
+    for (arch, os) in SUPPORTED_TARGETS
+    if arch != "none" # wasm is no good for us.
+]
 
-    for (exec_os, exec_cpu) in supported_execs:
+def declare_toolchains():
+    for (exec_os, exec_cpu) in _supported_execs:
         declare_tool_map(exec_os, exec_cpu)
 
         cc_toolchain_name = "{}_{}_cc_toolchain".format(exec_os, exec_cpu)
