@@ -25,9 +25,6 @@ def declare_toolchains():
                     "@platforms//cpu:{}".format(target_cpu),
                     "@platforms//os:{}".format(target_os),
                 ],
-                target_settings = [
-                    # "//toolchain:bootstrapped",
-                ],
                 toolchain = cc_toolchain_name,
                 toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
                 visibility = ["//visibility:public"],

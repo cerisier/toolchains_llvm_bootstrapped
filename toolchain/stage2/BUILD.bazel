@@ -20,31 +20,21 @@ cc_args_list(
 )
 
 cc_args_list(
-    name = "optimization_flags",
-    args = select({
-        "//config:stage2_optimization_mode_debug": [
-            "//toolchain/stage2/args:dbg_compile_flags",
-        ],
-        "//conditions:default": [
-            "//toolchain/stage2/args:opt_compile_flags",
-        ],
-    }),
-    visibility = ["//toolchain:__subpackages__"],
-)
-
-cc_args_list(
-    name = "runtimes_only_toolchain_args",
+    name = "toolchain_args",
     args = [
         # Common default compile flags.
         "//toolchain/args:llvm_target_for_platform",
         "//toolchain/args:no_absolute_paths_for_builtins",
         "//toolchain/args:deterministic_compile_flags",
+        "//toolchain/stage2/args:optimization_flags",
 
         ":platform_specific_args",
 
-        ":optimization_flags",
-        "//toolchain/stage2/args:default_link_flags",
+        # Optional sanitizers
         "//toolchain/stage2/args:ubsan_flags",
+
+        # Common default link flags.
+        "//toolchain/args:force_linker_flags",
     ],
     visibility = ["//toolchain:__subpackages__"],
 )
