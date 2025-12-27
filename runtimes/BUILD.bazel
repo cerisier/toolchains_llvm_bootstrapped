@@ -5,7 +5,7 @@ load("//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
 load(":copy_to_resource_directory.bzl", "copy_to_resource_directory")
 
 filegroup(
-    name = "empty_filegroup",
+    name = "none",
     srcs = [],
     visibility = ["//toolchain:__subpackages__"],
 )

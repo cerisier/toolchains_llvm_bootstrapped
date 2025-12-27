@@ -72,11 +72,11 @@ def cc_toolchain(name, tool_map):
         }),
         tool_map = tool_map,
         static_runtime_lib = select({
-            "//toolchain:bootstrapping": "//runtimes:empty_filegroup",
+            "//toolchain:bootstrapping": "//runtimes:none",
             "//conditions:default": "//runtimes:static_runtime_lib",
         }),
         dynamic_runtime_lib = select({
-            "//toolchain:bootstrapping": "//runtimes:empty_filegroup",
+            "//toolchain:bootstrapping": "//runtimes:none",
             "//conditions:default": "//runtimes:dynamic_runtime_lib",
         }),
         compiler = "clang",

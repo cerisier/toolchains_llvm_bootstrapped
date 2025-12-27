@@ -51,7 +51,7 @@ cc_args(
     ],
 )
 
-# Extracted from rules_cc unix_cc_configure.bz;
+# Extracted from rules_cc unix_cc_configure.bzl
 cc_args(
     name = "default_link_flags",
     actions = [
