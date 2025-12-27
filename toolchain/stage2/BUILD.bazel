@@ -5,7 +5,7 @@ cc_args_list(
     args = select({
         "@platforms//os:macos": [
             "//toolchain/args/macos:macos_minimum_os_flags",
-            "//toolchain/args/macos:macos_default_link_flags",
+            "//toolchain/args/macos:default_link_flags",
             "//toolchain/args/macos:macos_sdk_sysroot",
         ],
         "@platforms//os:linux": [

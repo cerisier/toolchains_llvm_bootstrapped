@@ -1,4 +1,12 @@
 bazel_dep(name = "rules_cc", version = "0.2.14")
+single_version_override(
+    module_name = "rules_cc",
+    patch_strip = 1,
+    patches = [
+        "//:rules_cc_include_dirs.patch",
+    ],
+)
+
 bazel_dep(name = "bazel_skylib", version = "1.8.2")
 bazel_dep(name = "bazel_lib", version = "3.0.0")
 bazel_dep(name = "platforms", version = "1.0.0")

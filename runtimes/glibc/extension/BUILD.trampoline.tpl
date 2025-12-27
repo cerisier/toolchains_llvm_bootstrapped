@@ -8,6 +8,11 @@ alias(
 )
 
 alias(
+    name = "glibc_headers_source_directory",
+    actual = make_select_glibc_repository_target("@glibc_headers", "glibc_headers_source_directory"),
+)
+
+alias(
     name = "glibc_headers_directory",
     actual = make_select_glibc_repository_target("@glibc_headers", "glibc_headers_directory"),
 )

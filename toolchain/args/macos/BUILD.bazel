@@ -25,7 +25,7 @@ cc_args(
 )
 
 cc_args(
-    name = "macos_default_link_flags",
+    name = "default_link_flags",
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],

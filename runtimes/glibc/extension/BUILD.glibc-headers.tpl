@@ -16,6 +16,12 @@ cc_library(
     visibility = ["//visibility:public"],
 )
 
+filegroup(
+    name = "glibc_headers_source_directory",
+    srcs = ["include"],
+    visibility = ["//visibility:public"],
+)
+
 directory(
     name = "glibc_headers_top_directory",
     srcs = glob([

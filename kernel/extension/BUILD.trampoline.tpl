@@ -8,6 +8,11 @@ alias(
 )
 
 alias(
+    name = "kernel_headers_source_directory",
+    actual = make_select_kernel_headers_repository_target("kernel_headers_source_directory"),
+)
+
+alias(
     name = "kernel_headers_directory",
     actual = make_select_kernel_headers_repository_target("kernel_headers_directory"),
 )

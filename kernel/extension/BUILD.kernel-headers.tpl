@@ -15,6 +15,12 @@ cc_library(
     visibility = ["//visibility:public"],
 )
 
+filegroup(
+    name = "kernel_headers_source_directory",
+    srcs = ["include"],
+    visibility = ["//visibility:public"],
+)
+
 directory(
     name = "kernel_headers_top_directory",
     srcs = glob([
