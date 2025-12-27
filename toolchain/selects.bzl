@@ -18,13 +18,19 @@ def platform_extra_binary(binary):
         "@toolchains_llvm_bootstrapped//platforms/config:windows_x86_64": "@prebuilts-extras-toolchain-artifacts-windows-amd64//:%s" % binary,
     })
 
-def platform_cc_tool_map(exec_os, exec_cpu):
+def _tool_repo(exec_os, exec_cpu):
     if exec_os == "macos":
-        tool_repo = "@llvm-toolchain-minimal-%s-darwin-arm64//" % LLVM_VERSION
+        return "@llvm-toolchain-minimal-%s-darwin-arm64//" % LLVM_VERSION
     elif exec_cpu == "x86_64":
-        tool_repo = "@llvm-toolchain-minimal-%s-%s-amd64//" % (LLVM_VERSION, exec_os)
+        return "@llvm-toolchain-minimal-%s-%s-amd64//" % (LLVM_VERSION, exec_os)
     else:
-        tool_repo = "@llvm-toolchain-minimal-%s-%s-arm64//" % (LLVM_VERSION, exec_os)
+        return "@llvm-toolchain-minimal-%s-%s-arm64//" % (LLVM_VERSION, exec_os)
+
+def platform_module_map(exec_os, exec_cpu):
+    return _tool_repo(exec_os, exec_cpu) + ":module_map"
+
+def platform_cc_tool_map(exec_os, exec_cpu):
+    tool_repo = _tool_repo(exec_os, exec_cpu)
 
     # Even though `tool_map` is exec-configured, this `select` happens under the target configuration.
     # That's because Bazel resolves the select before applying the exec transition, but if these targets

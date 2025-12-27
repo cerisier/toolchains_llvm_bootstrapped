@@ -184,31 +184,8 @@ subdirectory(
 )
 
 mingw_import_libraries(
-    name = "mingw_import_libraries_common_base",
-    directory = "mingw-w64-crt/lib-common",
-)
-
-run_binary(
-    name = "libsynchronization",
-    srcs = [
-        "mingw-w64-crt/lib-common/synchronization.mri",
-        ":import_lib_api-ms-win-core-synch-l1-2-0",
-    ],
-    outs = ["libsynchronization.a"],
-    tool = "@toolchains_llvm_bootstrapped//tools:llvm-ar",
-    args = [
-        "qcsDL",
-        "$(location libsynchronization.a)",
-        "$(location import_lib_api-ms-win-core-synch-l1-2-0)",
-    ],
-)
-
-filegroup(
     name = "mingw_import_libraries_common",
-    srcs = [
-        ":mingw_import_libraries_common_base",
-        ":libsynchronization",
-    ],
+    directory = "mingw-w64-crt/lib-common",
 )
 
 mingw_import_libraries(

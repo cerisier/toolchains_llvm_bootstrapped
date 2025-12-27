@@ -28,9 +28,13 @@ def headers_directory(name, path, visibility = None):
         visibility = visibility,
     )
 
+# Marker provider.
+SourceDirectoryInfo = provider()
+
 def _headers_directory_impl(ctx):
     return [
         ctx.attr.directory[DirectoryInfo],
+        SourceDirectoryInfo(),
         DefaultInfo(
             files = ctx.attr.source_directory[DefaultInfo].files,
         ),

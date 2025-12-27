@@ -1,11 +1,13 @@
 load("@rules_cc//cc/toolchains:toolchain.bzl", _cc_toolchain = "cc_toolchain")
 load("@rules_cc//cc/toolchains:feature_set.bzl", "cc_feature_set")
 
-def cc_toolchain(name, tool_map):
+def cc_toolchain(name, tool_map, module_map = None):
 
     cc_feature_set(
         name = name + "_known_features",
         all_of = [
+            "@rules_cc//cc/toolchains/args/layering_check:layering_check",
+            "@rules_cc//cc/toolchains/args/layering_check:use_module_maps",
             "//toolchain/features:static_link_cpp_runtimes",
             "//toolchain/features/runtime_library_search_directories:feature",
             "//toolchain/features:archive_param_file",
@@ -27,6 +29,10 @@ def cc_toolchain(name, tool_map):
     cc_feature_set(
         name = name + "_runtimes_only_known_features",
         all_of = [
+            # TODO(zbarsky): Do we want layering check for runtime libs?
+            #"@rules_cc//cc/toolchains/args/layering_check:layering_check",
+            #"@rules_cc//cc/toolchains/args/layering_check:use_module_maps",
+
             "//toolchain/features:archive_param_file",
             # Always last (contains user_compile_flags and user_link_flags who should apply last).
             "@rules_cc//cc/toolchains/args:experimental_replace_legacy_action_config_features",
@@ -47,6 +53,7 @@ def cc_toolchain(name, tool_map):
             ],
             "@platforms//os:none": [],
         }) + [
+            "@rules_cc//cc/toolchains/args/layering_check:module_maps",
             "//toolchain/features:archive_param_file",
             "//toolchain/features/legacy:all_legacy_builtin_features",
             # Always last (contains user_compile_flags and user_link_flags who should apply last).
@@ -87,6 +94,7 @@ def cc_toolchain(name, tool_map):
             "//conditions:default": [name + "_enabled_features"],
         }),
         tool_map = tool_map,
+        module_map = module_map,
         static_runtime_lib = select({
             "//toolchain:runtimes_none": "//runtimes:none",
             "//toolchain:runtimes_stage1": "//runtimes:none",

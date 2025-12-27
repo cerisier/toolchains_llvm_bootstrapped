@@ -155,6 +155,7 @@ cc_args_list(
 )
 
 # TODO(cerisier): extract those into proper semantic args list.
+# TODO(zbarsky): This must match llvm/toolchains/llvm.bzl
 cc_args_list(
     name = "macos_toolchain_args",
     args = [
@@ -163,6 +164,7 @@ cc_args_list(
 )
 
 # TODO(cerisier): extract those into proper semantic args list.
+# TODO(zbarsky): This must match llvm/toolchains/llvm.bzl
 cc_args_list(
     name = "linux_toolchain_args",
     args = [
@@ -188,6 +190,7 @@ cc_args_list(
 )
 
 # TODO(cerisier): extract those into proper semantic args list.
+# TODO(zbarsky): This must match llvm/toolchains/llvm.bzl
 cc_args_list(
     name = "windows_toolchain_args",
     args = [
@@ -215,6 +218,7 @@ cc_args_list(
         "//toolchain/args:llvm_target_for_platform",
         "//toolchain/args:no_absolute_paths_for_builtins",
         "//toolchain/args:deterministic_compile_flags",
+        "//toolchain/args:module_map",
 
         ":sysroot_flags",
         ":hermetic_compile_flags",
