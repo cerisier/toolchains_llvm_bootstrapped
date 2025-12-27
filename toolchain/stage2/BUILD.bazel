@@ -1,20 +1,34 @@
 load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 
 cc_args_list(
+    name = "hermetic_link_flags",
+    args = select({
+        "@platforms//os:macos": [],
+        "//conditions:default": [
+            "//toolchain/stage2/args:hermetic_link_flags",
+        ],
+    }),
+)
+
+cc_args_list(
+    name = "default_link_flags",
+    args = select({
+        "@platforms//os:macos": [
+            "//toolchain/args/macos:default_link_flags",
+        ],
+        "//conditions:default": [],
+    }),
+)
+
+cc_args_list(
     name = "platform_specific_args",
     args = select({
         "@platforms//os:macos": [
-            "//toolchain/args/macos:macos_minimum_os_flags",
-            "//toolchain/args/macos:macos_default_link_flags",
-            "//toolchain/args/macos:macos_sdk_sysroot",
+            "//toolchain:macos_toolchain_args",
         ],
-        "@platforms//os:linux": [
-            "//toolchain/stage2/args/linux:hermetic_linux_args",
-        ],
-        "@platforms//os:windows": [
-            "//toolchain/args:hermetic_compile_flags",
-        ],
-        "//conditions:default": [],
+        "@platforms//os:linux": [],
+        "@platforms//os:windows": [],
+        "@platforms//os:none": [],
     }),
     visibility = ["//toolchain:__subpackages__"],
 )
@@ -28,13 +42,18 @@ cc_args_list(
         "//toolchain/args:deterministic_compile_flags",
         "//toolchain/stage2/args:optimization_flags",
 
-        ":platform_specific_args",
+        "//toolchain:sysroot_flags",
+        "//toolchain:hermetic_compile_flags",
+        "//toolchain/stage2:hermetic_link_flags",
+
+        "//toolchain/stage2:platform_specific_args",
 
         # Optional sanitizers
         "//toolchain/stage2/args:ubsan_flags",
 
         # Common default link flags.
         "//toolchain/args:force_linker_flags",
+        "//toolchain/stage2:default_link_flags",
     ],
     visibility = ["//toolchain:__subpackages__"],
 )

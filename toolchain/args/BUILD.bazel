@@ -218,6 +218,45 @@ cc_args(
     ],
 )
 
+
+config_setting(
+    name = "empty_sysroot",
+    flag_values = {
+        "//config:empty_sysroot": "True",
+    },
+)
+
+# Passing a sysroot to /dev/null has the side effect of removing all default
+# library search paths that clang passes like -L/usr/lib.
+cc_args(
+    name = "empty_sysroot_flags",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:compile_actions",
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = select({
+        ":empty_sysroot": [],
+        "//conditions:default": [
+            "--sysroot=/dev/null",
+        ],
+    }),
+)
+
+cc_args(
+    # We provide the libc++ and libunwind ourselves through static_runtime_libs
+    # and dynamic_runtime_libs.
+    name = "hermetic_link_flags",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = [
+        # will prevent clang to choose which libunwind to link against
+        "--unwindlib=none",
+        # will prevent clang to choose which libc++ to link against
+        "-nostdlib++",
+    ],
+)
+
 cc_args(
     name = "default_libs",
     actions = [

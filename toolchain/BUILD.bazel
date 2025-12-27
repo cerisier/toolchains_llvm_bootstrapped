@@ -55,7 +55,8 @@ cc_args_list(
         "@platforms//os:linux": [
             "//toolchain/args/linux:default_link_flags",
         ],
-        "//conditions:default": [],
+        "@platforms//os:windows": [],
+        "@platforms//os:none": [],
     }),
 )
 
@@ -102,17 +103,53 @@ cc_args_list(
 )
 
 cc_args_list(
-    name = "macos_toolchain_args",
-    args = [
-        "//toolchain/args/macos:macos_sdk_sysroot",
-        "//toolchain/args/macos:macos_minimum_os_flags",
-    ],
+    name = "sysroot_flags",
+    args = select({
+        "@platforms//os:macos": [
+            "//toolchain/args/macos:macos_sdk_sysroot",
+        ],
+        "//conditions:default": [
+            "//toolchain/args:empty_sysroot_flags",
+        ],
+    }),
+    visibility = ["//toolchain:__subpackages__"],
 )
 
 cc_args_list(
+    name = "hermetic_compile_flags",
+    args = select({
+        "@platforms//os:macos": [],
+        "//conditions:default": [
+            "//toolchain/args:hermetic_compile_flags",
+        ],
+    }),
+    visibility = ["//toolchain:__subpackages__"],
+)
+
+cc_args_list(
+    name = "hermetic_link_flags",
+    args = select({
+        "@platforms//os:macos": [],
+        "//conditions:default": [
+            "//toolchain/args:hermetic_link_flags",
+        ],
+    }),
+    visibility = ["//toolchain:__subpackages__"],
+)
+
+# TODO(cerisier): extract those into proper semantic args list.
+cc_args_list(
+    name = "macos_toolchain_args",
+    args = [
+        "//toolchain/args/macos:macos_minimum_os_flags",
+    ],
+    visibility = ["//toolchain:__subpackages__"],
+)
+
+# TODO(cerisier): extract those into proper semantic args list.
+cc_args_list(
     name = "linux_toolchain_args",
     args = [
-        "//toolchain/args/linux:hermetic_linux_args",
         "//toolchain/args:libcxx_headers_include_search_paths",
     ] + select({
         "//platforms/config:musl": [
@@ -134,10 +171,10 @@ cc_args_list(
     }),
 )
 
+# TODO(cerisier): extract those into proper semantic args list.
 cc_args_list(
     name = "windows_toolchain_args",
     args = [
-        "//toolchain/args:hermetic_compile_flags",
         "//toolchain/args:libcxx_headers_include_search_paths",
         "//toolchain/args/windows:mingw_headers_include_search_paths",
     ],
@@ -163,6 +200,11 @@ cc_args_list(
         "//toolchain/args:no_absolute_paths_for_builtins",
         "//toolchain/args:deterministic_compile_flags",
 
+        ":sysroot_flags",
+        ":hermetic_compile_flags",
+        ":hermetic_link_flags",
+
+        # TODO(cerisier): Explode this into specific args instead
         ":platform_specific_args",
 
         # Optional sanitizers

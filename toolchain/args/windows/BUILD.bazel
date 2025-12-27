@@ -41,8 +41,6 @@ cc_args(
         "-L{mingw_import_library_search_path}",
         "-L{mingw_crt_library_search_path}",
 
-        "-nostdlib++",
-
         # Clang will respect the user's chosen crt variant.
         # It defaults on -lmsvcrt if it doesn't find any -l<crt> option
         # For now, we force on ucrt.

@@ -57,3 +57,14 @@ cc_args_list(
         "//conditions:default": [],
     }),
 )
+
+# TODO(cerisier): this needs to differ per runtime (e.g libc++ still need crtbegin)
+cc_args(
+    name = "hermetic_link_flags",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = [
+        "-nostdlib",
+    ],
+)

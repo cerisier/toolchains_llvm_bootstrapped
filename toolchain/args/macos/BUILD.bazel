@@ -24,8 +24,9 @@ cc_args(
     ],
 )
 
+# TODO(cerisier): Extract those into proper semantic args list.
 cc_args(
-    name = "macos_default_link_flags",
+    name = "default_link_flags",
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
@@ -41,7 +42,7 @@ cc_args(
 )
 
 cc_args(
-    name = "macos_default_libs",
+    name = "default_libs",
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],

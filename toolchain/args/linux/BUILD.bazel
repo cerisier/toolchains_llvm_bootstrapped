@@ -1,6 +1,5 @@
 
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
-load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 load("@rules_cc//cc/toolchains:actions.bzl", "cc_action_type_set")
 
 package(default_visibility = ["//visibility:public"])
@@ -23,35 +22,8 @@ cc_action_type_set(
     ],
 )
 
-# Passing a sysroot to /dev/null has the side effect of removing all default
-# library search paths.
-cc_args(
-    name = "linux_no_sysroot",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:compile_actions",
-        "@rules_cc//cc/toolchains/actions:link_actions",
-    ],
-    args = [
-        "--sysroot=/dev/null",
-    ],
-)
-
-cc_args(
-    # We provide the libc++ and libunwind ourselves through static_runtime_libs
-    # and dynamic_runtime_libs.
-    name = "hermetic_link_flags",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:link_actions",
-    ],
-    args = [
-        # will prevent clang to choose which libunwind to link against
-        "--unwindlib=none",
-        # will prevent clang to choose which libc++ to link against
-        "-nostdlib++",
-    ],
-)
-
 # Extracted from rules_cc unix_cc_configure.bzl
+# TODO(cerisier): Extract those into proper semantic args list.
 cc_args(
     name = "default_link_flags",
     actions = [
@@ -60,26 +32,6 @@ cc_args(
     args = [
         "-Wl,-no-as-needed",
         "-Wl,-z,relro,-z,now",
-    ],
-)
-
-config_setting(
-    name = "empty_sysroot",
-    flag_values = {
-        "//config:empty_sysroot": "True",
-    },
-)
-
-cc_args_list(
-    name = "hermetic_linux_args",
-    args = select({
-        ":empty_sysroot": [
-            ":linux_no_sysroot",
-        ],
-        "//conditions:default": [],
-    }) + [
-        "//toolchain/args:hermetic_compile_flags",
-        ":hermetic_link_flags",
     ],
 )
 
