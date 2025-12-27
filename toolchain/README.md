@@ -18,20 +18,26 @@ Groups are defined at the level of the most constrained targets, so that more fe
 ### Package structure
 
 **//toolchain/args:BUILD.bazel**:
-- Contains canonical definitions for each argument groups.
+- Defines the canonical meaning of each argument group.
+- Groups may be empty, but must exist.
+- No platform select() logic.
 
-> That is, platform agnostic flags for each argument groups that should be used
-> in most scenarios except if our implement is incomplete (like macos)
-> or when some specialization doesn't apply (like windows).
+This package defines what each group means, independent of platform or environment.
 
 **//toolchain/args/\<platform\>:BUILD.bazel**:
-- Contain platform specific args definition
-- And overrides of certain canonical arguments groups.
+- Defines platform-specific implementations of argument groups.
+- May replace or extend canonical groups where platform semantics differ.
+- No platform select() logic.
+
+These packages adjust how a canonical group is implemented on a given platform, without changing its semantic intent.
 
 **//toolchain:BUILD.bazel**:
-- Contains platform specialization of canonical argument groups.
-- Should contain only cc_args_list with platform selects.
-- Moreover, only this file should contain platform selects.
+- Assembles the final toolchain by selecting between argument groups.
+- Contains only cc_args_list targets.
+- No raw flags or action bindings.
+- **All platform selection lives here.**
+
+This package answers which groups apply on which platforms, and nothing else.
 
 TODO(cerisier): Support macOS specific flags (objc and frameworks). Still needed ?
 
