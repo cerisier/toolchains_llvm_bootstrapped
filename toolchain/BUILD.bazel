@@ -88,7 +88,7 @@ cc_args_list(
     name = "default_libs",
     args = select({
         "@platforms//os:macos": [
-            "//toolchain/args/macos:macos_default_libs",
+            "//toolchain/args/macos:default_libs",
         ],
         "@platforms//os:linux": [
             "//toolchain/args:default_libs",
