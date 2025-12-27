@@ -1,31 +1,17 @@
-load("@bazel_skylib//rules/directory:directory.bzl", "directory")
-load("@bazel_skylib//rules/directory:subdirectory.bzl", "subdirectory")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@toolchains_llvm_bootstrapped//:directory.bzl", "headers_directory")
 
 cc_library(
     name = "kernel_headers",
-    hdrs = glob([
-        "include/**",
-    ]),
-    includes = [
-        "include",
-    ],
+    hdrs = ["include"],
+    includes = ["include"],
     # Any code should always get passed linux UAPI headers as -isystem
     features = ["system_include_paths"],
     visibility = ["//visibility:public"],
 )
 
-directory(
-    name = "kernel_headers_top_directory",
-    srcs = glob([
-        "include/**",
-    ]),
-    visibility = ["//visibility:public"],
-)
-
-subdirectory(
+headers_directory(
     name = "kernel_headers_directory",
     path = "include",
-    parent = ":kernel_headers_top_directory",
     visibility = ["//visibility:public"],
 )

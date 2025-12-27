@@ -4,24 +4,6 @@ load("@rules_cc//cc/toolchains:actions.bzl", "cc_action_type_set")
 
 package(default_visibility = ["//visibility:public"])
 
-# TODO(zbarsky): Remove this when ugprading rules_cc
-cc_action_type_set(
-    name = "source_compile_actions",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:linkstamp_compile",
-        "@rules_cc//cc/toolchains/actions:cpp_compile",
-        "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
-        "@rules_cc//cc/toolchains/actions:cpp_module_compile",
-        "@rules_cc//cc/toolchains/actions:cpp_module_codegen",
-        "@rules_cc//cc/toolchains/actions:clif_match",
-        "@rules_cc//cc/toolchains/actions:objcpp_compile",
-        "@rules_cc//cc/toolchains/actions:preprocess_assemble",
-        "@rules_cc//cc/toolchains/actions:c_compile_actions",
-        "@rules_cc//cc/toolchains/actions:assembly_actions",
-        "@rules_cc//cc/toolchains/actions:objc_compile",
-    ],
-)
-
 # Extracted from rules_cc unix_cc_configure.bzl
 # TODO(cerisier): Extract those into proper semantic args list.
 cc_args(
@@ -38,7 +20,7 @@ cc_args(
 cc_args(
     name = "kernel_headers_include_search_paths",
     actions = [
-        ":source_compile_actions",
+        "@rules_cc//cc/toolchains/actions:source_compile_actions",
     ],
     args = [
         "-isystem",
@@ -47,6 +29,9 @@ cc_args(
     format = {
         "kernel_headers_include_search_path": "@kernel_headers//:kernel_headers_directory",
     },
+    allowlist_include_directories = [
+        "@kernel_headers//:kernel_headers_directory",
+    ],
     data = [
         "@kernel_headers//:kernel_headers_directory",
     ],
@@ -55,7 +40,7 @@ cc_args(
 cc_args(
     name = "glibc_headers_include_search_paths",
     actions = [
-        ":source_compile_actions",
+        "@rules_cc//cc/toolchains/actions:source_compile_actions",
     ],
     args = [
         # "__GLIBC_MINOR__={d}", version.minor
@@ -65,6 +50,9 @@ cc_args(
     format = {
         "libc_headers_include_search_path": "//runtimes/glibc:glibc_headers_include_search_directory",
     },
+    allowlist_include_directories = [
+        "//runtimes/glibc:glibc_headers_include_search_directory",
+    ],
     data = [
         "//runtimes/glibc:glibc_headers_include_search_directory",
     ],
@@ -103,7 +91,7 @@ cc_args(
 cc_args(
     name = "musl_libc_headers_include_search_paths",
     actions = [
-        ":source_compile_actions",
+        "@rules_cc//cc/toolchains/actions:source_compile_actions",
     ],
     args = [
         "-isystem",

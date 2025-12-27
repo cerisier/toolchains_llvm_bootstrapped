@@ -1,21 +1,11 @@
-load("@bazel_skylib//rules/directory:directory.bzl", "directory")
-load("@bazel_skylib//rules/directory:subdirectory.bzl", "subdirectory")
 load("@rules_cc//cc/toolchains:tool.bzl", "cc_tool")
 load("@rules_cc//cc/toolchains:tool_map.bzl", "cc_tool_map")
+load("//:directory.bzl", "headers_directory")
 
 def declare_llvm_targets(*, suffix = ""):
-
-    directory(
-        name = "builtin_headers_files",
-        srcs = native.glob(["lib/clang/21/include/**"]),
-        visibility = ["//visibility:public"],
-    )
-
-    subdirectory(
-        name = "builtin_headers_include_directory",
+    headers_directory(
+        name = "builtin_headers",
         path = "lib/clang/21/include",
-        parent = ":builtin_headers_files",
-        visibility = ["//visibility:public"],
     )
 
     # Convenient exports
@@ -50,20 +40,20 @@ def declare_llvm_targets(*, suffix = ""):
         name = "clang",
         src = "bin/clang" + suffix,
         data = [
-            ":builtin_headers_include_directory",
+            ":builtin_headers",
         ],
         capabilities = ["@rules_cc//cc/toolchains/capabilities:supports_pic"],
-        allowlist_include_directories = [":builtin_headers_include_directory"],
+        allowlist_include_directories = [":builtin_headers"],
     )
 
     cc_tool(
         name = "clang++",
         src = "bin/clang++" + suffix,
         data = [
-            ":builtin_headers_include_directory",
+            ":builtin_headers",
         ],
         capabilities = ["@rules_cc//cc/toolchains/capabilities:supports_pic"],
-        allowlist_include_directories = [":builtin_headers_include_directory"],
+        allowlist_include_directories = [":builtin_headers"],
     )
 
     cc_tool(
