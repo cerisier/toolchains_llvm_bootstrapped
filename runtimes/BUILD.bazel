@@ -5,6 +5,12 @@ load("//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
 load(":copy_to_resource_directory.bzl", "copy_to_resource_directory")
 
 filegroup(
+    name = "empty_filegroup",
+    srcs = [],
+    visibility = ["//toolchain:__subpackages__"],
+)
+
+filegroup(
     name = "static_runtime_lib",
     srcs = select({
         "@platforms//os:linux": [

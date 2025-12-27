@@ -33,16 +33,16 @@ cc_args(
     ],
 )
 
-# Use args/use_lld when it's fixed
-cc_args(
-    name = "default_link_flags",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:link_actions",
-    ],
-    args = [
-        "-fuse-ld=lld",
-        # "--ld-path={lld_path}",
-    ],
+cc_args_list(
+    name = "optimization_flags",
+    args = select({
+        "//config:stage2_optimization_mode_debug": [
+            ":dbg_compile_flags",
+        ],
+        "//conditions:default": [
+            ":opt_compile_flags",
+        ],
+    }),
 )
 
 cc_args_list(

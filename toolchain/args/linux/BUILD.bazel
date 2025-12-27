@@ -51,6 +51,18 @@ cc_args(
     ],
 )
 
+# Extracted from rules_cc unix_cc_configure.bz;
+cc_args(
+    name = "default_link_flags",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = [
+        "-Wl,-no-as-needed",
+        "-Wl,-z,relro,-z,now",
+    ],
+)
+
 config_setting(
     name = "empty_sysroot",
     flag_values = {

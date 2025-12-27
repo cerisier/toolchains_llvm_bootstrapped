@@ -2,7 +2,7 @@ load("@bazel_skylib//rules:common_settings.bzl", "bool_setting")
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains:artifacts.bzl", "cc_artifact_name_pattern")
 load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
-load(":declare_toolchains.bzl", "declare_all_toolchains")
+load(":declare_toolchains.bzl", "declare_toolchains")
 
 bool_setting(
     name = "bootstrap_setting",
@@ -50,9 +50,11 @@ cc_args_list(
     name = "default_link_flags",
     args = select({
         "@platforms//os:macos": [
-            "//toolchain/args/macos:macos_default_link_flags",
+            "//toolchain/args/macos:default_link_flags",
         ],
-        "@platforms//os:windows": [],
+        "@platforms//os:linux": [
+            "//toolchain/args/linux:default_link_flags",
+        ],
         "//conditions:default": [],
     }),
 )
@@ -69,22 +71,6 @@ cc_args_list(
         ],
         "@platforms//os:none": [],
     }),
-)
-
-# For correctness.
-#
-# For later: this makes the clang driver use compiler-rt compliant filenames
-# and paths when resolving compiler runtime libraries from the resource-dir.
-#
-# TODO(cerisier): Generate a custom resource-dir.
-cc_args(
-    name = "rtlib",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:link_actions",
-    ],
-    args = [
-        "-rtlib=compiler-rt",
-    ],
 )
 
 cc_args_list(
@@ -183,8 +169,8 @@ cc_args_list(
         "//toolchain/args:ubsan_flags",
 
         # Common default link flags.
-        "//toolchain/args:use_lld",
-        ":rtlib",
+        "//toolchain/args:force_linker_flags",
+        "//toolchain/args:rtlib",
         ":resource_dir",
         ":default_link_flags",
         ":default_startfiles", # Needs to stay out of resource_dir since clang does not always search for crtstuff for all targets.
@@ -201,4 +187,4 @@ cc_artifact_name_pattern(
     visibility = ["//toolchain:__subpackages__"],
 )
 
-declare_all_toolchains()
+declare_toolchains()

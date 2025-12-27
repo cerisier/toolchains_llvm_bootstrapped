@@ -1,6 +1,5 @@
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
-load("@rules_cc//cc/toolchains:actions.bzl", "cc_action_type_set")
 load("//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
 
 package(default_visibility = ["//visibility:public"])
@@ -108,7 +107,7 @@ cc_args(
 )
 
 cc_args(
-    name = "use_lld",
+    name = "force_linker_flags",
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
@@ -117,16 +116,7 @@ cc_args(
         # lld will be used if it's next to clang.
         # It would have been great to set the path explicitly.
         # "--ld-path={lld_path}",
-    ] + select({
-        "@platforms//os:macos": [],
-        "@platforms//os:windows": [],
-        "@platforms//os:none": [],
-        #TODO: Put those at the right place, they are applied too early
-        "//conditions:default": [
-            "-Wl,-no-as-needed",
-            "-Wl,-z,relro,-z,now",
-        ],
-    }),
+    ],
 )
 
 cc_args(
@@ -245,4 +235,16 @@ cc_args(
         "libcxx_library_search_path": "//runtimes/libcxx:libcxx_library_search_directory",
         "libunwind_library_search_path": "//runtimes/libunwind:libunwind_library_search_directory",
     },
+)
+
+# This makes the clang driver use compiler-rt compliant filenames
+# and paths when resolving compiler runtime libraries from the resource-dir.
+cc_args(
+    name = "rtlib",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = [
+        "-rtlib=compiler-rt",
+    ],
 )

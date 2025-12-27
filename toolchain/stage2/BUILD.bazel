@@ -1,5 +1,4 @@
 load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
-load("//toolchain/stage2:declare_toolchains.bzl", "declare_toolchains")
 
 cc_args_list(
     name = "platform_specific_args",
@@ -17,18 +16,25 @@ cc_args_list(
         ],
         "//conditions:default": [],
     }),
+    visibility = ["//toolchain:__subpackages__"],
 )
 
 cc_args_list(
-    name = "optimization_flags",
-    args = select({
-        "//config:stage2_optimization_mode_debug": [
-            "//toolchain/stage2/args:dbg_compile_flags",
-        ],
-        "//conditions:default": [
-            "//toolchain/stage2/args:opt_compile_flags",
-        ],
-    }),
-)
+    name = "toolchain_args",
+    args = [
+        # Common default compile flags.
+        "//toolchain/args:llvm_target_for_platform",
+        "//toolchain/args:no_absolute_paths_for_builtins",
+        "//toolchain/args:deterministic_compile_flags",
+        "//toolchain/stage2/args:optimization_flags",
 
-declare_toolchains()
+        ":platform_specific_args",
+
+        # Optional sanitizers
+        "//toolchain/stage2/args:ubsan_flags",
+
+        # Common default link flags.
+        "//toolchain/args:force_linker_flags",
+    ],
+    visibility = ["//toolchain:__subpackages__"],
+)
