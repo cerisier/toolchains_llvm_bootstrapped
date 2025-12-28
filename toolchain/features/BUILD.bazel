@@ -31,6 +31,10 @@ cc_args(
             #TODO: should be somehow done only if the choosen linker supports it
             "-Wl,--gc-sections",
         ],
+    }) + select({
+        "@platforms//cpu:wasm32": [],
+        "@platforms//cpu:wasm64": [],
+        "//conditions:default": ["-Wl,--icf=safe"],
     }),
 )
 
