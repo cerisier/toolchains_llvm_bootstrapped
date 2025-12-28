@@ -3,7 +3,13 @@ load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc:cc_test.bzl", "cc_test")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("@toolchains_llvm_bootstrapped//:defs.bzl", "exec_test")
-load(":defs.bzl", "ubsan_cc_binary")
+load(":defs.bzl", "opt_binary", "ubsan_cc_binary")
+
+opt_binary(
+    name = "no_optimize",
+    copts = ["-O0"],
+    srcs = ["no_optimize.cc"],
+)
 
 cc_binary(
     name = "main",
