@@ -6,6 +6,12 @@ load("@toolchains_llvm_bootstrapped//:defs.bzl", "exec_test")
 load(":defs.bzl", "ubsan_cc_binary")
 
 cc_binary(
+    name = "no_optimize",
+    copts = ["-O0"],
+    srcs = ["no_optimize.cc"],
+)
+
+cc_binary(
     name = "main",
     srcs = ["main.cc"],
     # We provide these libs explicitly via the toolchain runtime_library.
