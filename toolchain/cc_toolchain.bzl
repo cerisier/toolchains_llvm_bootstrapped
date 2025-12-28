@@ -4,32 +4,6 @@ load("@rules_cc//cc/toolchains:feature_set.bzl", "cc_feature_set")
 def cc_toolchain(name, tool_map):
 
     cc_feature_set(
-        name = name + "_enabled_features",
-        all_of = select({
-            "@platforms//os:linux": [
-                "//toolchain/features:static_link_cpp_runtimes",
-            ],
-            "@platforms//os:macos": [],
-            "@platforms//os:windows": [
-                "//toolchain/features:static_link_cpp_runtimes",
-            ],
-            "@platforms//os:none": [],
-        }) + [
-            "//toolchain/features/legacy:all_legacy_builtin_features",
-            # Always last (contains user_compile_flags and user_link_flags who should apply last).
-            "@rules_cc//cc/toolchains/args:experimental_replace_legacy_action_config_features",
-        ],
-    )
-
-    cc_feature_set(
-        name = name + "_runtimes_only_enabled_features",
-        all_of = [
-            # Always last (contains user_compile_flags and user_link_flags who should apply last).
-            "@rules_cc//cc/toolchains/args:experimental_replace_legacy_action_config_features",
-        ],
-    )
-
-    cc_feature_set(
         name = name + "_known_features",
         all_of = [
             "//toolchain/features:static_link_cpp_runtimes",
@@ -50,6 +24,32 @@ def cc_toolchain(name, tool_map):
 
     cc_feature_set(
         name = name + "_runtimes_only_known_features",
+        all_of = [
+            # Always last (contains user_compile_flags and user_link_flags who should apply last).
+            "@rules_cc//cc/toolchains/args:experimental_replace_legacy_action_config_features",
+        ],
+    )
+
+    cc_feature_set(
+        name = name + "_enabled_features",
+        all_of = select({
+            "@platforms//os:linux": [
+                "//toolchain/features:static_link_cpp_runtimes",
+            ],
+            "@platforms//os:macos": [],
+            "@platforms//os:windows": [
+                "//toolchain/features:static_link_cpp_runtimes",
+            ],
+            "@platforms//os:none": [],
+        }) + [
+            "//toolchain/features/legacy:all_legacy_builtin_features",
+            # Always last (contains user_compile_flags and user_link_flags who should apply last).
+            "@rules_cc//cc/toolchains/args:experimental_replace_legacy_action_config_features",
+        ],
+    )
+
+    cc_feature_set(
+        name = name + "_runtimes_only_enabled_features",
         all_of = [
             # Always last (contains user_compile_flags and user_link_flags who should apply last).
             "@rules_cc//cc/toolchains/args:experimental_replace_legacy_action_config_features",
