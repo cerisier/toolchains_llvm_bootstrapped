@@ -81,7 +81,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, windows-2022-arm64]
+        os: [windows-latest, windows-11-arm]
         bazel_version: [last_rc]
         folder:
           - "e2e/rules_cc"
