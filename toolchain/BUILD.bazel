@@ -1,4 +1,4 @@
-load("@bazel_skylib//rules:common_settings.bzl", "bool_setting", "string_setting")
+load("@bazel_skylib//rules:common_settings.bzl", "bool_setting", "string_setting", "string_flag")
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains:artifacts.bzl", "cc_artifact_name_pattern")
 load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
@@ -11,21 +11,21 @@ string_setting(
     name = "runtime_stage",
     values = [
         "stage0", # depend on compiler-only: CRTs, builtins, libc, static libraries.
-        "stage1", # depends on above: libunwind
-        "stage2", # depends on above: libc++abi
-        "stage3", # depends on above: libc++
+        # "stage1", # depends on above: libunwind
+        # "stage2", # depends on above: libc++abi
+        # "stage3", # depends on above: libc++
         "complete", # depends on above: user programs.
     ],
     build_setting_default = "complete",
 )
 
-string_setting(
+string_flag(
     name = "compiler_flavor",
     values = [
         "bootstrapped",
-        "unconstrained",
+        "prebuilt",
     ],
-    build_setting_default = "unconstrained",
+    build_setting_default = "prebuilt",
 )
 
 # bool_setting(
@@ -57,16 +57,16 @@ config_setting(
 # )
 
 config_setting(
-    name = "stage1_bootstrapped",
+    name = "prebuilt_toolchain",
     flag_values = {
         # ":stage1_bootstrap_setting": "0",
-        ":compiler_flavor": "unconstrained",
+        ":compiler_flavor": "prebuilt",
     },
     visibility = ["//visibility:public"],
 )
 
 config_setting(
-    name = "stage1_bootstrapping",
+    name = "bootstrapped_toolchain",
     flag_values = {
         # ":stage1_bootstrap_setting": "1",
         ":compiler_flavor": "bootstrapped",

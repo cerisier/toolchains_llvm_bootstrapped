@@ -7,7 +7,6 @@ load("@rules_cc//cc:action_names.bzl", "ACTION_NAMES")
 bootstrap_transition = transition(
     implementation = lambda settings, attr: {
         # we are compiling runtimes without any kind of other dependencies
-        # so we do not need any runtime.
         "//toolchain:runtime_stage": "stage0",
     },
     inputs = [],

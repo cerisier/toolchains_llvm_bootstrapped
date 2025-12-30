@@ -9,9 +9,9 @@ def _bootstrap_transition_impl(settings, attr):
 
         # we are compiling final programs, so we want all runtimes.
         "//toolchain:runtime_stage": "complete",
-        # ???
+
         # We want to build those binaries using the prebuilt compiler toolchain
-        "//toolchain:compiler_flavor": "bootstrapped",
+        "//toolchain:compiler_flavor": "prebuilt",
 
         # Some flags to make LLVM build sanely.
         "@llvm_zlib//:llvm_enable_zlib": False,

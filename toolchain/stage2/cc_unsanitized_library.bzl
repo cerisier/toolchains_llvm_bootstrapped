@@ -10,7 +10,7 @@ def _reset_sanitizers_impl(settings, attr):
         "//toolchain:runtime_stage": "complete",
 
         # We want to build those binaries using the prebuilt compiler toolchain
-        "//toolchain:compiler_flavor": "unconstrained",
+        "//toolchain:compiler_flavor": "prebuilt",
 
         # Right now, this rule is used to compile parts of LLVM.
         # We can't use the stage2 toolchain for that.
