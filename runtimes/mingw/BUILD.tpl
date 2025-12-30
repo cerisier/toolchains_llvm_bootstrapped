@@ -22,6 +22,7 @@ load(
     "UCRT_BASE_X86_64_ADDITIONAL_SRCS",
     "WS2_32_SRCS",
 )
+load("@toolchains_llvm_bootstrapped//:directory.bzl", "headers_directory")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -143,25 +144,14 @@ expand_template(
     out = "mingw-w64-headers/crt/_mingw.h",
 )
 
-directory(
-    name = "mingw_headers_directory",
-    srcs = glob([
-        "mingw-w64-headers/include/**",
-        "mingw-w64-headers/crt/**",
-    ]),
-    visibility = ["//visibility:public"],
-)
-
-subdirectory(
+headers_directory(
     name = "mingw_w64_headers_include_directory",
-    parent = ":mingw_headers_directory",
     path = "mingw-w64-headers/include",
     visibility = ["//visibility:public"],
 )
 
-subdirectory(
+headers_directory(
     name = "mingw_w64_headers_crt_directory",
-    parent = ":mingw_headers_directory",
     path = "mingw-w64-headers/crt",
     visibility = ["//visibility:public"],
 )
