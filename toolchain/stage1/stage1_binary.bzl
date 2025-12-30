@@ -4,8 +4,15 @@ load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory_bin_action")
 def _bootstrap_transition_impl(settings, attr):
     return {
         "//command_line_option:platforms": str(attr.platform),
-        "//toolchain:bootstrap_setting": False,
-        "//toolchain:stage1_bootstrap_setting": True,
+        # "//toolchain:bootstrap_setting": False,
+        # "//toolchain:stage1_bootstrap_setting": True,
+
+        # we are compiling final programs, so we want all runtimes.
+        "//toolchain:runtime_stage": "complete",
+        # ???
+        # We want to build those binaries using the prebuilt compiler toolchain
+        "//toolchain:compiler_flavor": "bootstrapped",
+
         # Some flags to make LLVM build sanely.
         "@llvm_zlib//:llvm_enable_zlib": False,
     }
@@ -15,8 +22,8 @@ bootstrap_transition = transition(
     inputs = [],
     outputs = [
         "//command_line_option:platforms",
-        "//toolchain:bootstrap_setting",
-        "//toolchain:stage1_bootstrap_setting",
+        "//toolchain:runtime_stage",
+        "//toolchain:compiler_flavor",
         "@llvm_zlib//:llvm_enable_zlib",
     ],
 )

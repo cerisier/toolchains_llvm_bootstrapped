@@ -6,11 +6,13 @@ load("@rules_cc//cc:action_names.bzl", "ACTION_NAMES")
 #TODO(cerisier): use a single shared transition
 bootstrap_transition = transition(
     implementation = lambda settings, attr: {
-        "//toolchain:bootstrap_setting": True,
+        # we are compiling runtimes without any kind of other dependencies
+        # so we do not need any runtime.
+        "//toolchain:runtime_stage": "stage0",
     },
     inputs = [],
     outputs = [
-        "//toolchain:bootstrap_setting",
+        "//toolchain:runtime_stage",
     ],
 )
 

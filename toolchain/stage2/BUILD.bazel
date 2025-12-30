@@ -53,6 +53,7 @@ cc_args_list(
 
         # Common default link flags.
         "//toolchain/args:force_linker_flags",
+        # "//toolchain:resource_dir",
         "//toolchain/stage2:default_link_flags",
     ],
     visibility = ["//toolchain:__subpackages__"],

@@ -1,39 +1,66 @@
-load("@bazel_skylib//rules:common_settings.bzl", "bool_setting")
+load("@bazel_skylib//rules:common_settings.bzl", "bool_setting", "string_setting")
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains:artifacts.bzl", "cc_artifact_name_pattern")
 load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 load(":declare_toolchains.bzl", "declare_toolchains")
 
-bool_setting(
-    name = "bootstrap_setting",
-    build_setting_default = False,
+# TODO(cerisier): Find a better name ?
+# This should be the semantic for "what are we building ?"
+# Runtimes without dependencies, runtimes with dependencies, user programs with runtime dependencies...
+string_setting(
+    name = "runtime_stage",
+    values = [
+        "stage0", # depend on compiler-only: CRTs, builtins, libc, static libraries.
+        "stage1", # depends on above: libunwind
+        "stage2", # depends on above: libc++abi
+        "stage3", # depends on above: libc++
+        "complete", # depends on above: user programs.
+    ],
+    build_setting_default = "complete",
 )
 
+string_setting(
+    name = "compiler_flavor",
+    values = [
+        "bootstrapped",
+        "unconstrained",
+    ],
+    build_setting_default = "unconstrained",
+)
+
+# bool_setting(
+#     name = "bootstrap_setting",
+#     build_setting_default = False,
+# )
+
 config_setting(
-    name = "bootstrapped",
+    name = "runtimes_all",
     flag_values = {
-        ":bootstrap_setting": "0",
+        # ":bootstrap_setting": "0",
+        ":runtime_stage": "complete",
     },
     visibility = ["//visibility:public"],
 )
 
 config_setting(
-    name = "bootstrapping",
+    name = "runtimes_none",
     flag_values = {
-        ":bootstrap_setting": "1",
+        # ":bootstrap_setting": "1",
+        ":runtime_stage": "stage0",
     },
     visibility = ["//visibility:public"],
 )
 
-bool_setting(
-    name = "stage1_bootstrap_setting",
-    build_setting_default = False,
-)
+# bool_setting(
+#     name = "stage1_bootstrap_setting",
+#     build_setting_default = False,
+# )
 
 config_setting(
     name = "stage1_bootstrapped",
     flag_values = {
-        ":stage1_bootstrap_setting": "0",
+        # ":stage1_bootstrap_setting": "0",
+        ":compiler_flavor": "unconstrained",
     },
     visibility = ["//visibility:public"],
 )
@@ -41,7 +68,8 @@ config_setting(
 config_setting(
     name = "stage1_bootstrapping",
     flag_values = {
-        ":stage1_bootstrap_setting": "1",
+        # ":stage1_bootstrap_setting": "1",
+        ":compiler_flavor": "bootstrapped",
     },
     visibility = ["//visibility:public"],
 )
@@ -82,6 +110,7 @@ cc_args_list(
             "//toolchain/args:resource_dir",
         ],
     }),
+    visibility = ["//toolchain:__subpackages__"],
 )
 
 cc_args_list(

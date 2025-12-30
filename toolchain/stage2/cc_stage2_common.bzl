@@ -10,12 +10,14 @@ def configure_builder_for_stage2(builder):
     builder.set("host_cxxopt", [])
     builder.set("host_linkopt", [])
 
+    # We are compiling runtimes without any kind of other dependencies.
     builder.set(
-        Label("//toolchain:bootstrap_setting"),
-        True,
+        Label("//toolchain:runtime_stage"),
+        "stage0",
     )
 
+    # TODO(cerisier): Why constraint here ?
     builder.set(
-        Label("//toolchain:stage1_bootstrap_setting"),
-        True,
+        Label("//toolchain:compiler_flavor"),
+        "bootstrapped",
     )
