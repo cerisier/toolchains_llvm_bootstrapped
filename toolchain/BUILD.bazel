@@ -3,6 +3,8 @@ load("@rules_cc//cc/toolchains:artifacts.bzl", "cc_artifact_name_pattern")
 load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 load(":declare_toolchains.bzl", "declare_toolchains")
 
+package(default_visibility = ["//toolchain:__subpackages__"])
+
 # TODO(cerisier): Find a better name ?
 # This should be the semantic for "what are we building ?"
 # Runtimes without dependencies, runtimes with dependencies, user programs with runtime dependencies...
@@ -28,50 +30,32 @@ string_flag(
     build_setting_default = "prebuilt",
 )
 
-# bool_setting(
-#     name = "bootstrap_setting",
-#     build_setting_default = False,
-# )
-
 config_setting(
     name = "runtimes_all",
     flag_values = {
-        # ":bootstrap_setting": "0",
         ":runtime_stage": "complete",
     },
-    visibility = ["//visibility:public"],
 )
 
 config_setting(
     name = "runtimes_none",
     flag_values = {
-        # ":bootstrap_setting": "1",
         ":runtime_stage": "stage0",
     },
-    visibility = ["//visibility:public"],
 )
-
-# bool_setting(
-#     name = "stage1_bootstrap_setting",
-#     build_setting_default = False,
-# )
 
 config_setting(
     name = "prebuilt_toolchain",
     flag_values = {
-        # ":stage1_bootstrap_setting": "0",
         ":source": "prebuilt",
     },
-    visibility = ["//visibility:public"],
 )
 
 config_setting(
     name = "bootstrapped_toolchain",
     flag_values = {
-        # ":stage1_bootstrap_setting": "1",
         ":source": "bootstrapped",
     },
-    visibility = ["//visibility:public"],
 )
 
 cc_args_list(
@@ -110,7 +94,6 @@ cc_args_list(
             "//toolchain/args:resource_dir",
         ],
     }),
-    visibility = ["//toolchain:__subpackages__"],
 )
 
 cc_args_list(
@@ -141,7 +124,6 @@ cc_args_list(
             "//toolchain/args:empty_sysroot_flags",
         ],
     }),
-    visibility = ["//toolchain:__subpackages__"],
 )
 
 cc_args_list(
@@ -152,7 +134,6 @@ cc_args_list(
             "//toolchain/args:hermetic_compile_flags",
         ],
     }),
-    visibility = ["//toolchain:__subpackages__"],
 )
 
 cc_args_list(
@@ -163,7 +144,6 @@ cc_args_list(
             "//toolchain/args:hermetic_link_flags",
         ],
     }),
-    visibility = ["//toolchain:__subpackages__"],
 )
 
 # TODO(cerisier): extract those into proper semantic args list.
@@ -172,7 +152,6 @@ cc_args_list(
     args = [
         "//toolchain/args/macos:macos_minimum_os_flags",
     ],
-    visibility = ["//toolchain:__subpackages__"],
 )
 
 # TODO(cerisier): extract those into proper semantic args list.
@@ -247,7 +226,6 @@ cc_args_list(
         ":default_startfiles", # Needs to stay out of resource_dir since clang does not always search for crtstuff for all targets.
         ":default_libs",
     ],
-    visibility = ["//toolchain:__subpackages__"],
 )
 
 cc_artifact_name_pattern(
@@ -255,7 +233,6 @@ cc_artifact_name_pattern(
     category = "@rules_cc//cc/toolchains/artifacts:executable",
     prefix = "",
     extension = ".exe",
-    visibility = ["//toolchain:__subpackages__"],
 )
 
 declare_toolchains()
