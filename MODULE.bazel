@@ -156,9 +156,6 @@ llvm.configure(
 )
 use_repo(llvm, "llvm-project")
 
-# llvm_configure = use_repo_rule("@llvm-raw//utils/bazel:configure.bzl", "llvm_configure")
-# llvm_configure(name = "llvm-project")
-
 ## OVERRIDES PORTS FROM DEPENDENCIES
 
 RULES_ZIG_COMMIT = "b9739c615ce62b64ee595ac4bcd9ee7cc06b0422"  # branch=zml

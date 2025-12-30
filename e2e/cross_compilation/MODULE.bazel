@@ -10,5 +10,5 @@ local_path_override(
 )
 
 register_toolchains(
-    "@toolchains_llvm_bootstrapped//toolchain:all",
+    "@toolchains_llvm_bootstrapped//toolchain/...",
 )

@@ -6,7 +6,7 @@ local_path_override(
 )
 
 register_toolchains(
-    "@toolchains_llvm_bootstrapped//toolchain:all",
+    "@toolchains_llvm_bootstrapped//toolchain/...",
 )
 
 bazel_dep(name = "rules_platform", version = "0.1.0")
