@@ -107,11 +107,26 @@ filegroup(
     srcs = ["mingw-w64-crt/%s" % path for path in UUID_SRCS],
 )
 
+filegroup(
+    name = "winpthreads_hdrs",
+    srcs = glob([
+        "mingw-w64-libraries/winpthreads/include/**",
+    ]),
+)
+
+filegroup(
+    name = "winpthreads_srcs",
+    srcs = glob([
+        "mingw-w64-libraries/winpthreads/src/**",
+    ]),
+)
+
 cc_runtime_stage0_library(
     name = "mingw_headers",
     hdrs = glob([
         "mingw-w64-headers/include/**",
         "mingw-w64-headers/crt/**",
+        "mingw-w64-libraries/winpthreads/include/**",
     ]) + [
         "mingw-w64-headers/crt/_mingw.h",
         "mingw-w64-headers/crt/sdks/_mingw_ddk.h",
@@ -120,6 +135,7 @@ cc_runtime_stage0_library(
     # but it seems mingw itself includes as <...>
     features = ["system_include_paths"],
     includes = [
+        "mingw-w64-libraries/winpthreads/include",
         "mingw-w64-headers/include",
         "mingw-w64-headers/crt",
     ],
@@ -154,6 +170,12 @@ headers_directory(
 headers_directory(
     name = "mingw_w64_headers_crt_directory",
     path = "mingw-w64-headers/crt",
+    visibility = ["//visibility:public"],
+)
+
+headers_directory(
+    name = "mingw_w64_winpthreads_include_directory",
+    path = "mingw-w64-libraries/winpthreads/include",
     visibility = ["//visibility:public"],
 )
 

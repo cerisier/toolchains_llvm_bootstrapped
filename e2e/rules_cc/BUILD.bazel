@@ -422,6 +422,17 @@ cc_test(
     tags = ["no-remote"],
 )
 
+cc_test(
+    name = "pthread_test",
+    srcs = ["pthread.cc"],
+    copts = ["-pthread"],
+    linkopts = ["-pthread"],
+    exec_compatible_with = HOST_CONSTRAINTS,
+    # remote-exec tests can't run without forcing the target platform to match
+    # the remote exec platform.
+    tags = ["no-remote"],
+)
+
 #######################################################
 
 cc_library(

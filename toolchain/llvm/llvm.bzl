@@ -211,6 +211,7 @@ def declare_llvm_targets(*, suffix = ""):
             "@mingw//:mingw_generated_headers_crt_directory",
             "@mingw//:mingw_w64_headers_include_directory",
             "@mingw//:mingw_w64_headers_crt_directory",
+            "@mingw//:mingw_w64_winpthreads_include_directory",
         ],
     )
 

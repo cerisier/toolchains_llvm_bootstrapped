@@ -27,6 +27,18 @@ MINGW_CRT_COMMON_COPTS = [
     "-Wno-missing-declarations",
 ]
 
+WINPTHREAD_COPTS = [
+    "-D_WIN32_WINNT=0x0f00",
+    "-D__USE_MINGW_ANSI_STDIO=0",
+    "-DIN_WINPTHREAD",
+    "-std=gnu99",
+] + select({
+    "@platforms//cpu:x86_64": ["-m64"],
+    "//conditions:default": [],
+}) + [
+    "-Wall",
+]
+
 cc_runtime_stage0_library(
     name = "mingw32_crt_lib",
     srcs = select({
@@ -282,6 +294,31 @@ cc_runtime_stage0_static_library(
     deps = [":uuid_lib"],
 )
 
+cc_runtime_stage0_library(
+    name = "winpthreads_lib",
+    srcs = [
+        "@mingw//:winpthreads_srcs",
+    ],
+    hdrs = ["@mingw//:winpthreads_hdrs"],
+    copts = WINPTHREAD_COPTS,
+    implementation_deps = [
+        "@mingw//:mingw_crt_headers",
+        "@mingw//:mingw_headers",
+    ],
+)
+
+cc_runtime_stage0_static_library(
+    name = "winpthread",
+    deps = [":winpthreads_lib"],
+)
+
+copy_file(
+    name = "pthread",
+    src = ":winpthread",
+    out = "libpthread.a",
+    visibility = ["//visibility:public"],
+)
+
 # TODO(zbarsky): Hack for now until we have real libstdc++ support...
 stub_library(
     name = "stdc++",
@@ -293,11 +330,13 @@ copy_to_directory(
         ":mingw32",
         ":mingwex",
         ":moldname",
+        ":pthread",
         ":stdc++",
         ":ucrt",
         ":ucrtbase",
         ":ucrtbased",
         ":uuid",
+        ":winpthread",
     ],
     replace_prefixes = {
         "mingw32_": "",
