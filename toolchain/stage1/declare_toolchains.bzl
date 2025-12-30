@@ -198,7 +198,6 @@ def declare_toolchains():
                     "@platforms//os:{}".format(target_os),
                 ],
                 target_settings = [
-                    # "//toolchain:runtimes_all",
                     "//toolchain:bootstrapped_toolchain",
                 ],
                 toolchain = cc_toolchain_name,

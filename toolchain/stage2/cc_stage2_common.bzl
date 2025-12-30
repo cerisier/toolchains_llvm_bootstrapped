@@ -18,6 +18,6 @@ def configure_builder_for_stage2(builder):
 
     # TODO(cerisier): Why constraint here ?
     builder.set(
-        Label("//toolchain:compiler_flavor"),
+        Label("//toolchain:source"),
         "prebuilt",
     )

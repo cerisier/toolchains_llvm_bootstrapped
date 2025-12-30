@@ -10,7 +10,7 @@ def _reset_sanitizers_impl(settings, attr):
         "//toolchain:runtime_stage": "complete",
 
         # We want to build those binaries using the prebuilt compiler toolchain
-        "//toolchain:compiler_flavor": "prebuilt",
+        "//toolchain:source": "prebuilt",
 
         # Right now, this rule is used to compile parts of LLVM.
         # We can't use the stage2 toolchain for that.
@@ -28,7 +28,7 @@ _reset_sanitizers = transition(
         "//config:ubsan",
         "//config/stage1:ubsan",
         "//toolchain:runtime_stage",
-        "//toolchain:compiler_flavor",
+        "//toolchain:source",
         "@llvm_zlib//:llvm_enable_zlib",
     ],
 )

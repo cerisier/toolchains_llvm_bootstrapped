@@ -11,7 +11,7 @@ def _bootstrap_transition_impl(settings, attr):
         "//toolchain:runtime_stage": "complete",
 
         # We want to build those binaries using the prebuilt compiler toolchain
-        "//toolchain:compiler_flavor": "prebuilt",
+        "//toolchain:source": "prebuilt",
 
         # Some flags to make LLVM build sanely.
         "@llvm_zlib//:llvm_enable_zlib": False,
@@ -23,7 +23,7 @@ bootstrap_transition = transition(
     outputs = [
         "//command_line_option:platforms",
         "//toolchain:runtime_stage",
-        "//toolchain:compiler_flavor",
+        "//toolchain:source",
         "@llvm_zlib//:llvm_enable_zlib",
     ],
 )

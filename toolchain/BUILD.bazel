@@ -1,5 +1,4 @@
-load("@bazel_skylib//rules:common_settings.bzl", "bool_setting", "string_setting", "string_flag")
-load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
+load("@bazel_skylib//rules:common_settings.bzl", "string_setting", "string_flag")
 load("@rules_cc//cc/toolchains:artifacts.bzl", "cc_artifact_name_pattern")
 load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 load(":declare_toolchains.bzl", "declare_toolchains")
@@ -19,8 +18,9 @@ string_setting(
     build_setting_default = "complete",
 )
 
+# Controls whether targets are built with bootstrapped toolchain or prebuilt toolchain.
 string_flag(
-    name = "compiler_flavor",
+    name = "source",
     values = [
         "bootstrapped",
         "prebuilt",
@@ -60,7 +60,7 @@ config_setting(
     name = "prebuilt_toolchain",
     flag_values = {
         # ":stage1_bootstrap_setting": "0",
-        ":compiler_flavor": "prebuilt",
+        ":source": "prebuilt",
     },
     visibility = ["//visibility:public"],
 )
@@ -69,7 +69,7 @@ config_setting(
     name = "bootstrapped_toolchain",
     flag_values = {
         # ":stage1_bootstrap_setting": "1",
-        ":compiler_flavor": "bootstrapped",
+        ":source": "bootstrapped",
     },
     visibility = ["//visibility:public"],
 )
