@@ -90,6 +90,9 @@ LLVM_RELEASE_ASSETS_SHA256 = {
     for (name, sha256) in LLVM_RELEASE_ASSETS_SHA256.items()
 ]
 
+cosmo = use_extension("//runtimes/mingw/extension:mingw.bzl", "mingw")
+use_repo(cosmo, "cosmo_libc")
+
 musl = use_extension("//runtimes/musl/extension:musl.bzl", "musl")
 use_repo(musl, "musl_libc")
 
