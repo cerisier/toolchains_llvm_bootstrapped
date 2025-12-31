@@ -31,7 +31,7 @@ common:prebuilt  --copt=-fno-exceptions
 common:prebuilt  --copt=-fno-rtti
 common:prebuilt  --copt=-fomit-frame-pointer
 common:prebuilt  --dynamic_mode=off
-common:prebuilt  --extra_toolchains=//toolchain/...
+common:prebuilt  --extra_toolchains=//toolchain:all
 
 common:rust    --@rules_cc//cc/toolchains/args/archiver_flags:use_libtool_on_macos=False
 common:rust    --@rules_rust//rust/settings:experimental_use_sh_toolchain_for_bootstrap_process_wrapper

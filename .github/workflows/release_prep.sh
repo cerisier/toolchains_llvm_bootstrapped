@@ -35,7 +35,7 @@ TODO
 bazel_dep(name = "toolchains_llvm_bootstrapped", version = "$TAG")
 
 register_toolchains(
-    "@toolchains_llvm_bootstrapped//toolchain/...",
+    "@toolchains_llvm_bootstrapped//toolchain:all",
 )
 \`\`\`
 EOF

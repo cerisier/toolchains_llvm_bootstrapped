@@ -29,7 +29,7 @@ Add this to your `MODULE.bazel`:
 bazel_dep(name = "toolchains_llvm_bootstrapped", version = "0.3.1")
 
 register_toolchains(
-    "@toolchains_llvm_bootstrapped//toolchain/...",
+    "@toolchains_llvm_bootstrapped//toolchain:all",
 )
 ```
 

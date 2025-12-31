@@ -1,3 +1,1 @@
-load("//toolchain/bootstrap:declare_toolchains.bzl", "declare_toolchains")
-
-declare_toolchains()
+# bootstrap toolchains are declared top level

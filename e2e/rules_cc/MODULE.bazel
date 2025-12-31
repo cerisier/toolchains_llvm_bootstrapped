@@ -10,7 +10,7 @@ local_path_override(
 )
 
 register_toolchains(
-    "@toolchains_llvm_bootstrapped//toolchain/...",
+    "@toolchains_llvm_bootstrapped//toolchain:all",
 )
 
 # Bump transitive zlib version to avoid genrules.

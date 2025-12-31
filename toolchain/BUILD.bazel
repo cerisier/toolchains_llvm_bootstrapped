@@ -1,6 +1,7 @@
 load("@bazel_skylib//rules:common_settings.bzl", "string_setting", "string_flag")
 load("@rules_cc//cc/toolchains:artifacts.bzl", "cc_artifact_name_pattern")
 load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
+load("//toolchain/bootstrap:declare_toolchains.bzl", declare_bootstrap_toolchains = "declare_toolchains")
 load(":declare_toolchains.bzl", "declare_toolchains")
 
 package(default_visibility = ["//toolchain:__subpackages__"])
@@ -236,3 +237,4 @@ cc_artifact_name_pattern(
 )
 
 declare_toolchains()
+declare_bootstrap_toolchains()
