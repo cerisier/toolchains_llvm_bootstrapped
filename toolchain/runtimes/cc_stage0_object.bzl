@@ -51,7 +51,7 @@ def _cc_stage0_object_impl(ctx):
         tools = cc_toolchain.all_files,
         executable = cc_tool,
         execution_requirements = {"supports-path-mapping": "1"},
-        mnemonic = "Ccstage0Compile",
+        mnemonic = "CcStage0Compile",
     )
 
     return [DefaultInfo(files = depset([ctx.outputs.out]))]
