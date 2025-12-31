@@ -1,9 +1,9 @@
 load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
 load("@toolchains_llvm_bootstrapped//third_party/libc/glibc:helpers.bzl", "glibc_includes")
-load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_library.bzl", "cc_stage2_library")
-load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_static_library.bzl", "cc_stage2_static_library")
-load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_object.bzl", "cc_stage2_object")
+load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_stage0_library.bzl", "cc_stage0_library")
+load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_stage0_static_library.bzl", "cc_stage0_static_library")
+load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_stage0_object.bzl", "cc_stage0_object")
 load("@toolchains_llvm_bootstrapped//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
 
 alias(
@@ -49,11 +49,11 @@ HDRS = glob([
     "bits/select.h",
 ])
 
-cc_stage2_library(
+cc_stage0_library(
     name = "glibc_init",
     copts = [
         # Normally, we would pass -nostdinc, but since we pass -nostdlibinc
-        # from the stage2 toolchain args regarless, having them both cause a
+        # from the stage0 toolchain args regarless, having them both cause a
         # warning about -nostdlibinc being ignored, so we duplicate the
         # -nostdlibinc and add -nobuiltininc to avoid the warning.
         #
@@ -65,14 +65,14 @@ cc_stage2_library(
     visibility = ["//visibility:public"],
 )
 
-cc_stage2_library(
+cc_stage0_library(
     name = "glibc_abi_note",
     srcs = [
         "@toolchains_llvm_bootstrapped//third_party/libc/glibc/csu:abi-note-2.31.S",
     ],
     copts = [
         # Normally, we would pass -nostdinc, but since we pass -nostdlibinc
-        # from the stage2 toolchain args regarless, having them both cause a
+        # from the stage0 toolchain args regarless, having them both cause a
         # warning about -nostdlibinc being ignored, so we duplicate the
         # -nostdlibinc and add -nobuiltininc to avoid the warning.
         #
@@ -97,7 +97,7 @@ cc_stage2_library(
     visibility = ["//visibility:public"],
 )
 
-cc_stage2_library(
+cc_stage0_library(
     name = "glibc_start",
     srcs = select({
         "@platforms//cpu:x86_64": ["sysdeps/x86_64/start.S"],
@@ -105,7 +105,7 @@ cc_stage2_library(
     }, no_match_error = "Unsupported platform"),
     copts = [
         # Normally, we would pass -nostdinc, but since we pass -nostdlibinc
-        # from the stage2 toolchain args regarless, having them both cause a
+        # from the stage0 toolchain args regarless, having them both cause a
         # warning about -nostdlibinc being ignored, so we duplicate the
         # -nostdlibinc and add -nobuiltininc to avoid the warning.
         #
@@ -144,13 +144,13 @@ cc_stage2_library(
     visibility = ["//visibility:public"],
 )
 
-cc_stage2_library(
+cc_stage0_library(
     name = "glibc_Scrt1",
     deps = [":glibc_start", ":glibc_init", ":glibc_abi_note"],
     visibility = ["//visibility:public"],
 )
 
-cc_stage2_object(
+cc_stage0_object(
     name = "glibc_Scrt1.object",
     srcs = [":glibc_start", ":glibc_init", ":glibc_abi_note"],
     copts = [
@@ -190,7 +190,7 @@ copy_file(
 #     }
 # }
 
-cc_stage2_library(
+cc_stage0_library(
     name = "glibc_c_nonshared",
     copts = [
         "-std=gnu11",
@@ -294,7 +294,7 @@ cc_stage2_library(
     visibility = ["//visibility:public"],
 )
 
-cc_stage2_static_library(
+cc_stage0_static_library(
     name = "c_nonshared",
     deps = [
         ":glibc_c_nonshared",

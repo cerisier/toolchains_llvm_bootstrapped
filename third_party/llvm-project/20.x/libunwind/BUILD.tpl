@@ -1,10 +1,10 @@
 
 
-load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_library.bzl", "cc_stage2_library")
-load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_static_library.bzl", "cc_stage2_static_library")
-load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_shared_library.bzl", "cc_stage2_shared_library")
+load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_stage0_library.bzl", "cc_stage0_library")
+load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_stage0_static_library.bzl", "cc_stage0_static_library")
+load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_stage0_shared_library.bzl", "cc_stage0_shared_library")
 
-cc_stage2_library(
+cc_stage0_library(
     name = "libunwind",
     copts = [
         "-Wa,--noexecstack",
@@ -95,7 +95,7 @@ cc_stage2_library(
     visibility = ["//visibility:public"],
 )
 
-cc_stage2_static_library(
+cc_stage0_static_library(
     name = "libunwind.static",
     deps = [
         ":libunwind",
@@ -103,7 +103,7 @@ cc_stage2_static_library(
     visibility = ["//visibility:public"],
 )
 
-cc_stage2_shared_library(
+cc_stage0_shared_library(
     name = "libunwind.shared",
     deps = [
         ":libunwind",

@@ -184,7 +184,7 @@ cc_args(
 alias(
     name = "ubsan_enabled",
     actual = select({
-        "//toolchain:bootstrapped_toolchain": "//config/stage1:ubsan_enabled",
+        "//toolchain:bootstrapped_toolchain": "//config/bootstrap:ubsan_enabled",
         "//conditions:default": "//config:ubsan_enabled",
     }),
     visibility = ["//toolchain:__subpackages__"],

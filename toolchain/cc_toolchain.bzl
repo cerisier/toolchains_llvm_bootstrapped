@@ -59,7 +59,7 @@ def cc_toolchain(name, tool_map):
     _cc_toolchain(
         name = name,
         args = select({
-            "//toolchain:runtimes_none": ["//toolchain/stage2:toolchain_args"],
+            "//toolchain:runtimes_none": ["//toolchain/runtimes:toolchain_args"],
             "//conditions:default": ["//toolchain:toolchain_args"],
         }),
         artifact_name_patterns = select({

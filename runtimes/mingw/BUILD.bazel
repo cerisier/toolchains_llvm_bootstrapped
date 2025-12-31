@@ -3,8 +3,8 @@ load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
 load("@bazel_lib//lib:run_binary.bzl", "run_binary")
 load("@bazel_skylib//rules:common_settings.bzl", "bool_setting")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
-load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_library.bzl", "cc_stage2_library")
-load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_static_library.bzl", "cc_stage2_static_library")
+load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_stage0_library.bzl", "cc_stage0_library")
+load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_stage0_static_library.bzl", "cc_stage0_static_library")
 load("//runtimes:defs.bzl", "stub_library")
 load(":crt_object.bzl", "crt_object")
 
@@ -24,7 +24,7 @@ MINGW_CRT_COMMON_COPTS = [
     "-Wno-missing-declarations",
 ]
 
-cc_stage2_library(
+cc_stage0_library(
     name = "mingw32_crt_lib",
     srcs = select({
         "@platforms//cpu:x86_64": ["@mingw//:mingw32_crt_x86_64_srcs"],
@@ -41,13 +41,13 @@ cc_stage2_library(
     copts = MINGW_CRT_COMMON_COPTS,
 )
 
-cc_stage2_static_library(
+cc_stage0_static_library(
     name = "mingw32",
     deps = [":mingw32_crt_lib"],
     visibility = ["//visibility:public"],
 )
 
-cc_stage2_library(
+cc_stage0_library(
     name = "mingwex_crt_lib",
     srcs = select({
         "@platforms//cpu:x86_64": ["@mingw//:mingwex_crt_x86_64_srcs"],
@@ -66,12 +66,12 @@ cc_stage2_library(
     ],
 )
 
-cc_stage2_static_library(
+cc_stage0_static_library(
     name = "mingwex",
     deps = [":mingwex_crt_lib"],
 )
 
-cc_stage2_library(
+cc_stage0_library(
     name = "ucrtbase_crt_lib",
     srcs = select({
         "@platforms//cpu:x86_64": ["@mingw//:ucrt_base_crt_x86_64_srcs"],
@@ -84,7 +84,7 @@ cc_stage2_library(
     copts = MINGW_CRT_COMMON_COPTS,
 )
 
-cc_stage2_static_library(
+cc_stage0_static_library(
     name = "ucrt_extra",
     deps = [":ucrtbase_crt_lib"],
 )
@@ -173,13 +173,13 @@ run_binary(
     visibility = ["//visibility:public"],
 )
 
-cc_stage2_library(
+cc_stage0_library(
     name = "moldname_crt_lib",
     srcs = ["@mingw//:moldname_crt_srcs"],
     copts = MINGW_CRT_COMMON_COPTS,
 )
 
-cc_stage2_static_library(
+cc_stage0_static_library(
     name = "moldname",
     deps = [":moldname_crt_lib"],
 )
@@ -198,7 +198,7 @@ run_binary(
     ],
 )
 
-cc_stage2_library(
+cc_stage0_library(
     name = "ws2_32_lib",
     srcs = ["@mingw//:ws2_32_srcs"],
     implementation_deps = [
@@ -208,7 +208,7 @@ cc_stage2_library(
     copts = MINGW_CRT_COMMON_COPTS,
 )
 
-cc_stage2_static_library(
+cc_stage0_static_library(
     name = "ws2_32",
     deps = [":ws2_32_lib"],
 )
@@ -229,7 +229,7 @@ run_binary(
     ],
 )
 
-cc_stage2_library(
+cc_stage0_library(
     name = "uuid_lib",
     srcs = ["@mingw//:mingw_uuid_srcs"],
     implementation_deps = [
@@ -238,7 +238,7 @@ cc_stage2_library(
     copts = MINGW_CRT_COMMON_COPTS,
 )
 
-cc_stage2_static_library(
+cc_stage0_static_library(
     name = "uuid",
     deps = [":uuid_lib"],
 )

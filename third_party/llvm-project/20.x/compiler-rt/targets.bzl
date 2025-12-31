@@ -23,7 +23,7 @@ def atomic_helper_cc_library(name, pat, size, model):
         srcs = [unique_filename],
         copts = [
             # Normally, we would pass -nostdinc, but since we pass -nostdlibinc
-            # from the stage2 toolchain args regarless, having them both cause a
+            # from the runtimes toolchain args regarless, having them both cause a
             # warning about -nostdlibinc being ignored, so we duplicate the
             # -nostdlibinc and add -nobuiltininc to avoid the warning.
             #

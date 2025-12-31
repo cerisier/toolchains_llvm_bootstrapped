@@ -1,10 +1,10 @@
 load("@bazel_lib//lib:copy_file.bzl", "copy_file")
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
-load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_library.bzl", "cc_stage2_library")
-load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_static_library.bzl", "cc_stage2_static_library")
+load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_stage0_library.bzl", "cc_stage0_library")
+load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_stage0_static_library.bzl", "cc_stage0_static_library")
 load("//runtimes:defs.bzl", "stub_library")
 load(":libc_musl_srcs_filegroup.bzl", "libc_musl_srcs_filegroup")
-load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_object.bzl", "cc_stage2_object")
+load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_stage0_object.bzl", "cc_stage0_object")
 load("//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
 
 libc_musl_srcs_filegroup(
@@ -32,7 +32,7 @@ CFLAGS_AUTO = [
     "-fno-align-functions",
     # "-pipe",
 ] + select({
-    "@toolchains_llvm_bootstrapped//config:stage2_optimization_mode_optimized": [
+    "@toolchains_llvm_bootstrapped//config:runtimes_optimization_mode_optimized": [
         "-fomit-frame-pointer",
     ],
     "//conditions:default": [],
@@ -54,7 +54,7 @@ CFLAGS_NOSSP = [
     "-fno-stack-protector",
 ]
 
-cc_stage2_library(
+cc_stage0_library(
     name = "musl_libc",
     copts = CFLAGS_ALL + ["-nostdlib"],
     srcs = [
@@ -71,13 +71,13 @@ cc_stage2_library(
     visibility = ["//visibility:public"],
 )
 
-cc_stage2_static_library(
+cc_stage0_static_library(
     name = "musl_libc.static",
     deps = [":musl_libc"],
     visibility = ["//visibility:public"],
 )
 
-cc_stage2_library(
+cc_stage0_library(
     name = "musl_crt1",
     srcs = ["@musl_libc//:crt/crt1.c"],
     copts = CFLAGS_ALL + ["-DCRT"] + CFLAGS_NOSSP,
@@ -88,7 +88,7 @@ cc_stage2_library(
     visibility = ["//visibility:public"],
 )
 
-cc_stage2_library(
+cc_stage0_library(
     name = "musl_rcrt1",
     srcs = ["@musl_libc//:crt/rcrt1.c"],
     copts = CFLAGS_ALL + ["-DCRT"] + CFLAGS_NOSSP + ["-fPIC"],
@@ -99,7 +99,7 @@ cc_stage2_library(
     visibility = ["//visibility:public"],
 )
 
-cc_stage2_library(
+cc_stage0_library(
     name = "musl_Scrt1",
     srcs = ["@musl_libc//:crt/Scrt1.c"],
     copts = CFLAGS_ALL + ["-DCRT"] + CFLAGS_NOSSP + ["-fPIC"],
@@ -113,7 +113,7 @@ cc_stage2_library(
     visibility = ["//visibility:public"],
 )
 
-cc_stage2_object(
+cc_stage0_object(
     name = "musl_Scrt1.object",
     srcs = [":musl_Scrt1"],
     copts = [
@@ -123,7 +123,7 @@ cc_stage2_object(
     visibility = ["//visibility:public"],
 )
 
-cc_stage2_object(
+cc_stage0_object(
     name = "musl_rcrt1.object",
     srcs = [":musl_rcrt1"],
     copts = [
@@ -133,7 +133,7 @@ cc_stage2_object(
     visibility = ["//visibility:public"],
 )
 
-cc_stage2_object(
+cc_stage0_object(
     name = "musl_crt1.object",
     srcs = [":musl_crt1"],
     copts = [

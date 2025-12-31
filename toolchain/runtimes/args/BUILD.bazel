@@ -1,7 +1,7 @@
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 
-package(default_visibility = ["//toolchain/stage2:__subpackages__"])
+package(default_visibility = ["//toolchain/runtimes:__subpackages__"])
 
 # compile_actions minus assemble_actions (only preprocess_assemble)
 OPT_FLAGS_COMPILE_ACTIONS = [
@@ -36,7 +36,7 @@ cc_args(
 cc_args_list(
     name = "optimization_flags",
     args = select({
-        "//config:stage2_optimization_mode_debug": [
+        "//config:runtimes_optimization_mode_debug": [
             ":dbg_compile_flags",
         ],
         "//conditions:default": [

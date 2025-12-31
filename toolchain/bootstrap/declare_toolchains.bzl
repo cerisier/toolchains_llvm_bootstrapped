@@ -1,6 +1,6 @@
 load("//platforms:common.bzl", "SUPPORTED_TARGETS")
 load("//toolchain:cc_toolchain.bzl", "cc_toolchain")
-load(":stage1_binary.bzl", "stage1_binary", "stage1_directory")
+load(":bootstrap_binary.bzl", "bootstrap_binary", "bootstrap_directory")
 load("@llvm-project//:vars.bzl", "LLVM_VERSION_MAJOR")
 load("@rules_cc//cc/toolchains:tool.bzl", "cc_tool")
 load("@rules_cc//cc/toolchains:tool_map.bzl", "cc_tool_map")
@@ -39,13 +39,13 @@ def declare_tool_map(exec_os, exec_cpu):
         },
     )
 
-    stage1_binary(
+    bootstrap_binary(
         name = prefix + "/bin/clang",
         platform = prefix + "_platform",
         actual = "@llvm-project//clang:clang.stripped",
     )
 
-    stage1_directory(
+    bootstrap_directory(
         name = prefix + "/clang_builtin_headers_include_directory",
         srcs = "@llvm-project//clang:builtin_headers_files",
         # TODO(zbarsky): Probably shouldn't force platform here.
@@ -63,7 +63,7 @@ def declare_tool_map(exec_os, exec_cpu):
         capabilities = ["@rules_cc//cc/toolchains/capabilities:supports_pic"],
     )
 
-    stage1_binary(
+    bootstrap_binary(
         name = prefix + "/bin/clang++",
         platform = prefix + "_platform",
         actual = "@llvm-project//clang:clang.stripped",
@@ -81,25 +81,25 @@ def declare_tool_map(exec_os, exec_cpu):
         capabilities = ["@rules_cc//cc/toolchains/capabilities:supports_pic"],
     )
 
-    stage1_binary(
+    bootstrap_binary(
         name = prefix + "/bin/ld.lld",
         platform = prefix + "_platform",
         actual = "@llvm-project//lld:lld.stripped",
     )
 
-    stage1_binary(
+    bootstrap_binary(
         name = prefix + "/bin/ld64.lld",
         platform = prefix + "_platform",
         actual = "@llvm-project//lld:lld.stripped",
     )
 
-    stage1_binary(
+    bootstrap_binary(
         name = prefix + "/bin/lld",
         platform = prefix + "_platform",
         actual = "@llvm-project//lld:lld.stripped",
     )
 
-    stage1_binary(
+    bootstrap_binary(
         name = prefix + "/bin/wasm-ld",
         platform = prefix + "_platform",
         actual = "@llvm-project//lld:lld.stripped",
@@ -116,7 +116,7 @@ def declare_tool_map(exec_os, exec_cpu):
         ],
     )
 
-    stage1_binary(
+    bootstrap_binary(
         name = prefix + "/bin/llvm-ar",
         platform = prefix + "_platform",
         actual = "@llvm-project//llvm:llvm-ar.stripped",
@@ -127,7 +127,7 @@ def declare_tool_map(exec_os, exec_cpu):
         src = prefix + "/bin/llvm-ar",
     )
 
-    stage1_binary(
+    bootstrap_binary(
         name = prefix + "/bin/llvm-libtool-darwin",
         platform = prefix + "_platform",
         actual = "@llvm-project//llvm:llvm-libtool-darwin.stripped",
@@ -138,13 +138,13 @@ def declare_tool_map(exec_os, exec_cpu):
         src = prefix + "/bin/llvm-libtool-darwin",
     )
 
-    stage1_binary(
+    bootstrap_binary(
         name = prefix + "/bin/llvm-objcopy",
         platform = prefix + "_platform",
         actual = "@llvm-project//llvm:llvm-objcopy.stripped",
     )
 
-    stage1_binary(
+    bootstrap_binary(
         name = prefix + "/bin/llvm-strip",
         platform = prefix + "_platform",
         actual = "@llvm-project//llvm:llvm-objcopy.stripped",

@@ -4,8 +4,6 @@ load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory_bin_action")
 def _bootstrap_transition_impl(settings, attr):
     return {
         "//command_line_option:platforms": str(attr.platform),
-        # "//toolchain:bootstrap_setting": False,
-        # "//toolchain:stage1_bootstrap_setting": True,
 
         # we are compiling final programs, so we want all runtimes.
         "//toolchain:runtime_stage": "complete",
@@ -28,7 +26,7 @@ bootstrap_transition = transition(
     ],
 )
 
-def _stage1_binary_impl(ctx):
+def _bootstrap_binary_impl(ctx):
     actual = ctx.attr.actual[0][DefaultInfo]
     exe = actual.files_to_run.executable
 
@@ -50,8 +48,8 @@ def _stage1_binary_impl(ctx):
         )
     ]
 
-stage1_binary = rule(
-    implementation = _stage1_binary_impl,
+bootstrap_binary = rule(
+    implementation = _bootstrap_binary_impl,
     executable = True,
     attrs = {
         "actual": attr.label(
@@ -70,7 +68,7 @@ stage1_binary = rule(
     toolchains = COPY_FILE_TOOLCHAINS,
 )
 
-def _stage1_directory_impl(ctx):
+def _bootstrap_directory_impl(ctx):
     copy_to_directory_bin = ctx.toolchains["@bazel_lib//lib:copy_to_directory_toolchain_type"].copy_to_directory_info.bin
 
     dst = ctx.actions.declare_directory(ctx.attr.destination)
@@ -87,8 +85,8 @@ def _stage1_directory_impl(ctx):
 
     return DefaultInfo(files = depset([dst]))
 
-stage1_directory = rule(
-    implementation = _stage1_directory_impl,
+bootstrap_directory = rule(
+    implementation = _bootstrap_directory_impl,
     attrs = {
         "srcs": attr.label(
             cfg = bootstrap_transition,

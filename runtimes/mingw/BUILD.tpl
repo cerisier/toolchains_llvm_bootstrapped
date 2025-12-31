@@ -4,7 +4,7 @@ load("@bazel_skylib//rules:expand_template.bzl", "expand_template")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@bazel_lib//lib:run_binary.bzl", "run_binary")
 load("@toolchains_llvm_bootstrapped//runtimes/mingw:import_libs.bzl", "mingw_import_libraries")
-load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_library.bzl", "cc_stage2_library")
+load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_stage0_library.bzl", "cc_stage0_library")
 load(
     "@toolchains_llvm_bootstrapped//runtimes/mingw:crt_sources.bzl",
     "MINGW32_HDRS",
@@ -105,7 +105,7 @@ filegroup(
     srcs = ["mingw-w64-crt/%s" % path for path in UUID_SRCS],
 )
 
-cc_stage2_library(
+cc_stage0_library(
     name = "mingw_headers",
     hdrs = glob([
         "mingw-w64-headers/include/**",
@@ -123,7 +123,7 @@ cc_stage2_library(
     ],
 )
 
-cc_stage2_library(
+cc_stage0_library(
     name = "mingw_crt_headers",
     hdrs = glob([
         "mingw-w64-crt/include/**",

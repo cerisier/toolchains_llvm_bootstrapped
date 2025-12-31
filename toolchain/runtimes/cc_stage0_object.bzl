@@ -15,7 +15,7 @@ bootstrap_transition = transition(
     ],
 )
 
-def _cc_stage2_object_impl(ctx):
+def _cc_stage0_object_impl(ctx):
     cc_toolchain = find_cc_toolchain(ctx)
 
     feature_configuration = cc_common.configure_features(
@@ -34,7 +34,7 @@ def _cc_stage2_object_impl(ctx):
     arguments.add("-r")
     for src in ctx.files.srcs:
         #TODO(cerisier): extract pic objects CC info instead of this.
-        # PICness from stage2 objects is defined in copts, not by the pic feature.
+        # PICness from stage0 objects is defined in copts, not by the pic feature.
         if src.path.endswith(".pic.a"):
             continue
         if src.path.endswith(".a"):
@@ -51,14 +51,14 @@ def _cc_stage2_object_impl(ctx):
         tools = cc_toolchain.all_files,
         executable = cc_tool,
         execution_requirements = {"supports-path-mapping": "1"},
-        mnemonic = "CcStage2Compile",
+        mnemonic = "Ccstage0Compile",
     )
 
     return [DefaultInfo(files = depset([ctx.outputs.out]))]
 
-cc_stage2_object = rule(
+cc_stage0_object = rule(
     doc = "A rule that links .o and .a files into a single .o file.",
-    implementation = _cc_stage2_object_impl,
+    implementation = _cc_stage0_object_impl,
     attrs = {
         "srcs": attr.label_list(
             doc = "List of source files (.o or .a) to be linked into a single object file.",

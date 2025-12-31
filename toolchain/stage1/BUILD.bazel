@@ -1,3 +1,0 @@
-load("//toolchain/stage1:declare_toolchains.bzl", "declare_toolchains")
-
-declare_toolchains()

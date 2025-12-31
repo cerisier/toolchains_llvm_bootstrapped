@@ -13,7 +13,7 @@ def config_settings():
     # Setting this to "debug" will compile these libraries with debug symbols,
     # frame pointers where applicable, and no optimizations.
     string_flag(
-        name = "stage2_optimization_mode",
+        name = "runtimes_optimization_mode",
         values = OPTIMIZATION_MODES,
         build_setting_default = "optimized",
         visibility = ["//visibility:public"],
@@ -21,9 +21,9 @@ def config_settings():
 
     for optimization_mode in OPTIMIZATION_MODES:
         native.config_setting(
-            name = "stage2_optimization_mode_{}".format(optimization_mode),
+            name = "runtimes_optimization_mode_{}".format(optimization_mode),
             flag_values = {
-                ":stage2_optimization_mode": optimization_mode,
+                ":runtimes_optimization_mode": optimization_mode,
             },
             visibility = ["//visibility:public"],
         )

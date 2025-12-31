@@ -2,9 +2,9 @@ load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
-load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_library.bzl", "cc_stage2_library")
-load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_static_library.bzl", "cc_stage2_static_library")
-load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_shared_library.bzl", "cc_stage2_shared_library")
+load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_stage0_library.bzl", "cc_stage0_library")
+load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_stage0_static_library.bzl", "cc_stage0_static_library")
+load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_stage0_shared_library.bzl", "cc_stage0_shared_library")
 
 # Should replicate libcxx/include/CMakeLists.txt
 filegroup(
@@ -1402,7 +1402,7 @@ cc_library(
     }),
 )
 
-cc_stage2_static_library(
+cc_stage0_static_library(
     name = "libcxx.static",
     deps = [
         ":libcxx",
@@ -1410,7 +1410,7 @@ cc_stage2_static_library(
     visibility = ["//visibility:public"],
 )
 
-cc_stage2_shared_library(
+cc_stage0_shared_library(
     name = "libcxx.shared",
     deps = [
         ":libcxx",

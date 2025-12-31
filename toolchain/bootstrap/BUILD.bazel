@@ -1,0 +1,3 @@
+load("//toolchain/bootstrap:declare_toolchains.bzl", "declare_toolchains")
+
+declare_toolchains()

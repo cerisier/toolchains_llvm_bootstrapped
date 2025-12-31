@@ -1,6 +1,6 @@
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
-load("//toolchain/stage2:cc_stage2_object.bzl", "cc_stage2_object")
+load("//toolchain/runtimes:cc_stage0_object.bzl", "cc_stage0_object")
 load("//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
 load(":copy_to_resource_directory.bzl", "copy_to_resource_directory")
 
@@ -50,7 +50,7 @@ cc_library(
     srcs = ["empty.c"],
 )
 
-cc_stage2_object(
+cc_stage0_object(
     name = "crti_object",
     srcs = [
         ":empty",
@@ -62,7 +62,7 @@ cc_stage2_object(
     visibility = ["//visibility:public"],
 )
 
-cc_stage2_object(
+cc_stage0_object(
     name = "crtn_object",
     srcs = [
         ":empty",
