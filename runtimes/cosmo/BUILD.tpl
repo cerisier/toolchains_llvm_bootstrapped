@@ -395,61 +395,127 @@ cc_stage2_library(
     visibility = ["//visibility:private"],
 )
 
-cc_stage2_library(
+# https://github.com/jart/cosmopolitan/blob/4.0.2/libc/intrin/BUILD.mk
+cosmo_cc_library(
     name = "libc_intrin",
-    srcs = select({
-        "@platforms//cpu:x86_64": glob(
-            ["libc/intrin/**/*.%s" % ext for ext in ["c", "cc", "cpp", "s", "S"]],
-            exclude = COSMO_COMMON_EXCLUDES + ["libc/intrin/aarch64/**"],
-            allow_empty = True,
-        ),
-        "@platforms//cpu:aarch64": glob(
-            ["libc/intrin/**/*.%s" % ext for ext in ["c", "cc", "cpp"]],
-            exclude = COSMO_COMMON_EXCLUDES + [
-                "libc/intrin/pthread_pause_np.c",
-            ],
-            allow_empty = True,
-        ) + [
-            "libc/intrin/getcontext.S",
-            "libc/intrin/swapcontext.S",
-            "libc/intrin/tailcontext.S",
-            "libc/intrin/fenv.S",
-            "libc/intrin/gcov.S",
-            "libc/intrin/cosmo_futex_thunk.S",
-            "libc/intrin/kclocknames.S",
-            "libc/intrin/kdos2errno.S",
-            "libc/intrin/kerrnodocs.S",
-            "libc/intrin/kipoptnames.S",
-            "libc/intrin/kipv6optnames.S",
-            "libc/intrin/kerrnonames.S",
-            "libc/intrin/kfcntlcmds.S",
-            "libc/intrin/kopenflags.S",
-            "libc/intrin/krlimitnames.S",
-            "libc/intrin/ksignalnames.S",
-            "libc/intrin/ksockoptnames.S",
-            "libc/intrin/ktcpoptnames.S",
-            "libc/intrin/stackcall.S",
-            "libc/intrin/kmonthname.S",
-            "libc/intrin/kmonthnameshort.S",
-            "libc/intrin/kweekdayname.S",
-            "libc/intrin/kweekdaynameshort.S",
-            "libc/intrin/dsohandle.S",
-        ] + glob(["libc/intrin/aarch64/*.S"], allow_empty = True),
-        "//conditions:default": [],
-    }),
-    textual_hdrs = [":libc_hdrs"],
-    copts = COSMO_COMMON_COPTS + [
+    dir = "libc/intrin",
+    copts = [
+        # -x-no-pg
         "-ffreestanding",
         "-fno-sanitize=all",
         "-fno-stack-protector",
         "-Wframe-larger-than=4096",
+        #"-Walloca-larger-than=4096",
     ],
+    aarch64_safe_assembly_srcs = [
+        "libc/intrin/getcontext.S",
+        "libc/intrin/swapcontext.S",
+        "libc/intrin/tailcontext.S",
+        "libc/intrin/fenv.S",
+        "libc/intrin/gcov.S",
+        "libc/intrin/cosmo_futex_thunk.S",
+        #"libc/intrin/typeinfo.S",
+        "libc/intrin/kclocknames.S",
+        "libc/intrin/kdos2errno.S",
+        "libc/intrin/kerrnodocs.S",
+        "libc/intrin/kipoptnames.S",
+        "libc/intrin/kipv6optnames.S",
+        "libc/intrin/kerrnonames.S",
+        "libc/intrin/kfcntlcmds.S",
+        "libc/intrin/kopenflags.S",
+        "libc/intrin/krlimitnames.S",
+        "libc/intrin/ksignalnames.S",
+        "libc/intrin/ksockoptnames.S",
+        "libc/intrin/ktcpoptnames.S",
+        "libc/intrin/stackcall.S",
+        "libc/intrin/kmonthname.S",
+        "libc/intrin/kmonthnameshort.S",
+        "libc/intrin/kweekdayname.S",
+        "libc/intrin/kweekdaynameshort.S",
+        "libc/intrin/sched_yield.S",
+        "libc/intrin/dsohandle.S",
+        # "libc/intrin/getpagesize_freebsd.S",
+    ] + glob(["libc/intrin/aarch64/*.S"]),
+    per_file_copts = {
+        "libc/intrin/mman.greg.c": ["-Os"],
+        # TODO(zbarsky): kprint.c in the makefile?
+        "libc/intrin/kprintf.greg.c": [
+            "-Wframe-larger-than=128",
+            # "-Walloca-larger-than=128",
+        ],
+        "libc/intrin/cursor.c": ["-ffunction-sections"],
+        "libc/intrin/mmap.c": [
+            "-ffunction-sections",
+            "-mgeneral-regs-only",
+        ],
+        "libc/intrin/tree.c": ["-ffunction-sections"],
+        "libc/intrin/memmove.c": [
+            "-fno-toplevel-reorder",
+            "-O2",
+            "-finline",
+            "-foptimize-sibling-calls",
+            "-fpie",
+        ],
+        "libc/intrin/bzero.c": [
+            "-O2",
+            "-finline",
+            "-foptimize-sibling-calls",
+            "-fpie",
+        ],
+        "libc/intrin/strlen.c": [
+            "-O2",
+            "-finline",
+            "-foptimize-sibling-calls",
+        ],
+        "libc/intrin/strchr.c": [
+            "-O2",
+            "-finline",
+            "-foptimize-sibling-calls",
+        ],
+        "libc/intrin/memchr.c": [
+            "-O2",
+            "-finline",
+            "-foptimize-sibling-calls",
+        ],
+        "libc/intrin/memrchr.c": [
+            "-O2",
+            "-finline",
+            "-foptimize-sibling-calls",
+        ],
+        "libc/intrin/memcmp.c": [
+            "-O2",
+            "-finline",
+            "-foptimize-sibling-calls",
+            "-fpie",
+        ],
+        "libc/intrin/memset.c": [
+            "-O2",
+            "-finline",
+            "-foptimize-sibling-calls",
+        ],
+        "libc/intrin/x86.c": [
+            "-ffreestanding",
+            "-fno-jump-tables",
+            "-fpatchable-function-entry=0",
+            "-Os",
+        ],
+        "libc/intrin/dll.c": ["-mgeneral-regs-only"],
+        "libc/intrin/fds.c": ["-mgeneral-regs-only"],
+        "libc/intrin/demangle.c": ["-mgeneral-regs-only"],
+        "libc/intrin/windowsdurationtotimeval.c": ["-O2"],
+        "libc/intrin/windowsdurationtotimespec.c": ["-O2"],
+        "libc/intrin/timevaltowindowstime.c": ["-O2"],
+        "libc/intrin/timespectowindowstime.c": ["-O2"],
+        "libc/intrin/windowstimetotimeval.c": ["-O2"],
+        "libc/intrin/windowstimetotimespec.c": ["-O2"],
+    },
+    x86_64_assembly_excludes = ["libc/intrin/aarch64/**"],
     deps = [
         ":libc_nexgen32e",
         ":libc_nt",
         ":libc_sysv",
     ],
-    visibility = ["//visibility:private"],
+    textual_hdrs = [":libc_hdrs"],
 )
 
 cc_stage2_library(
@@ -762,18 +828,9 @@ cosmo_cc_library(
     name = "libc_sysv",
     dir = "libc/sysv",
     per_file_copts = {
-        "libc/sysv/errloc.c": ["-ffreestanding", "-fno-stack-protector", "-fno-sanitize=all", "-mgeneral-regs-only"],
-        "libc/sysv/linret.c": ["-ffreestanding", "-fno-stack-protector", "-fno-sanitize=all", "-mgeneral-regs-only"],
-        "libc/sysv/errfun.c": ["-ffreestanding", "-fno-stack-protector", "-fno-sanitize=all", "-mgeneral-regs-only"],
-        "libc/sysv/enosys.c": ["-ffreestanding", "-fno-stack-protector", "-fno-sanitize=all", "-mgeneral-regs-only"],
+        "libc/sysv/errno.c": ["-ffreestanding", "-fno-stack-protector", "-fno-sanitize=all", "-mgeneral-regs-only"],
         "libc/sysv/sysret.c": ["-ffreestanding", "-fno-stack-protector", "-fno-sanitize=all", "-mgeneral-regs-only"],
-
-        "libc/sysv/errno.c": ["-fpie", "-Os"],
-        "libc/sysv/errno-windows.c": ["-fpie", "-Os"],
-        "libc/sysv/errno-freebsd.c": ["-fpie", "-Os"],
-        "libc/sysv/errno-openbsd.c": ["-fpie", "-Os"],
-        "libc/sysv/errno-netbsd.c": ["-fpie", "-Os"],
-        "libc/sysv/errno-xnu.c": ["-fpie", "-Os"],
+        "libc/sysv/errfun2.c": ["-ffreestanding", "-fno-stack-protector", "-fno-sanitize=all", "-mgeneral-regs-only"],
 
         "libc/sysv/sysv.c": ["-ffreestanding", "-fno-stack-protector", "-fno-sanitize=all", "-mgeneral-regs-only"] + select({
             "@platforms//cpu:aarch64": [
@@ -794,7 +851,6 @@ cosmo_cc_library(
         })
     },
     aarch64_safe_assembly_srcs = [
-        "libc/sysv/gc.S",
         "libc/sysv/syscon.S",
         "libc/sysv/hostos.S",
         "libc/sysv/syslib.S",
@@ -804,7 +860,7 @@ cosmo_cc_library(
         "libc/sysv/syscall4.S",
         "libc/sysv/restorert.S",
     ] + glob([
-        #"libc/sysv/calls/*.S",
+        "libc/sysv/calls/*.S",
         "libc/sysv/consts/*.S",
         "libc/sysv/errfuns/*.S",
         "libc/sysv/dos2errno/*.S",
