@@ -18,22 +18,6 @@ cc_args(
 )
 
 cc_args(
-    name = "toolchain_bin_search_path",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:link_actions",
-    ],
-    args = [
-        "-B{toolchain_bin_overlay}",
-    ],
-    format = {
-        "toolchain_bin_overlay": "//tools:toolchain_bin_overlay",
-    },
-    data = [
-        "//tools:toolchain_bin_overlay",
-    ],
-)
-
-cc_args(
     name = "kernel_headers_include_search_paths",
     actions = [
         "@rules_cc//cc/toolchains/actions:source_compile_actions",
