@@ -1,0 +1,26 @@
+package(default_visibility = ["//visibility:public"])
+
+exports_files([
+    "0001-make-pt_blkmask-atomic.patch",
+    "0002-memchr-sse2.patch",
+    "0003-memchr-guard-mmx-builtins.patch",
+    "0004-musl-errno-runtime-cases.patch",
+    "0005-openmp-disable-mm-malloc.patch",
+    "0006-nsync-atomic-pointer-cast.patch",
+    "0007-musl-lookup-name-errno-runtime.patch",
+    "0008-clang-intrin-wrappers.patch",
+    "0009-clang-mmintrin-vector-conversion.patch",
+    "0010-disable-mmx-intrinsics.patch",
+    "0011-errno-no-nocallersavedregisters.patch",
+    "0012-disable-tmmintrin-mmx.patch",
+    "0013-tprecode8to16-conditional-neon.patch",
+    "0014-guard-max-align.patch",
+    "0016-dlmalloc-atomic-loads.patch",
+    "0017-immintrin-include-xmmintrin.patch",
+    "0018-guard-avx-includes.patch",
+    "0019-guard-avx512vlvnni.patch",
+    "0020-sigblock-external-sig.patch",
+    "0021-musl-getnameinfo-af-constants.patch",
+    "0022-mmintrin-internal-respect-cosmo-disable-mmx.patch",
+    "0023-chunkcopy-scalar-fallback.patch",
+])

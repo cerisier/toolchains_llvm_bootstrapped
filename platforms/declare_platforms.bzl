@@ -1,6 +1,6 @@
 
-load("//platforms:common.bzl", "ARCH_ALIASES", "SUPPORTED_TARGETS", "LIBC_SUPPORTED_TARGETS")
-load("//constraints/libc:libc_versions.bzl", "LIBCS", "DEFAULT_LIBC")
+load("//platforms:common.bzl", "ARCH_ALIASES", "SUPPORTED_TARGETS", "LIBC_SUPPORTED_TARGETS", "COSMO_SUPPORTED_CPUS")
+load("//constraints/libc:libc_versions.bzl", "LIBCS", "GLIBCS", "DEFAULT_LIBC")
 
 def declare_platforms():
     for (target_os, target_cpu) in SUPPORTED_TARGETS:
@@ -21,13 +21,7 @@ def declare_platforms():
             # constraint if they want to.
             constraints.append("//constraints/libc:{}".format(DEFAULT_LIBC))
 
-        native.platform(
-            name = "{}_{}".format(target_os, target_cpu),
-            constraint_values = constraints,
-            visibility = ["//visibility:public"],
-        )
-
-        for alias in ARCH_ALIASES.get(target_cpu, []):
+        for alias in [target_cpu] + ARCH_ALIASES.get(target_cpu, []):
             native.platform(
                 name = "{}_{}".format(target_os, alias),
                 constraint_values = constraints,
@@ -37,19 +31,10 @@ def declare_platforms():
     declare_platforms_libc_aware()
 
 def declare_platforms_libc_aware():
+    # Linux supports glibc/musl variants.
     for target_os, target_cpu in LIBC_SUPPORTED_TARGETS:
-        for libc in LIBCS:
-            native.platform(
-                name = "{}_{}_{}".format(target_os, target_cpu, libc),
-                constraint_values = [
-                    "@platforms//cpu:{}".format(target_cpu),
-                    "@platforms//os:{}".format(target_os),
-                    "//constraints/libc:{}".format(libc),
-                ],
-                visibility = ["//visibility:public"],
-            )
-
-            for alias in ARCH_ALIASES.get(target_cpu, []):
+        for libc in GLIBCS + ["musl"]:
+            for alias in [target_cpu] + ARCH_ALIASES.get(target_cpu, []):
                 native.platform(
                     name = "{}_{}_{}".format(target_os, alias, libc),
                     constraint_values = [
@@ -59,3 +44,15 @@ def declare_platforms_libc_aware():
                     ],
                     visibility = ["//visibility:public"],
                 )
+
+    # Cosmopolitan targets CPU only (no OS constraint).
+    for target_cpu in COSMO_SUPPORTED_CPUS:
+        for alias in [target_cpu] + ARCH_ALIASES.get(target_cpu, []):
+            native.platform(
+                name = "cosmo_{}".format(alias),
+                constraint_values = [
+                    "@platforms//cpu:{}".format(target_cpu),
+                    "//constraints/libc:cosmo",
+                ],
+                visibility = ["//visibility:public"],
+            )

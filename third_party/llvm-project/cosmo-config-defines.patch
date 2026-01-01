@@ -1,0 +1,10 @@
+--- a/utils/bazel/llvm-project-overlay/llvm/config.bzl	2025-12-31 07:04:36
++++ b/utils/bazel/llvm-project-overlay/llvm/config.bzl	2025-12-31 07:04:36
+@@ -86,6 +86,7 @@
+     "@bazel_tools//src/conditions:windows": win32_defines,
+     "@bazel_tools//src/conditions:darwin": macos_defines,
+     "@bazel_tools//src/conditions:freebsd": posix_defines,
++    "@toolchains_llvm_bootstrapped//platforms/config:cosmo": posix_defines,
+     "//conditions:default": linux_defines,
+ })
+ 

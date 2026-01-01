@@ -1,0 +1,12 @@
+diff -ruN a/utils/bazel/llvm-project-overlay/llvm/include/llvm/Config/config.h b/utils/bazel/llvm-project-overlay/llvm/include/llvm/Config/config.h
+--- a/utils/bazel/llvm-project-overlay/llvm/include/llvm/Config/config.h	2025-12-31 07:04:36
++++ b/utils/bazel/llvm-project-overlay/llvm/include/llvm/Config/config.h	2025-12-31 07:04:36
+@@ -54,2 +54,6 @@
+-/* Define if dlopen() is available on this platform. */
+-#define HAVE_DLOPEN 1
++/* Define if dlopen() is available on this platform. */
++#if defined(_COSMO_SOURCE) || defined(__COSMOPOLITAN__)
++#define HAVE_DLOPEN 0
++#else
++#define HAVE_DLOPEN 1
++#endif

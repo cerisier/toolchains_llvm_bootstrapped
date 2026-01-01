@@ -44,7 +44,12 @@ cc_stage2_library(
         "_DEBUG",
         # "_LIBUNWIND_HAS_NO_THREADS", # ANY_NON_SINGLE_THREADED
         # "_DCOMPILER_RT_ARMHF_TARGET", # ARM
-    ],
+    ] + select({
+        "@toolchains_llvm_bootstrapped//platforms/config:cosmo": [
+            "_LIBUNWIND_USE_DLADDR=0",
+        ],
+        "//conditions:default": [],
+    }),
     hdrs = glob([
         "include/**",
         "src/*.h",
@@ -83,6 +88,9 @@ cc_stage2_library(
     }) + select({
         "@toolchains_llvm_bootstrapped//platforms/config:musl": [
             "@musl_libc//:musl_libc_headers",
+        ],
+        "@toolchains_llvm_bootstrapped//platforms/config:cosmo": [
+            "@toolchains_llvm_bootstrapped//runtimes/cosmo:cosmo_headers",
         ],
         "@toolchains_llvm_bootstrapped//platforms/config:gnu": [
             "@glibc//:gnu_libc_headers",

@@ -1371,11 +1371,16 @@ cc_library(
     ] + [
         # LIBCXX_ENABLE_NEW_DELETE_DEFINITIONS
     ],
-    implementation_deps = [
-        # Order matter. Search path should have C++ headers before any lib C headers.
-        "@libcxx//:headers",
-        "@libcxxabi//:headers",
-    ] + select({
+    implementation_deps = select({
+        "@toolchains_llvm_bootstrapped//platforms/config:cosmo": [
+            "@toolchains_llvm_bootstrapped//runtimes/cosmo:cosmo_headers",
+        ],
+        "//conditions:default": [
+            # Order matter. Search path should have C++ headers before any lib C headers.
+            "@libcxx//:headers",
+            "@libcxxabi//:headers",
+        ],
+    }) + select({
         "@platforms//os:macos": [],
         "@platforms//os:windows": [],
         "@platforms//os:linux": [
@@ -1391,6 +1396,9 @@ cc_library(
     ] + select({
         "@toolchains_llvm_bootstrapped//platforms/config:musl": [
             "@musl_libc//:musl_libc_headers",
+        ],
+        "@toolchains_llvm_bootstrapped//platforms/config:cosmo": [
+            # C++ headers provided by Cosmopolitan libcxx.
         ],
         "@toolchains_llvm_bootstrapped//platforms/config:gnu": [
             "@glibc//:gnu_libc_headers",

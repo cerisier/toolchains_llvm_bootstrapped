@@ -10,6 +10,10 @@ def _llvm_raw_impl(mctx):
         patch_args = ["-p1"],
         patches = [
             "//third_party/llvm-project:llvm-extra.patch",
+            "//third_party/llvm-project:cosmo-threading-gettid.patch",
+            "//third_party/llvm-project:cosmo-config-defines.patch",
+            "//third_party/llvm-project:cosmo-no-dlopen.patch",
+            "//third_party/llvm-project:cosmo-disable-sbrk.patch",
             "//third_party/llvm-project:llvm-bazel9.patch",
             "//third_party/llvm-project:llvm-sanitizers-ignorelists.patch",
             "//third_party/llvm-project:windows_link_and_genrule.patch",
@@ -32,7 +36,7 @@ def _llvm_raw_impl(mctx):
 
     http_archive(
         name = "llvm_zstd",
-        build_file = "@llvm-raw//utils/bazel/third_party_build:zstd.BUILD",
+        build_file = "//third_party/llvm-project:cosmo-zstd.BUILD",
         sha256 = "7c42d56fac126929a6a85dbc73ff1db2411d04f104fae9bdea51305663a83fd0",
         strip_prefix = "zstd-1.5.2",
         urls = ["https://github.com/facebook/zstd/releases/download/v1.5.2/zstd-1.5.2.tar.gz"],

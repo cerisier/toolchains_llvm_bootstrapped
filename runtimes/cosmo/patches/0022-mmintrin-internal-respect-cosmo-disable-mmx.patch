@@ -1,0 +1,23 @@
+--- a/third_party/intel/mmintrin.internal.h
++++ b/third_party/intel/mmintrin.internal.h
+@@ -23,6 +23,12 @@
+ typedef char __v8qi __attribute__ ((__vector_size__ (8)));
+ typedef long long __v1di __attribute__ ((__vector_size__ (8)));
+ typedef float __v2sf __attribute__ ((__vector_size__ (8)));
++
++#ifdef COSMO_DISABLE_MMX
++
++/* Skip MMX intrinsics when explicitly disabled for the cosmo toolchain. */
++
++#else
+ extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
+ _mm_empty (void)
+ {
+@@ -701,6 +707,7 @@
+ {
+   return _mm_set_pi8 (__b, __b, __b, __b, __b, __b, __b, __b);
+ }
++#endif /* COSMO_DISABLE_MMX */
+ #ifdef __DISABLE_MMX__
+ #undef __DISABLE_MMX__
+ #pragma GCC pop_options

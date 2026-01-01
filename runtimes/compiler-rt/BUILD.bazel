@@ -1,6 +1,9 @@
 alias(
     name = "clang_rt.builtins.static",
-    actual = "@compiler-rt//:clang_rt.builtins.static",
+    actual = select({
+        "//platforms/config:cosmo": "//runtimes/cosmo:clang_rt.builtins.static",
+        "//conditions:default": "@compiler-rt//:clang_rt.builtins.static",
+    }),
     visibility = ["//visibility:public"],
 )
 

@@ -28,6 +28,7 @@ LIBC_KERNEL_VERSIONS = {
     "gnu.2.41": "6.14.6",
     "gnu.2.42": "6.16.12",
     "musl"    : "6.16.12", # Latest for musl always
+    "cosmo"   : "6.16.12",
 }
 
 LIBC_KERNEL_VERSIONS["unconstrained"] = LIBC_KERNEL_VERSIONS["gnu.2.28"]

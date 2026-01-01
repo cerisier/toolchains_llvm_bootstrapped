@@ -1,0 +1,13 @@
+--- a/libc/isystem/immintrin.h
++++ b/libc/isystem/immintrin.h
+@@ -1,7 +1,9 @@
+ #ifndef COSMOPOLITAN_LIBC_ISYSTEM_IMMINTRIN_INTERNAL_H_
+ #define COSMOPOLITAN_LIBC_ISYSTEM_IMMINTRIN_INTERNAL_H_
+ #ifdef __clang__
++/* Ensure SSE intrinsics are visible even when AVX is disabled. */
++#include "libc/isystem/xmmintrin.h"
+ #include "third_party/intel/clang/immintrin.h"
+ #else
+ #include "third_party/intel/immintrin.internal.h"
+ #endif
+ #endif /* COSMOPOLITAN_LIBC_ISYSTEM_IMMINTRIN_INTERNAL_H_ */

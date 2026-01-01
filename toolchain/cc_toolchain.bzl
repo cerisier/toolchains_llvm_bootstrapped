@@ -11,6 +11,7 @@ def cc_toolchain(name, tool_map):
             "@platforms//os:linux": [
                 "@rules_cc//cc/toolchains/args/thin_lto:feature",
             ],
+            "//platforms/config:cosmo": [],
             "//conditions:default": [],
         }) + [
             # Those features are enabled internally by --compilation_mode flags family.
@@ -34,6 +35,9 @@ def cc_toolchain(name, tool_map):
         name = name + "_enabled_features",
         all_of = select({
             "@platforms//os:linux": [
+                "//toolchain/features:static_link_cpp_runtimes",
+            ],
+            "//platforms/config:cosmo": [
                 "//toolchain/features:static_link_cpp_runtimes",
             ],
             "@platforms//os:macos": [],

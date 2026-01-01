@@ -115,10 +115,15 @@ cc_library(
         # LIBCXXABI_ENABLE_THREADS
         "src/cxa_thread_atexit.cpp",
     ],
-    implementation_deps = [
-        # Order matter. Search path should have C++ headers before any lib C headers.
-        "@libcxx//:headers",
-    ] + select({
+    implementation_deps = select({
+        "@toolchains_llvm_bootstrapped//platforms/config:cosmo": [
+            "@toolchains_llvm_bootstrapped//runtimes/cosmo:cosmo_headers",
+        ],
+        "//conditions:default": [
+            # Order matter. Search path should have C++ headers before any lib C headers.
+            "@libcxx//:headers",
+        ],
+    }) + select({
         "@platforms//os:macos": [],
         "@platforms//os:windows": [],
         "@platforms//os:linux": [
@@ -134,6 +139,9 @@ cc_library(
     ] + select({
         "@toolchains_llvm_bootstrapped//platforms/config:musl": [
             "@musl_libc//:musl_libc_headers",
+        ],
+        "@toolchains_llvm_bootstrapped//platforms/config:cosmo": [
+            # C++ headers provided by Cosmopolitan libcxx.
         ],
         "@toolchains_llvm_bootstrapped//platforms/config:gnu": [
             "@glibc//:gnu_libc_headers",

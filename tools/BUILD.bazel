@@ -1,4 +1,6 @@
-load("@toolchains_llvm_bootstrapped//toolchain:selects.bzl", "platform_llvm_binary")
+load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("@toolchains_llvm_bootstrapped//toolchain:selects.bzl", "LLVM_VERSION", "platform_llvm_binary")
 load("@toolchains_llvm_bootstrapped//tools:defs.bzl", "TOOLCHAIN_BINARIES")
 
 package(default_visibility = ["//visibility:public"])
@@ -10,3 +12,27 @@ package(default_visibility = ["//visibility:public"])
     )
     for tool in TOOLCHAIN_BINARIES
 ]
+
+write_file(
+    name = "gplusplus_wrapper",
+    out = "g++",
+    is_executable = True,
+    content = [
+        "#!/bin/sh",
+        (
+            "exec external/+http_archive+llvm-toolchain-minimal-{version}-linux-amd64/bin/clang++ "
+            + "--target x86_64-unknown-unknown --sysroot=/dev/null "
+            + "-resource-dir bazel-out/cosmo_amd64-opt/bin/runtimes/resource_directory "
+            + "-Bbazel-out/cosmo_amd64-opt/bin/runtimes/crt_objects_directory_cosmo "
+            + "-nostdlib++ --unwindlib=none -rtlib=compiler-rt \"$@\""
+        ).format(version = LLVM_VERSION),
+    ],
+)
+
+copy_to_directory(
+    name = "toolchain_bin_overlay",
+    srcs = [
+        ":gplusplus_wrapper",
+    ],
+    include_external_repositories = ["**"],
+)

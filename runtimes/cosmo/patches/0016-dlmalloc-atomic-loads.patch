@@ -1,0 +1,35 @@
+--- a/third_party/dlmalloc/init.inc
++++ b/third_party/dlmalloc/init.inc
+@@ -6,9 +6,12 @@ void dlmalloc_pre_fork(void) {
+ void dlmalloc_pre_fork(void) {
+ #if ONLY_MSPACES
+   mstate h;
+-  for (unsigned i = ARRAYLEN(g_heaps); i--;)
+-    if ((h = atomic_load_explicit(&g_heaps[i], memory_order_acquire)))
++  for (unsigned i = ARRAYLEN(g_heaps); i--;) {
++    /* clang's C11 atomics insist on _Atomic pointees; plain loads are fine. */
++    h = g_heaps[i];
++    if (h)
+       ACQUIRE_LOCK(&h->mutex);
++  }
+ #else
+   ACQUIRE_LOCK(&(gm)->mutex);
+ #endif
+@@ -18,7 +21,7 @@ void dlmalloc_post_fork_parent(void) {
+ #if ONLY_MSPACES
+   mstate h;
+   for (unsigned i = 0; i < ARRAYLEN(g_heaps); ++i)
+-    if ((h = atomic_load_explicit(&g_heaps[i], memory_order_acquire)))
++    if ((h = g_heaps[i]))
+       RELEASE_LOCK(&h->mutex);
+ #else
+   RELEASE_LOCK(&(gm)->mutex);
+@@ -29,7 +32,7 @@ void dlmalloc_post_fork_child(void) {
+ #if ONLY_MSPACES
+   mstate h;
+   for (unsigned i = 0; i < ARRAYLEN(g_heaps); ++i)
+-    if ((h = atomic_load_explicit(&g_heaps[i], memory_order_acquire)))
++    if ((h = g_heaps[i]))
+       REFRESH_LOCK(&h->mutex);
+ #else
+   REFRESH_LOCK(&(gm)->mutex);

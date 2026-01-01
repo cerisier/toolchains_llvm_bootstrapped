@@ -1,4 +1,4 @@
-load("//platforms:common.bzl", "SUPPORTED_TARGETS")
+load("//platforms:common.bzl", "SUPPORTED_TARGETS", "COSMO_SUPPORTED_CPUS")
 load("//toolchain:cc_toolchain.bzl", "cc_toolchain")
 load(":stage1_binary.bzl", "stage1_binary", "stage1_directory")
 load("@llvm-project//:vars.bzl", "LLVM_VERSION_MAJOR")
@@ -196,6 +196,26 @@ def declare_toolchains():
                 target_compatible_with = [
                     "@platforms//cpu:{}".format(target_cpu),
                     "@platforms//os:{}".format(target_os),
+                ],
+                target_settings = [
+                    "//toolchain:bootstrapped",
+                    "//toolchain:stage1_bootstrapped",
+                ],
+                toolchain = cc_toolchain_name,
+                toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
+                visibility = ["//visibility:public"],
+            )
+
+        for target_cpu in COSMO_SUPPORTED_CPUS:
+            native.toolchain(
+                name = "{}_{}_to_cosmo_{}".format(exec_os, exec_cpu, target_cpu),
+                exec_compatible_with = [
+                    "@platforms//cpu:{}".format(exec_cpu),
+                    "@platforms//os:{}".format(exec_os),
+                ],
+                target_compatible_with = [
+                    "@platforms//cpu:{}".format(target_cpu),
+                    "//constraints/libc:cosmo",
                 ],
                 target_settings = [
                     "//toolchain:bootstrapped",

@@ -26,3 +26,9 @@ LIBC_SUPPORTED_TARGETS = [
     ("linux", "x86_64"),
     ("linux", "aarch64"),
 ]
+
+# Cosmopolitan libc targets CPU only (no OS constraint).
+COSMO_SUPPORTED_CPUS = [
+    "x86_64",
+    "aarch64",
+]

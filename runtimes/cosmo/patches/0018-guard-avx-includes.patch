@@ -1,0 +1,71 @@
+--- a/third_party/intel/clang/immintrin.h
++++ b/third_party/intel/clang/immintrin.h
+@@ -54,15 +54,15 @@
+ #include "clwbintrin.h"
+ #endif
+ 
+-#if !defined(__SCE__) || __has_feature(modules) || defined(__AVX__)
++#if defined(__AVX__)
+ #include "avxintrin.h"
+ #endif
+ 
+-#if !defined(__SCE__) || __has_feature(modules) || defined(__AVX2__)
++#if defined(__AVX2__)
+ #include "avx2intrin.h"
+ #endif
+ 
+-#if !defined(__SCE__) || __has_feature(modules) || defined(__F16C__)
++#if defined(__F16C__)
+ #include "f16cintrin.h"
+ #endif
+ 
+@@ -81,40 +81,39 @@
+ #include "popcntintrin.h"
+ #endif
+ 
+-#if !defined(__SCE__) || __has_feature(modules) || defined(__FMA__)
++#if defined(__FMA__)
+ #include "fmaintrin.h"
+ #endif
+ 
+-#if !defined(__SCE__) || __has_feature(modules) || defined(__AVX512F__)
++#if defined(__AVX512F__)
+ #include "avx512fintrin.h"
+ #endif
+ 
+-#if !defined(__SCE__) || __has_feature(modules) || defined(__AVX512VL__)
++#if defined(__AVX512VL__)
+ #include "avx512vlintrin.h"
+ #endif
+ 
+-#if !defined(__SCE__) || __has_feature(modules) || defined(__AVX512BW__)
++#if defined(__AVX512BW__)
+ #include "avx512bwintrin.h"
+ #endif
+ 
+-#if !defined(__SCE__) || __has_feature(modules) || defined(__AVX512BITALG__)
++#if defined(__AVX512BITALG__)
+ #include "avx512bitalgintrin.h"
+ #endif
+ 
+-#if !defined(__SCE__) || __has_feature(modules) || defined(__AVX512CD__)
++#if defined(__AVX512CD__)
+ #include "avx512cdintrin.h"
+ #endif
+ 
+-#if !defined(__SCE__) || __has_feature(modules) || defined(__AVX512VPOPCNTDQ__)
++#if defined(__AVX512VPOPCNTDQ__)
+ #include "avx512vpopcntdqintrin.h"
+ #endif
+ 
+-#if !defined(__SCE__) || __has_feature(modules) ||                             \
+-    (defined(__AVX512VL__) && defined(__AVX512VPOPCNTDQ__))
++#if defined(__AVX512VL__) && defined(__AVX512VPOPCNTDQ__)
+ #include "avx512vpopcntdqvlintrin.h"
+ #endif
+ 
+-#if !defined(__SCE__) || __has_feature(modules) || defined(__AVX512VNNI__)
++#if defined(__AVX512VNNI__)
+ #include "avx512vnniintrin.h"
+ #endif
+ 

@@ -1,0 +1,49 @@
+--- a/third_party/zlib/chunkcopy.inc
++++ b/third_party/zlib/chunkcopy.inc
+@@ -29,6 +29,46 @@
+ #if defined(INFLATE_CHUNK_SIMD_NEON)
+ #include "third_party/aarch64/arm_neon.internal.h"
+ typedef uint8x16_t z_vec128i_t;
++#elif defined(COSMO_DISABLE_MMX)
++typedef struct {
++  uint64_t lo;
++  uint64_t hi;
++} z_vec128i_t;
++
++static inline z_vec128i_t v_load64_dup(const void* src) {
++  uint64_t val;
++  Z_BUILTIN_MEMCPY(&val, src, sizeof(val));
++  z_vec128i_t v = {val, val};
++  return v;
++}
++
++static inline z_vec128i_t v_load32_dup(const void* src) {
++  uint32_t val;
++  Z_BUILTIN_MEMCPY(&val, src, sizeof(val));
++  uint64_t rep = ((uint64_t)val << 32) | val;
++  z_vec128i_t v = {rep, rep};
++  return v;
++}
++
++static inline z_vec128i_t v_load16_dup(const void* src) {
++  uint16_t val;
++  Z_BUILTIN_MEMCPY(&val, src, sizeof(val));
++  uint64_t rep = 0x0001000100010001ull * val;
++  z_vec128i_t v = {rep, rep};
++  return v;
++}
++
++static inline z_vec128i_t v_load8_dup(const void* src) {
++  uint8_t val;
++  Z_BUILTIN_MEMCPY(&val, src, sizeof(val));
++  uint64_t rep = 0x0101010101010101ull * val;
++  z_vec128i_t v = {rep, rep};
++  return v;
++}
++
++static inline void v_store_128(void* out, const z_vec128i_t vec) {
++  Z_BUILTIN_MEMCPY(out, &vec, sizeof(vec));
++}
+ #elif defined(INFLATE_CHUNK_SIMD_SSE2)
+ #include "third_party/intel/emmintrin.internal.h"
+ typedef __m128i z_vec128i_t;

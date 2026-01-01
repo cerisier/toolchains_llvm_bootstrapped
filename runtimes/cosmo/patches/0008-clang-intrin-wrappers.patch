@@ -1,0 +1,233 @@
+diff -ruN cosmopolitan-4.0.2/dsp/core/sad16x8n.c cosmopolitan-4.0.2.mod/dsp/core/sad16x8n.c
+--- cosmopolitan-4.0.2/dsp/core/sad16x8n.c	2025-01-05 17:05:49
++++ cosmopolitan-4.0.2.mod/dsp/core/sad16x8n.c	2025-12-31 12:16:40
+@@ -20,7 +20,7 @@
+ #include "libc/limits.h"
+ #include "libc/macros.h"
+ #include "third_party/aarch64/arm_neon.internal.h"
+-#include "third_party/intel/emmintrin.internal.h"
++#include "libc/isystem/emmintrin.h"
+ 
+ /**
+  * Mixes audio.
+diff -ruN cosmopolitan-4.0.2/dsp/scale/cdecimate2xuint8x8.c cosmopolitan-4.0.2.mod/dsp/scale/cdecimate2xuint8x8.c
+--- cosmopolitan-4.0.2/dsp/scale/cdecimate2xuint8x8.c	2025-01-05 17:05:49
++++ cosmopolitan-4.0.2.mod/dsp/scale/cdecimate2xuint8x8.c	2025-12-31 12:16:40
+@@ -19,7 +19,7 @@
+ #include "libc/macros.h"
+ #include "libc/nexgen32e/x86feature.h"
+ #include "libc/str/str.h"
+-#include "third_party/intel/immintrin.internal.h"
++#include "libc/isystem/immintrin.h"
+ 
+ /**
+  * Performs 2D Motion Picture Convolution Acceleration by Leveraging SSSE3.
+diff -ruN cosmopolitan-4.0.2/libc/intrin/memchr.c cosmopolitan-4.0.2.mod/libc/intrin/memchr.c
+--- cosmopolitan-4.0.2/libc/intrin/memchr.c	2025-12-31 12:15:58
++++ cosmopolitan-4.0.2.mod/libc/intrin/memchr.c	2025-12-31 12:16:40
+@@ -27,7 +27,7 @@
+ #endif
+ 
+ #if defined(__x86_64__) && !defined(__chibicc__) && COSMO_HAS_MMX_BUILTINS
+-#include "third_party/intel/emmintrin.internal.h"
++#include "libc/isystem/emmintrin.h"
+ #define COSMO_MEMCHR_SSE 1
+ #else
+ #define COSMO_MEMCHR_SSE 0
+diff -ruN cosmopolitan-4.0.2/libc/str/memmem.c cosmopolitan-4.0.2.mod/libc/str/memmem.c
+--- cosmopolitan-4.0.2/libc/str/memmem.c	2025-01-05 17:05:49
++++ cosmopolitan-4.0.2.mod/libc/str/memmem.c	2025-12-31 12:16:40
+@@ -20,7 +20,7 @@
+ #include "libc/str/kmp.h"
+ #include "libc/str/str.h"
+ #include "third_party/aarch64/arm_neon.internal.h"
+-#include "third_party/intel/emmintrin.internal.h"
++#include "libc/isystem/emmintrin.h"
+ 
+ /**
+  * Searches for fixed-length substring in memory region.
+diff -ruN cosmopolitan-4.0.2/libc/str/strcasestr.c cosmopolitan-4.0.2.mod/libc/str/strcasestr.c
+--- cosmopolitan-4.0.2/libc/str/strcasestr.c	2025-01-05 17:05:49
++++ cosmopolitan-4.0.2.mod/libc/str/strcasestr.c	2025-12-31 12:16:40
+@@ -22,7 +22,7 @@
+ #include "libc/runtime/stack.h"
+ #include "libc/str/tab.h"
+ #include "third_party/aarch64/arm_neon.internal.h"
+-#include "third_party/intel/immintrin.internal.h"
++#include "libc/isystem/immintrin.h"
+ 
+ static int ToUpper(int c) {
+   return 'a' <= c && c <= 'z' ? c - ('a' - 'A') : c;
+diff -ruN cosmopolitan-4.0.2/libc/str/strstr.c cosmopolitan-4.0.2.mod/libc/str/strstr.c
+--- cosmopolitan-4.0.2/libc/str/strstr.c	2025-01-05 17:05:49
++++ cosmopolitan-4.0.2.mod/libc/str/strstr.c	2025-12-31 12:16:40
+@@ -19,7 +19,7 @@
+ #include "libc/str/str.h"
+ #include "libc/str/kmp.h"
+ #include "third_party/aarch64/arm_neon.internal.h"
+-#include "third_party/intel/immintrin.internal.h"
++#include "libc/isystem/immintrin.h"
+ 
+ /**
+  * Searches for substring.
+diff -ruN cosmopolitan-4.0.2/libc/str/tprecode16to8.c cosmopolitan-4.0.2.mod/libc/str/tprecode16to8.c
+--- cosmopolitan-4.0.2/libc/str/tprecode16to8.c	2025-01-05 17:05:49
++++ cosmopolitan-4.0.2.mod/libc/str/tprecode16to8.c	2025-12-31 12:16:40
+@@ -21,7 +21,7 @@
+ #include "libc/str/str.h"
+ #include "libc/str/utf16.h"
+ #include "third_party/aarch64/arm_neon.internal.h"
+-#include "third_party/intel/emmintrin.internal.h"
++#include "libc/isystem/emmintrin.h"
+ 
+ #if !IsModeDbg()
+ #if defined(__x86_64__)
+diff -ruN cosmopolitan-4.0.2/libc/str/tprecode8to16.c cosmopolitan-4.0.2.mod/libc/str/tprecode8to16.c
+--- cosmopolitan-4.0.2/libc/str/tprecode8to16.c	2025-01-05 17:05:49
++++ cosmopolitan-4.0.2.mod/libc/str/tprecode8to16.c	2025-12-31 12:16:40
+@@ -24,7 +24,7 @@
+ #include "libc/str/thompike.h"
+ #include "libc/str/utf16.h"
+ #include "third_party/aarch64/arm_neon.internal.h"
+-#include "third_party/intel/emmintrin.internal.h"
++#include "libc/isystem/emmintrin.h"
+ 
+ #if !IsModeDbg()
+ #if defined(__x86_64__)
+diff -ruN cosmopolitan-4.0.2/libc/tinymath/ceil.c cosmopolitan-4.0.2.mod/libc/tinymath/ceil.c
+--- cosmopolitan-4.0.2/libc/tinymath/ceil.c	2025-01-05 17:05:49
++++ cosmopolitan-4.0.2.mod/libc/tinymath/ceil.c	2025-12-31 12:16:40
+@@ -29,7 +29,7 @@
+ #include "libc/runtime/fenv.h"
+ #include "libc/tinymath/internal.h"
+ #ifndef __llvm__
+-#include "third_party/intel/smmintrin.internal.h"
++#include "libc/isystem/smmintrin.h"
+ #endif
+ __static_yoink("musl_libc_notice");
+ 
+diff -ruN cosmopolitan-4.0.2/libc/tinymath/ceilf.c cosmopolitan-4.0.2.mod/libc/tinymath/ceilf.c
+--- cosmopolitan-4.0.2/libc/tinymath/ceilf.c	2025-01-05 17:05:49
++++ cosmopolitan-4.0.2.mod/libc/tinymath/ceilf.c	2025-12-31 12:16:40
+@@ -28,7 +28,7 @@
+ #include "libc/math.h"
+ #include "libc/tinymath/internal.h"
+ #ifndef __llvm__
+-#include "third_party/intel/smmintrin.internal.h"
++#include "libc/isystem/smmintrin.h"
+ #endif
+ __static_yoink("musl_libc_notice");
+ 
+diff -ruN cosmopolitan-4.0.2/libc/tinymath/floor.c cosmopolitan-4.0.2.mod/libc/tinymath/floor.c
+--- cosmopolitan-4.0.2/libc/tinymath/floor.c	2025-01-05 17:05:49
++++ cosmopolitan-4.0.2.mod/libc/tinymath/floor.c	2025-12-31 12:16:40
+@@ -29,7 +29,7 @@
+ #include "libc/runtime/fenv.h"
+ #include "libc/tinymath/internal.h"
+ #ifndef __llvm__
+-#include "third_party/intel/smmintrin.internal.h"
++#include "libc/isystem/smmintrin.h"
+ #endif
+ __static_yoink("musl_libc_notice");
+ 
+diff -ruN cosmopolitan-4.0.2/libc/tinymath/floorf.c cosmopolitan-4.0.2.mod/libc/tinymath/floorf.c
+--- cosmopolitan-4.0.2/libc/tinymath/floorf.c	2025-01-05 17:05:49
++++ cosmopolitan-4.0.2.mod/libc/tinymath/floorf.c	2025-12-31 12:16:40
+@@ -28,7 +28,7 @@
+ #include "libc/math.h"
+ #include "libc/tinymath/internal.h"
+ #ifndef __llvm__
+-#include "third_party/intel/smmintrin.internal.h"
++#include "libc/isystem/smmintrin.h"
+ #endif
+ __static_yoink("musl_libc_notice");
+ 
+diff -ruN cosmopolitan-4.0.2/libc/tinymath/trunc.c cosmopolitan-4.0.2.mod/libc/tinymath/trunc.c
+--- cosmopolitan-4.0.2/libc/tinymath/trunc.c	2025-01-05 17:05:49
++++ cosmopolitan-4.0.2.mod/libc/tinymath/trunc.c	2025-12-31 12:16:40
+@@ -28,7 +28,7 @@
+ #include "libc/math.h"
+ #include "libc/tinymath/internal.h"
+ #ifndef __llvm__
+-#include "third_party/intel/smmintrin.internal.h"
++#include "libc/isystem/smmintrin.h"
+ #endif
+ __static_yoink("musl_libc_notice");
+ 
+diff -ruN cosmopolitan-4.0.2/libc/tinymath/truncf.c cosmopolitan-4.0.2.mod/libc/tinymath/truncf.c
+--- cosmopolitan-4.0.2/libc/tinymath/truncf.c	2025-01-05 17:05:49
++++ cosmopolitan-4.0.2.mod/libc/tinymath/truncf.c	2025-12-31 12:16:40
+@@ -28,7 +28,7 @@
+ #include "libc/math.h"
+ #include "libc/tinymath/internal.h"
+ #ifndef __llvm__
+-#include "third_party/intel/smmintrin.internal.h"
++#include "libc/isystem/smmintrin.h"
+ #endif
+ __static_yoink("musl_libc_notice");
+ 
+diff -ruN cosmopolitan-4.0.2/libc/x/utf16to8.c cosmopolitan-4.0.2.mod/libc/x/utf16to8.c
+--- cosmopolitan-4.0.2/libc/x/utf16to8.c	2025-01-05 17:05:49
++++ cosmopolitan-4.0.2.mod/libc/x/utf16to8.c	2025-12-31 12:16:40
+@@ -23,7 +23,7 @@
+ #include "libc/str/thompike.h"
+ #include "libc/str/utf16.h"
+ #include "libc/x/x.h"
+-#include "third_party/intel/emmintrin.internal.h"
++#include "libc/isystem/emmintrin.h"
+ 
+ /**
+  * Transcodes UTF-16 to UTF-8.
+diff -ruN cosmopolitan-4.0.2/libc/x/utf8to32.c cosmopolitan-4.0.2.mod/libc/x/utf8to32.c
+--- cosmopolitan-4.0.2/libc/x/utf8to32.c	2025-01-05 17:05:49
++++ cosmopolitan-4.0.2.mod/libc/x/utf8to32.c	2025-12-31 12:16:40
+@@ -21,7 +21,7 @@
+ #include "libc/str/thompike.h"
+ #include "libc/str/utf16.h"
+ #include "libc/x/x.h"
+-#include "third_party/intel/emmintrin.internal.h"
++#include "libc/isystem/emmintrin.h"
+ 
+ /**
+  * Transcodes UTF-8 to UTF-32.
+diff -ruN cosmopolitan-4.0.2/test/libc/str/crc32z_test.c cosmopolitan-4.0.2.mod/test/libc/str/crc32z_test.c
+--- cosmopolitan-4.0.2/test/libc/str/crc32z_test.c	2025-01-05 17:05:49
++++ cosmopolitan-4.0.2.mod/test/libc/str/crc32z_test.c	2025-12-31 12:16:40
+@@ -30,7 +30,7 @@
+ #include "libc/testlib/testlib.h"
+ #include "third_party/aarch64/arm_acle.internal.h"
+ #include "third_party/aarch64/arm_neon.internal.h"
+-#include "third_party/intel/immintrin.internal.h"
++#include "libc/isystem/immintrin.h"
+ #include "third_party/zlib/zlib.h"
+ 
+ #define FANATICS "Fanatics"
+diff -ruN cosmopolitan-4.0.2/third_party/xxhash/xxh_x86dispatch.c cosmopolitan-4.0.2.mod/third_party/xxhash/xxh_x86dispatch.c
+--- cosmopolitan-4.0.2/third_party/xxhash/xxh_x86dispatch.c	2025-01-05 17:05:49
++++ cosmopolitan-4.0.2.mod/third_party/xxhash/xxh_x86dispatch.c	2025-12-31 12:16:40
+@@ -179,9 +179,9 @@
+  * @brief Like @ref XXH_TARGET_SSE2, but for AVX512.
+  */
+ #if defined(__GNUC__)
+-#include "third_party/intel/emmintrin.internal.h" /* SSE2 */
++#include "libc/isystem/emmintrin.h" /* SSE2 */
+ #  if XXH_DISPATCH_AVX2 || XXH_DISPATCH_AVX512
+-#include "third_party/intel/immintrin.internal.h" /* AVX2, AVX512F */
++#include "libc/isystem/immintrin.h" /* AVX2, AVX512F */
+ #  endif
+ #  define XXH_TARGET_SSE2 __attribute__((__target__("sse2")))
+ #  define XXH_TARGET_AVX2 __attribute__((__target__("avx2")))
+diff -ruN cosmopolitan-4.0.2/third_party/zlib/crc_folding.c cosmopolitan-4.0.2.mod/third_party/zlib/crc_folding.c
+--- cosmopolitan-4.0.2/third_party/zlib/crc_folding.c	2025-01-05 17:05:49
++++ cosmopolitan-4.0.2.mod/third_party/zlib/crc_folding.c	2025-12-31 12:16:40
+@@ -3,8 +3,8 @@
+ #include "libc/limits.h"
+ #include "libc/literal.h"
+ #include "libc/str/str.h"
+-#include "third_party/intel/emmintrin.internal.h"
+-#include "third_party/intel/immintrin.internal.h"
++#include "libc/isystem/emmintrin.h"
++#include "libc/isystem/immintrin.h"
+ #include "third_party/intel/wmmintrin.internal.h"
+ #include "third_party/zlib/deflate.internal.h"
+ 

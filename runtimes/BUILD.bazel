@@ -13,6 +13,7 @@ filegroup(
 filegroup(
     name = "static_runtime_lib",
     srcs = select({
+        "//platforms/config:cosmo": [],
         "@platforms//os:linux": [
             "@libcxx//:libcxx.static",
             "@libcxxabi//:libcxxabi.static",
@@ -32,6 +33,7 @@ filegroup(
 filegroup(
     name = "dynamic_runtime_lib",
     srcs = select({
+        "//platforms/config:cosmo": [],
         "@platforms//os:linux": [
             "@libcxx//:libcxx.shared",
             "@libcxxabi//:libcxxabi.shared",
@@ -122,9 +124,28 @@ copy_to_directory(
     visibility = ["//visibility:public"],
 )
 
+copy_to_directory(
+    name = "crt_objects_directory_cosmo",
+    srcs = [
+        ":crti_object",
+        ":crtn_object",
+        "//runtimes/cosmo:cosmo_crt.object",
+        "//runtimes/cosmo:cosmo_crt1.object",
+        "//runtimes/cosmo:cosmo_rcrt1.object",
+        "//runtimes/cosmo:cosmo_Scrt1.object",
+    ],
+    include_external_repositories = ["**"],
+    root_paths = [
+        ".",
+        "runtimes/cosmo",
+    ],
+    visibility = ["//visibility:public"],
+)
+
 alias(
     name = "crt_objects_directory",
     actual = select({
+        "//platforms/config:cosmo": ":crt_objects_directory_cosmo",
         "@platforms//os:linux": ":crt_objects_directory_linux",
         "@platforms//os:windows": ":crt_objects_directory_windows",
     }),

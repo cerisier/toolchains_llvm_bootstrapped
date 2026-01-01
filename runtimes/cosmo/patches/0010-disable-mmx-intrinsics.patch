@@ -1,0 +1,141 @@
+diff -ruN a/third_party/intel/clang/emmintrin.h b/third_party/intel/clang/emmintrin.h
+--- a/third_party/intel/clang/emmintrin.h	2025-01-05 17:05:49
++++ b/third_party/intel/clang/emmintrin.h	2025-12-31 13:26:17
+@@ -1486,6 +1486,7 @@
+ /// \param __a
+ ///    A 128-bit vector of [2 x double].
+ /// \returns A 64-bit vector of [2 x i32] containing the converted values.
++#ifndef COSMO_DISABLE_MMX
+ static __inline__ __m64 __DEFAULT_FN_ATTRS_MMX _mm_cvtpd_pi32(__m128d __a) {
+   return (__m64)__builtin_ia32_cvtpd2pi((__v2df)__a);
+ }
+@@ -1523,6 +1524,7 @@
+ static __inline__ __m128d __DEFAULT_FN_ATTRS_MMX _mm_cvtpi32_pd(__m64 __a) {
+   return __builtin_ia32_cvtpi2pd((__v2si)__a);
+ }
++#endif /* COSMO_DISABLE_MMX */
+ 
+ /// Returns the low-order element of a 128-bit vector of [2 x double] as
+ ///    a double-precision floating-point value.
+@@ -2096,6 +2098,7 @@
+   return (__m128i)((__v4su)__a + (__v4su)__b);
+ }
+ 
++#ifndef COSMO_DISABLE_MMX
+ /// Adds two signed or unsigned 64-bit integer values, returning the
+ ///    lower 64 bits of the sum.
+ ///
+@@ -2112,6 +2115,7 @@
+                                                             __m64 __b) {
+   return (__m64)__builtin_ia32_paddq((__v1di)__a, (__v1di)__b);
+ }
++#endif /* COSMO_DISABLE_MMX */
+ 
+ /// Adds the corresponding elements of two 128-bit vectors of [2 x i64],
+ ///    saving the lower 64 bits of each sum in the corresponding element of a
+@@ -2418,6 +2422,7 @@
+   return (__m128i)((__v8hu)__a * (__v8hu)__b);
+ }
+ 
++#ifndef COSMO_DISABLE_MMX
+ /// Multiplies 32-bit unsigned integer values contained in the lower bits
+ ///    of the two 64-bit integer vectors and returns the 64-bit unsigned
+ ///    product.
+@@ -2435,6 +2440,7 @@
+                                                             __m64 __b) {
+   return __builtin_ia32_pmuludq((__v2si)__a, (__v2si)__b);
+ }
++#endif /* COSMO_DISABLE_MMX */
+ 
+ /// Multiplies 32-bit unsigned integer values contained in the lower
+ ///    bits of the corresponding elements of two [2 x i64] vectors, and returns
+@@ -2539,10 +2545,12 @@
+ ///    A 64-bit integer vector containing the subtrahend.
+ /// \returns A 64-bit integer vector containing the difference of the values in
+ ///    the operands.
++#ifndef COSMO_DISABLE_MMX
+ static __inline__ __m64 __DEFAULT_FN_ATTRS_MMX _mm_sub_si64(__m64 __a,
+                                                             __m64 __b) {
+   return (__m64)__builtin_ia32_psubq((__v1di)__a, (__v1di)__b);
+ }
++#endif /* COSMO_DISABLE_MMX */
+ 
+ /// Subtracts the corresponding elements of two [2 x i64] vectors.
+ ///
+diff -ruN a/third_party/intel/clang/immintrin.h b/third_party/intel/clang/immintrin.h
+--- a/third_party/intel/clang/immintrin.h	2025-01-05 17:05:49
++++ b/third_party/intel/clang/immintrin.h	2025-12-31 13:22:54
+@@ -16,8 +16,10 @@
+ 
+ #include "x86gprintrin.h"
+ 
++#if !defined(COSMO_DISABLE_MMX)
+ #if !defined(__SCE__) || __has_feature(modules) || defined(__MMX__)
+ #include "mmintrin.h"
++#endif
+ #endif
+ 
+ #if !defined(__SCE__) || __has_feature(modules) || defined(__SSE__)
+diff -ruN a/third_party/intel/clang/mmintrin.h b/third_party/intel/clang/mmintrin.h
+--- a/third_party/intel/clang/mmintrin.h	2025-12-31 13:22:16
++++ b/third_party/intel/clang/mmintrin.h	2025-12-31 13:21:52
+@@ -26,6 +26,14 @@
+ typedef short __v4hi __attribute__((__vector_size__(8)));
+ typedef char __v8qi __attribute__((__vector_size__(8)));
+ 
++#ifdef COSMO_DISABLE_MMX
++
++#if defined(__clang__)
++#pragma clang diagnostic pop
++#endif
++
++#else
++
+ /* Define the default attributes for the functions in this file. */
+ #define __DEFAULT_FN_ATTRS                                                     \
+   __attribute__((__always_inline__, __nodebug__, __target__("mmx,no-evex512"), \
+@@ -1561,5 +1569,6 @@
+ #pragma clang diagnostic pop
+ #endif
+ 
+-#endif /* __MMINTRIN_H */
++#endif /* COSMO_DISABLE_MMX */
+ 
++#endif /* __MMINTRIN_H */
+diff -ruN a/third_party/intel/clang/xmmintrin.h b/third_party/intel/clang/xmmintrin.h
+--- a/third_party/intel/clang/xmmintrin.h	2025-01-05 17:05:49
++++ b/third_party/intel/clang/xmmintrin.h	2025-12-31 13:23:41
+@@ -14,7 +14,15 @@
+ #error "This header is only meant to be used on x86 and x64 architecture"
+ #endif
+ 
++#ifndef COSMO_DISABLE_MMX
+ #include "mmintrin.h"
++#else
++typedef long long __m64 __attribute__((__vector_size__(8), __aligned__(8)));
++typedef long long __v1di __attribute__((__vector_size__(8)));
++typedef int __v2si __attribute__((__vector_size__(8)));
++typedef short __v4hi __attribute__((__vector_size__(8)));
++typedef char __v8qi __attribute__((__vector_size__(8)));
++#endif
+ 
+ typedef int __v4si __attribute__((__vector_size__(16)));
+ typedef float __v4sf __attribute__((__vector_size__(16)));
+@@ -1434,6 +1442,8 @@
+ 
+ #endif
+ 
++#ifndef COSMO_DISABLE_MMX
++
+ /// Converts two low-order float values in a 128-bit vector of
+ ///    [4 x float] into a 64-bit vector of [2 x i32].
+ ///
+@@ -3195,6 +3205,8 @@
+ #define _m_pavgw _mm_avg_pu16
+ #define _m_psadbw _mm_sad_pu8
+ #define _m_ _mm_
++
++#endif /* COSMO_DISABLE_MMX */
+ 
+ #undef __DEFAULT_FN_ATTRS
+ #undef __DEFAULT_FN_ATTRS_MMX

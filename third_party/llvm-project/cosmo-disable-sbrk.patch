@@ -1,0 +1,11 @@
+--- a/llvm/lib/Support/Unix/Process.inc
++++ b/llvm/lib/Support/Unix/Process.inc
+@@ -105,7 +105,7 @@ size_t Process::GetMallocUsage() {
+   if (mallctl("stats.allocated", &alloc, &sz, NULL, 0) == 0)
+     return alloc;
+   return 0;
+-#elif defined(HAVE_SBRK)
++#elif defined(HAVE_SBRK) && HAVE_SBRK && !defined(_COSMO_SOURCE)
+   // Note this is only an approximation and more closely resembles
+   // the value returned by mallinfo in the arena field.
+   static char *StartOfMemory = reinterpret_cast<char *>(::sbrk(0));

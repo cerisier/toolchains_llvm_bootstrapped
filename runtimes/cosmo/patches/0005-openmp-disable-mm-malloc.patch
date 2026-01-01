@@ -1,0 +1,54 @@
+From 6b4e6f7c3d57d2bf0e6c2a42cfa1e6f1e4f4e2c3 Mon Sep 17 00:00:00 2001
+From: David Zbarsky <dzbarsky@gmail.com>
+Date: Thu, 2 Jan 2025 10:50:00 -0500
+Subject: [PATCH] openmp: avoid _mm_malloc on cosmo builds
+
+Cosmopolitan's headers do not expose `_mm_malloc` without pulling in
+extra headers that conflict with assembly preprocessing. The upstream
+OpenMP config assumes the intrinsic is available on x86_64 and routes
+aligned allocation through it. For the cosmo toolchain, force the
+fallback path that uses aligned_alloc/posix_memalign instead.
+
+---
+ third_party/openmp/kmp_config.h | 24 +++++++++++++++----------
+ 1 file changed, 14 insertions(+), 10 deletions(-)
+
+diff --git a/third_party/openmp/kmp_config.h b/third_party/openmp/kmp_config.h
+index 8b40fbf7b..5dff0d6db 100644
+--- a/third_party/openmp/kmp_config.h
++++ b/third_party/openmp/kmp_config.h
+@@ -104,18 +104,22 @@
+ #define LIBOMP_HAVE_ATTRIBUTE_RTM 0
+ #define KMP_HAVE_ATTRIBUTE_RTM LIBOMP_HAVE_ATTRIBUTE_RTM
+ #define LIBOMP_ARCH_AARCH64_A64FX 0
+ #define KMP_ARCH_AARCH64_A64FX LIBOMP_ARCH_AARCH64_A64FX
+-#ifdef __x86_64__
+-#define LIBOMP_HAVE_XMMINTRIN_H 1
+-#else
+-#define LIBOMP_HAVE_XMMINTRIN_H 0
+-#endif
++#if defined(_COSMO_SOURCE)
++#define LIBOMP_HAVE_XMMINTRIN_H 0
++#elif defined(__x86_64__)
++#define LIBOMP_HAVE_XMMINTRIN_H 1
++#else
++#define LIBOMP_HAVE_XMMINTRIN_H 0
++#endif
+ #define KMP_HAVE_XMMINTRIN_H LIBOMP_HAVE_XMMINTRIN_H
+-#ifdef __x86_64__
+-#define LIBOMP_HAVE__MM_MALLOC 1
+-#else
+-#define LIBOMP_HAVE__MM_MALLOC 0
+-#endif
++#if defined(_COSMO_SOURCE)
++#define LIBOMP_HAVE__MM_MALLOC 0
++#elif defined(__x86_64__)
++#define LIBOMP_HAVE__MM_MALLOC 1
++#else
++#define LIBOMP_HAVE__MM_MALLOC 0
++#endif
+ #define KMP_HAVE__MM_MALLOC LIBOMP_HAVE__MM_MALLOC
+ #define LIBOMP_HAVE_ALIGNED_ALLOC 1
+ #define KMP_HAVE_ALIGNED_ALLOC LIBOMP_HAVE_ALIGNED_ALLOC
+-- 
+2.47.0

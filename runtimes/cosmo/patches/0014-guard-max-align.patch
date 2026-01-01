@@ -1,0 +1,14 @@
+--- a/libc/integral/c.inc
++++ b/libc/integral/c.inc
+@@ -88,2 +88,9 @@
+-#define __DEFINED_max_align_t
+-typedef long double max_align_t;
++#if defined(__clang__)
++#if !defined(__DEFINED_max_align_t)
++#define __DEFINED_max_align_t
++typedef long double max_align_t;
++#endif
++#elif !defined(__DEFINED_max_align_t)
++#define __DEFINED_max_align_t
++typedef long double max_align_t;
++#endif

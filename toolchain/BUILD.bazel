@@ -2,6 +2,7 @@ load("@bazel_skylib//rules:common_settings.bzl", "bool_setting")
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains:artifacts.bzl", "cc_artifact_name_pattern")
 load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
+load("//toolchain:selects.bzl", "platform_llvm_binary")
 load(":declare_toolchains.bzl", "declare_toolchains")
 
 bool_setting(
@@ -55,6 +56,9 @@ cc_args_list(
         "@platforms//os:linux": [
             "//toolchain/args/linux:default_link_flags",
         ],
+        "//platforms/config:cosmo": [
+            "//toolchain/args:cosmo_default_link_flags",
+        ],
         "@platforms//os:windows": [],
         "@platforms//os:none": [],
     }),
@@ -65,6 +69,9 @@ cc_args_list(
     args = select({
         "@platforms//os:macos": [],
         "@platforms//os:linux": [
+            "//toolchain/args:crt_search_directory",
+        ],
+        "//platforms/config:cosmo": [
             "//toolchain/args:crt_search_directory",
         ],
         "@platforms//os:windows": [
@@ -78,6 +85,9 @@ cc_args_list(
     name = "resource_dir",
     args = select({
         "@platforms//os:macos": [],
+        "//platforms/config:cosmo": [
+            "//toolchain/args:resource_dir",
+        ],
         "//conditions:default": [
             "//toolchain/args:resource_dir",
         ],
@@ -87,6 +97,7 @@ cc_args_list(
 cc_args_list(
     name = "default_libs",
     args = select({
+        "//platforms/config:cosmo": [],
         "@platforms//os:macos": [
             "//toolchain/args/macos:default_libs",
         ],
@@ -119,6 +130,9 @@ cc_args_list(
     name = "hermetic_compile_flags",
     args = select({
         "@platforms//os:macos": [],
+        "//platforms/config:cosmo": [
+            "//toolchain/args:hermetic_compile_flags",
+        ],
         "//conditions:default": [
             "//toolchain/args:hermetic_compile_flags",
         ],
@@ -130,6 +144,9 @@ cc_args_list(
     name = "hermetic_link_flags",
     args = select({
         "@platforms//os:macos": [],
+        "//platforms/config:cosmo": [
+            "//toolchain/args:hermetic_link_flags",
+        ],
         "//conditions:default": [
             "//toolchain/args:hermetic_link_flags",
         ],
@@ -149,9 +166,14 @@ cc_args_list(
 # TODO(cerisier): extract those into proper semantic args list.
 cc_args_list(
     name = "linux_toolchain_args",
-    args = [
-        "//toolchain/args:libcxx_headers_include_search_paths",
-    ] + select({
+    args = select({
+        "//platforms/config:cosmo": [
+            "//toolchain/args:cosmo_libcxx_headers_include_search_paths",
+        ],
+        "//conditions:default": [
+            "//toolchain/args:libcxx_headers_include_search_paths",
+        ],
+    }) + select({
         "//platforms/config:musl": [
             "//toolchain/args/linux:kernel_headers_include_search_paths",
             "//toolchain/args/linux:musl_libc_headers_include_search_paths",
@@ -168,7 +190,10 @@ cc_args_list(
             "//toolchain/args:static_link_executable",
         ],
         "//conditions:default": [],
-    }),
+    }) + [
+        #"//toolchain/args/linux:toolchain_bin_search_path",
+    ],
+    visibility = ["//visibility:public"],
 )
 
 # TODO(cerisier): extract those into proper semantic args list.
@@ -186,6 +211,7 @@ cc_args_list(
         # Platform specific flags.
         "@platforms//os:macos": [":macos_toolchain_args"],
         "@platforms//os:linux": [":linux_toolchain_args"],
+        "//platforms/config:cosmo": [":linux_toolchain_args"],
         "@platforms//os:windows": [":windows_toolchain_args"],
         "@platforms//os:none": [],
         "//conditions:default": [],
@@ -196,7 +222,8 @@ cc_args_list(
     name = "toolchain_args",
     args = [
         # Common default compile flags.
-        "//toolchain/args:llvm_target_for_platform",
+        "//toolchain/args:llvm_compile_target_for_platform",
+        "//toolchain/args:llvm_link_target_for_platform",
         "//toolchain/args:no_absolute_paths_for_builtins",
         "//toolchain/args:deterministic_compile_flags",
 
@@ -206,6 +233,9 @@ cc_args_list(
 
         # TODO(cerisier): Explode this into specific args instead
         ":platform_specific_args",
+
+        # Cosmopolitan static runtime (all OSes)
+        ":cosmo_platform_args",
 
         # Optional sanitizers
         "//toolchain/args:ubsan_flags",
@@ -218,6 +248,44 @@ cc_args_list(
         ":default_startfiles", # Needs to stay out of resource_dir since clang does not always search for crtstuff for all targets.
         ":default_libs",
     ],
+    visibility = ["//toolchain:__subpackages__"],
+)
+
+cc_args_list(
+    name = "cosmo_platform_args",
+    args = select({
+        "//platforms/config:cosmo_x86_64": [
+            "//toolchain/args:cosmo_libcxx_headers_include_search_paths",
+            "//toolchain/args:cosmo_header_paths",
+            "//toolchain/args:cosmo_normalize_include",
+            "//toolchain/args:cosmo_linux_defines",
+            "//toolchain/args:cosmo_cxx_standard",
+            "//toolchain/args:cosmo_lax_vector_conversions",
+            "//toolchain/args:cosmo_simd_flags",
+            "//toolchain/args:cosmo_disable_mmx",
+            "//toolchain/args:cosmo_linker_script",
+            "//toolchain/args:cosmo_startfiles",
+            "//toolchain/args:cosmo_disable_default_crt",
+            "//toolchain/args/linux:cosmo_libc_headers_include_search_paths",
+            "//toolchain/args/linux:default_libs_cosmo",
+        ],
+        "//platforms/config:cosmo_aarch64": [
+            "//toolchain/args:cosmo_libcxx_headers_include_search_paths",
+            "//toolchain/args:cosmo_header_paths",
+            "//toolchain/args:cosmo_normalize_include",
+            "//toolchain/args:cosmo_linux_defines",
+            "//toolchain/args:cosmo_cxx_standard",
+            "//toolchain/args:cosmo_lax_vector_conversions",
+            "//toolchain/args:cosmo_simd_flags",
+            "//toolchain/args:cosmo_disable_mmx",
+            "//toolchain/args:cosmo_linker_script_aarch64",
+            "//toolchain/args:cosmo_startfiles",
+            "//toolchain/args:cosmo_disable_default_crt",
+            "//toolchain/args/linux:cosmo_libc_headers_include_search_paths",
+            "//toolchain/args/linux:default_libs_cosmo",
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//toolchain:__subpackages__"],
 )
 

@@ -1,0 +1,24 @@
+--- a/third_party/intel/clang/mmintrin.h
++++ b/third_party/intel/clang/mmintrin.h
+@@ -10,6 +10,11 @@
+ #ifndef __MMINTRIN_H
+ #define __MMINTRIN_H
+ 
++#if defined(__clang__)
++#pragma clang diagnostic push
++#pragma clang diagnostic ignored "-Wvector-conversion"
++#endif
++
+ #if !defined(__i386__) && !defined(__x86_64__)
+ #error "This header is only meant to be used on x86 and x64 architecture"
+ #endif
+@@ -1552,5 +1557,9 @@
+ #define _m_pcmpgtw _mm_cmpgt_pi16
+ #define _m_pcmpgtd _mm_cmpgt_pi32
+ 
++#if defined(__clang__)
++#pragma clang diagnostic pop
++#endif
++
+ #endif /* __MMINTRIN_H */
+ 

@@ -468,6 +468,9 @@ cc_stage2_library(
         "@toolchains_llvm_bootstrapped//platforms/config:musl": [
             "@musl_libc//:musl_libc_headers",
         ],
+        "@toolchains_llvm_bootstrapped//platforms/config:cosmo": [
+            "@toolchains_llvm_bootstrapped//runtimes/cosmo:cosmo_headers",
+        ],
         "@toolchains_llvm_bootstrapped//platforms/config:gnu": [
             "@glibc//:gnu_libc_headers",
         ],
@@ -621,6 +624,9 @@ cc_stage2_library(
     ] + select({
         "@toolchains_llvm_bootstrapped//platforms/config:musl": [
             "@musl_libc//:musl_libc_headers",
+        ],
+        "@toolchains_llvm_bootstrapped//platforms/config:cosmo": [
+            "@toolchains_llvm_bootstrapped//runtimes/cosmo:cosmo_headers",
         ],
         "@toolchains_llvm_bootstrapped//platforms/config:gnu": [
             "@glibc//:gnu_libc_headers",

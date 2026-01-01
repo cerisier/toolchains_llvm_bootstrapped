@@ -1,0 +1,34 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Google <noreply@google.com>
+Date: Thu, 30 Jan 2025 00:00:00 +0000
+Subject: [PATCH] Use SYS_gettid for cosmo builds
+
+Cosmopolitan exposes Linux syscall numbers via `SYS_*` rather than
+`__NR_*` macros, so use the generic name when available.
+
+---
+ llvm/lib/Support/Unix/Threading.inc | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/llvm/lib/Support/Unix/Threading.inc b/llvm/lib/Support/Unix/Threading.inc
+index 1849a4f5..dd2c7940 100644
+--- a/llvm/lib/Support/Unix/Threading.inc
++++ b/llvm/lib/Support/Unix/Threading.inc
+@@ -144,7 +144,11 @@ uint64_t get_threadid() {
+ #elif defined(__OpenBSD__)
+   return uint64_t(getthrid());
+ #elif defined(__ANDROID__)
+   return uint64_t(gettid());
+ #elif defined(__linux__)
+-  return uint64_t(syscall(__NR_gettid));
++#if defined(SYS_gettid)
++  return uint64_t(syscall(SYS_gettid));
++#else
++  return uint64_t(syscall(__NR_gettid));
++#endif
+ #elif defined(_AIX)
+   return uint64_t(thread_self());
+ #else
+-- 
+2.34.1
+

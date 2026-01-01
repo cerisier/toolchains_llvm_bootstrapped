@@ -1,6 +1,6 @@
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
-load("//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
+load("//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE", "LLVM_LINK_TARGET_TRIPLE")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -33,14 +33,191 @@ cc_args(
 )
 
 cc_args(
-    name = "llvm_target_for_platform",
+    name = "llvm_compile_target_for_platform",
     actions = [
         "@rules_cc//cc/toolchains/actions:compile_actions",
-        "@rules_cc//cc/toolchains/actions:link_actions",
     ],
     args = [
         "-target",
     ] + LLVM_TARGET_TRIPLE,
+)
+
+cc_args(
+    name = "llvm_link_target_for_platform",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = [
+        "-target",
+    ] + LLVM_LINK_TARGET_TRIPLE,
+)
+
+cc_args(
+    name = "cosmo_header_paths",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:compile_actions",
+    ],
+    args = [
+        "-isystem",
+        "{cosmo_headers}",
+        "-isystem",
+        "{cosmo_headers}/libc/isystem",
+        "-isystem",
+        "{cosmo_headers}/libc",
+        "-isystem",
+        "{cosmo_headers}/libc/nt",
+        "-iquote",
+        "{cosmo_headers}",
+        "-iquote",
+        "{cosmo_headers}/third_party/libcxx",
+    ],
+    format = {
+        "cosmo_headers": "@cosmo_libc//:cosmo_headers_include_search_directory",
+    },
+    data = [
+        "@cosmo_libc//:cosmo_headers_include_search_directory",
+    ],
+)
+
+cc_args(
+    name = "cosmo_normalize_include",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:c_compile",
+        "@rules_cc//cc/toolchains/actions:cpp_compile",
+        "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
+        "@rules_cc//cc/toolchains/actions:cpp_module_compile",
+        "@rules_cc//cc/toolchains/actions:cpp_module_codegen",
+        "@rules_cc//cc/toolchains/actions:clif_match",
+        "@rules_cc//cc/toolchains/actions:objcpp_compile",
+    ],
+    args = [
+        "-include",
+        "toolchain/args/cosmo_normalize_with_linux.h",
+    ],
+    data = [
+        "cosmo_normalize_with_linux.h",
+    ],
+)
+
+cc_args(
+    name = "cosmo_linux_defines",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:compile_actions",
+    ],
+    args = [
+        "-D_COSMO_SOURCE",
+        "-D__linux__",
+        "-Dlinux",
+        "-D__linux",
+        "-DLITTLE_ENDIAN=1234",
+        "-DBIG_ENDIAN=4321",
+        "-DBYTE_ORDER=LITTLE_ENDIAN",
+        "-DHAVE_SBRK=0",
+    ],
+)
+
+cc_args(
+    name = "cosmo_cxx_standard",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:cpp_compile",
+        "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
+        "@rules_cc//cc/toolchains/actions:cpp_module_compile",
+        "@rules_cc//cc/toolchains/actions:cpp_module_codegen",
+        "@rules_cc//cc/toolchains/actions:clif_match",
+        "@rules_cc//cc/toolchains/actions:objcpp_compile",
+    ],
+    args = [
+        "-std=gnu++23",
+    ],
+)
+
+cc_args(
+    name = "cosmo_lax_vector_conversions",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:compile_actions",
+    ],
+    args = [
+        "-flax-vector-conversions",
+    ],
+)
+
+cc_args(
+    name = "cosmo_disable_mmx",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:compile_actions",
+    ],
+    args = [
+        "-DCOSMO_DISABLE_MMX",
+    ],
+)
+
+cc_args(
+    name = "cosmo_simd_flags",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:compile_actions",
+    ],
+    args = select({
+        "//platforms/config:cosmo_x86_64": [
+            "-mmmx",
+            "-msse",
+            "-msse2",
+            "-msse3",
+            "-mssse3",
+        ],
+        "//conditions:default": [],
+    }),
+)
+
+cc_args(
+    name = "cosmo_default_link_flags",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = [
+        "-Wl,-no-as-needed",
+    ],
+)
+
+cc_args(
+    name = "cosmo_linker_script",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = [
+        "-Wl,-T,{ape_lds}",
+        "-Wl,-z,common-page-size=4096",
+        "-Wl,-z,max-page-size=16384",
+        "-Wl,--gc-sections",
+        "-Wl,-z,noexecstack",
+        "-Wl,-z,norelro",
+    ],
+    format = {
+        "ape_lds": "@cosmo_libc//:ape_linker_script",
+    },
+    data = [
+        "@cosmo_libc//:ape_linker_script",
+    ],
+)
+
+cc_args(
+    name = "cosmo_linker_script_aarch64",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = [
+        "-Wl,-T,{ape_lds}",
+        "-Wl,-z,common-page-size=16384",
+        "-Wl,-z,max-page-size=16384",
+        "-Wl,--gc-sections",
+        "-Wl,-z,noexecstack",
+        "-Wl,-z,norelro",
+    ],
+    format = {
+        "ape_lds": "@cosmo_libc//:ape_aarch64_linker_script",
+    },
+    data = [
+        "@cosmo_libc//:ape_aarch64_linker_script",
+    ],
 )
 
 cc_args(
@@ -69,6 +246,33 @@ cc_args(
     data = [
         "//runtimes/libcxx:libcxx_headers_include_search_directory",
         "//runtimes/libcxx:libcxxabi_headers_include_search_directory",
+    ],
+)
+
+cc_args(
+    name = "cosmo_libcxx_headers_include_search_paths",
+    actions = [
+        # cpp_compile_actions - lto_backend
+        # Omitted to avoid unused arg warning for -I paths.
+        "@rules_cc//cc/toolchains/actions:linkstamp_compile",
+        "@rules_cc//cc/toolchains/actions:cpp_compile",
+        "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
+        "@rules_cc//cc/toolchains/actions:cpp_module_compile",
+        "@rules_cc//cc/toolchains/actions:cpp_module_codegen",
+        "@rules_cc//cc/toolchains/actions:clif_match",
+        "@rules_cc//cc/toolchains/actions:objcpp_compile",
+    ],
+    args = [
+        "-isystem",
+        "{cosmo_headers}/third_party/libcxx",
+        "-isystem",
+        "{cosmo_headers}/third_party/libcxxabi",
+    ],
+    format = {
+        "cosmo_headers": "@cosmo_libc//:cosmo_headers_include_search_directory",
+    },
+    data = [
+        "@cosmo_libc//:cosmo_headers_include_search_directory",
     ],
 )
 
@@ -112,10 +316,8 @@ cc_args(
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
     args = [
+        "-v",
         "-fuse-ld=lld",
-        # lld will be used if it's next to clang.
-        # It would have been great to set the path explicitly.
-        # "--ld-path={lld_path}",
     ],
 )
 
@@ -145,6 +347,7 @@ cc_args(
         "-D__TIMESTAMP__=\"redacted\"",
         "-D__TIME__=\"redacted\"",
         "-ffile-compilation-dir=.",  # Avoid absolute paths in binaries
+        "-flax-vector-conversions",
     ],
 )
 
@@ -283,7 +486,39 @@ cc_args(
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
+    args = select({
+        "//platforms/config:cosmo": [
+            "-rtlib=compiler-rt",
+        ],
+        "//conditions:default": [
+            "-rtlib=compiler-rt",
+        ],
+    }),
+)
+
+cc_args(
+    name = "cosmo_disable_default_crt",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
     args = [
-        "-rtlib=compiler-rt",
+        "-nostartfiles",
+        "-nodefaultlibs",
+    ],
+)
+
+cc_args(
+    name = "cosmo_startfiles",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = [
+        "{cosmo_crt}",
+    ],
+    format = {
+        "cosmo_crt": "//runtimes/cosmo:cosmo_crt.object",
+    },
+    data = [
+        "//runtimes/cosmo:cosmo_crt.object",
     ],
 )

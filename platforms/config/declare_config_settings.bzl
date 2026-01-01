@@ -1,4 +1,4 @@
-load("//platforms:common.bzl", "SUPPORTED_TARGETS", "LIBC_SUPPORTED_TARGETS")
+load("//platforms:common.bzl", "SUPPORTED_TARGETS", "LIBC_SUPPORTED_TARGETS", "COSMO_SUPPORTED_CPUS")
 load("@bazel_skylib//lib:selects.bzl", "selects")
 load("//constraints/libc:libc_versions.bzl", "LIBCS", "GLIBCS")
 
@@ -16,8 +16,9 @@ def declare_config_settings():
     declare_config_settings_libc_aware()
 
 def declare_config_settings_libc_aware():
+    # Linux supports multiple libc implementations (glibc, musl).
     for (target_os, target_cpu) in LIBC_SUPPORTED_TARGETS:
-        for libc in LIBCS + ["unconstrained"]:
+        for libc in ["musl"] + GLIBCS + ["unconstrained"]:
             native.config_setting(
                 name = "{}_{}_{}".format(target_os, target_cpu, libc),
                 constraint_values = [
@@ -38,6 +39,28 @@ def declare_config_settings_libc_aware():
             visibility = ["//visibility:public"],
         )
 
+    # Cosmopolitan targets CPU only (no OS constraint).
+    for target_cpu in COSMO_SUPPORTED_CPUS:
+        native.config_setting(
+            name = "cosmo_{}".format(target_cpu),
+            constraint_values = [
+                "@platforms//cpu:{}".format(target_cpu),
+                "//constraints/libc:cosmo",
+            ],
+            visibility = ["//visibility:public"],
+        )
+
+    # Legacy names with OS prefixes for compatibility with existing selects.
+    for target_os, target_cpu in SUPPORTED_TARGETS:
+        native.config_setting(
+            name = "{}_{}_cosmo".format(target_os, target_cpu),
+            constraint_values = [
+                "@platforms//cpu:{}".format(target_cpu),
+                "//constraints/libc:cosmo",
+            ],
+            visibility = ["//visibility:public"],
+        )
+
     selects.config_setting_group(
         name = "gnu",
         match_any = [
@@ -53,6 +76,14 @@ def declare_config_settings_libc_aware():
         name = "musl",
         constraint_values = [
             "//constraints/libc:musl",
+        ],
+        visibility = ["//visibility:public"],
+    )
+
+    native.config_setting(
+        name = "cosmo",
+        constraint_values = [
+            "//constraints/libc:cosmo",
         ],
         visibility = ["//visibility:public"],
     )

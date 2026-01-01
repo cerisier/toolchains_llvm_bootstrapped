@@ -10,6 +10,9 @@ def make_select_kernel_headers_repository_target(bazel_target):
         for libc_version in LIBCS + ["unconstrained"]:
             kernel_version = LIBC_KERNEL_VERSIONS[libc_version]
             apparent_target = "@linux_kernel_headers_{}.{}//:{}".format(arch_to_kernel_arch(target_arch), kernel_version, bazel_target)
-            selection["@toolchains_llvm_bootstrapped//platforms/config:{}_{}_{}".format(target_os, target_arch, libc_version)] = apparent_target
+            if libc_version == "cosmo":
+                selection["@toolchains_llvm_bootstrapped//platforms/config:cosmo_{}".format(target_arch)] = apparent_target
+            else:
+                selection["@toolchains_llvm_bootstrapped//platforms/config:{}_{}_{}".format(target_os, target_arch, libc_version)] = apparent_target
 
     return select(selection)

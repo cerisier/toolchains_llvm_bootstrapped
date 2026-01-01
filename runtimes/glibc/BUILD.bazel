@@ -82,6 +82,27 @@ write_file(
     ],
 )
 
+write_file(
+    name = "_IO_stdin_used.S",
+    out = "glibc/build/_IO_stdin_used.S",
+    content = [
+        ".globl _IO_stdin_used",
+        ".type _IO_stdin_used, %object;",
+        "#if __SIZEOF_POINTER__ == 4",
+        ".size _IO_stdin_used, 4",
+        ".section .rodata",
+        "_IO_stdin_used:",
+        ".long 0",
+        "#else",
+        ".size _IO_stdin_used, 8",
+        ".section .rodata",
+        ".p2align 3",
+        "_IO_stdin_used:",
+        ".quad 0",
+        "#endif",
+    ],
+)
+
 # Make one cc_shared_library target per lib, using the assembly file
 LIBS = [
     make_glibc_shared_library(
@@ -97,7 +118,8 @@ LIBS = [
         lib_version = "6",
         srcs = [
             ":libc.s",
-            ":__stack_chk_guard.S"
+            ":__stack_chk_guard.S",
+            ":_IO_stdin_used.S",
         ],
         extra_link_flags = [
             # _IO_stdin_used is defined as a global symbol in .rodata

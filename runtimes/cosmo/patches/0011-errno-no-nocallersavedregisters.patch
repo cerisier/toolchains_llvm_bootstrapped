@@ -1,0 +1,11 @@
+--- a/libc/sysv/errno.c
++++ b/libc/sysv/errno.c
+@@ -38,7 +38,7 @@
+  *
+  * This function promises to not clobber argument registers.
+  */
+-nocallersavedregisters errno_t *__errno_location(void) {
++errno_t *__errno_location(void) {
+   if (__tls_enabled) {
+     return &__get_tls()->tib_errno;
+   } else {

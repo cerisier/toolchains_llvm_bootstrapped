@@ -4,6 +4,9 @@ cc_args_list(
     name = "hermetic_link_flags",
     args = select({
         "@platforms//os:macos": [],
+        "//platforms/config:cosmo": [
+            "//toolchain/stage2/args:hermetic_link_flags",
+        ],
         "//conditions:default": [
             "//toolchain/stage2/args:hermetic_link_flags",
         ],
@@ -16,6 +19,7 @@ cc_args_list(
         "@platforms//os:macos": [
             "//toolchain/args/macos:default_link_flags",
         ],
+        "//platforms/config:cosmo": [],
         "//conditions:default": [],
     }),
 )
@@ -27,8 +31,43 @@ cc_args_list(
             "//toolchain:macos_toolchain_args",
         ],
         "@platforms//os:linux": [],
+        "//platforms/config:cosmo": [
+            "//toolchain:linux_toolchain_args",
+        ],
         "@platforms//os:windows": [],
         "@platforms//os:none": [],
+    }),
+    visibility = ["//toolchain:__subpackages__"],
+)
+
+cc_args_list(
+    name = "cosmo_platform_args",
+    args = select({
+        "//platforms/config:cosmo_x86_64": [
+            "//toolchain/args:cosmo_libcxx_headers_include_search_paths",
+            "//toolchain/args:cosmo_header_paths",
+            "//toolchain/args:cosmo_normalize_include",
+            "//toolchain/args:cosmo_linux_defines",
+            "//toolchain/args:cosmo_cxx_standard",
+            "//toolchain/args:cosmo_lax_vector_conversions",
+            "//toolchain/args:cosmo_simd_flags",
+            "//toolchain/args:cosmo_disable_mmx",
+            "//toolchain/args:cosmo_linker_script",
+            "//toolchain/args/linux:cosmo_libc_headers_include_search_paths",
+        ],
+        "//platforms/config:cosmo_aarch64": [
+            "//toolchain/args:cosmo_libcxx_headers_include_search_paths",
+            "//toolchain/args:cosmo_header_paths",
+            "//toolchain/args:cosmo_normalize_include",
+            "//toolchain/args:cosmo_linux_defines",
+            "//toolchain/args:cosmo_cxx_standard",
+            "//toolchain/args:cosmo_lax_vector_conversions",
+            "//toolchain/args:cosmo_simd_flags",
+            "//toolchain/args:cosmo_disable_mmx",
+            "//toolchain/args:cosmo_linker_script_aarch64",
+            "//toolchain/args/linux:cosmo_libc_headers_include_search_paths",
+        ],
+        "//conditions:default": [],
     }),
     visibility = ["//toolchain:__subpackages__"],
 )
@@ -37,7 +76,8 @@ cc_args_list(
     name = "toolchain_args",
     args = [
         # Common default compile flags.
-        "//toolchain/args:llvm_target_for_platform",
+        "//toolchain/args:llvm_compile_target_for_platform",
+        "//toolchain/args:llvm_link_target_for_platform",
         "//toolchain/args:no_absolute_paths_for_builtins",
         "//toolchain/args:deterministic_compile_flags",
         "//toolchain/stage2/args:optimization_flags",
@@ -47,6 +87,9 @@ cc_args_list(
         "//toolchain/stage2:hermetic_link_flags",
 
         "//toolchain/stage2:platform_specific_args",
+
+        # Cosmopolitan static runtime (all OSes)
+        ":cosmo_platform_args",
 
         # Optional sanitizers
         "//toolchain/stage2/args:ubsan_flags",
