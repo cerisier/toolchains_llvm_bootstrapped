@@ -299,7 +299,6 @@ cc_stage2_library(
         ":libc_nt",
         ":libc_str",
         ":libc_sysv",
-        ":libc_sysv_calls",
         _COMPILER_RT_DEP,
     ],
     visibility = ["//visibility:private"],
@@ -329,7 +328,6 @@ cc_stage2_library(
         ":libc_stdio",
         ":libc_str",
         ":libc_sysv",
-        ":libc_sysv_calls",
         ":libc_thread",
         ":libc_tinymath",
         _COMPILER_RT_DEP,
@@ -350,7 +348,7 @@ cc_stage2_library(
     copts = COSMO_COMMON_COPTS + [
         "-Wframe-larger-than=4096",
     ],
-    deps = [":libc_sysv_calls"],
+    deps = [":libc_sysv"],
     visibility = ["//visibility:private"],
 )
 
@@ -450,7 +448,6 @@ cc_stage2_library(
         ":libc_nexgen32e",
         ":libc_nt",
         ":libc_sysv",
-        ":libc_sysv_calls",
     ],
     visibility = ["//visibility:private"],
 )
@@ -483,7 +480,6 @@ cc_stage2_library(
         ":libc_runtime",
         ":libc_str",
         ":libc_sysv",
-        ":libc_sysv_calls",
         ":third_party_dlmalloc",
         ":third_party_gdtoa",
     ],
@@ -510,28 +506,61 @@ cc_stage2_library(
     visibility = ["//visibility:private"],
 )
 
-cc_stage2_library(
+# https://github.com/jart/cosmopolitan/blob/4.0.2/libc/mem/BUILD.mk
+cosmo_cc_library(
     name = "libc_mem",
-    srcs = glob(
-        ["libc/mem/**/*.%s" % ext for ext in ["c", "cc", "cpp", "s", "S"]],
-        exclude = COSMO_COMMON_EXCLUDES,
-        allow_empty = True,
-    ),
+    dir = "libc/mem",
     textual_hdrs = [":libc_hdrs"],
     copts = COSMO_COMMON_COPTS + [
         "-fno-sanitize=all",
         "-Wframe-larger-than=4096",
         "-fexceptions",
     ],
-    visibility = ["//visibility:private"],
+    per_file_copts = {
+        "libc/mem/asan.c": [
+            "-O2",
+            "-finline",
+            "-finline-functions",
+            "-x-no-pg",
+            "-ffreestanding",
+            "-fno-sanitize=all",
+            "-fno-stack-protector",
+            "-Wframe-larger-than=4096",
+        ],
+        "libc/mem/asanthunk.c": ["-Os"] + NO_MAGIC_COPTS + ["-foptimize-sibling-calls"],
+    },
+    deps = [
+        ":libc_calls",
+        ":libc_fmt",
+        ":libc_intrin",
+        ":libc_nexgen32e",
+        ":libc_runtime",
+        ":libc_str",
+        ":libc_sysv",
+        ":libc_sysv_calls",
+        ":third_party_dlmalloc",
+    ],
 )
 
+# https://github.com/jart/cosmopolitan/blob/4.0.2/libc/nexgen32e/BUILD.mk
 cosmo_cc_library(
     name = "libc_nexgen32e",
-    srcs = glob(
-        ["libc/nexgen32e/**/*.%s" % ext for ext in ["c", "cc", "s", "S"]],
-        allow_empty = True,
-    ),
+    dir = "libc/nexgen32e",
+    aarch64_safe_assembly_srcs = [
+        "libc/nexgen32e/gc.S",
+        "libc/nexgen32e/zip.S",
+        "libc/nexgen32e/mcount.S",
+        "libc/nexgen32e/ksha256.S",
+        "libc/nexgen32e/ksha512.S",
+        "libc/nexgen32e/kcp437.S",
+        "libc/nexgen32e/ktensindex.S",
+        "libc/nexgen32e/longjmp.S",
+        "libc/nexgen32e/setjmp.S",
+        #"libc/nexgen32e/missingno.S",
+        "libc/nexgen32e/khalfcache3.S",
+        "libc/nexgen32e/gclongjmp.S",
+        "libc/nexgen32e/checkstackalign.S",
+    ],
     textual_hdrs = [":libc_hdrs"],
     per_file_copts = {
         "libc/nexgen32e/envp.c": NO_MAGIC_COPTS,
@@ -593,7 +622,6 @@ cc_stage2_library(
         ":libc_runtime",
         ":libc_str",
         ":libc_sysv",
-        ":libc_sysv_calls",
         ":third_party_dlmalloc",
         ":third_party_gdtoa",
         ":third_party_nsync",
@@ -677,13 +705,10 @@ cc_stage2_library(
     visibility = ["//visibility:private"],
 )
 
-
+# TODO(zbarsky): update this one...
 cosmo_cc_library(
     name = "libc_str",
-    srcs = glob(
-        ["libc/str/**/*.%s" % ext for ext in ["c", "cc", "s", "S"]],
-        allow_empty = True,
-    ),
+    dir = "libc/str",
     deps = [
         ":libc_intrin",
         ":libc_nexgen32e",
@@ -731,40 +756,63 @@ cosmo_cc_library(
     },
 )
 
-cc_stage2_library(
+# https://github.com/jart/cosmopolitan/blob/4.0.2/libc/sysv/BUILD.mk
+# TODO(zbarsky): Split out calls lib??
+cosmo_cc_library(
     name = "libc_sysv",
-    srcs = select({
-        "@platforms//cpu:x86_64": glob(
-            ["libc/sysv/**/*.%s" % ext for ext in ["c", "cc", "cpp", "s", "S"]],
-            exclude = COSMO_COMMON_EXCLUDES,
-            allow_empty = True,
-        ),
-        "@platforms//cpu:aarch64": glob(
-            ["libc/sysv/**/*.%s" % ext for ext in ["c", "cc", "cpp", "s", "S"]],
-            exclude = COSMO_COMMON_EXCLUDES + [
-                "libc/sysv/errfun.S",
-                "libc/sysv/systemfive.S",
-            ],
-            allow_empty = True,
-        ),
-        "//conditions:default": [],
-    }),
-    textual_hdrs = [":libc_hdrs"],
-    copts = COSMO_COMMON_COPTS,
-    visibility = ["//visibility:private"],
-)
+    dir = "libc/sysv",
+    per_file_copts = {
+        "libc/sysv/errloc.c": ["-ffreestanding", "-fno-stack-protector", "-fno-sanitize=all", "-mgeneral-regs-only"],
+        "libc/sysv/linret.c": ["-ffreestanding", "-fno-stack-protector", "-fno-sanitize=all", "-mgeneral-regs-only"],
+        "libc/sysv/errfun.c": ["-ffreestanding", "-fno-stack-protector", "-fno-sanitize=all", "-mgeneral-regs-only"],
+        "libc/sysv/enosys.c": ["-ffreestanding", "-fno-stack-protector", "-fno-sanitize=all", "-mgeneral-regs-only"],
+        "libc/sysv/sysret.c": ["-ffreestanding", "-fno-stack-protector", "-fno-sanitize=all", "-mgeneral-regs-only"],
 
-cc_stage2_library(
-    name = "libc_sysv_calls",
-    srcs = glob(
-        ["libc/sysv/calls/**/*.%s" % ext for ext in ["c", "cc", "cpp", "s", "S"]],
-        exclude = COSMO_COMMON_EXCLUDES,
-        allow_empty = True,
-    ),
+        "libc/sysv/errno.c": ["-fpie", "-Os"],
+        "libc/sysv/errno-windows.c": ["-fpie", "-Os"],
+        "libc/sysv/errno-freebsd.c": ["-fpie", "-Os"],
+        "libc/sysv/errno-openbsd.c": ["-fpie", "-Os"],
+        "libc/sysv/errno-netbsd.c": ["-fpie", "-Os"],
+        "libc/sysv/errno-xnu.c": ["-fpie", "-Os"],
+
+        "libc/sysv/sysv.c": ["-ffreestanding", "-fno-stack-protector", "-fno-sanitize=all", "-mgeneral-regs-only"] + select({
+            "@platforms//cpu:aarch64": [
+                "-ffixed-x0",
+                "-ffixed-x1",
+                "-ffixed-x2",
+                "-ffixed-x3",
+                "-ffixed-x4",
+                "-ffixed-x5",
+                "-ffixed-x8",
+                "-ffixed-x9",
+                "-ffixed-x16",
+                "-fomit-frame-pointer",
+                "-foptimize-sibling-calls",
+                "-Os",
+            ],
+            "@platforms//cpu:x86_64": [],
+        })
+    },
+    aarch64_safe_assembly_srcs = [
+        "libc/sysv/gc.S",
+        "libc/sysv/syscon.S",
+        "libc/sysv/hostos.S",
+        "libc/sysv/syslib.S",
+        "libc/sysv/syscount.S",
+        "libc/sysv/syscall2.S",
+        "libc/sysv/syscall3.S",
+        "libc/sysv/syscall4.S",
+        "libc/sysv/restorert.S",
+    ] + glob([
+        #"libc/sysv/calls/*.S",
+        "libc/sysv/consts/*.S",
+        "libc/sysv/errfuns/*.S",
+        "libc/sysv/dos2errno/*.S",
+    ]),
+    deps = [
+        ":libc_nexgen32e",
+    ],
     textual_hdrs = [":libc_hdrs"],
-    copts = COSMO_COMMON_COPTS,
-    deps = [":libc_sysv"],
-    visibility = ["//visibility:private"],
 )
 
 cc_stage2_library(
@@ -788,7 +836,6 @@ cc_stage2_library(
         ":libc_runtime",
         ":libc_str",
         ":libc_sysv",
-        ":libc_sysv_calls",
         ":libc_tinymath",
         ":third_party_dlmalloc",
         ":third_party_nsync",
@@ -870,7 +917,6 @@ cc_stage2_library(
         ":libc_stdio",
         ":libc_str",
         ":libc_sysv",
-        ":libc_sysv_calls",
         ":libc_thread",
         ":libc_tinymath",
         ":libc_x",
@@ -1212,7 +1258,6 @@ cc_stage2_library(
         ":libc_nt",
         ":libc_str",
         ":libc_sysv",
-        ":libc_sysv_calls",
     ],
     visibility = ["//visibility:private"],
 )
@@ -1261,7 +1306,6 @@ cc_stage2_library(
         ":libc_nexgen32e",
         ":libc_str",
         ":libc_sysv",
-        ":libc_sysv_calls",
         ":third_party_nsync",
         _COMPILER_RT_DEP,
     ],

@@ -79,13 +79,22 @@ DEFAULT_LDFLAGS = [
 
 COSMO_COMMON_COPTS = DEFAULT_CCFLAGS + DEFAULT_CPPFLAGS + DEFAULT_COPTS + DEFAULT_ASFLAGS
 
-def cosmo_cc_library(name, srcs, copts = [], per_file_copts = {}, **kwargs):
-    excludes = per_file_copts.keys()
+def cosmo_cc_library(name, dir, copts = [], aarch64_safe_assembly_srcs = [], per_file_copts = {}, **kwargs):
     libs = [name + "_srcs"]
 
     cc_stage2_library(
         name = name + "_srcs",
-        srcs = list(set(srcs) - set(excludes)),
+        srcs = native.glob(
+            [dir + "/**/*.c", dir + "/**/*.cc"],
+            exclude = per_file_copts.keys(),
+            allow_empty = True,
+        ) + select({
+            "@platforms//cpu:x86_64": native.glob(
+                [dir + "/**/*.s", dir + "/**/*.S"],
+                allow_empty = True,
+            ),
+            "@platforms//cpu:aarch64": aarch64_safe_assembly_srcs,
+        }),
         copts = COSMO_COMMON_COPTS + copts,
         conlyopts = DEFAULT_CFLAGS,
         cxxopts = DEFAULT_CXXFLAGS,
