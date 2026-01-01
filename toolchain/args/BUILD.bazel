@@ -422,7 +422,7 @@ cc_args(
         "@rules_cc//cc/toolchains/actions:cpp_compile_actions",
         "@rules_cc//cc/toolchains/actions:c_compile_actions",
         # -nostdlibinc triggers a warning for assemble (no preprocess)
-        "@rules_cc//cc/toolchains/actions:preprocess_assemble",
+        #"@rules_cc//cc/toolchains/actions:preprocess_assemble",
         "@rules_cc//cc/toolchains/actions:objc_compile",
         "@rules_cc//cc/toolchains/actions:objcpp_compile",
     ],

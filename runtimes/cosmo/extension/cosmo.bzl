@@ -21,7 +21,7 @@ def _cosmo_extension_impl(module_ctx):
             #"//runtimes/cosmo/patches:0008-clang-intrin-wrappers.patch",
             #"//runtimes/cosmo/patches:0009-clang-mmintrin-vector-conversion.patch",
             #"//runtimes/cosmo/patches:0010-disable-mmx-intrinsics.patch",
-            #"//runtimes/cosmo/patches:0011-errno-no-nocallersavedregisters.patch",
+            "//runtimes/cosmo/patches:0011-errno-no-nocallersavedregisters.patch",
             #"//runtimes/cosmo/patches:0012-disable-tmmintrin-mmx.patch",
             #"//runtimes/cosmo/patches:0013-tprecode8to16-conditional-neon.patch",
             #"//runtimes/cosmo/patches:0014-guard-max-align.patch",
@@ -38,6 +38,7 @@ def _cosmo_extension_impl(module_ctx):
             #"//runtimes/cosmo/patches:0026-arm64-clang-compat.patch",
             #"//runtimes/cosmo/patches:0027-arm-neon-compare.patch",
             #"//runtimes/cosmo/patches:0028-arm64-fenv-demangle.patch",
+            "//runtimes/cosmo/patches:0029-brain16-clang-fallback.patch",
         ],
         patch_args = ["-p1", "-l"],
     )

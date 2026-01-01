@@ -450,7 +450,8 @@ cosmo_cc_library(
         ],
         "libc/intrin/tree.c": ["-ffunction-sections"],
         "libc/intrin/memmove.c": [
-            "-fno-toplevel-reorder",
+            # TODO(zbarsky): what happens when this is disabled...
+            #"-fno-toplevel-reorder",
             "-O2",
             "-finline",
             "-foptimize-sibling-calls",
