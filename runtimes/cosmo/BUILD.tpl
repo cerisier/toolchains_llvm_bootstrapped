@@ -432,7 +432,7 @@ cosmo_cc_library(
         "libc/intrin/kmonthnameshort.S",
         "libc/intrin/kweekdayname.S",
         "libc/intrin/kweekdaynameshort.S",
-        "libc/intrin/sched_yield.S",
+        #"libc/intrin/sched_yield.S",
         "libc/intrin/dsohandle.S",
         # "libc/intrin/getpagesize_freebsd.S",
     ] + glob(["libc/intrin/aarch64/*.S"]),
@@ -900,16 +900,36 @@ cc_stage2_library(
     visibility = ["//visibility:private"],
 )
 
-cc_stage2_library(
+# https://github.com/jart/cosmopolitan/blob/4.0.2/libc/tinymath/BUILD.mk
+cosmo_cc_library(
     name = "libc_tinymath",
-    srcs = glob(
-        ["libc/tinymath/**/*.%s" % ext for ext in ["c", "cc", "cpp", "s", "S"]],
-        exclude = COSMO_COMMON_EXCLUDES,
-        allow_empty = True,
-    ),
-    textual_hdrs = [":libc_hdrs"],
-    copts = COSMO_COMMON_COPTS,
-    visibility = ["//visibility:private"],
+    dir = "libc/tinymath",
+    copts = [
+        "-fmath-errno",
+        "-fsigned-zeros",
+        "-ftrapping-math",
+        "-frounding-math",
+        "-fsignaling-nans",
+        "-fno-reciprocal-math",
+        "-fno-associative-math",
+        "-fno-finite-math-only",
+        "-fno-cx-limited-range",
+        "-ffp-int-builtin-inexact",
+    ],
+    per_file_copts = {
+        "libc/tinymath/lround.c": ["-fno-builtin"],
+        "libc/tinymath/lroundf.c": ["-fno-builtin"],
+        "libc/tinymath/lroundl.c": ["-fno-builtin"],
+
+        "libc/tinymath/expl.c": ["-ffunction-sections"],
+        "libc/tinymath/loglq.c": ["-ffunction-sections"],
+    },
+    deps = [
+        ":libc_intrin",
+        ":libc_nexgen32e",
+        ":libc_sysv",
+        ":third_party_compiler_rt",
+    ],
 )
 
 cc_stage2_library(
