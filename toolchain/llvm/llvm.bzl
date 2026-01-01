@@ -1,4 +1,3 @@
-load("@bazel_lib//lib:copy_file.bzl", "copy_file")
 load("@rules_cc//cc/toolchains:tool.bzl", "cc_tool")
 load("@rules_cc//cc/toolchains:tool_map.bzl", "cc_tool_map")
 load("//:directory.bzl", "headers_directory")
@@ -7,7 +6,6 @@ def declare_llvm_targets(*, suffix = ""):
     headers_directory(
         name = "builtin_headers",
         path = "lib/clang/21/include",
-        visibility = ["//visibility:public"],
     )
 
     # Convenient exports
@@ -58,19 +56,10 @@ def declare_llvm_targets(*, suffix = ""):
         allowlist_include_directories = [":builtin_headers"],
     )
 
-    copy_file(
-        name = "g++",
-        src = "bin/clang++",
-        out = "bin/g++",
-        allow_symlink = True,
-    )
-
     cc_tool(
         name = "lld",
         src = "bin/clang++" + suffix,
         data = [
-            # Needed when linking for cosmo
-            #"bin/g++",
             "bin/ld.lld" + suffix,
             "bin/ld64.lld" + suffix,
             "bin/lld" + suffix,

@@ -187,6 +187,5 @@ alias(
         "//platforms/config:musl": ":default_libs_musl",
         "//platforms/config:gnu": ":default_libs_gnu",
         "//platforms/config:cosmo": ":default_libs_cosmo",
-        "//conditions:default": ":default_libs_gnu",
     }),
 )
