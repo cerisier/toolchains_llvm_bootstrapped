@@ -23,4 +23,9 @@ exports_files([
     "0021-musl-getnameinfo-af-constants.patch",
     "0022-mmintrin-internal-respect-cosmo-disable-mmx.patch",
     "0023-chunkcopy-scalar-fallback.patch",
+    "0024-sysv-aarch64-local-registers.patch",
+    "0025-arm-neon-f16-compare.patch",
+    "0026-arm64-clang-compat.patch",
+    "0027-arm-neon-compare.patch",
+    "0028-arm64-fenv-demangle.patch",
 ])

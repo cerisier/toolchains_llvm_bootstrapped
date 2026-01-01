@@ -1,0 +1,43 @@
+--- a/libc/sysv/sysv.c
++++ b/libc/sysv/sysv.c
+@@ -25,18 +25,6 @@
+ #include "libc/thread/tls.h"
+ #ifndef __x86_64__
+ 
+-// todo(jart): dismal llvm
+-register long x0 asm("x0");
+-register long x1 asm("x1");
+-register long x2 asm("x2");
+-register long x3 asm("x3");
+-register long x4 asm("x4");
+-register long x5 asm("x5");
+-register long sysv_ordinal asm("x8");
+-register long freebsd_ordinal asm("x9");
+-register long xnu_ordinal asm("x16");
+-register long cosmo_tls_register asm("x28");
+-
+ void report_cancelation_point(int, int);
+ 
+ dontinline long systemfive_cancel(void) {
+@@ -45,6 +33,10 @@
+ 
+ // special region of executable memory where cancelation is safe
+ dontinline long systemfive_cancellable(void) {
++  register long x0 asm("x0");
++  register long sysv_ordinal asm("x8");
++  register long xnu_ordinal asm("x16");
++  register long cosmo_tls_register asm("x28");
+ 
+   // check (1) this is a cancelation point
+   // plus (2) cancelations aren't disabled
+@@ -113,6 +105,10 @@
+  * @return x0
+  */
+ long systemfive(void) {
++  register long x0 asm("x0");
++  register long sysv_ordinal asm("x8");
++  register long freebsd_ordinal asm("x9");
++  register long xnu_ordinal asm("x16");
+ 
+   // handle special cases
+   if (IsLinux() || IsFreebsd()) {

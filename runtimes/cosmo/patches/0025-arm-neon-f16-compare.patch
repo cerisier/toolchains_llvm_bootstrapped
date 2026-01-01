@@ -1,0 +1,172 @@
+--- a/third_party/aarch64/clang/arm_neon.h
++++ b/third_party/aarch64/clang/arm_neon.h
+@@ -1916,14 +1916,14 @@
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("fullfp16,neon"))) uint16x8_t vceqzq_f16(float16x8_t __p0) {
+   uint16x8_t __ret;
+-  __ret = (uint16x8_t) __builtin_neon_vceqzq_f16((int8x16_t)__p0, 49);
++  __ret = (uint16x8_t)(__p0 == (float16x8_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("fullfp16,neon"))) uint16x8_t vceqzq_f16(float16x8_t __p0) {
+   uint16x8_t __ret;
+   float16x8_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 7, 6, 5, 4, 3, 2, 1, 0);
+-  __ret = (uint16x8_t) __builtin_neon_vceqzq_f16((int8x16_t)__rev0, 49);
++  __ret = (uint16x8_t)(__rev0 == (float16x8_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 7, 6, 5, 4, 3, 2, 1, 0);
+   return __ret;
+ }
+@@ -1932,14 +1932,14 @@
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("fullfp16,neon"))) uint16x4_t vceqz_f16(float16x4_t __p0) {
+   uint16x4_t __ret;
+-  __ret = (uint16x4_t) __builtin_neon_vceqz_f16((int8x8_t)__p0, 17);
++  __ret = (uint16x4_t)(__p0 == (float16x4_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("fullfp16,neon"))) uint16x4_t vceqz_f16(float16x4_t __p0) {
+   uint16x4_t __ret;
+   float16x4_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 3, 2, 1, 0);
+-  __ret = (uint16x4_t) __builtin_neon_vceqz_f16((int8x8_t)__rev0, 17);
++  __ret = (uint16x4_t)(__rev0 == (float16x4_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 3, 2, 1, 0);
+   return __ret;
+ }
+@@ -1982,14 +1982,14 @@
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("fullfp16,neon"))) uint16x8_t vcgezq_f16(float16x8_t __p0) {
+   uint16x8_t __ret;
+-  __ret = (uint16x8_t) __builtin_neon_vcgezq_f16((int8x16_t)__p0, 49);
++  __ret = (uint16x8_t)(__p0 >= (float16x8_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("fullfp16,neon"))) uint16x8_t vcgezq_f16(float16x8_t __p0) {
+   uint16x8_t __ret;
+   float16x8_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 7, 6, 5, 4, 3, 2, 1, 0);
+-  __ret = (uint16x8_t) __builtin_neon_vcgezq_f16((int8x16_t)__rev0, 49);
++  __ret = (uint16x8_t)(__rev0 >= (float16x8_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 7, 6, 5, 4, 3, 2, 1, 0);
+   return __ret;
+ }
+@@ -1998,14 +1998,14 @@
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("fullfp16,neon"))) uint16x4_t vcgez_f16(float16x4_t __p0) {
+   uint16x4_t __ret;
+-  __ret = (uint16x4_t) __builtin_neon_vcgez_f16((int8x8_t)__p0, 17);
++  __ret = (uint16x4_t)(__p0 >= (float16x4_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("fullfp16,neon"))) uint16x4_t vcgez_f16(float16x4_t __p0) {
+   uint16x4_t __ret;
+   float16x4_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 3, 2, 1, 0);
+-  __ret = (uint16x4_t) __builtin_neon_vcgez_f16((int8x8_t)__rev0, 17);
++  __ret = (uint16x4_t)(__rev0 >= (float16x4_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 3, 2, 1, 0);
+   return __ret;
+ }
+@@ -2048,14 +2048,14 @@
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("fullfp16,neon"))) uint16x8_t vcgtzq_f16(float16x8_t __p0) {
+   uint16x8_t __ret;
+-  __ret = (uint16x8_t) __builtin_neon_vcgtzq_f16((int8x16_t)__p0, 49);
++  __ret = (uint16x8_t)(__p0 > (float16x8_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("fullfp16,neon"))) uint16x8_t vcgtzq_f16(float16x8_t __p0) {
+   uint16x8_t __ret;
+   float16x8_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 7, 6, 5, 4, 3, 2, 1, 0);
+-  __ret = (uint16x8_t) __builtin_neon_vcgtzq_f16((int8x16_t)__rev0, 49);
++  __ret = (uint16x8_t)(__rev0 > (float16x8_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 7, 6, 5, 4, 3, 2, 1, 0);
+   return __ret;
+ }
+@@ -2064,14 +2064,14 @@
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("fullfp16,neon"))) uint16x4_t vcgtz_f16(float16x4_t __p0) {
+   uint16x4_t __ret;
+-  __ret = (uint16x4_t) __builtin_neon_vcgtz_f16((int8x8_t)__p0, 17);
++  __ret = (uint16x4_t)(__p0 > (float16x4_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("fullfp16,neon"))) uint16x4_t vcgtz_f16(float16x4_t __p0) {
+   uint16x4_t __ret;
+   float16x4_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 3, 2, 1, 0);
+-  __ret = (uint16x4_t) __builtin_neon_vcgtz_f16((int8x8_t)__rev0, 17);
++  __ret = (uint16x4_t)(__rev0 > (float16x4_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 3, 2, 1, 0);
+   return __ret;
+ }
+@@ -2114,14 +2114,14 @@
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("fullfp16,neon"))) uint16x8_t vclezq_f16(float16x8_t __p0) {
+   uint16x8_t __ret;
+-  __ret = (uint16x8_t) __builtin_neon_vclezq_f16((int8x16_t)__p0, 49);
++  __ret = (uint16x8_t)(__p0 <= (float16x8_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("fullfp16,neon"))) uint16x8_t vclezq_f16(float16x8_t __p0) {
+   uint16x8_t __ret;
+   float16x8_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 7, 6, 5, 4, 3, 2, 1, 0);
+-  __ret = (uint16x8_t) __builtin_neon_vclezq_f16((int8x16_t)__rev0, 49);
++  __ret = (uint16x8_t)(__rev0 <= (float16x8_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 7, 6, 5, 4, 3, 2, 1, 0);
+   return __ret;
+ }
+@@ -2130,14 +2130,14 @@
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("fullfp16,neon"))) uint16x4_t vclez_f16(float16x4_t __p0) {
+   uint16x4_t __ret;
+-  __ret = (uint16x4_t) __builtin_neon_vclez_f16((int8x8_t)__p0, 17);
++  __ret = (uint16x4_t)(__p0 <= (float16x4_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("fullfp16,neon"))) uint16x4_t vclez_f16(float16x4_t __p0) {
+   uint16x4_t __ret;
+   float16x4_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 3, 2, 1, 0);
+-  __ret = (uint16x4_t) __builtin_neon_vclez_f16((int8x8_t)__rev0, 17);
++  __ret = (uint16x4_t)(__rev0 <= (float16x4_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 3, 2, 1, 0);
+   return __ret;
+ }
+@@ -2180,14 +2180,14 @@
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("fullfp16,neon"))) uint16x8_t vcltzq_f16(float16x8_t __p0) {
+   uint16x8_t __ret;
+-  __ret = (uint16x8_t) __builtin_neon_vcltzq_f16((int8x16_t)__p0, 49);
++  __ret = (uint16x8_t)(__p0 < (float16x8_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("fullfp16,neon"))) uint16x8_t vcltzq_f16(float16x8_t __p0) {
+   uint16x8_t __ret;
+   float16x8_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 7, 6, 5, 4, 3, 2, 1, 0);
+-  __ret = (uint16x8_t) __builtin_neon_vcltzq_f16((int8x16_t)__rev0, 49);
++  __ret = (uint16x8_t)(__rev0 < (float16x8_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 7, 6, 5, 4, 3, 2, 1, 0);
+   return __ret;
+ }
+@@ -2196,14 +2196,14 @@
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("fullfp16,neon"))) uint16x4_t vcltz_f16(float16x4_t __p0) {
+   uint16x4_t __ret;
+-  __ret = (uint16x4_t) __builtin_neon_vcltz_f16((int8x8_t)__p0, 17);
++  __ret = (uint16x4_t)(__p0 < (float16x4_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("fullfp16,neon"))) uint16x4_t vcltz_f16(float16x4_t __p0) {
+   uint16x4_t __ret;
+   float16x4_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 3, 2, 1, 0);
+-  __ret = (uint16x4_t) __builtin_neon_vcltz_f16((int8x8_t)__rev0, 17);
++  __ret = (uint16x4_t)(__rev0 < (float16x4_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 3, 2, 1, 0);
+   return __ret;
+ }

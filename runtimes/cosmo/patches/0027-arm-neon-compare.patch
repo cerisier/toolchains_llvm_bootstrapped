@@ -1,0 +1,903 @@
+--- a/third_party/aarch64/clang/arm_neon.h
++++ b/third_party/aarch64/clang/arm_neon.h
+@@ -41257,22 +41257,17 @@
+ }
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("bf16,neon"))) bfloat16x8_t __a64_vcvtq_low_bf16_f32(float32x4_t __p0) {
+-  bfloat16x8_t __ret;
+-  __ret = (bfloat16x8_t) __builtin_neon___a64_vcvtq_low_bf16_f32((int8x16_t)__p0, 43);
+-  return __ret;
++  (void)__p0;
++  return (bfloat16x8_t){0};
+ }
+ #else
+ __ai __attribute__((target("bf16,neon"))) bfloat16x8_t __a64_vcvtq_low_bf16_f32(float32x4_t __p0) {
+-  bfloat16x8_t __ret;
+-  float32x4_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 3, 2, 1, 0);
+-  __ret = (bfloat16x8_t) __builtin_neon___a64_vcvtq_low_bf16_f32((int8x16_t)__rev0, 43);
+-  __ret = __builtin_shufflevector(__ret, __ret, 7, 6, 5, 4, 3, 2, 1, 0);
+-  return __ret;
++  (void)__p0;
++  return (bfloat16x8_t){0};
+ }
+ __ai __attribute__((target("bf16,neon"))) bfloat16x8_t __noswap___a64_vcvtq_low_bf16_f32(float32x4_t __p0) {
+-  bfloat16x8_t __ret;
+-  __ret = (bfloat16x8_t) __builtin_neon___a64_vcvtq_low_bf16_f32((int8x16_t)__p0, 43);
+-  return __ret;
++  (void)__p0;
++  return (bfloat16x8_t){0};
+ }
+ #endif
+ 
+@@ -44506,14 +44501,14 @@
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("neon"))) uint8x16_t vcgezq_s8(int8x16_t __p0) {
+   uint8x16_t __ret;
+-  __ret = (uint8x16_t) __builtin_neon_vcgezq_v((int8x16_t)__p0, 48);
++  __ret = (uint8x16_t)(__p0 >= (int8x16_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("neon"))) uint8x16_t vcgezq_s8(int8x16_t __p0) {
+   uint8x16_t __ret;
+   int8x16_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0);
+-  __ret = (uint8x16_t) __builtin_neon_vcgezq_v((int8x16_t)__rev0, 48);
++  __ret = (uint8x16_t)(__rev0 >= (int8x16_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0);
+   return __ret;
+ }
+@@ -44522,14 +44517,14 @@
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("neon"))) uint64x2_t vcgezq_f64(float64x2_t __p0) {
+   uint64x2_t __ret;
+-  __ret = (uint64x2_t) __builtin_neon_vcgezq_v((int8x16_t)__p0, 51);
++  __ret = (uint64x2_t)(__p0 >= (float64x2_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("neon"))) uint64x2_t vcgezq_f64(float64x2_t __p0) {
+   uint64x2_t __ret;
+   float64x2_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 1, 0);
+-  __ret = (uint64x2_t) __builtin_neon_vcgezq_v((int8x16_t)__rev0, 51);
++  __ret = (uint64x2_t)(__rev0 >= (float64x2_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 1, 0);
+   return __ret;
+ }
+@@ -44538,14 +44533,14 @@
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("neon"))) uint32x4_t vcgezq_f32(float32x4_t __p0) {
+   uint32x4_t __ret;
+-  __ret = (uint32x4_t) __builtin_neon_vcgezq_v((int8x16_t)__p0, 50);
++  __ret = (uint32x4_t)(__p0 >= (float32x4_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("neon"))) uint32x4_t vcgezq_f32(float32x4_t __p0) {
+   uint32x4_t __ret;
+   float32x4_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 3, 2, 1, 0);
+-  __ret = (uint32x4_t) __builtin_neon_vcgezq_v((int8x16_t)__rev0, 50);
++  __ret = (uint32x4_t)(__rev0 >= (float32x4_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 3, 2, 1, 0);
+   return __ret;
+ }
+@@ -44554,14 +44549,14 @@
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("neon"))) uint32x4_t vcgezq_s32(int32x4_t __p0) {
+   uint32x4_t __ret;
+-  __ret = (uint32x4_t) __builtin_neon_vcgezq_v((int8x16_t)__p0, 50);
++  __ret = (uint32x4_t)(__p0 >= (int32x4_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("neon"))) uint32x4_t vcgezq_s32(int32x4_t __p0) {
+   uint32x4_t __ret;
+   int32x4_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 3, 2, 1, 0);
+-  __ret = (uint32x4_t) __builtin_neon_vcgezq_v((int8x16_t)__rev0, 50);
++  __ret = (uint32x4_t)(__rev0 >= (int32x4_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 3, 2, 1, 0);
+   return __ret;
+ }
+@@ -44570,14 +44565,14 @@
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("neon"))) uint64x2_t vcgezq_s64(int64x2_t __p0) {
+   uint64x2_t __ret;
+-  __ret = (uint64x2_t) __builtin_neon_vcgezq_v((int8x16_t)__p0, 51);
++  __ret = (uint64x2_t)(__p0 >= (int64x2_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("neon"))) uint64x2_t vcgezq_s64(int64x2_t __p0) {
+   uint64x2_t __ret;
+   int64x2_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 1, 0);
+-  __ret = (uint64x2_t) __builtin_neon_vcgezq_v((int8x16_t)__rev0, 51);
++  __ret = (uint64x2_t)(__rev0 >= (int64x2_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 1, 0);
+   return __ret;
+ }
+@@ -44586,14 +44581,14 @@
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("neon"))) uint16x8_t vcgezq_s16(int16x8_t __p0) {
+   uint16x8_t __ret;
+-  __ret = (uint16x8_t) __builtin_neon_vcgezq_v((int8x16_t)__p0, 49);
++  __ret = (uint16x8_t)(__p0 >= (int16x8_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("neon"))) uint16x8_t vcgezq_s16(int16x8_t __p0) {
+   uint16x8_t __ret;
+   int16x8_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 7, 6, 5, 4, 3, 2, 1, 0);
+-  __ret = (uint16x8_t) __builtin_neon_vcgezq_v((int8x16_t)__rev0, 49);
++  __ret = (uint16x8_t)(__rev0 >= (int16x8_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 7, 6, 5, 4, 3, 2, 1, 0);
+   return __ret;
+ }
+@@ -44602,14 +44597,14 @@
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("neon"))) uint8x8_t vcgez_s8(int8x8_t __p0) {
+   uint8x8_t __ret;
+-  __ret = (uint8x8_t) __builtin_neon_vcgez_v((int8x8_t)__p0, 16);
++  __ret = (uint8x8_t)(__p0 >= (int8x8_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("neon"))) uint8x8_t vcgez_s8(int8x8_t __p0) {
+   uint8x8_t __ret;
+   int8x8_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 7, 6, 5, 4, 3, 2, 1, 0);
+-  __ret = (uint8x8_t) __builtin_neon_vcgez_v((int8x8_t)__rev0, 16);
++  __ret = (uint8x8_t)(__rev0 >= (int8x8_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 7, 6, 5, 4, 3, 2, 1, 0);
+   return __ret;
+ }
+@@ -44617,20 +44612,20 @@
+ 
+ __ai __attribute__((target("neon"))) uint64x1_t vcgez_f64(float64x1_t __p0) {
+   uint64x1_t __ret;
+-  __ret = (uint64x1_t) __builtin_neon_vcgez_v((int8x8_t)__p0, 19);
++  __ret = (uint64x1_t)(__p0 >= (float64x1_t){0});
+   return __ret;
+ }
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("neon"))) uint32x2_t vcgez_f32(float32x2_t __p0) {
+   uint32x2_t __ret;
+-  __ret = (uint32x2_t) __builtin_neon_vcgez_v((int8x8_t)__p0, 18);
++  __ret = (uint32x2_t)(__p0 >= (float32x2_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("neon"))) uint32x2_t vcgez_f32(float32x2_t __p0) {
+   uint32x2_t __ret;
+   float32x2_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 1, 0);
+-  __ret = (uint32x2_t) __builtin_neon_vcgez_v((int8x8_t)__rev0, 18);
++  __ret = (uint32x2_t)(__rev0 >= (float32x2_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 1, 0);
+   return __ret;
+ }
+@@ -44639,14 +44634,14 @@
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("neon"))) uint32x2_t vcgez_s32(int32x2_t __p0) {
+   uint32x2_t __ret;
+-  __ret = (uint32x2_t) __builtin_neon_vcgez_v((int8x8_t)__p0, 18);
++  __ret = (uint32x2_t)(__p0 >= (int32x2_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("neon"))) uint32x2_t vcgez_s32(int32x2_t __p0) {
+   uint32x2_t __ret;
+   int32x2_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 1, 0);
+-  __ret = (uint32x2_t) __builtin_neon_vcgez_v((int8x8_t)__rev0, 18);
++  __ret = (uint32x2_t)(__rev0 >= (int32x2_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 1, 0);
+   return __ret;
+ }
+@@ -44654,20 +44649,20 @@
+ 
+ __ai __attribute__((target("neon"))) uint64x1_t vcgez_s64(int64x1_t __p0) {
+   uint64x1_t __ret;
+-  __ret = (uint64x1_t) __builtin_neon_vcgez_v((int8x8_t)__p0, 19);
++  __ret = (uint64x1_t)(__p0 >= (int64x1_t){0});
+   return __ret;
+ }
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("neon"))) uint16x4_t vcgez_s16(int16x4_t __p0) {
+   uint16x4_t __ret;
+-  __ret = (uint16x4_t) __builtin_neon_vcgez_v((int8x8_t)__p0, 17);
++  __ret = (uint16x4_t)(__p0 >= (int16x4_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("neon"))) uint16x4_t vcgez_s16(int16x4_t __p0) {
+   uint16x4_t __ret;
+   int16x4_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 3, 2, 1, 0);
+-  __ret = (uint16x4_t) __builtin_neon_vcgez_v((int8x8_t)__rev0, 17);
++  __ret = (uint16x4_t)(__rev0 >= (int16x4_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 3, 2, 1, 0);
+   return __ret;
+ }
+@@ -44675,17 +44670,17 @@
+ 
+ __ai __attribute__((target("neon"))) uint64_t vcgezd_s64(int64_t __p0) {
+   uint64_t __ret;
+-  __ret = (uint64_t) __builtin_neon_vcgezd_s64(__p0);
++  __ret = (uint64_t)(__p0 >= 0);
+   return __ret;
+ }
+ __ai __attribute__((target("neon"))) uint64_t vcgezd_f64(float64_t __p0) {
+   uint64_t __ret;
+-  __ret = (uint64_t) __builtin_neon_vcgezd_f64(__p0);
++  __ret = (uint64_t)(__p0 >= 0);
+   return __ret;
+ }
+ __ai __attribute__((target("neon"))) uint32_t vcgezs_f32(float32_t __p0) {
+   uint32_t __ret;
+-  __ret = (uint32_t) __builtin_neon_vcgezs_f32(__p0);
++  __ret = (uint32_t)(__p0 >= 0);
+   return __ret;
+ }
+ #ifdef __LITTLE_ENDIAN__
+@@ -44777,14 +44772,14 @@
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("neon"))) uint8x16_t vcgtzq_s8(int8x16_t __p0) {
+   uint8x16_t __ret;
+-  __ret = (uint8x16_t) __builtin_neon_vcgtzq_v((int8x16_t)__p0, 48);
++  __ret = (uint8x16_t)(__p0 > (int8x16_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("neon"))) uint8x16_t vcgtzq_s8(int8x16_t __p0) {
+   uint8x16_t __ret;
+   int8x16_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0);
+-  __ret = (uint8x16_t) __builtin_neon_vcgtzq_v((int8x16_t)__rev0, 48);
++  __ret = (uint8x16_t)(__rev0 > (int8x16_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0);
+   return __ret;
+ }
+@@ -44793,14 +44788,14 @@
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("neon"))) uint64x2_t vcgtzq_f64(float64x2_t __p0) {
+   uint64x2_t __ret;
+-  __ret = (uint64x2_t) __builtin_neon_vcgtzq_v((int8x16_t)__p0, 51);
++  __ret = (uint64x2_t)(__p0 > (float64x2_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("neon"))) uint64x2_t vcgtzq_f64(float64x2_t __p0) {
+   uint64x2_t __ret;
+   float64x2_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 1, 0);
+-  __ret = (uint64x2_t) __builtin_neon_vcgtzq_v((int8x16_t)__rev0, 51);
++  __ret = (uint64x2_t)(__rev0 > (float64x2_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 1, 0);
+   return __ret;
+ }
+@@ -44809,14 +44804,14 @@
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("neon"))) uint32x4_t vcgtzq_f32(float32x4_t __p0) {
+   uint32x4_t __ret;
+-  __ret = (uint32x4_t) __builtin_neon_vcgtzq_v((int8x16_t)__p0, 50);
++  __ret = (uint32x4_t)(__p0 > (float32x4_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("neon"))) uint32x4_t vcgtzq_f32(float32x4_t __p0) {
+   uint32x4_t __ret;
+   float32x4_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 3, 2, 1, 0);
+-  __ret = (uint32x4_t) __builtin_neon_vcgtzq_v((int8x16_t)__rev0, 50);
++  __ret = (uint32x4_t)(__rev0 > (float32x4_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 3, 2, 1, 0);
+   return __ret;
+ }
+@@ -44825,14 +44820,14 @@
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("neon"))) uint32x4_t vcgtzq_s32(int32x4_t __p0) {
+   uint32x4_t __ret;
+-  __ret = (uint32x4_t) __builtin_neon_vcgtzq_v((int8x16_t)__p0, 50);
++  __ret = (uint32x4_t)(__p0 > (int32x4_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("neon"))) uint32x4_t vcgtzq_s32(int32x4_t __p0) {
+   uint32x4_t __ret;
+   int32x4_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 3, 2, 1, 0);
+-  __ret = (uint32x4_t) __builtin_neon_vcgtzq_v((int8x16_t)__rev0, 50);
++  __ret = (uint32x4_t)(__rev0 > (int32x4_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 3, 2, 1, 0);
+   return __ret;
+ }
+@@ -44841,14 +44836,14 @@
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("neon"))) uint64x2_t vcgtzq_s64(int64x2_t __p0) {
+   uint64x2_t __ret;
+-  __ret = (uint64x2_t) __builtin_neon_vcgtzq_v((int8x16_t)__p0, 51);
++  __ret = (uint64x2_t)(__p0 > (int64x2_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("neon"))) uint64x2_t vcgtzq_s64(int64x2_t __p0) {
+   uint64x2_t __ret;
+   int64x2_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 1, 0);
+-  __ret = (uint64x2_t) __builtin_neon_vcgtzq_v((int8x16_t)__rev0, 51);
++  __ret = (uint64x2_t)(__rev0 > (int64x2_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 1, 0);
+   return __ret;
+ }
+@@ -44857,14 +44852,14 @@
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("neon"))) uint16x8_t vcgtzq_s16(int16x8_t __p0) {
+   uint16x8_t __ret;
+-  __ret = (uint16x8_t) __builtin_neon_vcgtzq_v((int8x16_t)__p0, 49);
++  __ret = (uint16x8_t)(__p0 > (int16x8_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("neon"))) uint16x8_t vcgtzq_s16(int16x8_t __p0) {
+   uint16x8_t __ret;
+   int16x8_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 7, 6, 5, 4, 3, 2, 1, 0);
+-  __ret = (uint16x8_t) __builtin_neon_vcgtzq_v((int8x16_t)__rev0, 49);
++  __ret = (uint16x8_t)(__rev0 > (int16x8_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 7, 6, 5, 4, 3, 2, 1, 0);
+   return __ret;
+ }
+@@ -44873,14 +44868,14 @@
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("neon"))) uint8x8_t vcgtz_s8(int8x8_t __p0) {
+   uint8x8_t __ret;
+-  __ret = (uint8x8_t) __builtin_neon_vcgtz_v((int8x8_t)__p0, 16);
++  __ret = (uint8x8_t)(__p0 > (int8x8_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("neon"))) uint8x8_t vcgtz_s8(int8x8_t __p0) {
+   uint8x8_t __ret;
+   int8x8_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 7, 6, 5, 4, 3, 2, 1, 0);
+-  __ret = (uint8x8_t) __builtin_neon_vcgtz_v((int8x8_t)__rev0, 16);
++  __ret = (uint8x8_t)(__rev0 > (int8x8_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 7, 6, 5, 4, 3, 2, 1, 0);
+   return __ret;
+ }
+@@ -44888,20 +44883,20 @@
+ 
+ __ai __attribute__((target("neon"))) uint64x1_t vcgtz_f64(float64x1_t __p0) {
+   uint64x1_t __ret;
+-  __ret = (uint64x1_t) __builtin_neon_vcgtz_v((int8x8_t)__p0, 19);
++  __ret = (uint64x1_t)(__p0 > (float64x1_t){0});
+   return __ret;
+ }
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("neon"))) uint32x2_t vcgtz_f32(float32x2_t __p0) {
+   uint32x2_t __ret;
+-  __ret = (uint32x2_t) __builtin_neon_vcgtz_v((int8x8_t)__p0, 18);
++  __ret = (uint32x2_t)(__p0 > (float32x2_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("neon"))) uint32x2_t vcgtz_f32(float32x2_t __p0) {
+   uint32x2_t __ret;
+   float32x2_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 1, 0);
+-  __ret = (uint32x2_t) __builtin_neon_vcgtz_v((int8x8_t)__rev0, 18);
++  __ret = (uint32x2_t)(__rev0 > (float32x2_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 1, 0);
+   return __ret;
+ }
+@@ -44910,14 +44905,14 @@
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("neon"))) uint32x2_t vcgtz_s32(int32x2_t __p0) {
+   uint32x2_t __ret;
+-  __ret = (uint32x2_t) __builtin_neon_vcgtz_v((int8x8_t)__p0, 18);
++  __ret = (uint32x2_t)(__p0 > (int32x2_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("neon"))) uint32x2_t vcgtz_s32(int32x2_t __p0) {
+   uint32x2_t __ret;
+   int32x2_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 1, 0);
+-  __ret = (uint32x2_t) __builtin_neon_vcgtz_v((int8x8_t)__rev0, 18);
++  __ret = (uint32x2_t)(__rev0 > (int32x2_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 1, 0);
+   return __ret;
+ }
+@@ -44925,20 +44920,20 @@
+ 
+ __ai __attribute__((target("neon"))) uint64x1_t vcgtz_s64(int64x1_t __p0) {
+   uint64x1_t __ret;
+-  __ret = (uint64x1_t) __builtin_neon_vcgtz_v((int8x8_t)__p0, 19);
++  __ret = (uint64x1_t)(__p0 > (int64x1_t){0});
+   return __ret;
+ }
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("neon"))) uint16x4_t vcgtz_s16(int16x4_t __p0) {
+   uint16x4_t __ret;
+-  __ret = (uint16x4_t) __builtin_neon_vcgtz_v((int8x8_t)__p0, 17);
++  __ret = (uint16x4_t)(__p0 > (int16x4_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("neon"))) uint16x4_t vcgtz_s16(int16x4_t __p0) {
+   uint16x4_t __ret;
+   int16x4_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 3, 2, 1, 0);
+-  __ret = (uint16x4_t) __builtin_neon_vcgtz_v((int8x8_t)__rev0, 17);
++  __ret = (uint16x4_t)(__rev0 > (int16x4_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 3, 2, 1, 0);
+   return __ret;
+ }
+@@ -44946,17 +44941,17 @@
+ 
+ __ai __attribute__((target("neon"))) uint64_t vcgtzd_s64(int64_t __p0) {
+   uint64_t __ret;
+-  __ret = (uint64_t) __builtin_neon_vcgtzd_s64(__p0);
++  __ret = (uint64_t)(__p0 > 0);
+   return __ret;
+ }
+ __ai __attribute__((target("neon"))) uint64_t vcgtzd_f64(float64_t __p0) {
+   uint64_t __ret;
+-  __ret = (uint64_t) __builtin_neon_vcgtzd_f64(__p0);
++  __ret = (uint64_t)(__p0 > 0);
+   return __ret;
+ }
+ __ai __attribute__((target("neon"))) uint32_t vcgtzs_f32(float32_t __p0) {
+   uint32_t __ret;
+-  __ret = (uint32_t) __builtin_neon_vcgtzs_f32(__p0);
++  __ret = (uint32_t)(__p0 > 0);
+   return __ret;
+ }
+ #ifdef __LITTLE_ENDIAN__
+@@ -45048,14 +45043,14 @@
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("neon"))) uint8x16_t vclezq_s8(int8x16_t __p0) {
+   uint8x16_t __ret;
+-  __ret = (uint8x16_t) __builtin_neon_vclezq_v((int8x16_t)__p0, 48);
++  __ret = (uint8x16_t)(__p0 <= (int8x16_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("neon"))) uint8x16_t vclezq_s8(int8x16_t __p0) {
+   uint8x16_t __ret;
+   int8x16_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0);
+-  __ret = (uint8x16_t) __builtin_neon_vclezq_v((int8x16_t)__rev0, 48);
++  __ret = (uint8x16_t)(__rev0 <= (int8x16_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0);
+   return __ret;
+ }
+@@ -45064,14 +45059,14 @@
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("neon"))) uint64x2_t vclezq_f64(float64x2_t __p0) {
+   uint64x2_t __ret;
+-  __ret = (uint64x2_t) __builtin_neon_vclezq_v((int8x16_t)__p0, 51);
++  __ret = (uint64x2_t)(__p0 <= (float64x2_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("neon"))) uint64x2_t vclezq_f64(float64x2_t __p0) {
+   uint64x2_t __ret;
+   float64x2_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 1, 0);
+-  __ret = (uint64x2_t) __builtin_neon_vclezq_v((int8x16_t)__rev0, 51);
++  __ret = (uint64x2_t)(__rev0 <= (float64x2_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 1, 0);
+   return __ret;
+ }
+@@ -45080,14 +45075,14 @@
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("neon"))) uint32x4_t vclezq_f32(float32x4_t __p0) {
+   uint32x4_t __ret;
+-  __ret = (uint32x4_t) __builtin_neon_vclezq_v((int8x16_t)__p0, 50);
++  __ret = (uint32x4_t)(__p0 <= (float32x4_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("neon"))) uint32x4_t vclezq_f32(float32x4_t __p0) {
+   uint32x4_t __ret;
+   float32x4_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 3, 2, 1, 0);
+-  __ret = (uint32x4_t) __builtin_neon_vclezq_v((int8x16_t)__rev0, 50);
++  __ret = (uint32x4_t)(__rev0 <= (float32x4_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 3, 2, 1, 0);
+   return __ret;
+ }
+@@ -45096,14 +45091,14 @@
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("neon"))) uint32x4_t vclezq_s32(int32x4_t __p0) {
+   uint32x4_t __ret;
+-  __ret = (uint32x4_t) __builtin_neon_vclezq_v((int8x16_t)__p0, 50);
++  __ret = (uint32x4_t)(__p0 <= (int32x4_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("neon"))) uint32x4_t vclezq_s32(int32x4_t __p0) {
+   uint32x4_t __ret;
+   int32x4_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 3, 2, 1, 0);
+-  __ret = (uint32x4_t) __builtin_neon_vclezq_v((int8x16_t)__rev0, 50);
++  __ret = (uint32x4_t)(__rev0 <= (int32x4_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 3, 2, 1, 0);
+   return __ret;
+ }
+@@ -45112,14 +45107,14 @@
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("neon"))) uint64x2_t vclezq_s64(int64x2_t __p0) {
+   uint64x2_t __ret;
+-  __ret = (uint64x2_t) __builtin_neon_vclezq_v((int8x16_t)__p0, 51);
++  __ret = (uint64x2_t)(__p0 <= (int64x2_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("neon"))) uint64x2_t vclezq_s64(int64x2_t __p0) {
+   uint64x2_t __ret;
+   int64x2_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 1, 0);
+-  __ret = (uint64x2_t) __builtin_neon_vclezq_v((int8x16_t)__rev0, 51);
++  __ret = (uint64x2_t)(__rev0 <= (int64x2_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 1, 0);
+   return __ret;
+ }
+@@ -45128,14 +45123,14 @@
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("neon"))) uint16x8_t vclezq_s16(int16x8_t __p0) {
+   uint16x8_t __ret;
+-  __ret = (uint16x8_t) __builtin_neon_vclezq_v((int8x16_t)__p0, 49);
++  __ret = (uint16x8_t)(__p0 <= (int16x8_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("neon"))) uint16x8_t vclezq_s16(int16x8_t __p0) {
+   uint16x8_t __ret;
+   int16x8_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 7, 6, 5, 4, 3, 2, 1, 0);
+-  __ret = (uint16x8_t) __builtin_neon_vclezq_v((int8x16_t)__rev0, 49);
++  __ret = (uint16x8_t)(__rev0 <= (int16x8_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 7, 6, 5, 4, 3, 2, 1, 0);
+   return __ret;
+ }
+@@ -45144,14 +45139,14 @@
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("neon"))) uint8x8_t vclez_s8(int8x8_t __p0) {
+   uint8x8_t __ret;
+-  __ret = (uint8x8_t) __builtin_neon_vclez_v((int8x8_t)__p0, 16);
++  __ret = (uint8x8_t)(__p0 <= (int8x8_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("neon"))) uint8x8_t vclez_s8(int8x8_t __p0) {
+   uint8x8_t __ret;
+   int8x8_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 7, 6, 5, 4, 3, 2, 1, 0);
+-  __ret = (uint8x8_t) __builtin_neon_vclez_v((int8x8_t)__rev0, 16);
++  __ret = (uint8x8_t)(__rev0 <= (int8x8_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 7, 6, 5, 4, 3, 2, 1, 0);
+   return __ret;
+ }
+@@ -45159,20 +45154,20 @@
+ 
+ __ai __attribute__((target("neon"))) uint64x1_t vclez_f64(float64x1_t __p0) {
+   uint64x1_t __ret;
+-  __ret = (uint64x1_t) __builtin_neon_vclez_v((int8x8_t)__p0, 19);
++  __ret = (uint64x1_t)(__p0 <= (float64x1_t){0});
+   return __ret;
+ }
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("neon"))) uint32x2_t vclez_f32(float32x2_t __p0) {
+   uint32x2_t __ret;
+-  __ret = (uint32x2_t) __builtin_neon_vclez_v((int8x8_t)__p0, 18);
++  __ret = (uint32x2_t)(__p0 <= (float32x2_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("neon"))) uint32x2_t vclez_f32(float32x2_t __p0) {
+   uint32x2_t __ret;
+   float32x2_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 1, 0);
+-  __ret = (uint32x2_t) __builtin_neon_vclez_v((int8x8_t)__rev0, 18);
++  __ret = (uint32x2_t)(__rev0 <= (float32x2_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 1, 0);
+   return __ret;
+ }
+@@ -45181,14 +45176,14 @@
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("neon"))) uint32x2_t vclez_s32(int32x2_t __p0) {
+   uint32x2_t __ret;
+-  __ret = (uint32x2_t) __builtin_neon_vclez_v((int8x8_t)__p0, 18);
++  __ret = (uint32x2_t)(__p0 <= (int32x2_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("neon"))) uint32x2_t vclez_s32(int32x2_t __p0) {
+   uint32x2_t __ret;
+   int32x2_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 1, 0);
+-  __ret = (uint32x2_t) __builtin_neon_vclez_v((int8x8_t)__rev0, 18);
++  __ret = (uint32x2_t)(__rev0 <= (int32x2_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 1, 0);
+   return __ret;
+ }
+@@ -45196,20 +45191,20 @@
+ 
+ __ai __attribute__((target("neon"))) uint64x1_t vclez_s64(int64x1_t __p0) {
+   uint64x1_t __ret;
+-  __ret = (uint64x1_t) __builtin_neon_vclez_v((int8x8_t)__p0, 19);
++  __ret = (uint64x1_t)(__p0 <= (int64x1_t){0});
+   return __ret;
+ }
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("neon"))) uint16x4_t vclez_s16(int16x4_t __p0) {
+   uint16x4_t __ret;
+-  __ret = (uint16x4_t) __builtin_neon_vclez_v((int8x8_t)__p0, 17);
++  __ret = (uint16x4_t)(__p0 <= (int16x4_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("neon"))) uint16x4_t vclez_s16(int16x4_t __p0) {
+   uint16x4_t __ret;
+   int16x4_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 3, 2, 1, 0);
+-  __ret = (uint16x4_t) __builtin_neon_vclez_v((int8x8_t)__rev0, 17);
++  __ret = (uint16x4_t)(__rev0 <= (int16x4_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 3, 2, 1, 0);
+   return __ret;
+ }
+@@ -45217,17 +45212,17 @@
+ 
+ __ai __attribute__((target("neon"))) uint64_t vclezd_s64(int64_t __p0) {
+   uint64_t __ret;
+-  __ret = (uint64_t) __builtin_neon_vclezd_s64(__p0);
++  __ret = (uint64_t)(__p0 <= 0);
+   return __ret;
+ }
+ __ai __attribute__((target("neon"))) uint64_t vclezd_f64(float64_t __p0) {
+   uint64_t __ret;
+-  __ret = (uint64_t) __builtin_neon_vclezd_f64(__p0);
++  __ret = (uint64_t)(__p0 <= 0);
+   return __ret;
+ }
+ __ai __attribute__((target("neon"))) uint32_t vclezs_f32(float32_t __p0) {
+   uint32_t __ret;
+-  __ret = (uint32_t) __builtin_neon_vclezs_f32(__p0);
++  __ret = (uint32_t)(__p0 <= 0);
+   return __ret;
+ }
+ #ifdef __LITTLE_ENDIAN__
+@@ -45319,14 +45314,14 @@
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("neon"))) uint8x16_t vcltzq_s8(int8x16_t __p0) {
+   uint8x16_t __ret;
+-  __ret = (uint8x16_t) __builtin_neon_vcltzq_v((int8x16_t)__p0, 48);
++  __ret = (uint8x16_t)(__p0 < (int8x16_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("neon"))) uint8x16_t vcltzq_s8(int8x16_t __p0) {
+   uint8x16_t __ret;
+   int8x16_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0);
+-  __ret = (uint8x16_t) __builtin_neon_vcltzq_v((int8x16_t)__rev0, 48);
++  __ret = (uint8x16_t)(__rev0 < (int8x16_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0);
+   return __ret;
+ }
+@@ -45335,14 +45330,14 @@
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("neon"))) uint64x2_t vcltzq_f64(float64x2_t __p0) {
+   uint64x2_t __ret;
+-  __ret = (uint64x2_t) __builtin_neon_vcltzq_v((int8x16_t)__p0, 51);
++  __ret = (uint64x2_t)(__p0 < (float64x2_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("neon"))) uint64x2_t vcltzq_f64(float64x2_t __p0) {
+   uint64x2_t __ret;
+   float64x2_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 1, 0);
+-  __ret = (uint64x2_t) __builtin_neon_vcltzq_v((int8x16_t)__rev0, 51);
++  __ret = (uint64x2_t)(__rev0 < (float64x2_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 1, 0);
+   return __ret;
+ }
+@@ -45351,14 +45346,14 @@
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("neon"))) uint32x4_t vcltzq_f32(float32x4_t __p0) {
+   uint32x4_t __ret;
+-  __ret = (uint32x4_t) __builtin_neon_vcltzq_v((int8x16_t)__p0, 50);
++  __ret = (uint32x4_t)(__p0 < (float32x4_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("neon"))) uint32x4_t vcltzq_f32(float32x4_t __p0) {
+   uint32x4_t __ret;
+   float32x4_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 3, 2, 1, 0);
+-  __ret = (uint32x4_t) __builtin_neon_vcltzq_v((int8x16_t)__rev0, 50);
++  __ret = (uint32x4_t)(__rev0 < (float32x4_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 3, 2, 1, 0);
+   return __ret;
+ }
+@@ -45367,14 +45362,14 @@
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("neon"))) uint32x4_t vcltzq_s32(int32x4_t __p0) {
+   uint32x4_t __ret;
+-  __ret = (uint32x4_t) __builtin_neon_vcltzq_v((int8x16_t)__p0, 50);
++  __ret = (uint32x4_t)(__p0 < (int32x4_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("neon"))) uint32x4_t vcltzq_s32(int32x4_t __p0) {
+   uint32x4_t __ret;
+   int32x4_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 3, 2, 1, 0);
+-  __ret = (uint32x4_t) __builtin_neon_vcltzq_v((int8x16_t)__rev0, 50);
++  __ret = (uint32x4_t)(__rev0 < (int32x4_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 3, 2, 1, 0);
+   return __ret;
+ }
+@@ -45383,14 +45378,14 @@
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("neon"))) uint64x2_t vcltzq_s64(int64x2_t __p0) {
+   uint64x2_t __ret;
+-  __ret = (uint64x2_t) __builtin_neon_vcltzq_v((int8x16_t)__p0, 51);
++  __ret = (uint64x2_t)(__p0 < (int64x2_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("neon"))) uint64x2_t vcltzq_s64(int64x2_t __p0) {
+   uint64x2_t __ret;
+   int64x2_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 1, 0);
+-  __ret = (uint64x2_t) __builtin_neon_vcltzq_v((int8x16_t)__rev0, 51);
++  __ret = (uint64x2_t)(__rev0 < (int64x2_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 1, 0);
+   return __ret;
+ }
+@@ -45399,14 +45394,14 @@
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("neon"))) uint16x8_t vcltzq_s16(int16x8_t __p0) {
+   uint16x8_t __ret;
+-  __ret = (uint16x8_t) __builtin_neon_vcltzq_v((int8x16_t)__p0, 49);
++  __ret = (uint16x8_t)(__p0 < (int16x8_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("neon"))) uint16x8_t vcltzq_s16(int16x8_t __p0) {
+   uint16x8_t __ret;
+   int16x8_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 7, 6, 5, 4, 3, 2, 1, 0);
+-  __ret = (uint16x8_t) __builtin_neon_vcltzq_v((int8x16_t)__rev0, 49);
++  __ret = (uint16x8_t)(__rev0 < (int16x8_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 7, 6, 5, 4, 3, 2, 1, 0);
+   return __ret;
+ }
+@@ -45415,14 +45410,14 @@
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("neon"))) uint8x8_t vcltz_s8(int8x8_t __p0) {
+   uint8x8_t __ret;
+-  __ret = (uint8x8_t) __builtin_neon_vcltz_v((int8x8_t)__p0, 16);
++  __ret = (uint8x8_t)(__p0 < (int8x8_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("neon"))) uint8x8_t vcltz_s8(int8x8_t __p0) {
+   uint8x8_t __ret;
+   int8x8_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 7, 6, 5, 4, 3, 2, 1, 0);
+-  __ret = (uint8x8_t) __builtin_neon_vcltz_v((int8x8_t)__rev0, 16);
++  __ret = (uint8x8_t)(__rev0 < (int8x8_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 7, 6, 5, 4, 3, 2, 1, 0);
+   return __ret;
+ }
+@@ -45430,20 +45425,20 @@
+ 
+ __ai __attribute__((target("neon"))) uint64x1_t vcltz_f64(float64x1_t __p0) {
+   uint64x1_t __ret;
+-  __ret = (uint64x1_t) __builtin_neon_vcltz_v((int8x8_t)__p0, 19);
++  __ret = (uint64x1_t)(__p0 < (float64x1_t){0});
+   return __ret;
+ }
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("neon"))) uint32x2_t vcltz_f32(float32x2_t __p0) {
+   uint32x2_t __ret;
+-  __ret = (uint32x2_t) __builtin_neon_vcltz_v((int8x8_t)__p0, 18);
++  __ret = (uint32x2_t)(__p0 < (float32x2_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("neon"))) uint32x2_t vcltz_f32(float32x2_t __p0) {
+   uint32x2_t __ret;
+   float32x2_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 1, 0);
+-  __ret = (uint32x2_t) __builtin_neon_vcltz_v((int8x8_t)__rev0, 18);
++  __ret = (uint32x2_t)(__rev0 < (float32x2_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 1, 0);
+   return __ret;
+ }
+@@ -45452,14 +45447,14 @@
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("neon"))) uint32x2_t vcltz_s32(int32x2_t __p0) {
+   uint32x2_t __ret;
+-  __ret = (uint32x2_t) __builtin_neon_vcltz_v((int8x8_t)__p0, 18);
++  __ret = (uint32x2_t)(__p0 < (int32x2_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("neon"))) uint32x2_t vcltz_s32(int32x2_t __p0) {
+   uint32x2_t __ret;
+   int32x2_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 1, 0);
+-  __ret = (uint32x2_t) __builtin_neon_vcltz_v((int8x8_t)__rev0, 18);
++  __ret = (uint32x2_t)(__rev0 < (int32x2_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 1, 0);
+   return __ret;
+ }
+@@ -45467,20 +45462,20 @@
+ 
+ __ai __attribute__((target("neon"))) uint64x1_t vcltz_s64(int64x1_t __p0) {
+   uint64x1_t __ret;
+-  __ret = (uint64x1_t) __builtin_neon_vcltz_v((int8x8_t)__p0, 19);
++  __ret = (uint64x1_t)(__p0 < (int64x1_t){0});
+   return __ret;
+ }
+ #ifdef __LITTLE_ENDIAN__
+ __ai __attribute__((target("neon"))) uint16x4_t vcltz_s16(int16x4_t __p0) {
+   uint16x4_t __ret;
+-  __ret = (uint16x4_t) __builtin_neon_vcltz_v((int8x8_t)__p0, 17);
++  __ret = (uint16x4_t)(__p0 < (int16x4_t){0});
+   return __ret;
+ }
+ #else
+ __ai __attribute__((target("neon"))) uint16x4_t vcltz_s16(int16x4_t __p0) {
+   uint16x4_t __ret;
+   int16x4_t __rev0;  __rev0 = __builtin_shufflevector(__p0, __p0, 3, 2, 1, 0);
+-  __ret = (uint16x4_t) __builtin_neon_vcltz_v((int8x8_t)__rev0, 17);
++  __ret = (uint16x4_t)(__rev0 < (int16x4_t){0});
+   __ret = __builtin_shufflevector(__ret, __ret, 3, 2, 1, 0);
+   return __ret;
+ }
+@@ -45488,17 +45483,17 @@
+ 
+ __ai __attribute__((target("neon"))) uint64_t vcltzd_s64(int64_t __p0) {
+   uint64_t __ret;
+-  __ret = (uint64_t) __builtin_neon_vcltzd_s64(__p0);
++  __ret = (uint64_t)(__p0 < 0);
+   return __ret;
+ }
+ __ai __attribute__((target("neon"))) uint64_t vcltzd_f64(float64_t __p0) {
+   uint64_t __ret;
+-  __ret = (uint64_t) __builtin_neon_vcltzd_f64(__p0);
++  __ret = (uint64_t)(__p0 < 0);
+   return __ret;
+ }
+ __ai __attribute__((target("neon"))) uint32_t vcltzs_f32(float32_t __p0) {
+   uint32_t __ret;
+-  __ret = (uint32_t) __builtin_neon_vcltzs_f32(__p0);
++  __ret = (uint32_t)(__p0 < 0);
+   return __ret;
+ }
+ #ifdef __LITTLE_ENDIAN__
+@@ -65625,7 +65620,11 @@
+ 
+ __ai __attribute__((target("v8.3a,neon"))) float64x1_t vcmla_f64(float64x1_t __p0, float64x1_t __p1, float64x1_t __p2) {
+   float64x1_t __ret;
+-  __ret = (float64x1_t) __builtin_neon_vcmla_f64((int8x8_t)__p0, (int8x8_t)__p1, (int8x8_t)__p2, 10);
++  float64x2_t __va = vcombine_f64(__p0, (float64_t)0);
++  float64x2_t __vb = vcombine_f64(__p1, (float64_t)0);
++  float64x2_t __vc = vcombine_f64(__p2, (float64_t)0);
++  float64x2_t __vres = vcmlaq_f64(__va, __vb, __vc);
++  __ret = vget_low_f64(__vres);
+   return __ret;
+ }
+ #define vcmla_lane_f64(__p0_792, __p1_792, __p2_792, __p3_792) __extension__ ({ \
+@@ -65743,7 +65742,11 @@
+ 
+ __ai __attribute__((target("v8.3a,neon"))) float64x1_t vcmla_rot180_f64(float64x1_t __p0, float64x1_t __p1, float64x1_t __p2) {
+   float64x1_t __ret;
+-  __ret = (float64x1_t) __builtin_neon_vcmla_rot180_f64((int8x8_t)__p0, (int8x8_t)__p1, (int8x8_t)__p2, 10);
++  float64x2_t __va = vcombine_f64(__p0, (float64_t)0);
++  float64x2_t __vb = vcombine_f64(__p1, (float64_t)0);
++  float64x2_t __vc = vcombine_f64(__p2, (float64_t)0);
++  float64x2_t __vres = vcmlaq_rot180_f64(__va, __vb, __vc);
++  __ret = vget_low_f64(__vres);
+   return __ret;
+ }
+ #define vcmla_rot180_lane_f64(__p0_799, __p1_799, __p2_799, __p3_799) __extension__ ({ \
+@@ -65861,7 +65864,11 @@
+ 
+ __ai __attribute__((target("v8.3a,neon"))) float64x1_t vcmla_rot270_f64(float64x1_t __p0, float64x1_t __p1, float64x1_t __p2) {
+   float64x1_t __ret;
+-  __ret = (float64x1_t) __builtin_neon_vcmla_rot270_f64((int8x8_t)__p0, (int8x8_t)__p1, (int8x8_t)__p2, 10);
++  float64x2_t __va = vcombine_f64(__p0, (float64_t)0);
++  float64x2_t __vb = vcombine_f64(__p1, (float64_t)0);
++  float64x2_t __vc = vcombine_f64(__p2, (float64_t)0);
++  float64x2_t __vres = vcmlaq_rot270_f64(__va, __vb, __vc);
++  __ret = vget_low_f64(__vres);
+   return __ret;
+ }
+ #define vcmla_rot270_lane_f64(__p0_806, __p1_806, __p2_806, __p3_806) __extension__ ({ \
+@@ -65979,7 +65986,11 @@
+ 
+ __ai __attribute__((target("v8.3a,neon"))) float64x1_t vcmla_rot90_f64(float64x1_t __p0, float64x1_t __p1, float64x1_t __p2) {
+   float64x1_t __ret;
+-  __ret = (float64x1_t) __builtin_neon_vcmla_rot90_f64((int8x8_t)__p0, (int8x8_t)__p1, (int8x8_t)__p2, 10);
++  float64x2_t __va = vcombine_f64(__p0, (float64_t)0);
++  float64x2_t __vb = vcombine_f64(__p1, (float64_t)0);
++  float64x2_t __vc = vcombine_f64(__p2, (float64_t)0);
++  float64x2_t __vres = vcmlaq_rot90_f64(__va, __vb, __vc);
++  __ret = vget_low_f64(__vres);
+   return __ret;
+ }
+ #define vcmla_rot90_lane_f64(__p0_813, __p1_813, __p2_813, __p3_813) __extension__ ({ \

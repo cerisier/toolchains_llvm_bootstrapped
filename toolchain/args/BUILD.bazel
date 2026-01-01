@@ -91,11 +91,17 @@ cc_args(
         "@rules_cc//cc/toolchains/actions:objcpp_compile",
     ],
     args = [
+        #"-include",
+        #"toolchain/args/cosmo_normalize_with_linux.h",
         "-include",
-        "toolchain/args/cosmo_normalize_with_linux.h",
+        "{normalize_inc}"
     ],
+    format = {
+        "normalize_inc": "@cosmo_libc//:normalize_inc",
+    },
     data = [
         "cosmo_normalize_with_linux.h",
+        "@cosmo_libc//:normalize_inc",
     ],
 )
 
@@ -163,6 +169,12 @@ cc_args(
             "-msse2",
             "-msse3",
             "-mssse3",
+        ],
+        "//platforms/config:cosmo_aarch64": [
+            "-ffixed-x18",
+            "-ffixed-x28",
+            "-fsigned-char",
+            "-march=armv8.6-a+fp16+bf16+dotprod+crypto",
         ],
         "//conditions:default": [],
     }),

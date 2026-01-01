@@ -42,33 +42,35 @@ cc_args_list(
 
 cc_args_list(
     name = "cosmo_platform_args",
-    args = select({
-        "//platforms/config:cosmo_x86_64": [
-            "//toolchain/args:cosmo_libcxx_headers_include_search_paths",
-            "//toolchain/args:cosmo_header_paths",
-            "//toolchain/args:cosmo_normalize_include",
-            "//toolchain/args:cosmo_linux_defines",
-            "//toolchain/args:cosmo_cxx_standard",
-            "//toolchain/args:cosmo_lax_vector_conversions",
-            "//toolchain/args:cosmo_simd_flags",
-            "//toolchain/args:cosmo_disable_mmx",
-            "//toolchain/args:cosmo_linker_script",
-            "//toolchain/args/linux:cosmo_libc_headers_include_search_paths",
-        ],
-        "//platforms/config:cosmo_aarch64": [
-            "//toolchain/args:cosmo_libcxx_headers_include_search_paths",
-            "//toolchain/args:cosmo_header_paths",
-            "//toolchain/args:cosmo_normalize_include",
-            "//toolchain/args:cosmo_linux_defines",
-            "//toolchain/args:cosmo_cxx_standard",
-            "//toolchain/args:cosmo_lax_vector_conversions",
-            "//toolchain/args:cosmo_simd_flags",
-            "//toolchain/args:cosmo_disable_mmx",
-            "//toolchain/args:cosmo_linker_script_aarch64",
-            "//toolchain/args/linux:cosmo_libc_headers_include_search_paths",
-        ],
-        "//conditions:default": [],
-    }),
+    args = [
+         "//toolchain/args:cosmo_normalize_include",
+    ],
+    #select({
+    #    "//platforms/config:cosmo_x86_64": [
+    #        "//toolchain/args:cosmo_libcxx_headers_include_search_paths",
+    #        #"//toolchain/args:cosmo_header_paths",
+    #        #"//toolchain/args:cosmo_linux_defines",
+    #        "//toolchain/args:cosmo_cxx_standard",
+    #        "//toolchain/args:cosmo_lax_vector_conversions",
+    #        "//toolchain/args:cosmo_simd_flags",
+    #        "//toolchain/args:cosmo_disable_mmx",
+    #        "//toolchain/args:cosmo_linker_script",
+    #        #"//toolchain/args/linux:cosmo_libc_headers_include_search_paths",
+    #    ],
+    #    "//platforms/config:cosmo_aarch64": [
+    #        "//toolchain/args:cosmo_libcxx_headers_include_search_paths",
+    #        #"//toolchain/args:cosmo_header_paths",
+    #        "//toolchain/args:cosmo_normalize_include",
+    #        #"//toolchain/args:cosmo_linux_defines",
+    #        "//toolchain/args:cosmo_cxx_standard",
+    #        "//toolchain/args:cosmo_lax_vector_conversions",
+    #        "//toolchain/args:cosmo_simd_flags",
+    #        "//toolchain/args:cosmo_disable_mmx",
+    #        "//toolchain/args:cosmo_linker_script_aarch64",
+    #        #"//toolchain/args/linux:cosmo_libc_headers_include_search_paths",
+    #    ],
+    #    "//conditions:default": [],
+    #}),
     visibility = ["//toolchain:__subpackages__"],
 )
 

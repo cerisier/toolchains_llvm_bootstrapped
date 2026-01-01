@@ -5,8 +5,14 @@ load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_library.bzl", "c
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_object.bzl", "cc_stage2_object")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_static_library.bzl", "cc_stage2_static_library")
 load("@toolchains_llvm_bootstrapped//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
+load("@toolchains_llvm_bootstrapped//runtimes/cosmo:cosmo_cc_library.bzl", "COSMO_COMMON_COPTS", "NO_MAGIC_COPTS", "cosmo_cc_library")
 
 package(default_visibility = ["//visibility:public"])
+
+filegroup(
+    name = "normalize_inc",
+    srcs = ["libc/integral/normalize.inc"],
+)
 
 """
 Build file for the Cosmopolitan libc release (4.0.2).
@@ -57,23 +63,6 @@ COSMO_LIBRARY_DIRS = [
     "third_party/zlib",
     "tool/args",
 ]
-
-# All C/C++/asm sources that make up cosmopolitan.a.
-filegroup(
-    name = "libc_intrin_aarch64_srcs",
-    srcs = glob(
-        ["libc/intrin/aarch64/**/*.%s" % ext for ext in ["c", "cc", "cpp", "s", "S"]],
-        allow_empty = True,
-    ),
-)
-
-filegroup(
-    name = "cosmoaudio_srcs",
-    srcs = glob(
-        ["dsp/audio/cosmoaudio/**/*.%s" % ext for ext in ["c", "cc", "cpp"]],
-        allow_empty = True,
-    ),
-)
 
 # Headers and textual includes used across the COSMOPOLITAN packages.
 filegroup(
@@ -152,46 +141,6 @@ filegroup(
     srcs = glob(["usr/share/zoneinfo/**"]),
 )
 
-COSMO_COMMON_COPTS = [
-    "-fno-ident",
-    "-fstrict-aliasing",
-    "-fstrict-overflow",
-    "-fno-semantic-interposition",
-    "-fno-omit-frame-pointer",
-    "-frecord-gcc-switches",
-    "-D_COSMO_SOURCE",
-    "-DMODE=\\\"\\\"",
-    "-D_Float32=float",
-    "-D_Float64=double",
-    "-D__float80=long\\ double",
-    "-D_Float128=long\\ double",
-    "-Wno-unknown-pragmas",
-    "-nostdinc",
-    "-iquote.",
-    "-isystem",
-    "libc/isystem",
-    "-Wall",
-    "-include",
-    "libc/integral/normalize.inc",
-    "-include",
-    "libc/stdalign.h",
-] + select({
-    "@platforms//cpu:x86_64": [
-        "-mno-red-zone",
-        "-mno-tls-direct-seg-refs",
-        "-msse",
-        "-msse2",
-        "-D__SSE__=1",
-        "-D__SSE2__=1",
-    ],
-    "@platforms//cpu:aarch64": [
-        "-ffixed-x18",
-        "-ffixed-x28",
-        "-fsigned-char",
-    ],
-    "//conditions:default": [],
-})
-
 COSMO_AUDIO_COPTS = COSMO_COMMON_COPTS + [
     "-include",
     "libc/isystem/windowsesque.h",
@@ -201,7 +150,6 @@ COSMO_AUDIO_COPTS = COSMO_COMMON_COPTS + [
 
 COSMO_COMMON_EXCLUDES = [
     "libc/crt/**",
-    "libc/intrin/aarch64/**",
     "dsp/audio/cosmoaudio/**",
     "ctl/new.cc",
     "examples/**",
@@ -211,50 +159,6 @@ COSMO_COMMON_EXCLUDES = [
 ]
 
 _COMPILER_RT_DEP = ":clang_rt.builtins.static"
-
-LIBC_STR_O3_SRCS = [
-    "libc/str/wmemset.c",
-    "libc/str/memset16.c",
-    "libc/str/dosdatetimetounix.c",
-    "libc/str/iso8601.c",
-    "libc/str/iso8601us.c",
-]
-
-LIBC_STR_O2_SRCS = [
-    "libc/str/bcmp.c",
-]
-
-LIBC_STR_OS_SRCS = [
-    "libc/str/getzipeocd.c",
-    "libc/str/getzipcdircomment.c",
-    "libc/str/getzipcdircommentsize.c",
-    "libc/str/getzipcdiroffset.c",
-    "libc/str/getzipcdirrecords.c",
-    "libc/str/getzipcfilecompressedsize.c",
-    "libc/str/getzipcfilemode.c",
-    "libc/str/getzipcfileoffset.c",
-    "libc/str/getzipcfileuncompressedsize.c",
-    "libc/str/getziplfilecompressedsize.c",
-    "libc/str/getziplfileuncompressedsize.c",
-    "libc/str/getzipcfiletimestamps.c",
-]
-
-LIBC_STR_NO_JUMP_SRCS = [
-    "libc/str/iswupper.cc",
-    "libc/str/iswlower.cc",
-    "libc/str/iswseparator.cc",
-]
-
-LIBC_STR_SPECIAL_SRCS = LIBC_STR_O3_SRCS + LIBC_STR_O2_SRCS + LIBC_STR_OS_SRCS + LIBC_STR_NO_JUMP_SRCS
-
-LIBC_STR_COMMON_COPTS = COSMO_COMMON_COPTS
-
-_LIBC_STR_DEPS = [
-    ":libc_intrin",
-    ":libc_nexgen32e",
-    ":libc_sysv",
-    _COMPILER_RT_DEP,
-]
 
 ZLIB_COMMON_COPTS = COSMO_COMMON_COPTS + [
     "-ffunction-sections",
@@ -362,11 +266,27 @@ MUSL_DEPS = [
 
 cc_stage2_library(
     name = "libc_calls",
-    srcs = glob(
-        ["libc/calls/**/*.%s" % ext for ext in ["c", "cc", "cpp", "s", "S"]],
-        exclude = COSMO_COMMON_EXCLUDES,
-        allow_empty = True,
-    ),
+    srcs = select({
+        "@platforms//cpu:x86_64": glob(
+            ["libc/calls/**/*.%s" % ext for ext in ["c", "cc", "cpp", "s", "S"]],
+            exclude = COSMO_COMMON_EXCLUDES,
+            allow_empty = True,
+        ),
+        "@platforms//cpu:aarch64": glob(
+            ["libc/calls/**/*.%s" % ext for ext in ["c", "cc", "cpp", "s", "S"]],
+            exclude = COSMO_COMMON_EXCLUDES + [
+                "libc/calls/getntsyspath.S",
+                "libc/calls/kntsystemdirectory.S",
+                "libc/calls/kntwindowsdirectory.S",
+                "libc/calls/metalfile_init.S",
+                "libc/calls/netbsdtramp.S",
+                "libc/calls/program_executable_name_init.S",
+                "libc/calls/rdrand.c",
+            ],
+            allow_empty = True,
+        ),
+        "//conditions:default": [],
+    }),
     textual_hdrs = [":libc_hdrs"],
     copts = COSMO_COMMON_COPTS + [
         "-fno-sanitize=all",
@@ -479,12 +399,44 @@ cc_stage2_library(
 
 cc_stage2_library(
     name = "libc_intrin",
-    srcs = glob(
-        ["libc/intrin/**/*.%s" % ext for ext in ["c", "cc", "cpp", "s", "S"]],
-        exclude = COSMO_COMMON_EXCLUDES,
-        allow_empty = True,
-    ) + select({
-        "@platforms//cpu:aarch64": [":libc_intrin_aarch64_srcs"],
+    srcs = select({
+        "@platforms//cpu:x86_64": glob(
+            ["libc/intrin/**/*.%s" % ext for ext in ["c", "cc", "cpp", "s", "S"]],
+            exclude = COSMO_COMMON_EXCLUDES + ["libc/intrin/aarch64/**"],
+            allow_empty = True,
+        ),
+        "@platforms//cpu:aarch64": glob(
+            ["libc/intrin/**/*.%s" % ext for ext in ["c", "cc", "cpp"]],
+            exclude = COSMO_COMMON_EXCLUDES + [
+                "libc/intrin/pthread_pause_np.c",
+            ],
+            allow_empty = True,
+        ) + [
+            "libc/intrin/getcontext.S",
+            "libc/intrin/swapcontext.S",
+            "libc/intrin/tailcontext.S",
+            "libc/intrin/fenv.S",
+            "libc/intrin/gcov.S",
+            "libc/intrin/cosmo_futex_thunk.S",
+            "libc/intrin/kclocknames.S",
+            "libc/intrin/kdos2errno.S",
+            "libc/intrin/kerrnodocs.S",
+            "libc/intrin/kipoptnames.S",
+            "libc/intrin/kipv6optnames.S",
+            "libc/intrin/kerrnonames.S",
+            "libc/intrin/kfcntlcmds.S",
+            "libc/intrin/kopenflags.S",
+            "libc/intrin/krlimitnames.S",
+            "libc/intrin/ksignalnames.S",
+            "libc/intrin/ksockoptnames.S",
+            "libc/intrin/ktcpoptnames.S",
+            "libc/intrin/stackcall.S",
+            "libc/intrin/kmonthname.S",
+            "libc/intrin/kmonthnameshort.S",
+            "libc/intrin/kweekdayname.S",
+            "libc/intrin/kweekdaynameshort.S",
+            "libc/intrin/dsohandle.S",
+        ] + glob(["libc/intrin/aarch64/*.S"], allow_empty = True),
         "//conditions:default": [],
     }),
     textual_hdrs = [":libc_hdrs"],
@@ -505,11 +457,19 @@ cc_stage2_library(
 
 cc_stage2_library(
     name = "libc_irq",
-    srcs = glob(
-        ["libc/irq/**/*.%s" % ext for ext in ["c", "cc", "cpp", "s", "S"]],
-        exclude = COSMO_COMMON_EXCLUDES,
-        allow_empty = True,
-    ),
+    srcs = select({
+        "@platforms//cpu:x86_64": glob(
+            ["libc/irq/**/*.%s" % ext for ext in ["c", "cc", "cpp", "s", "S"]],
+            exclude = COSMO_COMMON_EXCLUDES,
+            allow_empty = True,
+        ),
+        "@platforms//cpu:aarch64": glob(
+            ["libc/irq/**/*.%s" % ext for ext in ["c", "cc", "cpp"]],
+            exclude = COSMO_COMMON_EXCLUDES,
+            allow_empty = True,
+        ),
+        "//conditions:default": [],
+    }),
     textual_hdrs = [":libc_hdrs"],
     copts = COSMO_COMMON_COPTS,
     deps = [
@@ -532,11 +492,19 @@ cc_stage2_library(
 
 cc_stage2_library(
     name = "libc_log",
-    srcs = glob(
-        ["libc/log/**/*.%s" % ext for ext in ["c", "cc", "cpp", "s", "S"]],
-        exclude = COSMO_COMMON_EXCLUDES,
-        allow_empty = True,
-    ),
+    srcs = select({
+        "@platforms//cpu:x86_64": glob(
+            ["libc/log/**/*.%s" % ext for ext in ["c", "cc", "cpp", "s", "S"]],
+            exclude = COSMO_COMMON_EXCLUDES,
+            allow_empty = True,
+        ),
+        "@platforms//cpu:aarch64": glob(
+            ["libc/log/**/*.%s" % ext for ext in ["c", "cc", "cpp"]],
+            exclude = COSMO_COMMON_EXCLUDES,
+            allow_empty = True,
+        ),
+        "//conditions:default": [],
+    }),
     textual_hdrs = [":libc_hdrs"],
     copts = COSMO_COMMON_COPTS,
     visibility = ["//visibility:private"],
@@ -558,25 +526,49 @@ cc_stage2_library(
     visibility = ["//visibility:private"],
 )
 
-cc_stage2_library(
+cosmo_cc_library(
     name = "libc_nexgen32e",
     srcs = glob(
-        ["libc/nexgen32e/**/*.%s" % ext for ext in ["c", "cc", "cpp", "s", "S"]],
-        exclude = COSMO_COMMON_EXCLUDES,
+        ["libc/nexgen32e/**/*.%s" % ext for ext in ["c", "cc", "s", "S"]],
         allow_empty = True,
     ),
     textual_hdrs = [":libc_hdrs"],
-    copts = COSMO_COMMON_COPTS,
-    visibility = ["//visibility:private"],
+    per_file_copts = {
+        "libc/nexgen32e/envp.c": NO_MAGIC_COPTS,
+        "libc/nexgen32e/argc2.c": NO_MAGIC_COPTS,
+        "libc/nexgen32e/argv2.c": NO_MAGIC_COPTS,
+        "libc/nexgen32e/auxv2.c": NO_MAGIC_COPTS,
+        #"libc/nexgen32e/cescapec.c": NO_MAGIC_COPTS,
+        "libc/nexgen32e/crc32init.c": NO_MAGIC_COPTS,
+        "libc/nexgen32e/environ2.c": NO_MAGIC_COPTS,
+        "libc/nexgen32e/kbase36.c": NO_MAGIC_COPTS,
+        "libc/nexgen32e/ktens.c": NO_MAGIC_COPTS,
+        "libc/nexgen32e/ktolower.c": NO_MAGIC_COPTS,
+        "libc/nexgen32e/ktoupper.c": NO_MAGIC_COPTS,
+        "libc/nexgen32e/runlevel.c": NO_MAGIC_COPTS,
+        "libc/nexgen32e/pid.c": NO_MAGIC_COPTS,
+        "libc/nexgen32e/program_executable_name.c": NO_MAGIC_COPTS,
+        "libc/nexgen32e/program_invocation_name2.c": NO_MAGIC_COPTS,
+        "libc/nexgen32e/threaded.c": NO_MAGIC_COPTS,
+    },
 )
 
 cc_stage2_library(
     name = "libc_nt",
-    srcs = glob(
-        ["libc/nt/**/*.%s" % ext for ext in ["c", "cc", "cpp", "s", "S"]],
-        exclude = COSMO_COMMON_EXCLUDES,
-        allow_empty = True,
-    ),
+    srcs = select({
+        "@platforms//cpu:x86_64": glob(
+            ["libc/nt/**/*.%s" % ext for ext in ["c", "cc", "cpp", "s", "S"]],
+            exclude = COSMO_COMMON_EXCLUDES,
+            allow_empty = True,
+        ),
+        "@platforms//cpu:aarch64": glob(
+            ["libc/nt/**/*.%s" % ext for ext in ["c", "cc", "cpp"]],
+            exclude = COSMO_COMMON_EXCLUDES,
+            allow_empty = True,
+        ),
+        "//conditions:default": [],
+    }),
+
     textual_hdrs = [":libc_hdrs"],
     copts = COSMO_COMMON_COPTS,
     visibility = ["//visibility:private"],
@@ -611,11 +603,27 @@ cc_stage2_library(
 
 cc_stage2_library(
     name = "libc_runtime",
-    srcs = glob(
-        ["libc/runtime/**/*.%s" % ext for ext in ["c", "cc", "cpp", "s", "S"]],
-        exclude = COSMO_COMMON_EXCLUDES,
-        allow_empty = True,
-    ),
+    srcs = select({
+        "@platforms//cpu:x86_64": glob(
+            ["libc/runtime/**/*.%s" % ext for ext in ["c", "cc", "cpp", "s", "S"]],
+            exclude = COSMO_COMMON_EXCLUDES,
+            allow_empty = True,
+        ),
+        "@platforms//cpu:aarch64": glob(
+            ["libc/runtime/**/*.%s" % ext for ext in ["c", "cc", "cpp"]],
+            exclude = COSMO_COMMON_EXCLUDES + [
+                "libc/runtime/metalprintf.greg.c",
+            ],
+            allow_empty = True,
+        ) + [
+            "libc/runtime/clone-linux.S",
+            "libc/runtime/ftrace-hook.S",
+            "libc/runtime/init.S",
+            "libc/runtime/sigsetjmp.S",
+            "libc/runtime/zipos.S",
+        ],
+        "//conditions:default": [],
+    }),
     textual_hdrs = [":libc_hdrs"],
     copts = COSMO_COMMON_COPTS + [
         "-fno-sanitize=all",
@@ -647,11 +655,21 @@ cc_stage2_library(
 
 cc_stage2_library(
     name = "libc_stdio",
-    srcs = glob(
-        ["libc/stdio/**/*.%s" % ext for ext in ["c", "cc", "cpp", "s", "S"]],
-        exclude = COSMO_COMMON_EXCLUDES,
-        allow_empty = True,
-    ),
+    srcs = select({
+        "@platforms//cpu:x86_64": glob(
+            ["libc/stdio/**/*.%s" % ext for ext in ["c", "cc", "cpp", "s", "S"]],
+            exclude = COSMO_COMMON_EXCLUDES,
+            allow_empty = True,
+        ),
+        "@platforms//cpu:aarch64": glob(
+            ["libc/stdio/**/*.%s" % ext for ext in ["c", "cc", "cpp", "s", "S"]],
+            exclude = COSMO_COMMON_EXCLUDES + [
+                "libc/stdio/rdseed.c",
+            ],
+            allow_empty = True,
+        ),
+        "//conditions:default": [],
+    }),
     textual_hdrs = [":libc_hdrs"],
     copts = COSMO_COMMON_COPTS + [
         "-Wframe-larger-than=4096",
@@ -659,76 +677,78 @@ cc_stage2_library(
     visibility = ["//visibility:private"],
 )
 
-cc_stage2_library(
-    name = "libc_str_base",
+
+cosmo_cc_library(
+    name = "libc_str",
     srcs = glob(
-        ["libc/str/**/*.%s" % ext for ext in ["c", "cc", "cpp", "s", "S"]],
-        exclude = COSMO_COMMON_EXCLUDES + LIBC_STR_SPECIAL_SRCS,
+        ["libc/str/**/*.%s" % ext for ext in ["c", "cc", "s", "S"]],
         allow_empty = True,
     ),
-    textual_hdrs = [":libc_hdrs"],
-    copts = LIBC_STR_COMMON_COPTS,
-    deps = _LIBC_STR_DEPS,
-    visibility = ["//visibility:private"],
-)
-
-cc_stage2_library(
-    name = "libc_str_o3",
-    srcs = LIBC_STR_O3_SRCS,
-    textual_hdrs = [":libc_hdrs"],
-    copts = LIBC_STR_COMMON_COPTS + ["-O3"],
-    deps = _LIBC_STR_DEPS,
-    visibility = ["//visibility:private"],
-)
-
-cc_stage2_library(
-    name = "libc_str_o2",
-    srcs = LIBC_STR_O2_SRCS,
-    textual_hdrs = [":libc_hdrs"],
-    copts = LIBC_STR_COMMON_COPTS + ["-O2"],
-    deps = _LIBC_STR_DEPS,
-    visibility = ["//visibility:private"],
-)
-
-cc_stage2_library(
-    name = "libc_str_os",
-    srcs = LIBC_STR_OS_SRCS,
-    textual_hdrs = [":libc_hdrs"],
-    copts = LIBC_STR_COMMON_COPTS + ["-Os"],
-    deps = _LIBC_STR_DEPS,
-    visibility = ["//visibility:private"],
-)
-
-cc_stage2_library(
-    name = "libc_str_nojump",
-    srcs = LIBC_STR_NO_JUMP_SRCS,
-    textual_hdrs = [":libc_hdrs"],
-    copts = LIBC_STR_COMMON_COPTS + ["-fno-jump-tables"],
-    deps = _LIBC_STR_DEPS,
-    visibility = ["//visibility:private"],
-)
-
-cc_stage2_library(
-    name = "libc_str",
-    srcs = [],
-    textual_hdrs = [":libc_hdrs"],
     deps = [
-        ":libc_str_base",
-        ":libc_str_o3",
-        ":libc_str_o2",
-        ":libc_str_os",
-        ":libc_str_nojump",
+        ":libc_intrin",
+        ":libc_nexgen32e",
+        ":libc_sysv",
+        ":clang_rt.builtins.static",
     ],
-    visibility = ["//visibility:private"],
+    copts = [
+		"-fno-sanitize=all",
+		"-Wframe-larger-than=4096",
+		#"-Walloca-larger-than=4096",
+    ],
+    per_file_copts = {
+        "libc/str/crc32c.c": select({
+            "@platforms//cpu:x86_64": ["-msse4.1", "-mcrc32", "-mpclmul"],
+            "@platforms//cpu:aarch64": ["-march=armv8.1-a+crc+aes"],
+        }),
+
+        "libc/str/wmemset.c": ["-O3"],
+        "libc/str/memset16.c": ["-O3"],
+        "libc/str/dosdatetimetounix.c": ["-O3"],
+
+        "libc/str/getzipeocd.c": ["-Os"],
+        "libc/str/getzipcdircomment.c": ["-Os"],
+        "libc/str/getzipcdircommentsize.c": ["-Os"],
+        "libc/str/getzipcdiroffset.c": ["-Os"],
+        "libc/str/getzipcdirrecords.c": ["-Os"],
+        "libc/str/getzipcfilecompressedsize.c": ["-Os"],
+        "libc/str/getzipcfilemode.c": ["-Os"],
+        "libc/str/getzipcfileoffset.c": ["-Os"],
+        "libc/str/getzipcfileuncompressedsize.c": ["-Os"],
+        "libc/str/getziplfilecompressedsize.c": ["-Os"],
+        "libc/str/getziplfileuncompressedsize.c": ["-Os"],
+        "libc/str/getzipcfiletimestamps.c": ["-Os"],
+
+        #"libc/str/iswpunct.c": ["-fno-jump-tables"],
+        "libc/str/iswupper.cc": ["-fno-jump-tables"],
+        "libc/str/iswlower.cc": ["-fno-jump-tables"],
+        "libc/str/iswseparator.cc": ["-fno-jump-tables"],
+
+        "libc/str/bcmp.c": ["-O2"],
+        #"libc/str/strcmp.c": ["-O2"],
+
+        "libc/str/iso8601.c": ["-O3"],
+        "libc/str/iso8601us.c": ["-O3"],
+    },
 )
 
 cc_stage2_library(
     name = "libc_sysv",
-    srcs = glob(
-        ["libc/sysv/**/*.%s" % ext for ext in ["c", "cc", "cpp", "s", "S"]],
-        exclude = COSMO_COMMON_EXCLUDES,
-        allow_empty = True,
-    ),
+    srcs = select({
+        "@platforms//cpu:x86_64": glob(
+            ["libc/sysv/**/*.%s" % ext for ext in ["c", "cc", "cpp", "s", "S"]],
+            exclude = COSMO_COMMON_EXCLUDES,
+            allow_empty = True,
+        ),
+        "@platforms//cpu:aarch64": glob(
+            ["libc/sysv/**/*.%s" % ext for ext in ["c", "cc", "cpp", "s", "S"]],
+            exclude = COSMO_COMMON_EXCLUDES + [
+                "libc/sysv/errfun.S",
+                "libc/sysv/systemfive.S",
+            ],
+            allow_empty = True,
+        ),
+        "//conditions:default": [],
+    }),
     textual_hdrs = [":libc_hdrs"],
     copts = COSMO_COMMON_COPTS,
     visibility = ["//visibility:private"],
@@ -791,11 +811,15 @@ cc_stage2_library(
 
 cc_stage2_library(
     name = "libc_vga",
-    srcs = glob(
-        ["libc/vga/**/*.%s" % ext for ext in ["c", "cc", "cpp", "s", "S"]],
-        exclude = COSMO_COMMON_EXCLUDES,
-        allow_empty = True,
-    ),
+    srcs = select({
+        "@platforms//cpu:x86_64": glob(
+            ["libc/vga/**/*.%s" % ext for ext in ["c", "cc", "cpp", "s", "S"]],
+            exclude = COSMO_COMMON_EXCLUDES,
+            allow_empty = True,
+        ),
+        "@platforms//cpu:aarch64": [],
+        "//conditions:default": [],
+    }),
     textual_hdrs = [":libc_hdrs"],
     copts = COSMO_COMMON_COPTS,
     visibility = ["//visibility:private"],
@@ -803,11 +827,15 @@ cc_stage2_library(
 
 cc_stage2_library(
     name = "libc_x",
-    srcs = glob(
-        ["libc/x/**/*.%s" % ext for ext in ["c", "cc", "cpp", "s", "S"]],
-        exclude = COSMO_COMMON_EXCLUDES,
-        allow_empty = True,
-    ),
+    srcs = select({
+        "@platforms//cpu:x86_64": glob(
+            ["libc/x/**/*.%s" % ext for ext in ["c", "cc", "cpp", "s", "S"]],
+            exclude = COSMO_COMMON_EXCLUDES,
+            allow_empty = True,
+        ),
+        "@platforms//cpu:aarch64": [],
+        "//conditions:default": [],
+    }),
     textual_hdrs = [":libc_hdrs"],
     copts = COSMO_COMMON_COPTS,
     visibility = ["//visibility:private"],
@@ -903,10 +931,19 @@ copy_file(
 
 cc_stage2_library(
     name = "libc_ape",
-    srcs = glob(
-        ["ape/*.S"],
-        allow_empty = True,
-    ),
+    srcs = select({
+        "@platforms//cpu:x86_64": glob(
+            ["ape/*.S"],
+            allow_empty = True,
+        ),
+        "@platforms//cpu:aarch64": [
+            "ape/ape.S",
+            "ape/start.S",
+            "ape/launch.S",
+            "ape/systemcall.S",
+        ],
+        "//conditions:default": [],
+    }),
     textual_hdrs = [":libc_hdrs"],
     copts = COSMO_COMMON_COPTS,
     visibility = ["//visibility:private"],
