@@ -1,11 +1,11 @@
 diff -ruN a/third_party/intel/clang/emmintrin.h b/third_party/intel/clang/emmintrin.h
---- a/third_party/intel/clang/emmintrin.h	2025-01-05 17:05:49
-+++ b/third_party/intel/clang/emmintrin.h	2025-12-31 13:26:17
+--- a/third_party/intel/clang/emmintrin.h	2026-01-01 20:47:00
++++ b/third_party/intel/clang/emmintrin.h	2026-01-01 20:47:00
 @@ -1486,6 +1486,7 @@
  /// \param __a
  ///    A 128-bit vector of [2 x double].
  /// \returns A 64-bit vector of [2 x i32] containing the converted values.
-+#ifndef COSMO_DISABLE_MMX
++#if !defined(COSMO_DISABLE_MMX)
  static __inline__ __m64 __DEFAULT_FN_ATTRS_MMX _mm_cvtpd_pi32(__m128d __a) {
    return (__m64)__builtin_ia32_cvtpd2pi((__v2df)__a);
  }
@@ -17,15 +17,12 @@ diff -ruN a/third_party/intel/clang/emmintrin.h b/third_party/intel/clang/emmint
  
  /// Returns the low-order element of a 128-bit vector of [2 x double] as
  ///    a double-precision floating-point value.
-@@ -2096,6 +2098,7 @@
-   return (__m128i)((__v4su)__a + (__v4su)__b);
- }
- 
-+#ifndef COSMO_DISABLE_MMX
- /// Adds two signed or unsigned 64-bit integer values, returning the
- ///    lower 64 bits of the sum.
- ///
-@@ -2112,6 +2115,7 @@
+@@ -2108,10 +2110,12 @@
+ /// \param __b
+ ///    A 64-bit integer.
+ /// \returns A 64-bit integer containing the sum of both parameters.
++#if !defined(COSMO_DISABLE_MMX)
+ static __inline__ __m64 __DEFAULT_FN_ATTRS_MMX _mm_add_si64(__m64 __a,
                                                              __m64 __b) {
    return (__m64)__builtin_ia32_paddq((__v1di)__a, (__v1di)__b);
  }
@@ -33,15 +30,12 @@ diff -ruN a/third_party/intel/clang/emmintrin.h b/third_party/intel/clang/emmint
  
  /// Adds the corresponding elements of two 128-bit vectors of [2 x i64],
  ///    saving the lower 64 bits of each sum in the corresponding element of a
-@@ -2418,6 +2422,7 @@
-   return (__m128i)((__v8hu)__a * (__v8hu)__b);
- }
- 
-+#ifndef COSMO_DISABLE_MMX
- /// Multiplies 32-bit unsigned integer values contained in the lower bits
- ///    of the two 64-bit integer vectors and returns the 64-bit unsigned
- ///    product.
-@@ -2435,6 +2440,7 @@
+@@ -2431,10 +2435,12 @@
+ /// \param __b
+ ///    A 64-bit integer containing one of the source operands.
+ /// \returns A 64-bit integer vector containing the product of both operands.
++#if !defined(COSMO_DISABLE_MMX)
+ static __inline__ __m64 __DEFAULT_FN_ATTRS_MMX _mm_mul_su32(__m64 __a,
                                                              __m64 __b) {
    return __builtin_ia32_pmuludq((__v2si)__a, (__v2si)__b);
  }
@@ -53,7 +47,7 @@ diff -ruN a/third_party/intel/clang/emmintrin.h b/third_party/intel/clang/emmint
  ///    A 64-bit integer vector containing the subtrahend.
  /// \returns A 64-bit integer vector containing the difference of the values in
  ///    the operands.
-+#ifndef COSMO_DISABLE_MMX
++#if !defined(COSMO_DISABLE_MMX)
  static __inline__ __m64 __DEFAULT_FN_ATTRS_MMX _mm_sub_si64(__m64 __a,
                                                              __m64 __b) {
    return (__m64)__builtin_ia32_psubq((__v1di)__a, (__v1di)__b);
@@ -63,53 +57,46 @@ diff -ruN a/third_party/intel/clang/emmintrin.h b/third_party/intel/clang/emmint
  /// Subtracts the corresponding elements of two [2 x i64] vectors.
  ///
 diff -ruN a/third_party/intel/clang/immintrin.h b/third_party/intel/clang/immintrin.h
---- a/third_party/intel/clang/immintrin.h	2025-01-05 17:05:49
-+++ b/third_party/intel/clang/immintrin.h	2025-12-31 13:22:54
-@@ -16,8 +16,10 @@
+--- a/third_party/intel/clang/immintrin.h	2026-01-01 20:47:00
++++ b/third_party/intel/clang/immintrin.h	2026-01-01 20:47:00
+@@ -16,7 +16,8 @@
  
  #include "x86gprintrin.h"
  
-+#if !defined(COSMO_DISABLE_MMX)
- #if !defined(__SCE__) || __has_feature(modules) || defined(__MMX__)
+-#if !defined(__SCE__) || __has_feature(modules) || defined(__MMX__)
++#if !defined(COSMO_DISABLE_MMX) && \
++    (!defined(__SCE__) || __has_feature(modules) || defined(__MMX__))
  #include "mmintrin.h"
-+#endif
  #endif
  
- #if !defined(__SCE__) || __has_feature(modules) || defined(__SSE__)
 diff -ruN a/third_party/intel/clang/mmintrin.h b/third_party/intel/clang/mmintrin.h
---- a/third_party/intel/clang/mmintrin.h	2025-12-31 13:22:16
-+++ b/third_party/intel/clang/mmintrin.h	2025-12-31 13:21:52
-@@ -26,6 +26,14 @@
+--- a/third_party/intel/clang/mmintrin.h	2026-01-01 20:47:00
++++ b/third_party/intel/clang/mmintrin.h	2026-01-01 20:47:00
+@@ -21,6 +21,8 @@
  typedef short __v4hi __attribute__((__vector_size__(8)));
  typedef char __v8qi __attribute__((__vector_size__(8)));
  
-+#ifdef COSMO_DISABLE_MMX
-+
-+#if defined(__clang__)
-+#pragma clang diagnostic pop
-+#endif
-+
-+#else
++#if !defined(COSMO_DISABLE_MMX)
 +
  /* Define the default attributes for the functions in this file. */
  #define __DEFAULT_FN_ATTRS                                                     \
    __attribute__((__always_inline__, __nodebug__, __target__("mmx,no-evex512"), \
-@@ -1561,5 +1569,6 @@
- #pragma clang diagnostic pop
- #endif
+@@ -1552,5 +1554,6 @@
+ #define _m_pcmpgtw _mm_cmpgt_pi16
+ #define _m_pcmpgtd _mm_cmpgt_pi32
  
 -#endif /* __MMINTRIN_H */
 +#endif /* COSMO_DISABLE_MMX */
  
 +#endif /* __MMINTRIN_H */
 diff -ruN a/third_party/intel/clang/xmmintrin.h b/third_party/intel/clang/xmmintrin.h
---- a/third_party/intel/clang/xmmintrin.h	2025-01-05 17:05:49
-+++ b/third_party/intel/clang/xmmintrin.h	2025-12-31 13:23:41
+--- a/third_party/intel/clang/xmmintrin.h	2026-01-01 20:47:00
++++ b/third_party/intel/clang/xmmintrin.h	2026-01-01 20:47:00
 @@ -14,7 +14,15 @@
  #error "This header is only meant to be used on x86 and x64 architecture"
  #endif
  
-+#ifndef COSMO_DISABLE_MMX
++#if !defined(COSMO_DISABLE_MMX)
  #include "mmintrin.h"
 +#else
 +typedef long long __m64 __attribute__((__vector_size__(8), __aligned__(8)));
@@ -125,7 +112,7 @@ diff -ruN a/third_party/intel/clang/xmmintrin.h b/third_party/intel/clang/xmmint
  
  #endif
  
-+#ifndef COSMO_DISABLE_MMX
++#if !defined(COSMO_DISABLE_MMX)
 +
  /// Converts two low-order float values in a 128-bit vector of
  ///    [4 x float] into a 64-bit vector of [2 x i32].

@@ -80,6 +80,10 @@ DEFAULT_LDFLAGS = [
 ]
 
 COSMO_COMMON_COPTS = DEFAULT_CCFLAGS + DEFAULT_CPPFLAGS + DEFAULT_COPTS + DEFAULT_ASFLAGS
+"""+ select({
+    "@platforms//cpu:x86_64": ["-march=x86-64-v2"],
+    "@platforms//cpu:aarch64": ["-march=armv8.2-a", "-mtune=generic"],
+})"""
 
 def cosmo_cc_library(name, dir, copts = [], aarch64_safe_assembly_srcs = [], per_file_copts = {}, x86_64_assembly_excludes = [], **kwargs):
     libs = [name + "_srcs"]
