@@ -60,6 +60,7 @@ def cc_toolchain(name, tool_map):
         name = name,
         args = select({
             "//toolchain:runtimes_none": ["//toolchain/runtimes:toolchain_args"],
+            "//toolchain:runtimes_stage1": ["//toolchain/runtimes:toolchain_args"],
             "//conditions:default": ["//toolchain:toolchain_args"],
         }),
         artifact_name_patterns = select({
@@ -70,19 +71,23 @@ def cc_toolchain(name, tool_map):
         }),
         known_features = select({
             "//toolchain:runtimes_none": [name + "_runtimes_only_known_features"],
+            "//toolchain:runtimes_stage1": [name + "_runtimes_only_known_features"],
             "//conditions:default": [name + "_known_features"],
         }),
         enabled_features = select({
             "//toolchain:runtimes_none": [name + "_runtimes_only_enabled_features"],
+            "//toolchain:runtimes_stage1": [name + "_runtimes_only_enabled_features"],
             "//conditions:default": [name + "_enabled_features"],
         }),
         tool_map = tool_map,
         static_runtime_lib = select({
             "//toolchain:runtimes_none": "//runtimes:none",
+            "//toolchain:runtimes_stage1": "//runtimes:none",
             "//conditions:default": "//runtimes:static_runtime_lib",
         }),
         dynamic_runtime_lib = select({
             "//toolchain:runtimes_none": "//runtimes:none",
+            "//toolchain:runtimes_stage1": "//runtimes:none",
             "//conditions:default": "//runtimes:dynamic_runtime_lib",
         }),
         compiler = "clang",

@@ -33,6 +33,45 @@ cc_args_list(
     visibility = ["//toolchain:__subpackages__"],
 )
 
+#TODO(cerisier): Maybe with a _gt_x select we could reuse this everywhere.
+
+cc_args_list(
+    name = "resource_dir",
+    args = select({
+        "//toolchain:runtimes_stage1": ["//toolchain:resource_dir"],
+        "//toolchain:runtimes_none": [],
+    }),
+)
+
+cc_args_list(
+    name = "default_startfiles",
+    args = select({
+        "//toolchain:runtimes_stage1": ["//toolchain:default_startfiles"],
+        "//toolchain:runtimes_none": [],
+    }),
+)
+
+cc_args_list(
+    name = "rtlib",
+    args = select({
+        "//toolchain:runtimes_stage1": [
+            "//toolchain/args:rtlib",
+        ],
+        "//toolchain:runtimes_none": [],
+    }),
+)
+
+#TODO(cerisier): Need a level of indirection to handle OS differences between stages.
+cc_args_list(
+    name = "default_libs",
+    args = select({
+        "//toolchain:runtimes_stage1": [
+            "//toolchain/args/linux:default_libs",
+        ],
+        "//toolchain:runtimes_none": [],
+    }),
+)
+
 cc_args_list(
     name = "toolchain_args",
     args = [
@@ -53,8 +92,12 @@ cc_args_list(
 
         # Common default link flags.
         "//toolchain/args:force_linker_flags",
-        # "//toolchain:resource_dir",
+        "//toolchain/runtimes:rtlib",
+        "//toolchain/runtimes:resource_dir",
         "//toolchain/runtimes:default_link_flags",
+        # Needs to stay out of resource_dir since clang does not always search for crtstuff for all targets.
+        ":default_startfiles",
+        ":default_libs",
     ],
     visibility = ["//toolchain:__subpackages__"],
 )
