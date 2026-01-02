@@ -377,27 +377,32 @@ cosmo_cc_library(
         "-fno-jump-tables",
     ],
     per_file_copts = {
-        "libc/fmt/formatint64.c": ["-O3"],
+        #"libc/fmt/formatint64.c": ["-O3"],
         "libc/fmt/formatint64thousands.c": ["-O3"],
-        "libc/fmt/dosdatetimetounix.c": ["-O3"],
-        "libc/fmt/itoa64radix10.greg.c": ["-O3"],
+        #"libc/fmt/dosdatetimetounix.c": ["-O3"],
+        #"libc/fmt/itoa64radix10.greg.c": ["-O3"],
 
         "libc/fmt/atoi.c": ["-Os"],
-        "libc/fmt/strtol.c": ["-Os"],
-        "libc/fmt/strtoul.c": ["-Os"],
+        #"libc/fmt/strtol.c": ["-Os"],
+        #"libc/fmt/strtoul.c": ["-Os"],
         "libc/fmt/wcstol.c": ["-Os"],
         "libc/fmt/wcstoul.c": ["-Os"],
-        "libc/fmt/strtoimax.c": ["-Os"],
-        "libc/fmt/strtoumax.c": ["-Os"],
-        "libc/fmt/wcstoimax.c": ["-Os"],
-        "libc/fmt/wcstoumax.c": ["-Os"],
+        #"libc/fmt/strtoimax.c": ["-Os"],
+        #"libc/fmt/strtoumax.c": ["-Os"],
+        #"libc/fmt/wcstoimax.c": ["-Os"],
+        #"libc/fmt/wcstoumax.c": ["-Os"],
     },
     deps = [
         ":libc_intrin",
         ":libc_nexgen32e",
+        # LIBC_NT_KERNEL32				\
+        # LIBC_NT_REALTIME				\
+        # LIBC_NT_SYNCHRONIZATION				\
+        # LIBC_NT_WS2_32					\
         ":libc_nt",
         ":libc_str",
         ":libc_sysv",
+        # LIBC_SYSV_CALLS					\
         ":libc_tinymath",
         ":third_party_compiler_rt",
     ],
@@ -522,8 +527,13 @@ cosmo_cc_library(
     x86_64_assembly_excludes = ["libc/intrin/aarch64/**"],
     deps = [
         ":libc_nexgen32e",
+        # LIBC_NT_KERNEL32				\
+        # LIBC_NT_REALTIME				\
+        # LIBC_NT_SYNCHRONIZATION				\
+        # LIBC_NT_WS2_32					\
         ":libc_nt",
         ":libc_sysv",
+        # LIBC_SYSV_CALLS					\
     ],
     textual_hdrs = [":libc_hdrs"],
 )
@@ -697,9 +707,13 @@ cosmo_cc_library(
         ":libc_mem",
         ":libc_nexgen32e",
         ":libc_nt",
+        # LIBC_NT_KERNEL32				\
+        # LIBC_NT_NTDLL					\
+        # LIBC_NT_PSAPI					\
         ":libc_runtime",
         ":libc_str",
         ":libc_sysv",
+        # LIBC_SYSV_CALLS					\
         ":third_party_dlmalloc",
         ":third_party_gdtoa",
         ":third_party_nsync",
@@ -783,7 +797,7 @@ cc_stage2_library(
     visibility = ["//visibility:private"],
 )
 
-# TODO(zbarsky): update this one...
+# https://github.com/jart/cosmopolitan/blob/4.0.2/libc/str/BUILD.mk
 cosmo_cc_library(
     name = "libc_str",
     dir = "libc/str",
@@ -799,11 +813,6 @@ cosmo_cc_library(
 		#"-Walloca-larger-than=4096",
     ],
     per_file_copts = {
-        "libc/str/crc32c.c": select({
-            "@platforms//cpu:x86_64": ["-msse4.1", "-mcrc32", "-mpclmul"],
-            "@platforms//cpu:aarch64": ["-march=armv8.1-a+crc+aes"],
-        }),
-
         "libc/str/wmemset.c": ["-O3"],
         "libc/str/memset16.c": ["-O3"],
         "libc/str/dosdatetimetounix.c": ["-O3"],
