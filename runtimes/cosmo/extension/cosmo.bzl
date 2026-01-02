@@ -23,8 +23,8 @@ def _cosmo_extension_impl(module_ctx):
             "//runtimes/cosmo/patches:0010-disable-mmx-intrinsics.patch",
             # TODO(zbarsky): We should fix the header isntead!
             "//runtimes/cosmo/patches:0011-errno-no-nocallersavedregisters.patch",
-            #"//runtimes/cosmo/patches:0012-disable-tmmintrin-mmx.patch",
-            #"//runtimes/cosmo/patches:0013-tprecode8to16-conditional-neon.patch",
+            "//runtimes/cosmo/patches:0012-disable-tmmintrin-mmx.patch",
+            "//runtimes/cosmo/patches:0013-tprecode8to16-conditional-neon.patch",
             #"//runtimes/cosmo/patches:0014-guard-max-align.patch",
             #"//runtimes/cosmo/patches:0016-dlmalloc-atomic-loads.patch",
             #"//runtimes/cosmo/patches:0017-immintrin-include-xmmintrin.patch",
@@ -43,6 +43,9 @@ def _cosmo_extension_impl(module_ctx):
             "//runtimes/cosmo/patches:0030-auto-disable-mmx-when-no-builtins.patch",
             "//runtimes/cosmo/patches:0031-arm64-build-fixes.patch",
             "//runtimes/cosmo/patches:0032-demangle-jmpbuf-x86.patch",
+            "//runtimes/cosmo/patches:0033-xmmintrin-sse-without-mmx.patch",
+            "//runtimes/cosmo/patches:0034-guard-avx512-popcnt-builtins.patch",
+            "//runtimes/cosmo/patches:0035-str-guard-arch-intrinsics.patch",
         ],
         patch_args = ["-p1", "-l"],
     )

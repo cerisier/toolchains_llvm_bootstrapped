@@ -32,4 +32,7 @@ exports_files([
     "0030-auto-disable-mmx-when-no-builtins.patch",
     "0031-arm64-build-fixes.patch",
     "0032-demangle-jmpbuf-x86.patch",
+    "0033-xmmintrin-sse-without-mmx.patch",
+    "0034-guard-avx512-popcnt-builtins.patch",
+    "0035-str-guard-arch-intrinsics.patch",
 ])
