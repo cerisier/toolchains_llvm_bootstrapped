@@ -1,6 +1,7 @@
+diff -u a/libc/intrin/pthread_pause_np.c b/libc/intrin/pthread_pause_np.c
 --- a/libc/intrin/pthread_pause_np.c
 +++ b/libc/intrin/pthread_pause_np.c
-@@
+@@ -17,5 +17,7 @@
 -#ifdef _MSC_VER
 -#include <intrin.h>
 -#else
@@ -13,20 +14,11 @@
 +#include <xmmintrin.h>
 +#endif
 +#endif
-@@
- void pthread_pause_np(void) {
- #if defined(__GNUC__) && defined(__aarch64__)
-   __asm__("yield");
- #elif defined(__x86_64__) || defined(__i386__)
-   _mm_pause();
-@@
- #else
-   // do nothing
- #endif
- }
+
+diff -u a/libc/intrin/brain16.c b/libc/intrin/brain16.c
 --- a/libc/intrin/brain16.c
 +++ b/libc/intrin/brain16.c
-@@
+@@ -1,5 +1,12 @@
 -#if defined(__clang__) && !defined(__FLT32_MANT_DIG__)
 -typedef float _Float32;   // if you're not compiling with -std=c23 yet
 -typedef double _Float64;
@@ -44,9 +36,11 @@
 +#if !defined(__FLT128_MANT_DIG__)
 +typedef long double _Float128;
 +#endif
+
+diff -u a/libc/intrin/float16.c b/libc/intrin/float16.c
 --- a/libc/intrin/float16.c
 +++ b/libc/intrin/float16.c
-@@
+@@ -1,5 +1,12 @@
 -#if defined(__clang__) && !defined(__FLT32_MANT_DIG__)
 -typedef float _Float32;   // if you're not compiling with -std=c23 yet
 -typedef double _Float64;
