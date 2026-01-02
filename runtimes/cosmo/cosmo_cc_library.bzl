@@ -44,8 +44,9 @@ DEFAULT_CPPFLAGS = [
 	#"-Wno-prio-ctor-dtor",
 	"-Wno-unknown-pragmas",
 	"-nostdinc",
-	"-iquote.",
-	"-isystem libc/isystem",
+	"-iquote external/+cosmo+cosmo_libc",
+    # TODO(zbarsky): kinda hax
+	"-isystem external/+cosmo+cosmo_libc/libc/isystem",
 ]
 
 DEFAULT_CFLAGS = [
@@ -58,7 +59,8 @@ DEFAULT_CXXFLAGS = [
     "-Wno-int-in-bool-context",
     "-Wno-narrowing",
     "-Wno-literal-suffix",
-    "-isystem third_party/libcxx",
+    # TODO(zbarsky): kinda hax
+    "-isystem external/+cosmo+cosmo_libc/third_party/libcxx",
 ]
 
 DEFAULT_ASFLAGS = [
