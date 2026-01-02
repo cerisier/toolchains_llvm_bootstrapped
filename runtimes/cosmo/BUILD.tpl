@@ -721,42 +721,57 @@ cosmo_cc_library(
     visibility = ["//visibility:private"],
 )
 
-cc_stage2_library(
+# https://github.com/jart/cosmopolitan/blob/4.0.2/libc/runtime/BUILD.mk
+cosmo_cc_library(
     name = "libc_runtime",
-    srcs = select({
-        "@platforms//cpu:x86_64": glob(
-            ["libc/runtime/**/*.%s" % ext for ext in ["c", "cc", "cpp", "s", "S"]],
-            exclude = COSMO_COMMON_EXCLUDES,
-            allow_empty = True,
-        ),
-        "@platforms//cpu:aarch64": glob(
-            ["libc/runtime/**/*.%s" % ext for ext in ["c", "cc", "cpp"]],
-            exclude = COSMO_COMMON_EXCLUDES + [
-                "libc/runtime/metalprintf.greg.c",
-            ],
-            allow_empty = True,
-        ) + [
-            "libc/runtime/clone-linux.S",
-            "libc/runtime/ftrace-hook.S",
-            "libc/runtime/init.S",
-            "libc/runtime/sigsetjmp.S",
-            "libc/runtime/zipos.S",
-        ],
-        "//conditions:default": [],
-    }),
+    dir = "libc/runtime",
     textual_hdrs = [":libc_hdrs"],
-    copts = COSMO_COMMON_COPTS + [
+    copts = [
         "-fno-sanitize=all",
         "-Wframe-larger-than=4096",
     ],
+    aarch64_safe_assembly_srcs = [
+        "libc/runtime/init.S",
+        #"libc/runtime/wipe.S",
+        "libc/runtime/clone-linux.S",
+        "libc/runtime/ftrace-hook.S",
+        "libc/runtime/zipos.S",
+        #"libc/runtime/switchstacks.S",
+        "libc/runtime/sigsetjmp.S",
+    ],
+    per_file_copts = {
+        "libc/runtime/cosmo2.c": ["-O0"],
+        #"libc/runtime/qsort.c": ["-Og"],
+        #"libc/runtime/mmap.c": ["-Os"] + select({
+        #    "@platforms//cpu:aarch64": ["-mcmodel=large"],
+        #    "@platforms//cpu:x86_64": [],
+        #}),
+        #"libc/runtime/munmap.c": ["-Os"],
+        #"libc/runtime/memtrack.greg.c": ["-Os"],
+        "libc/runtime/opensymboltable.greg.c": ["-Os"],
+        "libc/runtime/enable_tls.c": select({
+            # TODO(zbarsky): Added `-fno-pic`
+            "@platforms//cpu:aarch64": ["-fno-pic", "-mcmodel=large"],
+            "@platforms//cpu:x86_64": [],
+        }),
+    },
     deps = [
         ":libc_calls",
         ":libc_elf",
         ":libc_fmt",
         ":libc_intrin",
         ":libc_nexgen32e",
+        # LIBC_NT_ADVAPI32				\
+        # LIBC_NT_KERNEL32				\
+        # LIBC_NT_SYNCHRONIZATION				\
         ":libc_nt",
         ":libc_str",
+        ":libc_sysv",
+        #":libc_sysv_calls",
+        ":third_party_compiler_rt",
+        ":third_party_nsync",
+        ":third_party_puff",
+        #":third_party_xed",
     ],
     visibility = ["//visibility:private"],
 )
@@ -892,15 +907,12 @@ cosmo_cc_library(
     textual_hdrs = [":libc_hdrs"],
 )
 
-cc_stage2_library(
+# https://github.com/jart/cosmopolitan/blob/4.0.2/libc/thread/BUILD.mk
+cosmo_cc_library(
     name = "libc_thread",
-    srcs = glob(
-        ["libc/thread/**/*.%s" % ext for ext in ["c", "cc", "cpp", "s", "S"]],
-        exclude = COSMO_COMMON_EXCLUDES,
-        allow_empty = True,
-    ),
+    dir = "libc/thread",
     textual_hdrs = [":libc_hdrs"],
-    copts = COSMO_COMMON_COPTS + [
+    copts = [
         "-fno-sanitize=all",
         "-Wframe-larger-than=4096",
     ],
@@ -909,16 +921,18 @@ cc_stage2_library(
         ":libc_intrin",
         ":libc_mem",
         ":libc_nexgen32e",
+        # LIBC_NT_KERNEL32				\
+        # LIBC_NT_SYNCHRONIZATION				\
         ":libc_nt",
         ":libc_runtime",
         ":libc_str",
         ":libc_sysv",
+        #":libc_sysv_calls",
         ":libc_tinymath",
         ":third_party_dlmalloc",
         ":third_party_nsync",
         ":third_party_nsync_mem",
     ],
-    visibility = ["//visibility:private"],
 )
 
 # https://github.com/jart/cosmopolitan/blob/4.0.2/libc/tinymath/BUILD.mk

@@ -35,4 +35,5 @@ exports_files([
     "0033-xmmintrin-sse-without-mmx.patch",
     "0034-guard-avx512-popcnt-builtins.patch",
     "0035-str-guard-arch-intrinsics.patch",
+    "0036-clone-define-alignof.patch",
 ])

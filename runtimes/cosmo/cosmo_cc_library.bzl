@@ -40,7 +40,7 @@ DEFAULT_COPTS = [
 DEFAULT_CPPFLAGS = [
 	"-D_COSMO_SOURCE",
     # TODO(zbarsky): Other modes?
-	"-DMODE='opt'",
+	"-DMODE=\\\"opt\\\"",
 	#"-Wno-prio-ctor-dtor",
 	"-Wno-unknown-pragmas",
 	"-nostdinc",
