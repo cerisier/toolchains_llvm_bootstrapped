@@ -584,17 +584,17 @@ cosmo_cc_library(
         "-fexceptions",
     ],
     per_file_copts = {
-        "libc/mem/asan.c": [
-            "-O2",
-            "-finline",
-            "-finline-functions",
-            "-x-no-pg",
-            "-ffreestanding",
-            "-fno-sanitize=all",
-            "-fno-stack-protector",
-            "-Wframe-larger-than=4096",
-        ],
-        "libc/mem/asanthunk.c": ["-Os"] + NO_MAGIC_COPTS + ["-foptimize-sibling-calls"],
+        #"libc/mem/asan.c": [
+        #    "-O2",
+        #    "-finline",
+        #    "-finline-functions",
+        #    "-x-no-pg",
+        #    "-ffreestanding",
+        #    "-fno-sanitize=all",
+        #    "-fno-stack-protector",
+        #    "-Wframe-larger-than=4096",
+        #],
+        #"libc/mem/asanthunk.c": ["-Os"] + NO_MAGIC_COPTS + ["-foptimize-sibling-calls"],
     },
     deps = [
         ":libc_calls",
@@ -604,7 +604,7 @@ cosmo_cc_library(
         ":libc_runtime",
         ":libc_str",
         ":libc_sysv",
-        ":libc_sysv_calls",
+        #":libc_sysv_calls",
         ":third_party_dlmalloc",
     ],
 )
@@ -670,15 +670,17 @@ cc_stage2_library(
     visibility = ["//visibility:private"],
 )
 
-cc_stage2_library(
+# https://github.com/jart/cosmopolitan/blob/4.0.2/libc/proc/BUILD.mk
+cosmo_cc_library(
     name = "libc_proc",
-    srcs = glob(
-        ["libc/proc/**/*.%s" % ext for ext in ["c", "cc", "cpp", "s", "S"]],
-        exclude = COSMO_COMMON_EXCLUDES,
-        allow_empty = True,
-    ),
+    dir = "libc/proc",
+    aarch64_safe_assembly_srcs = [
+        "libc/proc/vfork.S",
+    ],
     textual_hdrs = [":libc_hdrs"],
-    copts = COSMO_COMMON_COPTS,
+    copts = [
+        "-Wframe-larger-than=4096",
+    ],
     deps = [
         ":libc_calls",
         ":libc_fmt",
@@ -910,12 +912,12 @@ cosmo_cc_library(
         "-fsigned-zeros",
         "-ftrapping-math",
         "-frounding-math",
-        "-fsignaling-nans",
+        #"-fsignaling-nans",
         "-fno-reciprocal-math",
         "-fno-associative-math",
         "-fno-finite-math-only",
         "-fno-cx-limited-range",
-        "-ffp-int-builtin-inexact",
+        #"-ffp-int-builtin-inexact",
     ],
     per_file_copts = {
         "libc/tinymath/lround.c": ["-fno-builtin"],
