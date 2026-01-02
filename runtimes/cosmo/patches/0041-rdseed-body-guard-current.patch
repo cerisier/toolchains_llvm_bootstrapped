@@ -1,0 +1,11 @@
+diff -u a/libc/stdio/rdseed.c b/libc/stdio/rdseed.c
+--- a/libc/stdio/rdseed.c
++++ b/libc/stdio/rdseed.c
+@@ -44,6 +44,7 @@
+   int i;
+   char cf;
+   uint64_t x;
++#if defined(__x86_64__) || defined(__i386__)
+   if (X86_HAVE(RDSEED)) {
+     for (i = 0; i < 10; ++i) {
+       asm volatile(CFLAG_ASM("rdseed\t%1")

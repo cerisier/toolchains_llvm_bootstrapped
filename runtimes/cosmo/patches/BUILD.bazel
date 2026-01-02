@@ -35,5 +35,9 @@ exports_files([
     "0033-xmmintrin-sse-without-mmx.patch",
     "0034-guard-avx512-popcnt-builtins.patch",
     "0035-str-guard-arch-intrinsics.patch",
-    "0036-clone-define-alignof.patch",
+    "0037-pthread-arm64-setjmp-constraints.patch",
+    "0038-rdseed-guard-x86.patch",
+    "0040-rdseed-body-guard-after-include.patch",
+    "0041-rdseed-body-guard-current.patch",
+    "0042-rdseed-add-endif.patch",
 ])

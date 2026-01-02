@@ -776,40 +776,69 @@ cosmo_cc_library(
     visibility = ["//visibility:private"],
 )
 
-cc_stage2_library(
+# https://github.com/jart/cosmopolitan/blob/4.0.2/libc/sock/BUILD.mk
+cosmo_cc_library(
     name = "libc_sock",
-    srcs = glob(
-        ["libc/sock/**/*.%s" % ext for ext in ["c", "cc", "cpp", "s", "S"]],
-        exclude = COSMO_COMMON_EXCLUDES,
-        allow_empty = True,
-    ),
+    dir = "libc/sock",
+    aarch64_safe_assembly_srcs = [
+        "libc/sock/sys_sendfile_xnu.S",
+        "libc/sock/sys_sendfile_freebsd.S",
+    ],
     textual_hdrs = [":libc_hdrs"],
-    copts = COSMO_COMMON_COPTS,
-    visibility = ["//visibility:private"],
+    deps = [
+        ":libc_calls",
+        ":libc_fmt",
+        ":libc_intrin",
+        ":libc_mem",
+        ":libc_nexgen32e",
+        # LIBC_NT_ADVAPI32			\
+        # LIBC_NT_IPHLPAPI			\
+        # LIBC_NT_KERNEL32			\
+        # LIBC_NT_NTDLL				\
+        # LIBC_NT_REALTIME			\
+        # LIBC_NT_WS2_32				\
+        ":libc_nt",
+        ":libc_runtime",
+        ":libc_stdio",
+        ":libc_str",
+        ":libc_sysv",
+        #":libc_sysv_calls",
+        ":third_party_tz",
+    ],
 )
 
-cc_stage2_library(
+# https://github.com/jart/cosmopolitan/blob/4.0.2/libc/stdio/BUILD.mk
+cosmo_cc_library(
     name = "libc_stdio",
-    srcs = select({
-        "@platforms//cpu:x86_64": glob(
-            ["libc/stdio/**/*.%s" % ext for ext in ["c", "cc", "cpp", "s", "S"]],
-            exclude = COSMO_COMMON_EXCLUDES,
-            allow_empty = True,
-        ),
-        "@platforms//cpu:aarch64": glob(
-            ["libc/stdio/**/*.%s" % ext for ext in ["c", "cc", "cpp", "s", "S"]],
-            exclude = COSMO_COMMON_EXCLUDES + [
-                "libc/stdio/rdseed.c",
-            ],
-            allow_empty = True,
-        ),
-        "//conditions:default": [],
-    }),
-    textual_hdrs = [":libc_hdrs"],
-    copts = COSMO_COMMON_COPTS + [
+    dir = "libc/stdio",
+    copts = [
+        "-fno-sanitize=all",
         "-Wframe-larger-than=4096",
     ],
-    visibility = ["//visibility:private"],
+    per_file_copts = {
+        "libc/stdio/fputc.c": ["-O3"],
+        "libc/stdio/appendw.c": ["-Os"],
+        "libc/stdio/dirstream.c": ["-ffunction-sections"],
+        "libc/stdio/mt19937.c": ["-ffunction-sections"],
+    },
+    textual_hdrs = [":libc_hdrs"],
+    deps = [
+        ":libc_calls",
+        ":libc_fmt",
+        ":libc_intrin",
+        ":libc_mem",
+        ":libc_nexgen32e",
+        # LIBC_NT_ADVAPI32				\
+        # LIBC_NT_KERNEL32				\
+        ":libc_nt",
+        ":libc_proc",
+        ":libc_runtime",
+        ":libc_str",
+        ":libc_sysv",
+        #":libc_sysv_calls",
+        ":third_party_dlmalloc",
+        ":third_party_gdtoa",
+    ],
 )
 
 # https://github.com/jart/cosmopolitan/blob/4.0.2/libc/str/BUILD.mk
