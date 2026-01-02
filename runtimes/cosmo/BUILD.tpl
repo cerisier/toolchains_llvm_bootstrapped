@@ -158,7 +158,7 @@ COSMO_COMMON_EXCLUDES = [
     "build/**",
 ]
 
-_COMPILER_RT_DEP = ":clang_rt.builtins.static"
+_COMPILER_RT_DEP = ":third_party_compiler_rt"
 
 ZLIB_COMMON_COPTS = COSMO_COMMON_COPTS + [
     "-ffunction-sections",
@@ -780,7 +780,7 @@ cosmo_cc_library(
         ":libc_intrin",
         ":libc_nexgen32e",
         ":libc_sysv",
-        ":clang_rt.builtins.static",
+        ":third_party_compiler_rt",
     ],
     copts = [
 		"-fno-sanitize=all",
@@ -835,15 +835,15 @@ cosmo_cc_library(
 
         "libc/sysv/sysv.c": ["-ffreestanding", "-fno-stack-protector", "-fno-sanitize=all", "-mgeneral-regs-only"] + select({
             "@platforms//cpu:aarch64": [
-                "-ffixed-x0",
-                "-ffixed-x1",
-                "-ffixed-x2",
-                "-ffixed-x3",
-                "-ffixed-x4",
-                "-ffixed-x5",
-                "-ffixed-x8",
-                "-ffixed-x9",
-                "-ffixed-x16",
+                #"-ffixed-x0",
+                #"-ffixed-x1",
+                #"-ffixed-x2",
+                #"-ffixed-x3",
+                #"-ffixed-x4",
+                #"-ffixed-x5",
+                #"-ffixed-x8",
+                #"-ffixed-x9",
+                #"-ffixed-x16",
                 "-fomit-frame-pointer",
                 "-foptimize-sibling-calls",
                 "-Os",
@@ -1568,28 +1568,18 @@ cc_library(
     visibility = ["//visibility:public"],
 )
 
-filegroup(
-    name = "compiler_rt_srcs",
-    srcs = glob(
-        ["third_party/compiler_rt/**/*.%s" % ext for ext in ["c", "S"]],
-        exclude = [
-            "third_party/compiler_rt/mingw_*",
-        ],
-        allow_empty = True,
-    ),
-)
-
-cc_stage2_library(
-    name = "clang_rt.builtins.static",
-    srcs = [":compiler_rt_srcs"],
-    copts = COSMO_COMMON_COPTS + [
-        "-iquote",
-        "third_party/compiler_rt",
+# https://github.com/jart/cosmopolitan/blob/4.0.2/third_party/compiler_rt/BUILD.mk
+cosmo_cc_library(
+    name = "third_party_compiler_rt",
+    dir = "third_party/compiler_rt",
+    copts = [
+        "-fno-strict-aliasing",
+        "-fno-strict-overflow",
     ],
-    textual_hdrs = glob(
-        ["third_party/compiler_rt/**/*.%s" % ext for ext in ["h", "inc"]],
-        allow_empty = True,
-    ),
+    local_defines = [
+        "CRT_HAS_128BIT",
+    ],
+    textual_hdrs = glob(["third_party/compiler_rt/**/*.inc"]) + [":libc_hdrs"],
     visibility = ["//visibility:public"],
 )
 

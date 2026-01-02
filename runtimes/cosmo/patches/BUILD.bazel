@@ -30,4 +30,5 @@ exports_files([
     "0028-arm64-fenv-demangle.patch",
     "0029-brain16-clang-fallback.patch",
     "0030-auto-disable-mmx-when-no-builtins.patch",
+    "0031-arm64-build-fixes.patch",
 ])
