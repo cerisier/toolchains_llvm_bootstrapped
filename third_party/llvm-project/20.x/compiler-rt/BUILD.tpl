@@ -1,5 +1,5 @@
-load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_stage0_library.bzl", "cc_stage0_library")
-load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_stage0_static_library.bzl", "cc_stage0_static_library")
+load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_library.bzl", "cc_runtime_stage0_library")
+load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
 load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_stage0_object.bzl", "cc_stage0_object")
 load("@toolchains_llvm_bootstrapped//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
 load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_unsanitized_library.bzl", "cc_unsanitized_library")
@@ -319,12 +319,12 @@ builtins_aarch64_atomic_deps = [
     if pat == "cas" or size != 16
 ]
 
-cc_stage0_library(
+cc_runtime_stage0_library(
     name = "builtins_aarch64_atomic",
     deps = builtins_aarch64_atomic_deps,
 )
 
-cc_stage0_library(
+cc_runtime_stage0_library(
     name = "builtins",
     includes = ["lib/builtins"],
     srcs = select({
@@ -481,7 +481,7 @@ cc_stage0_library(
     }),
 )
 
-cc_stage0_static_library(
+cc_runtime_stage0_static_library(
     name = "clang_rt.builtins.static",
     deps = [
         ":builtins",
@@ -499,7 +499,7 @@ CRT_DEFINES = [
     "CRT_USE_FRAME_REGISTRY",
 ]
 
-cc_stage0_library(
+cc_runtime_stage0_library(
     name = "clang_rt.crtbegin",
     srcs = [
         "lib/builtins/crtbegin.c",
@@ -541,7 +541,7 @@ copy_file(
     visibility = ["//visibility:public"],
 )
 
-cc_stage0_static_library(
+cc_runtime_stage0_static_library(
     name = "clang_rt.crtbegin.static",
     deps = [
         ":clang_rt.crtbegin",
@@ -549,7 +549,7 @@ cc_stage0_static_library(
     visibility = ["//visibility:public"],
 )
 
-cc_stage0_library(
+cc_runtime_stage0_library(
     name = "clang_rt.crtend",
     srcs = [
         "lib/builtins/crtend.c",
@@ -583,7 +583,7 @@ copy_file(
     visibility = ["//visibility:public"],
 )
 
-cc_stage0_static_library(
+cc_runtime_stage0_static_library(
     name = "clang_rt.crtend.static",
     deps = [
         ":clang_rt.crtend",
@@ -610,7 +610,7 @@ cc_unsanitized_library(
 )
 
 # TODO(zbarsky): It would be nice to not have to jam everything into a single BUILD file
-cc_stage0_library(
+cc_runtime_stage0_library(
     name = "linux_libc_headers",
     deps = [
         # linux UAPI headers are needed even for musl here because sanitizers include <sys/vt.h>
@@ -628,7 +628,7 @@ cc_stage0_library(
     }),
 )
 
-cc_stage0_library(
+cc_runtime_stage0_library(
     name = "libcxx_headers",
     deps = select({
         "@platforms//os:macos": [],
@@ -905,7 +905,7 @@ filegroup(
     srcs = INTERCEPTION_IMPL_HEADERS,
 )
 
-cc_stage0_library(
+cc_runtime_stage0_library(
     name = "sanitizer_common",
     srcs = [
         ":sanitizer_sources",
@@ -924,7 +924,7 @@ cc_stage0_library(
     ],
 )
 
-cc_stage0_library(
+cc_runtime_stage0_library(
     name = "sanitizer_common_libc",
     srcs = [
         ":sanitizer_libcdep_sources",
@@ -936,7 +936,7 @@ cc_stage0_library(
     ],
 )
 
-cc_stage0_library(
+cc_runtime_stage0_library(
     name = "sanitizer_common_coverage",
     srcs = [
         ":sanitizer_coverage_sources",
@@ -948,7 +948,7 @@ cc_stage0_library(
     ],
 )
 
-cc_stage0_library(
+cc_runtime_stage0_library(
     name = "sanitizer_common_symbolizer",
     srcs = [
         ":sanitizer_symbolizer_sources",
@@ -960,7 +960,7 @@ cc_stage0_library(
     ],
 )
 
-cc_stage0_library(
+cc_runtime_stage0_library(
     name = "sanitizer_common_symbolizer_internal",
     srcs = [
         "lib/sanitizer_common/symbolizer/sanitizer_symbolize.cpp",
@@ -1001,7 +1001,7 @@ filegroup(
     srcs = ["lib/interception/" + f for f in INTERCEPTION_HEADERS],
 )
 
-cc_stage0_library(
+cc_runtime_stage0_library(
     name = "interception",
     srcs = [
         ":interception_sources",
@@ -1074,7 +1074,7 @@ filegroup(
     srcs = ["lib/ubsan/" + f for f in UBSAN_HEADERS],
 )
 
-cc_stage0_library(
+cc_runtime_stage0_library(
     name = "ubsan",
     srcs = [
         ":ubsan_sources",
@@ -1106,7 +1106,7 @@ cc_stage0_library(
     ],
 )
 
-cc_stage0_static_library(
+cc_runtime_stage0_static_library(
     name = "ubsan.static",
     deps = [":ubsan"],
     visibility = ["//visibility:public"],

@@ -1,4 +1,4 @@
-def configure_builder_for_stage0(builder):
+def configure_builder_for_runtimes(builder, runtime_stage):
     # The problem is that compiler-rt and start libs can only be compiled with
     # a specific set of flags and compilation mode. It is not safe to let the user
     # interfere with them using default command line flags.
@@ -13,7 +13,7 @@ def configure_builder_for_stage0(builder):
     # We are compiling runtimes without any kind of other dependencies.
     builder.set(
         Label("//toolchain:runtime_stage"),
-        "stage0",
+        runtime_stage,
     )
 
     # TODO(cerisier): Why constraint here ?
@@ -21,3 +21,5 @@ def configure_builder_for_stage0(builder):
         Label("//toolchain:source"),
         "prebuilt",
     )
+
+    return builder
