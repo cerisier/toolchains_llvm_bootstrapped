@@ -42,6 +42,7 @@ def _cosmo_extension_impl(module_ctx):
             "//runtimes/cosmo/patches:0029-brain16-clang-fallback.patch",
             "//runtimes/cosmo/patches:0030-auto-disable-mmx-when-no-builtins.patch",
             "//runtimes/cosmo/patches:0031-arm64-build-fixes.patch",
+            "//runtimes/cosmo/patches:0032-demangle-jmpbuf-x86.patch",
         ],
         patch_args = ["-p1", "-l"],
     )

@@ -31,4 +31,5 @@ exports_files([
     "0029-brain16-clang-fallback.patch",
     "0030-auto-disable-mmx-when-no-builtins.patch",
     "0031-arm64-build-fixes.patch",
+    "0032-demangle-jmpbuf-x86.patch",
 ])

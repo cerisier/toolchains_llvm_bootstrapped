@@ -352,15 +352,12 @@ cc_stage2_library(
     visibility = ["//visibility:private"],
 )
 
-cc_stage2_library(
+# https://github.com/jart/cosmopolitan/blob/4.0.2/libc/elf/BUILD.mk
+cosmo_cc_library(
     name = "libc_elf",
-    srcs = glob(
-        ["libc/elf/**/*.%s" % ext for ext in ["c", "cc", "cpp", "s", "S"]],
-        exclude = COSMO_COMMON_EXCLUDES,
-        allow_empty = True,
-    ),
+    dir = "libc/elf",
     textual_hdrs = [":libc_hdrs"],
-    copts = COSMO_COMMON_COPTS + [
+    copts = [
         "-fno-sanitize=all",
         "-Wframe-larger-than=4096",
     ],
@@ -369,20 +366,32 @@ cc_stage2_library(
         ":libc_nexgen32e",
         ":libc_str",
     ],
-    visibility = ["//visibility:private"],
 )
 
-cc_stage2_library(
+# https://github.com/jart/cosmopolitan/blob/4.0.2/libc/intrin/BUILD.mk
+cosmo_cc_library(
     name = "libc_fmt",
-    srcs = glob(
-        ["libc/fmt/**/*.%s" % ext for ext in ["c", "cc", "cpp", "s", "S"]],
-        exclude = COSMO_COMMON_EXCLUDES,
-        allow_empty = True,
-    ),
+    dir = "libc/fmt",
     textual_hdrs = [":libc_hdrs"],
-    copts = COSMO_COMMON_COPTS + [
+    copts = [
         "-fno-jump-tables",
     ],
+    per_file_copts = {
+        "libc/fmt/formatint64.c": ["-O3"],
+        "libc/fmt/formatint64thousands.c": ["-O3"],
+        "libc/fmt/dosdatetimetounix.c": ["-O3"],
+        "libc/fmt/itoa64radix10.greg.c": ["-O3"],
+
+        "libc/fmt/atoi.c": ["-Os"],
+        "libc/fmt/strtol.c": ["-Os"],
+        "libc/fmt/strtoul.c": ["-Os"],
+        "libc/fmt/wcstol.c": ["-Os"],
+        "libc/fmt/wcstoul.c": ["-Os"],
+        "libc/fmt/strtoimax.c": ["-Os"],
+        "libc/fmt/strtoumax.c": ["-Os"],
+        "libc/fmt/wcstoimax.c": ["-Os"],
+        "libc/fmt/wcstoumax.c": ["-Os"],
+    },
     deps = [
         ":libc_intrin",
         ":libc_nexgen32e",
@@ -390,7 +399,7 @@ cc_stage2_library(
         ":libc_str",
         ":libc_sysv",
         ":libc_tinymath",
-        _COMPILER_RT_DEP,
+        ":third_party_compiler_rt",
     ],
     visibility = ["//visibility:private"],
 )
