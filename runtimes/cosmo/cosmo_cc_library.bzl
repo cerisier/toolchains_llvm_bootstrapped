@@ -85,16 +85,26 @@ COSMO_COMMON_COPTS = DEFAULT_CCFLAGS + DEFAULT_CPPFLAGS + DEFAULT_COPTS + DEFAUL
     "@platforms//cpu:aarch64": ["-march=armv8.2-a", "-mtune=generic"],
 })"""
 
-def cosmo_cc_library(name, dir, copts = [], aarch64_safe_assembly_srcs = [], per_file_copts = {}, x86_64_assembly_excludes = [], **kwargs):
+def cosmo_cc_library(name, dir, copts = [], aarch64_safe_assembly_srcs = [], per_file_copts = {}, x86_64_assembly_excludes = [], aarch64_srcs_excludes = [], x86_64_srcs_excludes = [], **kwargs):
     libs = [name + "_srcs"]
+
+    c_srcs = select({
+        "@platforms//cpu:x86_64": native.glob(
+            [dir + "/**/*.c", dir + "/**/*.cc"],
+            exclude = list(per_file_copts.keys()) + x86_64_srcs_excludes,
+            allow_empty = True,
+        ),
+        "@platforms//cpu:aarch64": native.glob(
+            [dir + "/**/*.c", dir + "/**/*.cc"],
+            exclude = list(per_file_copts.keys()) + aarch64_srcs_excludes,
+            allow_empty = True,
+        ),
+        "//conditions:default": [],
+    })
 
     cc_stage2_library(
         name = name + "_srcs",
-        srcs = native.glob(
-            [dir + "/**/*.c", dir + "/**/*.cc"],
-            exclude = per_file_copts.keys(),
-            allow_empty = True,
-        ) + select({
+        srcs = c_srcs + select({
             "@platforms//cpu:x86_64": native.glob(
                 [dir + "/**/*.s", dir + "/**/*.S"],
                 exclude = x86_64_assembly_excludes,

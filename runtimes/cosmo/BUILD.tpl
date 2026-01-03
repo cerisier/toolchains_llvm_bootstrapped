@@ -264,34 +264,157 @@ MUSL_DEPS = [
     ":third_party_zlib",
 ]
 
-cc_stage2_library(
+# https://github.com/jart/cosmopolitan/blob/4.0.2/libc/calls/BUILD.mk
+cosmo_cc_library(
     name = "libc_calls",
-    srcs = select({
-        "@platforms//cpu:x86_64": glob(
-            ["libc/calls/**/*.%s" % ext for ext in ["c", "cc", "cpp", "s", "S"]],
-            exclude = COSMO_COMMON_EXCLUDES,
-            allow_empty = True,
-        ),
-        "@platforms//cpu:aarch64": glob(
-            ["libc/calls/**/*.%s" % ext for ext in ["c", "cc", "cpp", "s", "S"]],
-            exclude = COSMO_COMMON_EXCLUDES + [
-                "libc/calls/getntsyspath.S",
-                "libc/calls/kntsystemdirectory.S",
-                "libc/calls/kntwindowsdirectory.S",
-                "libc/calls/metalfile_init.S",
-                "libc/calls/netbsdtramp.S",
-                "libc/calls/program_executable_name_init.S",
-                "libc/calls/rdrand.c",
-            ],
-            allow_empty = True,
-        ),
-        "//conditions:default": [],
-    }),
+    dir = "libc/calls",
     textual_hdrs = [":libc_hdrs"],
-    copts = COSMO_COMMON_COPTS + [
+    copts = [
         "-fno-sanitize=all",
         "-Wframe-larger-than=4096",
+        "-Walloca-larger-than=4096",
     ],
+    aarch64_safe_assembly_srcs = [
+        #"libc/calls/stackjump.S",
+    ],
+    aarch64_srcs_excludes = [
+        "libc/calls/rdrand.c",
+    ],
+    per_file_copts = {
+        "libc/calls/termios2host.c": [
+            "-O3",
+            "-ffreestanding",
+            "-mgeneral-regs-only",
+        ],
+        "libc/calls/siginfo2cosmo.c": [
+            "-O3",
+            "-ffreestanding",
+            "-mgeneral-regs-only",
+        ],
+        "libc/calls/sigenter-freebsd.c": [
+            "-O3",
+            "-ffreestanding",
+            "-mgeneral-regs-only",
+        ],
+        "libc/calls/sigenter-netbsd.c": [
+            "-O3",
+            "-ffreestanding",
+            "-mgeneral-regs-only",
+        ],
+        "libc/calls/sigenter-openbsd.c": [
+            "-O3",
+            "-ffreestanding",
+            "-mgeneral-regs-only",
+        ],
+        "libc/calls/sigenter-xnu.c": [
+            "-O3",
+            "-ffreestanding",
+            "-mgeneral-regs-only",
+        ],
+        # "libc/calls/ntcontext2linux.c": [
+        #     "-O3",
+        #     "-ffreestanding",
+        #     "-mgeneral-regs-only",
+        # ] + select({
+        #     "@platforms//cpu:x86_64": ["-mstringop-strategy=loop"],
+        #     "//conditions:default": [],
+        # }),
+
+        "libc/calls/open.c": ["-Os"],
+        "libc/calls/openat.c": ["-Os"],
+        "libc/calls/prctl.c": ["-Os"],
+
+        "libc/calls/getcwd.greg.c": ["-Os"],
+        "libc/calls/statfs2cosmo.c": [
+            "-Os",
+            "-mgeneral-regs-only",
+        ],
+
+        "libc/calls/gettimeofday.c": [
+            "-O2",
+            "-mgeneral-regs-only",
+        ],
+        # "libc/calls/clock.c": ["-O2"],
+        # "libc/calls/clock_gettime-mono.c": ["-O2"],
+        # "libc/calls/timespec_tomillis.c": ["-O2"],
+        # "libc/calls/timespec_tomicros.c": ["-O2"],
+        # "libc/calls/timespec_totimeval.c": ["-O2"],
+        # "libc/calls/timespec_fromnanos.c": ["-O2"],
+        # "libc/calls/timespec_frommillis.c": ["-O2"],
+        # "libc/calls/timespec_frommicros.c": ["-O2"],
+        # "libc/calls/timeval_tomillis.c": ["-O2"],
+        # "libc/calls/timeval_frommillis.c": ["-O2"],
+        # "libc/calls/timeval_frommicros.c": ["-O2"],
+
+        "libc/calls/sigaction.c": [
+            "-mgeneral-regs-only",
+        ] + select({
+            "@platforms//cpu:aarch64": [
+                "-mcmodel=large",
+                "-fno-pic",
+            ],
+            "//conditions:default": [],
+        }),
+        "libc/calls/getloadavg-nt.c": select({
+            "@platforms//cpu:aarch64": ["-ffreestanding"],
+            "//conditions:default": [],
+        }),
+
+        "libc/calls/pledge-linux.c": [
+            "-Os",
+            "-fPIC",
+            "-ffreestanding",
+            "-mgeneral-regs-only",
+        ],
+        # "libc/calls/sigcrashsig.c": ["-Os"],
+
+        "libc/calls/cfmakeraw.c": ["-mgeneral-regs-only"],
+        # "libc/calls/clock_gettime-xnu.c": ["-mgeneral-regs-only"],
+        "libc/calls/CPU_AND.c": ["-mgeneral-regs-only"],
+        "libc/calls/CPU_OR.c": ["-mgeneral-regs-only"],
+        "libc/calls/CPU_XOR.c": ["-mgeneral-regs-only"],
+        "libc/calls/dl_iterate_phdr.c": ["-mgeneral-regs-only"],
+        "libc/calls/dup-nt.c": ["-mgeneral-regs-only"],
+        "libc/calls/fcntl-nt.c": ["-mgeneral-regs-only"],
+        "libc/calls/flock-nt.c": ["-mgeneral-regs-only"],
+        "libc/calls/fstatfs-nt.c": ["-mgeneral-regs-only"],
+        "libc/calls/fstat-nt.c": ["-mgeneral-regs-only"],
+        "libc/calls/futimesat.c": ["-mgeneral-regs-only"],
+        "libc/calls/futimes.c": ["-mgeneral-regs-only"],
+        "libc/calls/getrlimit.c": ["-mgeneral-regs-only"],
+        "libc/calls/ioctl.c": ["-mgeneral-regs-only"],
+        "libc/calls/lutimes.c": ["-mgeneral-regs-only"],
+        "libc/calls/metaflock.c": ["-mgeneral-regs-only"],
+        "libc/calls/ntaccesscheck.c": ["-mgeneral-regs-only"],
+        "libc/calls/ntspawn.c": ["-mgeneral-regs-only"],
+        "libc/calls/open-nt.c": ["-mgeneral-regs-only"],
+        "libc/calls/ppoll.c": ["-mgeneral-regs-only"],
+        "libc/calls/preadv.c": ["-mgeneral-regs-only"],
+        "libc/calls/pselect.c": ["-mgeneral-regs-only"],
+        "libc/calls/pwritev.c": ["-mgeneral-regs-only"],
+        "libc/calls/read-nt.c": ["-mgeneral-regs-only"],
+        "libc/calls/readv.c": ["-mgeneral-regs-only"],
+        "libc/calls/readwrite-nt.c": ["-mgeneral-regs-only"],
+        "libc/calls/releasefd.c": ["-mgeneral-regs-only"],
+        "libc/calls/select.c": ["-mgeneral-regs-only"],
+        "libc/calls/sigignore.c": ["-mgeneral-regs-only"],
+        "libc/calls/signal.c": ["-mgeneral-regs-only"],
+        # "libc/calls/sig.c": ["-mgeneral-regs-only"],
+        "libc/calls/sigtimedwait.c": ["-mgeneral-regs-only"],
+        "libc/calls/stat2cosmo.c": ["-mgeneral-regs-only"],
+        "libc/calls/statfs2statvfs.c": ["-mgeneral-regs-only"],
+        "libc/calls/tcgetattr-nt.c": ["-mgeneral-regs-only"],
+        "libc/calls/tcgetattr.c": ["-mgeneral-regs-only"],
+        "libc/calls/tcgetwinsize-nt.c": ["-mgeneral-regs-only"],
+        "libc/calls/tcsetattr-nt.c": ["-mgeneral-regs-only"],
+        "libc/calls/tcsetwinsize-nt.c": ["-mgeneral-regs-only"],
+        "libc/calls/timespec_sleep.c": ["-mgeneral-regs-only"],
+        "libc/calls/uname.c": ["-mgeneral-regs-only"],
+        "libc/calls/utimensat-old.c": ["-mgeneral-regs-only"],
+        "libc/calls/utimes.c": ["-mgeneral-regs-only"],
+        "libc/calls/winexec.c": ["-mgeneral-regs-only"],
+        "libc/calls/writev.c": ["-mgeneral-regs-only"],
+    },
     deps = [
         ":libc_fmt",
         ":libc_intrin",
@@ -572,24 +695,43 @@ cc_stage2_library(
     visibility = ["//visibility:private"],
 )
 
-cc_stage2_library(
+
+# https://github.com/jart/cosmopolitan/blob/4.0.2/libc/log/BUILD.mk
+cosmo_cc_library(
     name = "libc_log",
-    srcs = select({
-        "@platforms//cpu:x86_64": glob(
-            ["libc/log/**/*.%s" % ext for ext in ["c", "cc", "cpp", "s", "S"]],
-            exclude = COSMO_COMMON_EXCLUDES,
-            allow_empty = True,
-        ),
-        "@platforms//cpu:aarch64": glob(
-            ["libc/log/**/*.%s" % ext for ext in ["c", "cc", "cpp"]],
-            exclude = COSMO_COMMON_EXCLUDES,
-            allow_empty = True,
-        ),
-        "//conditions:default": [],
-    }),
+    dir = "libc/log",
     textual_hdrs = [":libc_hdrs"],
-    copts = COSMO_COMMON_COPTS,
-    visibility = ["//visibility:private"],
+    copts = [
+        "-fno-sanitize=all",
+        "-Wframe-larger-than=4096",
+    ],
+    per_file_copts = {
+        "libc/log/checkfail.c": ["-mgeneral-regs-only"],
+        "libc/log/watch.c": ["-ffreestanding"],
+    },
+    deps = [
+        ":libc_calls",
+        ":libc_elf",
+        ":libc_fmt",
+        ":libc_intrin",
+        ":libc_mem",
+        ":libc_nexgen32e",
+        # LIBC_NT_KERNEL32				\
+        # LIBC_NT_NTDLL					\
+        ":libc_nt",
+        ":libc_proc",
+        ":libc_runtime",
+        ":libc_stdio",
+        ":libc_str",
+        ":libc_sysv",
+        #":libc_sysv_calls",
+        ":libc_thread",
+        ":libc_tinymath",
+        ":third_party_compiler_rt",
+        ":third_party_dlmalloc",
+        ":third_party_gdtoa",
+        ":third_party_tz",
+    ],
 )
 
 # https://github.com/jart/cosmopolitan/blob/4.0.2/libc/mem/BUILD.mk
