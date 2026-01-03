@@ -518,14 +518,13 @@ cosmo_cc_library(
     deps = [
         ":libc_intrin",
         ":libc_nexgen32e",
-        # LIBC_NT_KERNEL32				\
-        # LIBC_NT_REALTIME				\
-        # LIBC_NT_SYNCHRONIZATION				\
-        # LIBC_NT_WS2_32					\
-        ":libc_nt",
+        ":libc_nt_kernel32",
+        ":libc_nt_realtime",
+        ":libc_nt_synchronization",
+        ":libc_nt_ws2_32",
         ":libc_str",
         ":libc_sysv",
-        # LIBC_SYSV_CALLS					\
+        ":libc_sysv_calls",
         ":libc_tinymath",
         ":third_party_compiler_rt",
     ],
@@ -650,13 +649,12 @@ cosmo_cc_library(
     x86_64_assembly_excludes = ["libc/intrin/aarch64/**"],
     deps = [
         ":libc_nexgen32e",
-        # LIBC_NT_KERNEL32				\
-        # LIBC_NT_REALTIME				\
-        # LIBC_NT_SYNCHRONIZATION				\
-        # LIBC_NT_WS2_32					\
-        ":libc_nt",
+        ":libc_nt_kernel32",
+        ":libc_nt_realtime",
+        ":libc_nt_synchronization",
+        ":libc_nt_ws2_32",
         ":libc_sysv",
-        # LIBC_SYSV_CALLS					\
+        ":libc_sysv_calls",
     ],
     textual_hdrs = [":libc_hdrs"],
 )
@@ -716,15 +714,14 @@ cosmo_cc_library(
         ":libc_intrin",
         ":libc_mem",
         ":libc_nexgen32e",
-        # LIBC_NT_KERNEL32				\
-        # LIBC_NT_NTDLL					\
-        ":libc_nt",
+        ":libc_nt_kernel32",
+        ":libc_nt_ntdll",
         ":libc_proc",
         ":libc_runtime",
         ":libc_stdio",
         ":libc_str",
         ":libc_sysv",
-        #":libc_sysv_calls",
+        ":libc_sysv_calls",
         ":libc_thread",
         ":libc_tinymath",
         ":third_party_compiler_rt",
@@ -765,7 +762,7 @@ cosmo_cc_library(
         ":libc_runtime",
         ":libc_str",
         ":libc_sysv",
-        #":libc_sysv_calls",
+        ":libc_sysv_calls",
         ":third_party_dlmalloc",
     ],
 )
@@ -810,6 +807,80 @@ cosmo_cc_library(
     },
 )
 
+# https://github.com/jart/cosmopolitan/blob/4.0.2/libc/nt/BUILD.mk
+cosmo_cc_library(
+    name = "libc_nt_kernel32",
+    dir = "libc/nt/kernel32",
+    extra_srcs = glob(["ape/*.h"]) + [
+        "libc/macros.h",
+        "libc/nt/codegen.h",
+        "libc/nt/sysv2nt.S",
+    ],
+)
+
+# https://github.com/jart/cosmopolitan/blob/4.0.2/libc/nt/BUILD.mk
+cosmo_cc_library(
+    name = "libc_nt_advapi32",
+    dir = "libc/nt/advapi32",
+    extra_srcs = glob(["ape/*.h"]) + [
+        "libc/macros.h",
+        "libc/nt/codegen.h",
+    ],
+    deps = [
+        ":libc_nt_kernel32",
+    ],
+)
+
+# https://github.com/jart/cosmopolitan/blob/4.0.2/libc/nt/BUILD.mk
+cosmo_cc_library(
+    name = "libc_nt_ntdll",
+    dir = "libc/nt/ntdll",
+    extra_srcs = glob(["ape/*.h", "libc/nt/**/*.h"]) + [
+        "libc/nt/ntdllimport.S",
+        "libc/dce.h",
+        "libc/macros.h",
+    ],
+)
+
+# https://github.com/jart/cosmopolitan/blob/4.0.2/libc/nt/BUILD.mk
+cosmo_cc_library(
+    name = "libc_nt_synchronization",
+    dir = "libc/nt/API-MS-Win-Core-Synch-l1-2-0",
+    extra_srcs = glob(["ape/*.h"]) + [
+        "libc/macros.h",
+        "libc/nt/codegen.h",
+    ],
+    deps = [
+        ":libc_nt_kernel32",
+    ],
+)
+
+# https://github.com/jart/cosmopolitan/blob/4.0.2/libc/nt/BUILD.mk
+cosmo_cc_library(
+    name = "libc_nt_realtime",
+    dir = "libc/nt/API-MS-Win-Core-Realtime-l1-1-1",
+    extra_srcs = glob(["ape/*.h"]) + [
+        "libc/macros.h",
+        "libc/nt/codegen.h",
+    ],
+    deps = [
+        ":libc_nt_kernel32",
+    ],
+)
+
+# https://github.com/jart/cosmopolitan/blob/4.0.2/libc/nt/BUILD.mk
+cosmo_cc_library(
+    name = "libc_nt_ws2_32",
+    dir = "libc/nt/ws2_32",
+    extra_srcs = glob(["ape/*.h"]) + [
+        "libc/macros.h",
+        "libc/nt/codegen.h",
+    ],
+    deps = [
+        ":libc_nt_kernel32",
+    ],
+)
+
 cc_stage2_library(
     name = "libc_nt",
     srcs = select({
@@ -849,13 +920,13 @@ cosmo_cc_library(
         ":libc_mem",
         ":libc_nexgen32e",
         ":libc_nt",
-        # LIBC_NT_KERNEL32				\
-        # LIBC_NT_NTDLL					\
+        ":libc_nt_kernel32",
+        ":libc_nt_ntdll",
         # LIBC_NT_PSAPI					\
         ":libc_runtime",
         ":libc_str",
         ":libc_sysv",
-        # LIBC_SYSV_CALLS					\
+        ":libc_sysv_calls",
         ":third_party_dlmalloc",
         ":third_party_gdtoa",
         ":third_party_nsync",
@@ -903,13 +974,12 @@ cosmo_cc_library(
         ":libc_fmt",
         ":libc_intrin",
         ":libc_nexgen32e",
-        # LIBC_NT_ADVAPI32				\
-        # LIBC_NT_KERNEL32				\
-        # LIBC_NT_SYNCHRONIZATION				\
-        ":libc_nt",
+        ":libc_nt_advapi32",
+        ":libc_nt_kernel32",
+        ":libc_nt_synchronization",
         ":libc_str",
         ":libc_sysv",
-        #":libc_sysv_calls",
+        ":libc_sysv_calls",
         ":third_party_compiler_rt",
         ":third_party_nsync",
         ":third_party_puff",
@@ -933,18 +1003,18 @@ cosmo_cc_library(
         ":libc_intrin",
         ":libc_mem",
         ":libc_nexgen32e",
-        # LIBC_NT_ADVAPI32			\
+        ":libc_nt_advapi32",
         # LIBC_NT_IPHLPAPI			\
-        # LIBC_NT_KERNEL32			\
-        # LIBC_NT_NTDLL				\
-        # LIBC_NT_REALTIME			\
-        # LIBC_NT_WS2_32				\
+        ":libc_nt_kernel32",
+        ":libc_nt_ntdll",
+        ":libc_nt_realtime",
+        ":libc_nt_ws2_32",
         ":libc_nt",
         ":libc_runtime",
         ":libc_stdio",
         ":libc_str",
         ":libc_sysv",
-        #":libc_sysv_calls",
+        ":libc_sysv_calls",
         ":third_party_tz",
     ],
 )
@@ -970,14 +1040,13 @@ cosmo_cc_library(
         ":libc_intrin",
         ":libc_mem",
         ":libc_nexgen32e",
-        # LIBC_NT_ADVAPI32				\
-        # LIBC_NT_KERNEL32				\
-        ":libc_nt",
+        ":libc_nt_advapi32",
+        ":libc_nt_kernel32",
         ":libc_proc",
         ":libc_runtime",
         ":libc_str",
         ":libc_sysv",
-        #":libc_sysv_calls",
+        ":libc_sysv_calls",
         ":third_party_dlmalloc",
         ":third_party_gdtoa",
     ],
@@ -1030,10 +1099,10 @@ cosmo_cc_library(
 )
 
 # https://github.com/jart/cosmopolitan/blob/4.0.2/libc/sysv/BUILD.mk
-# TODO(zbarsky): Split out calls lib??
 cosmo_cc_library(
     name = "libc_sysv",
     dir = "libc/sysv",
+    excludes = ["libc/sysv/calls/**"],
     per_file_copts = {
         "libc/sysv/errno.c": ["-ffreestanding", "-fno-stack-protector", "-fno-sanitize=all", "-mgeneral-regs-only"],
         "libc/sysv/sysret.c": ["-ffreestanding", "-fno-stack-protector", "-fno-sanitize=all", "-mgeneral-regs-only"],
@@ -1078,6 +1147,16 @@ cosmo_cc_library(
     textual_hdrs = [":libc_hdrs"],
 )
 
+# https://github.com/jart/cosmopolitan/blob/4.0.2/libc/sysv/BUILD.mk
+cosmo_cc_library(
+    name = "libc_sysv_calls",
+    dir = "libc/sysv/calls",
+    deps = [
+        ":libc_sysv",
+    ],
+    textual_hdrs = [":libc_hdrs"],
+)
+
 # https://github.com/jart/cosmopolitan/blob/4.0.2/libc/thread/BUILD.mk
 cosmo_cc_library(
     name = "libc_thread",
@@ -1092,13 +1171,12 @@ cosmo_cc_library(
         ":libc_intrin",
         ":libc_mem",
         ":libc_nexgen32e",
-        # LIBC_NT_KERNEL32				\
-        # LIBC_NT_SYNCHRONIZATION				\
-        ":libc_nt",
+        ":libc_nt_kernel32",
+        ":libc_nt_synchronization",
         ":libc_runtime",
         ":libc_str",
         ":libc_sysv",
-        #":libc_sysv_calls",
+        ":libc_sysv_calls",
         ":libc_tinymath",
         ":third_party_dlmalloc",
         ":third_party_nsync",
@@ -1752,17 +1830,17 @@ cc_stage2_static_library(
     name = "cosmopolitan",
     deps = [
         ":cosmo_libc",
-        ":third_party_dlmalloc",
-        ":third_party_gdtoa",
-        ":third_party_puff",
-        ":third_party_zlib",
-        ":third_party_tz",
-        ":third_party_musl",
-        ":third_party_nsync",
-        ":third_party_nsync_mem",
-        ":third_party_libunwind",
-        ":third_party_libcxxabi",
-        ":third_party_libcxx",
+        #":third_party_dlmalloc",
+        #":third_party_gdtoa",
+        #":third_party_puff",
+        #":third_party_zlib",
+        #":third_party_tz",
+        #":third_party_musl",
+        #":third_party_nsync",
+        #":third_party_nsync_mem",
+        #":third_party_libunwind",
+        #":third_party_libcxxabi",
+        #":third_party_libcxx",
     ],
     visibility = ["//visibility:public"],
 )
@@ -1785,6 +1863,12 @@ cosmo_cc_library(
         "CRT_HAS_128BIT",
     ],
     textual_hdrs = glob(["third_party/compiler_rt/**/*.inc"]) + [":libc_hdrs"],
+    visibility = ["//visibility:public"],
+)
+
+cc_stage2_static_library(
+    name = "clang_rt.builtins.static",
+    deps = [":third_party_compiler_rt"],
     visibility = ["//visibility:public"],
 )
 

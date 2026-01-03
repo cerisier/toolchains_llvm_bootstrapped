@@ -41,14 +41,6 @@ cc_args_list(
 )
 
 cc_args_list(
-    name = "cosmo_platform_args",
-    args = [
-         "//toolchain/args:cosmo_normalize_include",
-    ],
-    visibility = ["//toolchain:__subpackages__"],
-)
-
-cc_args_list(
     name = "toolchain_args",
     args = [
         # Common default compile flags.
@@ -64,15 +56,17 @@ cc_args_list(
 
         "//toolchain/stage2:platform_specific_args",
 
-        # Cosmopolitan static runtime (all OSes)
-        ":cosmo_platform_args",
-
         # Optional sanitizers
         "//toolchain/stage2/args:ubsan_flags",
 
         # Common default link flags.
         "//toolchain/args:force_linker_flags",
         "//toolchain/stage2:default_link_flags",
-    ],
+    ] + select({
+        "//platforms/config:cosmo": [
+            "//toolchain/args:cosmo_normalize_include",
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//toolchain:__subpackages__"],
 )

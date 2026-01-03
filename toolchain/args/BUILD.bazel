@@ -100,7 +100,6 @@ cc_args(
         "normalize_inc": "@cosmo_libc//:normalize_inc",
     },
     data = [
-        "cosmo_normalize_with_linux.h",
         "@cosmo_libc//:normalize_inc",
     ],
 )

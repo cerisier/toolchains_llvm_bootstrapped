@@ -85,9 +85,6 @@ cc_args_list(
     name = "resource_dir",
     args = select({
         "@platforms//os:macos": [],
-        "//platforms/config:cosmo": [
-            "//toolchain/args:resource_dir",
-        ],
         "//conditions:default": [
             "//toolchain/args:resource_dir",
         ],
@@ -232,9 +229,6 @@ cc_args_list(
         # TODO(cerisier): Explode this into specific args instead
         ":platform_specific_args",
 
-        # Cosmopolitan static runtime (all OSes)
-        ":cosmo_platform_args",
-
         # Optional sanitizers
         "//toolchain/args:ubsan_flags",
 
@@ -245,7 +239,12 @@ cc_args_list(
         ":default_link_flags",
         ":default_startfiles", # Needs to stay out of resource_dir since clang does not always search for crtstuff for all targets.
         ":default_libs",
-    ],
+    ] + select({
+        "//platforms/config:cosmo": [
+            ":cosmo_platform_args",
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//toolchain:__subpackages__"],
 )
 
