@@ -47,10 +47,7 @@ def _cosmo_extension_impl(module_ctx):
             "//runtimes/cosmo/patches:0034-guard-avx512-popcnt-builtins.patch",
             "//runtimes/cosmo/patches:0035-str-guard-arch-intrinsics.patch",
             "//runtimes/cosmo/patches:0037-pthread-arm64-setjmp-constraints.patch",
-            "//runtimes/cosmo/patches:0038-rdseed-guard-x86.patch",
-            "//runtimes/cosmo/patches:0040-rdseed-body-guard-after-include.patch",
-            "//runtimes/cosmo/patches:0041-rdseed-body-guard-current.patch",
-            "//runtimes/cosmo/patches:0042-rdseed-add-endif.patch",
+            "//runtimes/cosmo/patches:0045-rdseed-guard-nonx86.patch",
         ],
         patch_args = ["-p1", "-l"],
     )
