@@ -7,6 +7,8 @@ load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_static_library.b
 load("@toolchains_llvm_bootstrapped//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
 load("@toolchains_llvm_bootstrapped//runtimes/cosmo:cosmo_cc_library.bzl", "COSMO_COMMON_COPTS", "NO_MAGIC_COPTS", "cosmo_cc_library")
 load("@toolchains_llvm_bootstrapped//runtimes/cosmo:static_archive_file.bzl", "cc_static_lib_file")
+load("@toolchains_llvm_bootstrapped//runtimes/cosmo:libcxx_headers.bzl", "LIBCXX_HEADERS")
+
 
 package(default_visibility = ["//visibility:public"])
 
@@ -160,56 +162,6 @@ COSMO_COMMON_EXCLUDES = [
 ]
 
 _COMPILER_RT_DEP = ":third_party_compiler_rt"
-
-ZLIB_COMMON_COPTS = COSMO_COMMON_COPTS + [
-    "-ffunction-sections",
-    "-fdata-sections",
-] + select({
-    "@platforms//cpu:aarch64": [
-        "-DADLER32_SIMD_NEON",
-        "-DDEFLATE_SLIDE_HASH_NEON",
-        "-DINFLATE_CHUNK_SIMD_NEON",
-        "-DINFLATE_CHUNK_READ_64LE",
-    ],
-    "//conditions:default": [],
-})
-
-ZLIB_BASE_SRCS = [
-    "third_party/zlib/adler32.c",
-    "third_party/zlib/compress.c",
-    "third_party/zlib/cpu_features.c",
-    "third_party/zlib/crc32.c",
-    "third_party/zlib/infback.c",
-    "third_party/zlib/inffast.c",
-    "third_party/zlib/inflate.c",
-    "third_party/zlib/inftrees.c",
-    "third_party/zlib/notice.c",
-    "third_party/zlib/treeconst.c",
-    "third_party/zlib/trees.c",
-    "third_party/zlib/uncompr.c",
-    "third_party/zlib/zutil.c",
-]
-
-ZLIB_X86_SIMD_SRCS = [
-    "third_party/zlib/adler32_simd.c",
-    "third_party/zlib/crc_folding.c",
-    "third_party/zlib/crc32_simd_sse42.c",
-    "third_party/zlib/crc32_simd_avx512.c",
-]
-
-ZLIB_AARCH64_SIMD_SRCS = [
-    "third_party/zlib/crc32_simd_neon.c",
-]
-
-ZLIB_DEFLATE_SRC = "third_party/zlib/deflate.c"
-
-ZLIB_DEPS = [
-    ":libc_intrin",
-    ":libc_nexgen32e",
-    ":libc_mem",
-    ":libc_str",
-    ":libc_sysv",
-]
 
 # GCC-only -Walloca-larger-than is skipped since clang reports it as unknown.
 TZ_COMMON_COPTS = COSMO_COMMON_COPTS + [
@@ -1413,113 +1365,54 @@ cc_stage2_library(
     visibility = ["//visibility:private"],
 )
 
-cc_stage2_library(
-    name = "third_party_zlib_base",
-    srcs = ZLIB_BASE_SRCS + select({
-        "@platforms//cpu:aarch64": ["third_party/zlib/inffast_chunk.c"],
-        "//conditions:default": [],
-    }),
-    textual_hdrs = [":libc_hdrs"],
-    copts = ZLIB_COMMON_COPTS,
-    deps = ZLIB_DEPS,
-    visibility = ["//visibility:private"],
-)
-
-cc_stage2_library(
-    name = "third_party_zlib_deflate",
-    srcs = [ZLIB_DEFLATE_SRC],
-    textual_hdrs = [":libc_hdrs"],
-    copts = ZLIB_COMMON_COPTS + select({
-        "@platforms//cpu:aarch64": [
-            "-O3",
-            "-DBUILD_NEON",
-            "-march=armv8-a+aes+crc",
-        ],
-        "//conditions:default": [],
-    }),
-    deps = ZLIB_DEPS,
-    visibility = ["//visibility:private"],
-)
-
-cc_stage2_library(
-    name = "third_party_zlib_adler32_simd",
-    srcs = select({
-        "@platforms//cpu:x86_64": [],
-        "//conditions:default": [],
-    }),
-    textual_hdrs = [":libc_hdrs"],
-    copts = ZLIB_COMMON_COPTS,
-    deps = ZLIB_DEPS,
-    visibility = ["//visibility:private"],
-)
-
-cc_stage2_library(
-    name = "third_party_zlib_crc_sse",
-    srcs = select({
-        "@platforms//cpu:x86_64": [
-            "third_party/zlib/crc_folding.c",
-            "third_party/zlib/crc32_simd_sse42.c",
-        ],
-        "//conditions:default": [],
-    }),
-    textual_hdrs = [":libc_hdrs"],
-    copts = ZLIB_COMMON_COPTS + [
-        "-O3",
-        "-msse4.2",
-        "-mpclmul",
-        "-UCRC32_SIMD_AVX512_PCLMUL",
-        "-DCRC32_SIMD_SSE42_PCLMUL",
-        "-DBUILD_SSE42",
-    ],
-    deps = ZLIB_DEPS,
-    visibility = ["//visibility:private"],
-)
-
-cc_stage2_library(
-    name = "third_party_zlib_crc_avx512",
-    srcs = select({
-        "@platforms//cpu:x86_64": ["third_party/zlib/crc32_simd_avx512.c"],
-        "//conditions:default": [],
-    }),
-    textual_hdrs = [":libc_hdrs"],
-    copts = ZLIB_COMMON_COPTS + [
-        "-O3",
-        "-mpclmul",
-        "-mavx512f",
-        "-mvpclmulqdq",
-        "-UCRC32_SIMD_SSE42_PCLMUL",
-        "-DCRC32_SIMD_AVX512_PCLMUL",
-        "-DBUILD_AVX512",
-    ],
-    deps = ZLIB_DEPS,
-    visibility = ["//visibility:private"],
-)
-
-cc_stage2_library(
-    name = "third_party_zlib_crc_neon",
-    srcs = select({
-        "@platforms//cpu:aarch64": ZLIB_AARCH64_SIMD_SRCS,
-        "//conditions:default": [],
-    }),
-    textual_hdrs = [":libc_hdrs"],
-    copts = ZLIB_COMMON_COPTS + [
-        "-O3",
-        "-DBUILD_NEON",
-        "-march=armv8-a+aes+crc",
-    ],
-    deps = ZLIB_DEPS,
-    visibility = ["//visibility:private"],
-)
-
-# CRC SIMD objects rely on intrinsics clang does not currently provide, so we
-# stick to the base and adler32 variants for the cosmo build.
-cc_stage2_library(
+cosmo_cc_library(
     name = "third_party_zlib",
-    srcs = [],
+    dir = "third_party/zlib",
+    copts = [
+        "-ffunction-sections",
+        "-fdata-sections",
+        "-DADLER32_SIMD_SSSE3",
+        "-DCRC32_SIMD_SSE42_PCLMUL",
+        "-DCRC32_SIMD_AVX512_PCLMUL",
+        "-DDEFLATE_SLIDE_HASH_SSE2",
+        "-DINFLATE_CHUNK_SIMD_SSE2",
+        "-DINFLATE_CHUNK_READ_64LE",
+    ],
+    conlyopts = ["-std=gnu17"],
+    per_file_copts = {
+        "third_party/zlib/adler32_simd.c": ["-O3", "-mssse3"],
+        "third_party/zlib/crc_folding.c": [
+            "-O3",
+            "-msse4.2",
+            "-mpclmul",
+            "-UCRC32_SIMD_AVX512_PCLMUL",
+            "-DCRC32_SIMD_SSE42_PCLMUL",
+            "-DBUILD_SSE42",
+        ],
+        "third_party/zlib/crc32_simd_sse42.c": [
+            "-O3",
+            "-msse4.2",
+            "-mpclmul",
+            "-UCRC32_SIMD_AVX512_PCLMUL",
+            "-DCRC32_SIMD_SSE42_PCLMUL",
+            "-DBUILD_SSE42",
+        ],
+        "third_party/zlib/crc32_simd_avx512.c": [
+            "-O3",
+            "-mpclmul",
+			"-mavx512f",
+			"-mvpclmulqdq",
+			"-UCRC32_SIMD_SSE42_PCLMUL",
+			"-DCRC32_SIMD_AVX512_PCLMUL",
+			"-DBUILD_AVX512",
+        ],
+    },
     deps = [
-        ":third_party_zlib_base",
-        ":third_party_zlib_deflate",
-        ":third_party_puff",
+        ":libc_intrin",
+        ":libc_nexgen32e",
+        ":libc_mem",
+        ":libc_str",
+        ":libc_sysv",
     ],
     visibility = ["//visibility:private"],
 )
@@ -1585,13 +1478,6 @@ cc_stage2_library(
         ":third_party_musl_base",
         ":third_party_musl_portcosmo",
     ],
-    visibility = ["//visibility:private"],
-)
-
-cc_stage2_library(
-    name = "cosmo_locale_stubs",
-    srcs = ["@toolchains_llvm_bootstrapped//runtimes/cosmo:locale_stubs.c"],
-    copts = COSMO_COMMON_COPTS,
     visibility = ["//visibility:private"],
 )
 
@@ -1758,30 +1644,24 @@ cc_stage2_library(
     visibility = ["//visibility:private"],
 )
 
-cc_stage2_library(
+# https://github.com/jart/cosmopolitan/blob/4.0.2/third_party/libcxx/BUILD.mk
+cosmo_cc_library(
     name = "third_party_libcxx",
-    srcs = glob(
-        ["third_party/libcxx/**/*.%s" % ext for ext in ["cpp", "cc", "c"]],
-        exclude = ["third_party/libcxx/test/**"],
-        allow_empty = True,
-    ),
-    textual_hdrs = glob(
-        ["third_party/libcxx/**/*.%s" % ext for ext in ["h", "inc"]],
-        exclude = ["third_party/libcxx/test/**"],
-        allow_empty = True,
-    ),
-    copts = COSMO_COMMON_COPTS + [
-        "-nostdinc++",
+    dir = "third_party/libcxx",
+    extra_srcs = glob(["third_party/libcxx/**/*.cpp"]),
+    per_file_copts = {
+        "third_party/libcxx/locale.cpp": ["-O", "-g0"],
+    },
+    copts = [
         "-ffunction-sections",
         "-fdata-sections",
         "-fexceptions",
         "-frtti",
-        "-Wno-alloc-size-larger-than",
-        "-DLIBCXX_BUILDING_LIBCXXABI",
-        "-D_LIBCPP_BUILDING_LIBRARY",
-        "-Ithird_party/libcxx",
-        "-Ithird_party/libcxxabi",
-        "-Ithird_party/libunwind/include",
+        #"-Wno-alloc-size-larger-than",
+    ],
+    local_defines = [
+        "LIBCXX_BUILDING_LIBCXXABI",
+        "_LIBCPP_BUILDING_LIBRARY",
     ],
     deps = [
         ":libc_calls",
@@ -1796,10 +1676,12 @@ cc_stage2_library(
         ":libc_sysv",
         ":libc_thread",
         ":libc_tinymath",
+        ":third_party_compiler_rt",
         ":third_party_gdtoa",
         ":third_party_libcxxabi",
         ":third_party_libunwind",
-        _COMPILER_RT_DEP,
+        ":third_party_musl",
+        ":third_party_tz",
     ],
     visibility = ["//visibility:private"],
 )
@@ -1829,7 +1711,7 @@ cc_stage2_library(
         ":libc_tinymath",
         ":libc_vga",
         ":libc_x",
-        ":cosmo_locale_stubs",
+        ":third_party_musl",
     ],
     visibility = ["//visibility:public"],
 )
