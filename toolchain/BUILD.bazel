@@ -13,7 +13,7 @@ string_setting(
     name = "runtime_stage",
     values = [
         "stage0", # depend on compiler-only: CRTs, builtins, libc, static libraries.
-        # "stage1", # depends on above: libunwind
+        "stage1", # depends on above: libunwind
         # "stage2", # depends on above: libc++abi
         # "stage3", # depends on above: libc++
         "complete", # depends on above: user programs.
@@ -35,6 +35,13 @@ config_setting(
     name = "runtimes_all",
     flag_values = {
         ":runtime_stage": "complete",
+    },
+)
+
+config_setting(
+    name = "runtimes_stage1",
+    flag_values = {
+        ":runtime_stage": "stage1",
     },
 )
 
@@ -224,7 +231,8 @@ cc_args_list(
         "//toolchain/args:rtlib",
         ":resource_dir",
         ":default_link_flags",
-        ":default_startfiles", # Needs to stay out of resource_dir since clang does not always search for crtstuff for all targets.
+        # Needs to stay out of resource_dir since clang does not always search for crtstuff for all targets.
+        ":default_startfiles",
         ":default_libs",
     ],
 )

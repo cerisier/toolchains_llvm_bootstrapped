@@ -24,6 +24,7 @@ def make_glibc_shared_library(
         version = "."+lib_version if len(lib_version) > 0 else ""
     )
 
+    # Stage0 because libc doesn't depend on anything at all
     cc_runtime_stage0_shared_library(
         name = name,
         deps = ["lib%s" % lib_name],

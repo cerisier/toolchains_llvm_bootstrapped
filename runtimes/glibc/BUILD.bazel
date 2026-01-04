@@ -54,16 +54,17 @@ select_file(
     visibility = ["//visibility:public"],
 )
 
-# __stack_chk_guard is a global symbol that is provided and initialized by the
-# dynamic linker (ld.so) when using glibc.
+# The below are global symbols that are provided and initialized by the dynamic
+# linker (ld.so) when using glibc.
 #
-# Because we let clang frontend provide the -dynamic-linker flag, it means that
-# the linker will never be able to link against the actual target dynamic linker,
-# only set the proper path as the dynamic linker.
+# To avoid having to compute the proper ld.so name in the linker script, we
+# resort to providing those symbols here.
 #
-# Because of this, references to __stack_chk_guard would end up as undefined
-# symbol. Here we add a stub in the libc because we know that the
-# dynamic linker will be the one to provide it.
+# These symbols may not be normally availble for all targets and versions of the
+# glibc but it should be "mostly" harmless.
+#
+# It might cause faulty programs to successfully link when they should not, even
+# tho the situations should be very rare or non-existent in practice.
 write_file(
     name = "__stack_chk_guard.S",
     out = "glibc/build/__stack_chk_guard.S",
@@ -82,6 +83,26 @@ write_file(
     ],
 )
 
+# Same as above.
+write_file(
+    name = "__tls_get_addr.S",
+    out = "glibc/build/__tls_get_addr.S",
+    content = [
+        "#if __SIZEOF_POINTER__ == 4",
+        ".balign 4",
+        "#else",
+        ".balign 8",
+        "#endif",
+        ".globl __tls_get_addr",
+        ".type __tls_get_addr, %function;",
+        "#if __SIZEOF_POINTER__ == 4",
+        "__tls_get_addr: .long 0",
+        "#else",
+        "__tls_get_addr: .quad 0",
+        "#endif",
+    ],
+)
+
 # Make one cc_shared_library target per lib, using the assembly file
 LIBS = [
     make_glibc_shared_library(
@@ -97,7 +118,8 @@ LIBS = [
         lib_version = "6",
         srcs = [
             ":libc.s",
-            ":__stack_chk_guard.S"
+            ":__stack_chk_guard.S",
+            ":__tls_get_addr.S",
         ],
         extra_link_flags = [
             # _IO_stdin_used is defined as a global symbol in .rodata

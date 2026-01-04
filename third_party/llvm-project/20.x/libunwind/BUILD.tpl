@@ -3,15 +3,20 @@
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_library.bzl", "cc_runtime_stage0_library")
 load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
-load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_shared_library.bzl", "cc_runtime_stage0_shared_library")
+load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_shared_library.bzl", "cc_runtime_stage1_shared_library")
 
-cc_runtime_stage0_library(
+cc_library(
     name = "libunwind",
     copts = [
         "-Wa,--noexecstack",
-        "-fvisibility=hidden",
-        "-fvisibility-inlines-hidden",
-        "-fvisibility-global-new-delete=force-hidden",
+    ] + select({
+        "@toolchains_llvm_bootstrapped//runtimes:linkmode_static": [
+            "-fvisibility=hidden",
+            "-fvisibility-inlines-hidden",
+            "-fvisibility-global-new-delete=force-hidden",
+        ],
+        "@toolchains_llvm_bootstrapped//runtimes:linkmode_dynamic": [],
+    }) + [
         "-Wno-bitwise-conditional-parentheses",
         "-Wno-visibility",
         "-Wno-incompatible-pointer-types",
@@ -25,7 +30,9 @@ cc_runtime_stage0_library(
             "-Wno-unused-value",
         ],
         "//conditions:default": [],
-    }),
+    }) + [
+        "-funwind-tables",
+    ],
     conlyopts = [
         "-std=c99",
         "-fexceptions",
@@ -34,10 +41,11 @@ cc_runtime_stage0_library(
         "-fno-exceptions",
         "-fno-rtti",
     ],
+    linkopts = [
+        "--unwindlib=none",
+    ],
     features = ["-default_compile_flags"],
     local_defines = [
-        "_LIBUNWIND_DISABLE_VISIBILITY_ANNOTATIONS", # only for static libunwind
-
         # This is intentionally always defined because the macro definition means, should it only
         # build for the target specified by compiler defines. Since we pass -target the compiler
         # defines will be correct.
@@ -45,7 +53,13 @@ cc_runtime_stage0_library(
         "_DEBUG",
         # "_LIBUNWIND_HAS_NO_THREADS", # ANY_NON_SINGLE_THREADED
         # "_DCOMPILER_RT_ARMHF_TARGET", # ARM
-    ],
+        "_LIBUNWIND_USE_FRAME_HEADER_CACHE",
+    ] + select({
+        "@toolchains_llvm_bootstrapped//runtimes:linkmode_static": [
+            "_LIBUNWIND_HIDE_SYMBOLS",
+        ],
+        "@toolchains_llvm_bootstrapped//runtimes:linkmode_dynamic": [],
+    }),
     hdrs = glob([
         "include/**",
         "src/*.h",
@@ -104,10 +118,15 @@ cc_runtime_stage0_static_library(
     visibility = ["//visibility:public"],
 )
 
-cc_runtime_stage0_shared_library(
+# Stage1 because libunwind.so must have CRTs
+cc_runtime_stage1_shared_library(
     name = "libunwind.shared",
     deps = [
         ":libunwind",
+    ],
+    user_link_flags = [
+        "-Wl,-soname,libunwind.so.1",
+        "-v",
     ],
     shared_lib_name = "libunwind.so.1.0",
     visibility = ["//visibility:public"],

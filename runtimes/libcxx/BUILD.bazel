@@ -1,6 +1,30 @@
-load("@bazel_lib//lib:copy_file.bzl", "copy_file")
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
 load("//runtimes:defs.bzl", "stub_library")
+
+alias(
+    name = "libcxx.static",
+    actual = "@libcxx//:libcxx.static",
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "libcxx.shared",
+    actual = "@libcxx//:libcxx.shared",
+    visibility = ["//visibility:public"],
+)
+
+
+alias(
+    name = "libcxxabi.static",
+    actual = "@libcxxabi//:libcxxabi.static",
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "libcxxabi.shared",
+    actual = "@libcxxabi//:libcxxabi.shared",
+    visibility = ["//visibility:public"],
+)
 
 stub_library(
     name = "c++",

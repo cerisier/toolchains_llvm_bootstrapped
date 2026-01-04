@@ -64,7 +64,12 @@ cc_args(
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
-    args = [
-        "-nostdlib",
-    ],
+    args = select({
+        "//toolchain:runtimes_stage1": [
+            "-nostdlib++",
+        ],
+        "//toolchain:runtimes_none": [
+            "-nostdlib",
+        ],
+    }),
 )

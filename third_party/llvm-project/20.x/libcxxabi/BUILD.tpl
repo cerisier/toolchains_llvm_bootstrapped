@@ -52,11 +52,19 @@ cc_library(
         "_LIBCPP_BUILDING_LIBRARY",
         "LIBCXX_BUILDING_LIBCXXABI",
         # DHAVE___CXA_THREAD_ATEXIT_IMPL (gnu but not linux and glibc >= 2.18)
-        # "_LIBCXXABI_DISABLE_VISIBILITY_ANNOTATIONS", # Only for satic c++abi"
-    ],
-    copts = [
-        "-fvisibility=hidden",
-        "-fvisibility-inlines-hidden",
+    ] + select({
+        "@toolchains_llvm_bootstrapped//runtimes:linkmode_static": [
+            "_LIBCXXABI_DISABLE_VISIBILITY_ANNOTATIONS",
+        ],
+        "@toolchains_llvm_bootstrapped//runtimes:linkmode_dynamic": [],
+    }),
+    copts = select({
+        "@toolchains_llvm_bootstrapped//runtimes:linkmode_static": [
+            "-fvisibility=hidden",
+            "-fvisibility-inlines-hidden",
+        ],
+        "@toolchains_llvm_bootstrapped//runtimes:linkmode_dynamic": [],
+    }) + [
         "-fPIC", #TODO: Support PIC
         "-fstrict-aliasing",
         "-std=c++23",
@@ -158,6 +166,9 @@ cc_runtime_stage0_shared_library(
     deps = [
         ":libcxxabi",
     ],
-    # shared_lib_name = "libc++abi.1.0",
+    user_link_flags = [
+        "-Wl,-soname,libc++abi.so.1",
+    ],
+    shared_lib_name = "libc++abi.so.1.0",
     visibility = ["//visibility:public"],
 )

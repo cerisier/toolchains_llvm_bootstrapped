@@ -3,6 +3,34 @@ load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("//toolchain/runtimes:cc_stage0_object.bzl", "cc_stage0_object")
 load("//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
 load(":copy_to_resource_directory.bzl", "copy_to_resource_directory")
+load("@bazel_skylib//rules:common_settings.bzl", "string_setting")
+
+#TODO(cerisier): duplicate this per runtime repo ? or do differently ?
+string_setting(
+    name = "linkmode",
+    build_setting_default = "dynamic",
+    values = [
+        "static",
+        "dynamic",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "linkmode_static",
+    flag_values = {
+        ":linkmode": "static",
+    },
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "linkmode_dynamic",
+    flag_values = {
+        ":linkmode": "dynamic",
+    },
+    visibility = ["//visibility:public"],
+)
 
 filegroup(
     name = "none",
@@ -36,8 +64,7 @@ filegroup(
             "@libcxx//:libcxx.shared",
             "@libcxxabi//:libcxxabi.shared",
             # only if libcxx on linux
-            # TODO(zbarsky): Enable this? libunwind depends on a another shared lib which loses GraphNodeInfo provider
-            #"@libunwind//:libunwind.shared",
+            "@libunwind//:libunwind.shared",
         ],
         # TODO(zbarsky): windows?
         "//conditions:default": [],
