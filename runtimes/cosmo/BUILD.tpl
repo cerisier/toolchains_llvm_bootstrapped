@@ -1807,7 +1807,6 @@ cc_stage2_library(
 cc_stage2_library(
     name = "cosmo_libc",
     deps = [
-        ":libc_ape",
         ":libc_calls",
         ":libc_crt",
         ":libc_dlopen",
@@ -1825,11 +1824,11 @@ cc_stage2_library(
         ":libc_stdio",
         ":libc_str",
         ":libc_sysv",
+        ":libc_testlib",
         ":libc_thread",
         ":libc_tinymath",
         ":libc_vga",
         ":libc_x",
-        ":libc_testlib",
         ":cosmo_locale_stubs",
     ],
     visibility = ["//visibility:public"],
