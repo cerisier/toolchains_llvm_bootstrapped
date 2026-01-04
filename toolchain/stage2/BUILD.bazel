@@ -64,7 +64,7 @@ cc_args_list(
         "//toolchain/stage2:default_link_flags",
     ] + select({
         "//platforms/config:cosmo": [
-            "//toolchain/args:cosmo_normalize_include",
+            "//toolchain:cosmo_platform_compile_args",
         ],
         "//conditions:default": [],
     }),

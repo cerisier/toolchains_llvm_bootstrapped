@@ -286,6 +286,21 @@ cc_args_list(
     visibility = ["//toolchain:__subpackages__"],
 )
 
+cc_args_list(
+    name = "cosmo_platform_compile_args",
+    args = [
+        "//toolchain/args:cosmo_libcxx_headers_include_search_paths",
+        "//toolchain/args:cosmo_header_paths",
+        "//toolchain/args:cosmo_normalize_include",
+        "//toolchain/args:cosmo_linux_defines",
+        "//toolchain/args:cosmo_cxx_standard",
+        "//toolchain/args:cosmo_lax_vector_conversions",
+        "//toolchain/args:cosmo_simd_flags",
+        "//toolchain/args:cosmo_disable_mmx",
+    ],
+    visibility = ["//visibility:public"],
+)
+
 cc_artifact_name_pattern(
     name = "windows_executable_pattern",
     category = "@rules_cc//cc/toolchains/artifacts:executable",

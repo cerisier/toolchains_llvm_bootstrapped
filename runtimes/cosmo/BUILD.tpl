@@ -6,6 +6,7 @@ load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_object.bzl", "cc
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_static_library.bzl", "cc_stage2_static_library")
 load("@toolchains_llvm_bootstrapped//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
 load("@toolchains_llvm_bootstrapped//runtimes/cosmo:cosmo_cc_library.bzl", "COSMO_COMMON_COPTS", "NO_MAGIC_COPTS", "cosmo_cc_library")
+load("@toolchains_llvm_bootstrapped//runtimes/cosmo:static_archive_file.bzl", "cc_static_lib_file")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -53,7 +54,7 @@ COSMO_LIBRARY_DIRS = [
     "third_party/double-conversion",
     "third_party/gdtoa",
     "third_party/getopt",
-    #"third_party/musl",
+    "third_party/musl",
     "third_party/nsync",
     #"third_party/openmp",
     "third_party/puff",
@@ -272,7 +273,7 @@ cosmo_cc_library(
     copts = [
         "-fno-sanitize=all",
         "-Wframe-larger-than=4096",
-        "-Walloca-larger-than=4096",
+        #"-Walloca-larger-than=4096",
     ],
     aarch64_safe_assembly_srcs = [
         #"libc/calls/stackjump.S",
@@ -577,7 +578,7 @@ cosmo_cc_library(
         # TODO(zbarsky): kprint.c in the makefile?
         "libc/intrin/kprintf.greg.c": [
             "-Wframe-larger-than=128",
-            # "-Walloca-larger-than=128",
+            #"-Walloca-larger-than=128",
         ],
         "libc/intrin/cursor.c": ["-ffunction-sections"],
         "libc/intrin/mmap.c": [
@@ -1587,6 +1588,13 @@ cc_stage2_library(
     visibility = ["//visibility:private"],
 )
 
+cc_stage2_library(
+    name = "cosmo_locale_stubs",
+    srcs = ["@toolchains_llvm_bootstrapped//runtimes/cosmo:locale_stubs.c"],
+    copts = COSMO_COMMON_COPTS,
+    visibility = ["//visibility:private"],
+)
+
 LIBUNWIND_COPTS = COSMO_COMMON_COPTS + [
     "-fexceptions",
     "-ffunction-sections",
@@ -1822,6 +1830,7 @@ cc_stage2_library(
         ":libc_vga",
         ":libc_x",
         ":libc_testlib",
+        ":cosmo_locale_stubs",
     ],
     visibility = ["//visibility:public"],
 )
@@ -1835,7 +1844,6 @@ cc_stage2_static_library(
         #":third_party_puff",
         #":third_party_zlib",
         #":third_party_tz",
-        #":third_party_musl",
         #":third_party_nsync",
         #":third_party_nsync_mem",
         #":third_party_libunwind",
@@ -1902,6 +1910,24 @@ COSMO_COMPANION_LIBS = [
     for lib in COSMO_COMPANION_LIBS
 ]
 
+cc_static_lib_file(
+    name = "cosmo_libcxx",
+    lib = ":third_party_libcxx",
+    out = "libc++.a",
+)
+
+cc_static_lib_file(
+    name = "cosmo_libcxxabi",
+    lib = ":third_party_libcxxabi",
+    out = "libc++abi.a",
+)
+
+cc_static_lib_file(
+    name = "cosmo_libunwind",
+    lib = ":third_party_libunwind",
+    out = "libunwind.a",
+)
+
 copy_to_directory(
     name = "cosmo_library_search_directory",
     srcs = [
@@ -1909,6 +1935,10 @@ copy_to_directory(
         ":cosmo_libc_archive",
     ] + [
         ":cosmo_lib{}".format(lib) for lib in COSMO_COMPANION_LIBS
+    ] + [
+        ":cosmo_libcxx",
+        ":cosmo_libcxxabi",
+        ":cosmo_libunwind",
     ],
     root_paths = ["."],
     visibility = ["//visibility:public"],

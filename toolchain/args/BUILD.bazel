@@ -91,28 +91,27 @@ cc_args(
         "@rules_cc//cc/toolchains/actions:objcpp_compile",
     ],
     args = [
-        #"-include",
-        #"toolchain/args/cosmo_normalize_with_linux.h",
         "-include",
-        "{normalize_inc}"
+        "toolchain/args/cosmo_normalize_with_linux.h",
     ],
-    format = {
-        "normalize_inc": "@cosmo_libc//:normalize_inc",
-    },
-    data = [
-        "@cosmo_libc//:normalize_inc",
-    ],
+    data = ["//toolchain/args:cosmo_normalize_with_linux.h"],
 )
 
 cc_args(
     name = "cosmo_linux_defines",
     actions = [
-        "@rules_cc//cc/toolchains/actions:compile_actions",
+        "@rules_cc//cc/toolchains/actions:c_compile",
+        "@rules_cc//cc/toolchains/actions:cpp_compile",
+        "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
+        "@rules_cc//cc/toolchains/actions:cpp_module_compile",
+        "@rules_cc//cc/toolchains/actions:cpp_module_codegen",
+        "@rules_cc//cc/toolchains/actions:clif_match",
+        "@rules_cc//cc/toolchains/actions:objc_compile",
+        "@rules_cc//cc/toolchains/actions:objcpp_compile",
     ],
     args = [
         "-D_COSMO_SOURCE",
         "-D__linux__",
-        "-Dlinux",
         "-D__linux",
         "-DLITTLE_ENDIAN=1234",
         "-DBIG_ENDIAN=4321",

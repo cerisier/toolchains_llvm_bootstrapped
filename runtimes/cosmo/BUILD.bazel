@@ -3,6 +3,8 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 # This package is only used to re-export targets from the external cosmo_libc
 # repository populated by the module extension.
 
+exports_files(["locale_stubs.c"])
+
 alias(
     name = "cosmo_libc",
     actual = "@cosmo_libc//:cosmo_libc",
