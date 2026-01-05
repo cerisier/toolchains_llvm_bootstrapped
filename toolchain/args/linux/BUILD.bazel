@@ -133,6 +133,8 @@ cc_args(
         "-L{libc_library_search_path}",
         "-Wl,--push-state",
         "-Wl,--as-needed",
+        # Ensure APE header objects get pulled from the archive.
+        "-Wl,-u,ape_pe",
         "-lc++",
         "-lc++abi",
         "-lunwind",
@@ -145,7 +147,6 @@ cc_args(
         "-lresolv",
         "-lxnet",
         "-lcrypt",
-        "-l:libape.a",
         "-Wl,--pop-state",
     ],
     data = [

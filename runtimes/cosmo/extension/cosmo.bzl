@@ -100,7 +100,6 @@ def _cosmo_extension_impl(mctx):
             "//runtimes/cosmo/patches:0035-str-guard-arch-intrinsics.patch",
             "//runtimes/cosmo/patches:0037-pthread-arm64-setjmp-constraints.patch",
             "//runtimes/cosmo/patches:0045-rdseed-guard-nonx86.patch",
-            "//runtimes/cosmo/patches:0051-ape-aarch64-balign.patch",
             #"//runtimes/cosmo/patches:0046-mmintrin-forward-decls.patch",
             #"//runtimes/cosmo/patches:0047-mmintrin-cosmo-disable-mmx.patch",
             #"//runtimes/cosmo/patches:0048-intrin-guard-clang.patch",

@@ -13,3 +13,11 @@ platform(
         "OSFamily": "Linux",
     },
 )
+
+load("//:apify.bzl", "apify_binary")
+
+# APE-wrapped llvm-ar for Cosmopolitan builds; elsewhere this aliases the ELF.
+apify_binary(
+    name = "llvm-ar",
+    elf = "@llvm-project//llvm:llvm-ar",
+)

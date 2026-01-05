@@ -1,9 +1,0 @@
---- a/ape/ape.S
-+++ b/ape/ape.S
-@@ -1835,1 +1835,5 @@
--	.align	TLS_ALIGNMENT
-+#if defined(__aarch64__)
-+	.balign	TLS_ALIGNMENT
-+#else
-+	.align	TLS_ALIGNMENT
-+#endif
