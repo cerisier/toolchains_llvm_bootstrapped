@@ -1289,7 +1289,7 @@ copy_file(
 )
 
 cc_stage2_library(
-    name = "libc_ape",
+    name = "ape",
     srcs = select({
         "@platforms//cpu:x86_64": glob(
             ["ape/*.S"],
@@ -1302,9 +1302,22 @@ cc_stage2_library(
             "ape/systemcall.S",
         ],
         "//conditions:default": [],
+    }) + [
+        "ape/loader.c",
+    ],
+    conlyopts = select({
+        "@platforms//cpu:x86_64": ["-DSUPPORT_VECTOR=121"],
+        "@platforms//cpu:aarch64": ["-DSUPPORT_VECTOR=33"],
+        "//conditions:default": [],
     }),
     textual_hdrs = [":libc_hdrs"],
-    copts = COSMO_COMMON_COPTS,
+    copts = COSMO_COMMON_COPTS + select({
+        "@platforms//cpu:aarch64": [
+            # .align expects a power-of-two exponent on aarch64; 6 → 64 bytes.
+            "-DTLS_ALIGNMENT=6",
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:private"],
 )
 
@@ -1766,6 +1779,7 @@ cc_stage2_library(
 cc_stage2_static_library(
     name = "cosmopolitan",
     deps = [
+        ":ape",
         ":cosmo_libc",
         #":third_party_dlmalloc",
         #":third_party_gdtoa",
@@ -1856,6 +1870,12 @@ cc_static_lib_file(
     out = "libunwind.a",
 )
 
+cc_static_lib_file(
+    name = "cosmo_libc_ape",
+    lib = ":ape",
+    out = "libape.a",
+)
+
 copy_to_directory(
     name = "cosmo_library_search_directory",
     srcs = [
@@ -1867,6 +1887,7 @@ copy_to_directory(
         ":cosmo_libcxx",
         ":cosmo_libcxxabi",
         ":cosmo_libunwind",
+        ":cosmo_libc_ape",
     ],
     root_paths = ["."],
     visibility = ["//visibility:public"],

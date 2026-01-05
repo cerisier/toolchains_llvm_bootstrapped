@@ -145,6 +145,7 @@ cc_args(
         "-lresolv",
         "-lxnet",
         "-lcrypt",
+        "-l:libape.a",
         "-Wl,--pop-state",
     ],
     data = [

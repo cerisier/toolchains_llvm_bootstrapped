@@ -25,8 +25,8 @@ common:prebuilt  -c opt
 common:prebuilt  --strip=always
 common:prebuilt  --stripopt=--strip-all
 # Use ThinLTO when available (on Linux), but it doesn't work for Darwin targets, so also enable `flto=thin` as fallback.
-common:prebuilt   --features=thin_lto
-common:prebuilt  --copt=-flto=thin
+#common:prebuilt   --features=thin_lto
+#common:prebuilt  --copt=-flto=thin
 common:prebuilt  --copt=-fno-exceptions
 common:prebuilt  --copt=-fno-rtti
 common:prebuilt  --copt=-fomit-frame-pointer
