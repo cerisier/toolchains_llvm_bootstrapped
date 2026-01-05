@@ -244,4 +244,6 @@ exports_files([
     "crt/crt1.c",
     "crt/rcrt1.c",
     "crt/Scrt1.c",
+    "ldso/dlstart.c",
+    "ldso/dynlink.c",
 ])

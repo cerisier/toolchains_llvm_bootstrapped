@@ -1,7 +1,8 @@
 load("@bazel_lib//lib:copy_file.bzl", "copy_file")
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
-load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_library.bzl", "cc_runtime_stage0_library")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
+load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_shared_library.bzl", "cc_runtime_stage0_shared_library")
 load("//runtimes:defs.bzl", "stub_library")
 load(":libc_musl_srcs_filegroup.bzl", "libc_musl_srcs_filegroup")
 load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_stage0_object.bzl", "cc_stage0_object")
@@ -54,7 +55,7 @@ CFLAGS_NOSSP = [
     "-fno-stack-protector",
 ]
 
-cc_runtime_stage0_library(
+cc_library(
     name = "musl_libc",
     copts = CFLAGS_ALL + ["-nostdlib"],
     srcs = [
@@ -77,7 +78,38 @@ cc_runtime_stage0_static_library(
     visibility = ["//visibility:public"],
 )
 
-cc_runtime_stage0_library(
+cc_library(
+    name = "musl_ldso",
+    srcs = [
+        "@musl_libc//:ldso/dlstart.c",
+        "@musl_libc//:ldso/dynlink.c",
+    ],
+    # passing all files as textual_hdrs since arch specific .c can #include
+    # their generic .c counterpart.
+    textual_hdrs = ["@musl_libc//:compile_srcs"],
+    implementation_deps = [
+        "@musl_libc//:musl_internal_headers",
+        "@musl_libc//:musl_libc_headers_for_musl",
+    ],
+    copts = CFLAGS_ALL + ["-nostdlib", "-fPIC"],
+)
+
+cc_runtime_stage0_shared_library(
+    name = "musl_libc.shared",
+    deps = [
+        ":musl_libc",
+        ":musl_ldso",
+    ],
+    user_link_flags = [
+        "-Wl,-e,_dlstart",
+        # should it be "now"?
+        "-Wl,-z,now",
+        "-Wl,-soname,libc.so",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
     name = "musl_crt1",
     srcs = ["@musl_libc//:crt/crt1.c"],
     copts = CFLAGS_ALL + ["-DCRT"] + CFLAGS_NOSSP,
@@ -88,7 +120,7 @@ cc_runtime_stage0_library(
     visibility = ["//visibility:public"],
 )
 
-cc_runtime_stage0_library(
+cc_library(
     name = "musl_rcrt1",
     srcs = ["@musl_libc//:crt/rcrt1.c"],
     copts = CFLAGS_ALL + ["-DCRT"] + CFLAGS_NOSSP + ["-fPIC"],
@@ -99,7 +131,7 @@ cc_runtime_stage0_library(
     visibility = ["//visibility:public"],
 )
 
-cc_runtime_stage0_library(
+cc_library(
     name = "musl_Scrt1",
     srcs = ["@musl_libc//:crt/Scrt1.c"],
     copts = CFLAGS_ALL + ["-DCRT"] + CFLAGS_NOSSP + ["-fPIC"],
@@ -148,9 +180,19 @@ copy_file(
     src = ":musl_libc.static",
     out = "libc.a",
     allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "musl_libc.so",
+    src = ":musl_libc.shared",
+    out = "libc.so",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
 )
 
 MUSL_LIBS = [
+    # "c",
     "m",
     "rt",
     "pthread",
@@ -165,8 +207,8 @@ MUSL_LIBS = [
 # That's what musl does.
 [
     stub_library(
-        name = "musl_lib{}".format(lib),
-        out = "lib{}.a".format(lib),
+        name = "musl_lib{}_stub".format(lib),
+        out = "stubs/lib{}.a".format(lib),
         visibility = ["//visibility:public"],
     ) for lib in MUSL_LIBS
 ]
@@ -174,10 +216,13 @@ MUSL_LIBS = [
 copy_to_directory(
     name = "musl_library_search_directory",
     srcs = [
-        ":musl_libc.a",
+        # ":musl_libc.a",
     ] + [
-        ":musl_lib{}".format(lib) for lib in MUSL_LIBS
+        ":musl_lib{}_stub".format(lib) for lib in MUSL_LIBS
     ],
+    replace_prefixes = {
+        "stubs": "",
+    },
     visibility = ["//visibility:public"],
 )
 

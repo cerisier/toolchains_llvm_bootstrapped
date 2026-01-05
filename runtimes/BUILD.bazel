@@ -127,7 +127,7 @@ copy_to_directory(
     name = "crt_objects_directory_linux",
     srcs = select({
         "//platforms/config:musl": [
-            # -static-pie is implied
+            "//runtimes/musl:musl_Scrt1.object",
             "//runtimes/musl:musl_rcrt1.object",
         ],
         "//platforms/config:gnu": [
