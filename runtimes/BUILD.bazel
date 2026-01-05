@@ -39,12 +39,34 @@ filegroup(
 )
 
 filegroup(
+    name = "libc_static_linux",
+    srcs = select({
+        "//platforms/config:musl": [
+            "@toolchains_llvm_bootstrapped//runtimes/musl:libc.a",
+        ],
+        # Gnu is always dynamic and passed as a explict link flag args
+        "//conditions:default": [":none"],
+    }),
+)
+
+filegroup(
+    name = "libc_shared_linux",
+    srcs = select({
+        "//platforms/config:musl": [
+            "@toolchains_llvm_bootstrapped//runtimes/musl:libc.so",
+        ],
+        # Gnu is always dynamic and passed as a explict link flag args
+        "//conditions:default": [":none"],
+    }),
+)
+
+filegroup(
     name = "static_runtime_lib",
     srcs = select({
         "@platforms//os:linux": [
+            ":libc_static_linux",
             "@libcxx//:libcxx.static",
             "@libcxxabi//:libcxxabi.static",
-            ## only if libcxx on linux
             "@libunwind//:libunwind.static",
         ],
         "@platforms//os:windows": [
@@ -61,9 +83,9 @@ filegroup(
     name = "dynamic_runtime_lib",
     srcs = select({
         "@platforms//os:linux": [
+            ":libc_shared_linux",
             "@libcxx//:libcxx.shared",
             "@libcxxabi//:libcxxabi.shared",
-            # only if libcxx on linux
             "@libunwind//:libunwind.shared",
         ],
         # TODO(zbarsky): windows?
