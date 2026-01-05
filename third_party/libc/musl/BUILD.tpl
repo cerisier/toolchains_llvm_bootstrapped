@@ -10,7 +10,11 @@ filegroup(
         "src/**/*.c",
         "src/**/*.S",
         "src/**/*.s",
-    ]),
+    ], exclude = glob([
+        # As of this commit, oldmalloc and mallocng are the only subdir that are
+        # not an <arch>
+        "src/malloc/oldmalloc/**", # only mallocng
+    ])),
     visibility = ["//visibility:public"],
 )
 
