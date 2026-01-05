@@ -1,0 +1,26 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: David Zbarsky <dzbarsky@google.com>
+Date: Fri, 5 Jan 2025 00:25:00 -0800
+Subject: [PATCH] Avoid x86-only stub when assembling APE on aarch64
+
+The aarch64 toolchain rejects the legacy `pop %rax` stub that is used
+when only System V hosts are supported. Make the PE-preferring path
+also apply when targeting aarch64 so we don't try to assemble x86
+instructions with the aarch64 assembler.
+---
+ ape/ape.S | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/ape/ape.S b/ape/ape.S
+index a9d909aa..a55091f0 100644
+--- a/ape/ape.S
++++ b/ape/ape.S
+@@ -116,7 +116,7 @@
+ //	@param	dl is drive number
+ //	@noreturn
+ ape_mz:
+-#if SupportsWindows() || SupportsMetal()
++#if SupportsWindows() || SupportsMetal() || defined(__aarch64__)
+ 	.asciz	"MZqFpD='\n"		// Mark 'Zibo' Joseph Zbikowski
+ //	# in real mode
+ //	dec	%bp

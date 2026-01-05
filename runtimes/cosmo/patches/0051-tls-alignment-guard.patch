@@ -1,0 +1,27 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: David Zbarsky <dzbarsky@google.com>
+Date: Fri, 5 Jan 2025 00:05:00 -0800
+Subject: [PATCH] Respect externally provided TLS_ALIGNMENT
+
+Clang on aarch64 treats `.align` arguments as log2 values. We override
+`TLS_ALIGNMENT` via CFLAGS to keep the assembler happy, so avoid
+redefining it in the header when it's already supplied by the build.
+---
+ libc/thread/tls.h | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/libc/thread/tls.h b/libc/thread/tls.h
+index 870d9efd..73a1c6db 100644
+--- a/libc/thread/tls.h
++++ b/libc/thread/tls.h
+@@ -1,7 +1,9 @@
+ #ifndef COSMOPOLITAN_LIBC_THREAD_TLS_H_
+ #define COSMOPOLITAN_LIBC_THREAD_TLS_H_
+ 
+-#define TLS_ALIGNMENT 64
++#ifndef TLS_ALIGNMENT
++#define TLS_ALIGNMENT 64
++#endif
+ 
+ #define TIB_FLAG_VFORKED 1
+ 

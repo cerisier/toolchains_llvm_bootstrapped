@@ -42,4 +42,9 @@ exports_files([
     "0048-intrin-guard-clang.patch",
     "0049-use-clang-intrin-when-mmx-disabled.patch",
     "0050-zlib-intrin-system-includes.patch",
+    "0051-tls-alignment-guard.patch",
+    "0052-ape-aarch64-avoid-x86-pop.patch",
+    "0053-aarch64-stackchkguard.patch",
+    "0054-aarch64-lds-lower-base.patch",
+    "0055-aarch64-lds-restore-end.patch",
 ])

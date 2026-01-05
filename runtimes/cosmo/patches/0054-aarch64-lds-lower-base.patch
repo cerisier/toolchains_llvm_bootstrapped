@@ -1,0 +1,25 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: David Zbarsky <dzbarsky@google.com>
+Date: Sun, 5 Jan 2025 01:10:00 -0800
+Subject: [PATCH] Use a compact base address in aarch64 linker script
+
+The default aarch64 linker script placed the image at 0x000800000000,
+which makes the resulting ELF enormous when linking statically with lld.
+Use a lower base to keep the file size reasonable for our aarch64 builds.
+---
+ ape/aarch64.lds | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/ape/aarch64.lds b/ape/aarch64.lds
+index 853a5a45..9e5dc3b9 100644
+--- a/ape/aarch64.lds
++++ b/ape/aarch64.lds
+@@ -10,7 +10,7 @@ OUTPUT_FORMAT("elf64-littleaarch64",
+               "elf64-littleaarch64")
+ 
+ SECTIONS {
+ 
+-  . = SEGMENT_START("text-segment", 0x000800000000);
++  . = SEGMENT_START("text-segment", 0x400000);
+   __executable_start = .;
+   . += SIZEOF_HEADERS;

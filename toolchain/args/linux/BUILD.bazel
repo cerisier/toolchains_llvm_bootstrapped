@@ -133,8 +133,13 @@ cc_args(
         "-L{libc_library_search_path}",
         "-Wl,--push-state",
         "-Wl,--as-needed",
-        # Ensure APE header objects get pulled from the archive.
-        "-Wl,-u,ape_pe",
+    ] + select({
+        "@toolchains_llvm_bootstrapped//platforms/config:cosmo_x86_64": [
+            # Ensure APE header objects get pulled from the archive on x86.
+            "-Wl,-u,ape_pe",
+        ],
+        "//conditions:default": [],
+    }) + [
         "-lc++",
         "-lc++abi",
         "-lunwind",

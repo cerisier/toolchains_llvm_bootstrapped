@@ -1,0 +1,32 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: David Zbarsky <dzbarsky@google.com>
+Date: Sat, 4 Jan 2025 23:59:59 -0800
+Subject: [PATCH] Provide __stack_chk_guard for aarch64 builds
+
+The existing stack canary implementation uses x86 instructions and
+is excluded from aarch64 builds. Add a minimal aarch64 assembly
+definition so -fstack-protector instrumented code can link.
+---
+ libc/intrin/aarch64/stackchkguard.S | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+ create mode 100644 libc/intrin/aarch64/stackchkguard.S
+
+diff --git a/libc/intrin/aarch64/stackchkguard.S b/libc/intrin/aarch64/stackchkguard.S
+new file mode 100644
+index 00000000..9bcb4c3e
+--- /dev/null
++++ b/libc/intrin/aarch64/stackchkguard.S
+@@ -0,0 +1,13 @@
++/* Minimal stack protector canary for aarch64 builds.
++ *
++ * The x86 implementation in libc/intrin/stackchkguard.S can't be assembled
++ * with the aarch64 toolchain, so provide a simple non-zero guard value.
++ */
++#ifdef __aarch64__
++#include "libc/macros.h"
++
++__stack_chk_guard:
++	.quad	0x595e9fbd94a5c89b
++	.endobj	__stack_chk_guard,globl
++
++#endif

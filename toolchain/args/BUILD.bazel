@@ -216,7 +216,7 @@ cc_args(
     ],
     args = [
         "-Wl,-T,{ape_lds}",
-        "-Wl,-z,common-page-size=16384",
+        "-Wl,-z,common-page-size=4096",
         "-Wl,-z,max-page-size=16384",
         "-Wl,--gc-sections",
         "-Wl,-z,noexecstack",

@@ -11,18 +11,10 @@ def apify_binary(name, elf, objcopy = "@toolchains_llvm_bootstrapped//tools:llvm
     ape_out = name + ".ape"
 
     native.genrule(
-        name = name + "_ape",
+        name = name,
         srcs = [elf],
         outs = [ape_out],
         tools = [objcopy],
         cmd = "$(location {objcopy}) -O binary $< $@".format(objcopy = objcopy),
         executable = True,
-    )
-
-    native.filegroup(
-        name = name,
-        srcs = select({
-            "@toolchains_llvm_bootstrapped//platforms/config:cosmo": [name + "_ape"],
-            "//conditions:default": [elf],
-        }),
     )

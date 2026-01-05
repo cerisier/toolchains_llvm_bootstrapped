@@ -32,6 +32,7 @@ cc_args(
             "-Wl,--gc-sections",
         ],
     }) + select({
+        "@platforms//cpu:aarch64": [],
         "@platforms//cpu:wasm32": [],
         "@platforms//cpu:wasm64": [],
         "//conditions:default": ["-Wl,--icf=safe"],

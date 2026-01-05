@@ -1296,7 +1296,6 @@ cc_stage2_library(
             allow_empty = True,
         ),
         "@platforms//cpu:aarch64": [
-            "ape/ape.S",
             "ape/start.S",
             "ape/launch.S",
             "ape/systemcall.S",
@@ -1307,12 +1306,13 @@ cc_stage2_library(
     ],
     conlyopts = select({
         "@platforms//cpu:x86_64": ["-DSUPPORT_VECTOR=121"],
-        "@platforms//cpu:aarch64": ["-DSUPPORT_VECTOR=33"],
+        "@platforms//cpu:aarch64": ["-DSUPPORT_VECTOR=255"],
         "//conditions:default": [],
     }),
     textual_hdrs = [":libc_hdrs"],
     copts = COSMO_COMMON_COPTS + select({
         "@platforms//cpu:aarch64": [
+            "-DSUPPORT_VECTOR=255",
             # .align expects a power-of-two exponent on aarch64; 6 → 64 bytes.
             "-DTLS_ALIGNMENT=6",
         ],
