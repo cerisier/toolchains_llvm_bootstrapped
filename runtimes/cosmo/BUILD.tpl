@@ -1776,7 +1776,7 @@ cc_stage2_static_library(
         #":third_party_nsync_mem",
         #":third_party_libunwind",
         #":third_party_libcxxabi",
-        #":third_party_libcxx",
+        ":third_party_libcxx",
     ],
     visibility = ["//visibility:public"],
 )
