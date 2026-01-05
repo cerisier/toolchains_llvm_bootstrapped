@@ -1,0 +1,44 @@
+--- a/third_party/intel/mm_malloc.internal.h
++++ b/third_party/intel/mm_malloc.internal.h
+@@ -1,6 +1,6 @@
+ #if defined(__x86_64__) && !(__ASSEMBLER__ + __LINKER__ + 0)
+-#ifndef _MM_MALLOC_H_INCLUDED
+-#define _MM_MALLOC_H_INCLUDED
++#if !defined(_MM_MALLOC_H_INCLUDED) && !defined(__MM_MALLOC_H)
++#define _MM_MALLOC_H_INCLUDED
+ #include "libc/mem/mem.h"
+ #ifndef __cplusplus
+ extern int posix_memalign (void **, size_t, size_t);
+--- a/third_party/intel/xmmintrin.internal.h
++++ b/third_party/intel/xmmintrin.internal.h
+@@ -1,6 +1,6 @@
+ #if defined(__x86_64__) && !(__ASSEMBLER__ + __LINKER__ + 0)
+-#ifndef _XMMINTRIN_H_INCLUDED
+-#define _XMMINTRIN_H_INCLUDED
++#if !defined(_XMMINTRIN_H_INCLUDED) && !defined(__XMMINTRIN_H)
++#define _XMMINTRIN_H_INCLUDED
+ #include "third_party/intel/mmintrin.internal.h"
+ #include "third_party/intel/mm_malloc.internal.h"
+ enum _mm_hint
+--- a/third_party/intel/emmintrin.internal.h
++++ b/third_party/intel/emmintrin.internal.h
+@@ -1,6 +1,6 @@
+ #if defined(__x86_64__) && !(__ASSEMBLER__ + __LINKER__ + 0)
+-#ifndef _EMMINTRIN_H_INCLUDED
+-#define _EMMINTRIN_H_INCLUDED
++#if !defined(_EMMINTRIN_H_INCLUDED) && !defined(__EMMINTRIN_H)
++#define _EMMINTRIN_H_INCLUDED
+ #include "third_party/intel/xmmintrin.internal.h"
+ #ifndef __SSE2__
+ #pragma GCC push_options
+--- a/third_party/intel/wmmintrin.internal.h
++++ b/third_party/intel/wmmintrin.internal.h
+@@ -1,6 +1,6 @@
+ #if defined(__x86_64__) && !(__ASSEMBLER__ + __LINKER__ + 0)
+-#ifndef _WMMINTRIN_H_INCLUDED
+-#define _WMMINTRIN_H_INCLUDED
++#if !defined(_WMMINTRIN_H_INCLUDED) && !defined(__WMMINTRIN_H)
++#define _WMMINTRIN_H_INCLUDED
+ #include "third_party/intel/emmintrin.internal.h"
+ #if !defined(__AES__) || !defined(__SSE2__)
+ #pragma GCC push_options

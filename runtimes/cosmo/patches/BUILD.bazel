@@ -37,4 +37,9 @@ exports_files([
     "0035-str-guard-arch-intrinsics.patch",
     "0037-pthread-arm64-setjmp-constraints.patch",
     "0045-rdseed-guard-nonx86.patch",
+    "0046-mmintrin-forward-decls.patch",
+    "0047-mmintrin-cosmo-disable-mmx.patch",
+    "0048-intrin-guard-clang.patch",
+    "0049-use-clang-intrin-when-mmx-disabled.patch",
+    "0050-zlib-intrin-system-includes.patch",
 ])

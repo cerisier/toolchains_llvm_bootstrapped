@@ -1,0 +1,42 @@
+--- a/third_party/zlib/adler32_simd.c
++++ b/third_party/zlib/adler32_simd.c
+@@ -53,7 +53,7 @@
+ #include "third_party/zlib/zconf.h"
+ #include "third_party/zlib/zutil.h"
+ #include "third_party/zlib/zutil_internal.h"
+-#include "third_party/intel/tmmintrin.internal.h"
++#include <tmmintrin.h>
+ 
+ #ifdef _MSC_VER
+ #include <intrin.h>
+--- a/third_party/zlib/chunkcopy.inc
++++ b/third_party/zlib/chunkcopy.inc
+@@ -30,7 +30,7 @@
+ #include "libc/macros.internal.h"
+ #include "third_party/zlib/zutil.h"
+ #include "third_party/zlib/unaligned.h"
+-#include "third_party/intel/emmintrin.internal.h"
++#include <emmintrin.h>
+ 
+ #define CHUNKSIZE        16384
+ #define INFFAST_CHUNKSIZE 65536
+--- a/third_party/zlib/crc_folding.c
++++ b/third_party/zlib/crc_folding.c
+@@ -3,7 +3,7 @@
+ #include "libc/limits.h"
+ #include "libc/literal.h"
+ #include "libc/str/str.h"
+-#include "libc/isystem/emmintrin.h"
++#include <emmintrin.h>
+ #include "libc/isystem/immintrin.h"
+ #include "third_party/intel/wmmintrin.internal.h"
+ #include "third_party/zlib/deflate.internal.h"
+@@ -12,7 +12,7 @@
+ #if defined(__x86_64__) && defined(__GNUC__)
+ #  include "third_party/intel/kmmintrin.internal.h"
+ #endif
+-#include "third_party/intel/wmmintrin.internal.h"
++#include <wmmintrin.h>
+ #include "third_party/intel/clang/__wmmintrin_aes.h"
+ 
+ #define VMOVDQU __m128i_u

@@ -1365,47 +1365,94 @@ cc_stage2_library(
     visibility = ["//visibility:private"],
 )
 
+# https://github.com/jart/cosmopolitan/blob/4.0.2/third_party/zlib/BUILD.mk
 cosmo_cc_library(
     name = "third_party_zlib",
     dir = "third_party/zlib",
     copts = [
         "-ffunction-sections",
         "-fdata-sections",
-        "-DADLER32_SIMD_SSSE3",
-        "-DCRC32_SIMD_SSE42_PCLMUL",
-        "-DCRC32_SIMD_AVX512_PCLMUL",
-        "-DDEFLATE_SLIDE_HASH_SSE2",
-        "-DINFLATE_CHUNK_SIMD_SSE2",
-        "-DINFLATE_CHUNK_READ_64LE",
-    ],
+    ] + select({
+        "@platforms//cpu:x86_64": [
+            "-DADLER32_SIMD_SSSE3",
+            "-DCRC32_SIMD_SSE42_PCLMUL",
+            "-DCRC32_SIMD_AVX512_PCLMUL",
+            "-DDEFLATE_SLIDE_HASH_SSE2",
+            "-DINFLATE_CHUNK_SIMD_SSE2",
+            "-DINFLATE_CHUNK_READ_64LE",
+        ],
+        "@platforms//cpu:aarch64": [
+            "-DADLER32_SIMD_NEON",
+            "-DCRC32_ARMV8_CRC32",
+            "-DDEFLATE_SLIDE_HASH_NEON",
+            "-DINFLATE_CHUNK_SIMD_NEON",
+            "-DINFLATE_CHUNK_READ_64LE",
+        ],
+    }),
     conlyopts = ["-std=gnu17"],
+    x86_srcs = [
+        "third_party/zlib/adler32_simd.c",
+        "third_party/zlib/crc_folding.c",
+    ],
+    arm_srcs = [
+        #"third_party/zlib/crc_folding.c",
+    ],
     per_file_copts = {
-        "third_party/zlib/adler32_simd.c": ["-O3", "-mssse3"],
-        "third_party/zlib/crc_folding.c": [
-            "-O3",
-            "-msse4.2",
-            "-mpclmul",
-            "-UCRC32_SIMD_AVX512_PCLMUL",
-            "-DCRC32_SIMD_SSE42_PCLMUL",
-            "-DBUILD_SSE42",
-        ],
-        "third_party/zlib/crc32_simd_sse42.c": [
-            "-O3",
-            "-msse4.2",
-            "-mpclmul",
-            "-UCRC32_SIMD_AVX512_PCLMUL",
-            "-DCRC32_SIMD_SSE42_PCLMUL",
-            "-DBUILD_SSE42",
-        ],
-        "third_party/zlib/crc32_simd_avx512.c": [
-            "-O3",
-            "-mpclmul",
-			"-mavx512f",
-			"-mvpclmulqdq",
-			"-UCRC32_SIMD_SSE42_PCLMUL",
-			"-DCRC32_SIMD_AVX512_PCLMUL",
-			"-DBUILD_AVX512",
-        ],
+        "third_party/zlib/adler32_simd.c": select({
+            "@platforms//cpu:x86_64": ["-O3", "-mssse3"],
+            "@platforms//cpu:aarch64": [],
+        }),
+        "third_party/zlib/crc_folding.c": select({
+            "@platforms//cpu:x86_64": [
+                "-O3",
+                "-msse4.2",
+                "-mpclmul",
+                "-UCRC32_SIMD_AVX512_PCLMUL",
+                "-DCRC32_SIMD_SSE42_PCLMUL",
+                "-DBUILD_SSE42",
+            ],
+            "@platforms//cpu:aarch64": [],
+        }),
+        "third_party/zlib/crc32_simd_sse42.c": select({
+            "@platforms//cpu:x86_64": [
+                "-O3",
+                "-msse4.2",
+                "-mpclmul",
+                "-UCRC32_SIMD_AVX512_PCLMUL",
+                "-DCRC32_SIMD_SSE42_PCLMUL",
+                "-DBUILD_SSE42",
+            ],
+            "@platforms//cpu:aarch64": [],
+        }),
+        "third_party/zlib/crc32_simd_avx512.c": select({
+            "@platforms//cpu:x86_64": [
+                "-O3",
+                "-mpclmul",
+                "-mavx512f",
+                "-mvpclmulqdq",
+                "-UCRC32_SIMD_SSE42_PCLMUL",
+                "-DCRC32_SIMD_AVX512_PCLMUL",
+                "-DBUILD_AVX512",
+            ],
+            "@platforms//cpu:aarch64": [],
+        }),
+
+        "third_party/zlib/deflate.c": select({
+            "@platforms//cpu:aarch64": [
+                "-O3",
+                "-DBUILD_NEON",
+                "-march=armv8-a+aes+crc",
+            ],
+            "@platforms//cpu:x86_64": [],
+        }),
+        "third_party/zlib/crc32_simd_neon.c": select({
+            "@platforms//cpu:aarch64": [
+                "-O3",
+                "-DBUILD_NEON",
+                "-march=armv8-a+aes+crc",
+            ],
+            "@platforms//cpu:x86_64": [],
+        }),
     },
     deps = [
         ":libc_intrin",

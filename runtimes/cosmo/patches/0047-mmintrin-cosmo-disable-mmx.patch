@@ -1,0 +1,42 @@
+--- a/third_party/intel/mmintrin.internal.h
++++ b/third_party/intel/mmintrin.internal.h
+@@ -1,6 +1,33 @@
+ #if defined(__x86_64__) && !(__ASSEMBLER__ + __LINKER__ + 0)
+-#ifndef _MMINTRIN_H_INCLUDED
++#if !defined(_MMINTRIN_H_INCLUDED) && !defined(__MMINTRIN_H)
+ #define _MMINTRIN_H_INCLUDED
++
++#if defined(COSMO_DISABLE_MMX)
++
++typedef long long __m64 __attribute__ ((__vector_size__ (8), __may_alias__));
++typedef int __m32 __attribute__ ((__vector_size__ (4), __may_alias__));
++typedef short __m16 __attribute__ ((__vector_size__ (2), __may_alias__));
++typedef int __m64_u __attribute__ ((__vector_size__ (8), __may_alias__, __aligned__ (1)));
++typedef int __m32_u __attribute__ ((__vector_size__ (4), __may_alias__, __aligned__ (1)));
++typedef short __m16_u __attribute__ ((__vector_size__ (2), __may_alias__, __aligned__ (1)));
++typedef int __v2si __attribute__ ((__vector_size__ (8)));
++typedef short __v4hi __attribute__ ((__vector_size__ (8)));
++typedef char __v8qi __attribute__ ((__vector_size__ (8)));
++typedef long long __v1di __attribute__ ((__vector_size__ (8)));
++typedef float __v2sf __attribute__ ((__vector_size__ (8)));
++
++extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
++_mm_empty (void)
++{
++}
++
++extern __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
++_m_empty (void)
++{
++  _mm_empty ();
++}
++
++#else
+ #if defined __x86_64__ && !defined __SSE__ || !defined __MMX__
+ #pragma GCC push_options
+ #ifdef __MMX_WITH_SSE__
+@@ -757,3 +784,4 @@
+ #endif
+ #endif
+ #endif
++#endif /* COSMO_DISABLE_MMX */

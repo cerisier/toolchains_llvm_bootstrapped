@@ -1,10 +1,62 @@
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("@bazel_tools//tools/build_defs/repo:utils.bzl", "patch")
 load("@bazel_features//:features.bzl", "bazel_features")
 
-def _cosmo_extension_impl(module_ctx):
+def _cosmo_repo_impl(rctx):
+    rctx.download_and_extract(
+        url = rctx.attr.urls,
+        integrity = rctx.attr.integrity,
+        strip_prefix = rctx.attr.strip_prefix,
+    )
+
+    patch(rctx)
+
+    rctx.file("BUILD.bazel", rctx.read(rctx.attr.build_file))
+
+    replacements = {
+        "#include \"third_party/intel/x86gprintrin.internal.h\"": "#if defined(__x86_64__) || defined(__i386__)\n#include \"third_party/intel/clang/x86gprintrin.h\"\n#endif",
+        "#include \"third_party/intel/x86gprintrin.h\"": "#if defined(__x86_64__) || defined(__i386__)\n#include \"third_party/intel/clang/x86gprintrin.h\"\n#endif",
+        "third_party/aarch64/arm_acle.internal.h": "third_party/aarch64/clang/arm_acle.h",
+        "\"third_party/intel/tmmintrin.internal.h\"": "<tmmintrin.h>",
+        "\"third_party/intel/emmintrin.internal.h\"": "<emmintrin.h>",
+        "\"third_party/intel/smmintrin.internal.h\"": "<smmintrin.h>",
+        "\"third_party/intel/xmmintrin.internal.h\"": "<xmmintrin.h>",
+        "\"third_party/intel/wmmintrin.internal.h\"": "<wmmintrin.h>",
+        "\"third_party/intel/immintrin.internal.h\"": "<immintrin.h>",
+    }
+
+    replace_files = [
+        "third_party/zlib/adler32_simd.c",
+        "third_party/zlib/chunkcopy.inc",
+        "third_party/zlib/crc_folding.c",
+        "third_party/zlib/crc32_simd.inc",
+        "third_party/zlib/slide_hash_simd.inc",
+        "third_party/zlib/insert_string.inc",
+    ]
+
+    for path in replace_files:
+        content = rctx.read(path)
+        for old, new in replacements.items():
+            content = content.replace(old, new)
+        rctx.file(path, content)
+
+
+cosmo_repository = repository_rule(
+    implementation = _cosmo_repo_impl,
+    attrs = {
+        "urls": attr.string_list(mandatory = True),
+        "integrity": attr.string(),
+        "strip_prefix": attr.string(),
+        "build_file": attr.label(allow_single_file = True, mandatory = True),
+        "patches": attr.label_list(allow_files = True, default = []),
+        "patch_args": attr.string_list(),
+    },
+    doc = "Repository rule that fetches, extracts, patches, and prepares Cosmopolitan libc.",
+)
+
+def _cosmo_extension_impl(mctx):
     """Implementation of the cosmo module extension."""
 
-    http_archive(
+    cosmo_repository(
         name = "cosmo_libc",
         integrity = "sha256-5GYQaxgGTgyZbvZNJhEzr4Z7zNkhrRTlSXXYmqF6hxc=",
         urls = ["https://github.com/jart/cosmopolitan/releases/download/4.0.2/cosmopolitan-4.0.2.tar.gz"],
@@ -48,6 +100,10 @@ def _cosmo_extension_impl(module_ctx):
             "//runtimes/cosmo/patches:0035-str-guard-arch-intrinsics.patch",
             "//runtimes/cosmo/patches:0037-pthread-arm64-setjmp-constraints.patch",
             "//runtimes/cosmo/patches:0045-rdseed-guard-nonx86.patch",
+            #"//runtimes/cosmo/patches:0046-mmintrin-forward-decls.patch",
+            #"//runtimes/cosmo/patches:0047-mmintrin-cosmo-disable-mmx.patch",
+            #"//runtimes/cosmo/patches:0048-intrin-guard-clang.patch",
+            #"//runtimes/cosmo/patches:0049-use-clang-intrin-when-mmx-disabled.patch",
         ],
         patch_args = ["-p1", "-l"],
     )
@@ -56,7 +112,7 @@ def _cosmo_extension_impl(module_ctx):
     if bazel_features.external_deps.extension_metadata_has_reproducible:
         metadata_kwargs["reproducible"] = True
 
-    return module_ctx.extension_metadata(
+    return mctx.extension_metadata(
         root_module_direct_deps = ["cosmo_libc"],
         root_module_direct_dev_deps = [],
         **metadata_kwargs

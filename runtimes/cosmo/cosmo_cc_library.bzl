@@ -90,6 +90,8 @@ def cosmo_cc_library(
     dir,
     copts = [],
     conlyopts = [],
+    x86_srcs = [],
+    arm_srcs = [],
     extra_srcs = [],
     aarch64_safe_assembly_srcs = [],
     per_file_copts = {},
@@ -104,12 +106,12 @@ def cosmo_cc_library(
     c_srcs = select({
         "@platforms//cpu:x86_64": native.glob(
             [dir + "/**/*.c", dir + "/**/*.cc"],
-            exclude = list(per_file_copts.keys()) + excludes + x86_64_srcs_excludes,
+            exclude = list(per_file_copts.keys()) + excludes + x86_64_srcs_excludes + arm_srcs,
             allow_empty = True,
         ),
         "@platforms//cpu:aarch64": native.glob(
             [dir + "/**/*.c", dir + "/**/*.cc"],
-            exclude = list(per_file_copts.keys()) + excludes + aarch64_srcs_excludes,
+            exclude = list(per_file_copts.keys()) + excludes + aarch64_srcs_excludes + x86_srcs,
             allow_empty = True,
         ),
         "//conditions:default": [],
@@ -126,8 +128,8 @@ def cosmo_cc_library(
             "@platforms//cpu:aarch64": aarch64_safe_assembly_srcs,
         }),
         copts = COSMO_COMMON_COPTS + copts,
-        conlyopts = DEFAULT_CFLAGS + conlyopts,
-        cxxopts = DEFAULT_CXXFLAGS,
+        conlyopts = DEFAULT_CFLAGS + conlyopts + copts,
+        cxxopts = DEFAULT_CXXFLAGS + copts,
         **kwargs,
     )
 
@@ -135,12 +137,25 @@ def cosmo_cc_library(
         sanitized_name = file.replace("/", "_")
         libs.append(sanitized_name)
 
+        if file in x86_srcs:
+            srcs = select({
+                "@platforms//cpu:x86_64": [file],
+                "@platforms//cpu:aarch64": [],
+            })
+        elif file in arm_srcs:
+            srcs = select({
+                "@platforms//cpu:x86_64": [],
+                "@platforms//cpu:aarch64": [file],
+            })
+        else:
+            srcs = [file]
+
         cc_stage2_library(
             name = sanitized_name,
-            srcs = [file],
+            srcs = srcs,
             copts = COSMO_COMMON_COPTS + copts + per_file_copts[file],
-            conlyopts = DEFAULT_CFLAGS + conlyopts,
-            cxxopts = DEFAULT_CXXFLAGS,
+            conlyopts = DEFAULT_CFLAGS + conlyopts + copts + per_file_copts[file],
+            cxxopts = DEFAULT_CXXFLAGS + copts + per_file_copts[file],
             **kwargs
         )
 

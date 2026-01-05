@@ -1,0 +1,61 @@
+--- a/third_party/intel/xmmintrin.internal.h
++++ b/third_party/intel/xmmintrin.internal.h
+@@ -1,8 +1,12 @@
+ #if defined(__x86_64__) && !(__ASSEMBLER__ + __LINKER__ + 0)
+ #if !defined(_XMMINTRIN_H_INCLUDED) && !defined(__XMMINTRIN_H)
+ #define _XMMINTRIN_H_INCLUDED
++#if defined(COSMO_DISABLE_MMX)
++#include "third_party/intel/clang/xmmintrin.h"
++#else
+ #include "third_party/intel/mmintrin.internal.h"
+ #include "third_party/intel/mm_malloc.internal.h"
+ enum _mm_hint
+ {
+@@ -356,6 +360,7 @@
+ #ifdef __DISABLE_SSE__
+ #undef __DISABLE_SSE__
+ #pragma GCC pop_options
+ #endif
++#endif /* COSMO_DISABLE_MMX */
+ #endif
+ #endif
+--- a/third_party/intel/emmintrin.internal.h
++++ b/third_party/intel/emmintrin.internal.h
+@@ -1,8 +1,12 @@
+ #if defined(__x86_64__) && !(__ASSEMBLER__ + __LINKER__ + 0)
+ #if !defined(_EMMINTRIN_H_INCLUDED) && !defined(__EMMINTRIN_H)
+ #define _EMMINTRIN_H_INCLUDED
++#if defined(COSMO_DISABLE_MMX)
++#include "third_party/intel/clang/emmintrin.h"
++#else
+ #include "third_party/intel/xmmintrin.internal.h"
+ #ifndef __SSE2__
+ #pragma GCC push_options
+@@ -804,6 +808,7 @@
+ #ifdef __DISABLE_SSE2__
+ #undef __DISABLE_SSE2__
+ #pragma GCC pop_options
+ #endif
++#endif /* COSMO_DISABLE_MMX */
+ #endif
+ #endif
+--- a/third_party/intel/wmmintrin.internal.h
++++ b/third_party/intel/wmmintrin.internal.h
+@@ -1,8 +1,12 @@
+ #if defined(__x86_64__) && !(__ASSEMBLER__ + __LINKER__ + 0)
+ #if !defined(_WMMINTRIN_H_INCLUDED) && !defined(__WMMINTRIN_H)
+ #define _WMMINTRIN_H_INCLUDED
++#if defined(COSMO_DISABLE_MMX)
++#include "third_party/intel/clang/wmmintrin.h"
++#else
+ #include "third_party/intel/emmintrin.internal.h"
+ #if !defined(__AES__) || !defined(__SSE2__)
+ #pragma GCC push_options
+@@ -120,6 +124,7 @@
+ #ifdef __DISABLE_AES__
+ #undef __DISABLE_AES__
+ #pragma GCC pop_options
+ #endif
++#endif /* COSMO_DISABLE_MMX */
+ #endif
+ #endif
