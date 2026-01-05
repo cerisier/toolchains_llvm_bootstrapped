@@ -58,7 +58,7 @@ DEFAULT_CXXFLAGS = [
     "-fuse-cxa-atexit",
     "-Wno-int-in-bool-context",
     "-Wno-narrowing",
-    "-Wno-literal-suffix",
+    #"-Wno-literal-suffix",
     # TODO(zbarsky): kinda hax
     "-isystem external/+cosmo+cosmo_libc/third_party/libcxx",
 ]
