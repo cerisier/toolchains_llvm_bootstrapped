@@ -1,3 +1,4 @@
+load("@bazel_features//:features.bzl", "bazel_features")
 load("//:http_pkg_archive.bzl", "http_pkg_archive")
 
 # Opinionated list of frameworks for minimal macOS SDK.
@@ -36,6 +37,16 @@ def _osx_extension_impl(mctx):
         strip_prefix = "Library/Developer/CommandLineTools/SDKs/MacOSX15.5.sdk",
         # urls = ["https://swcdn.apple.com/content/downloads/10/32/082-12052-A_AHPGDY76PT/1a419zaf3vh8o9t3c0usblyr8eystpnsh5/CLTools_macOSNMOS_SDK.pkg"],
         urls = ["https://swcdn.apple.com/content/downloads/52/01/082-41241-A_0747ZN8FHV/dectd075r63pppkkzsb75qk61s0lfee22j/CLTools_macOSNMOS_SDK.pkg"],
+    )
+
+    metadata_kwargs = {}
+    if bazel_features.external_deps.extension_metadata_has_reproducible:
+        metadata_kwargs["reproducible"] = True
+
+    return mctx.extension_metadata(
+        root_module_direct_deps = ["macosx15.4.sdk"],
+        root_module_direct_dev_deps = [],
+        **metadata_kwargs
     )
 
 _framework_tag = tag_class(
