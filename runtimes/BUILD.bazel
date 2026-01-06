@@ -39,32 +39,9 @@ filegroup(
 )
 
 filegroup(
-    name = "libc_static_linux",
-    srcs = select({
-        "//platforms/config:musl": [
-            "@toolchains_llvm_bootstrapped//runtimes/musl:libc.a",
-        ],
-        # Gnu is always dynamic and passed as a explict link flag args
-        "//conditions:default": [":none"],
-    }),
-)
-
-filegroup(
-    name = "libc_shared_linux",
-    srcs = select({
-        "//platforms/config:musl": [
-            "@toolchains_llvm_bootstrapped//runtimes/musl:libc.so",
-        ],
-        # Gnu is always dynamic and passed as a explict link flag args
-        "//conditions:default": [":none"],
-    }),
-)
-
-filegroup(
     name = "static_runtime_lib",
     srcs = select({
         "@platforms//os:linux": [
-            ":libc_static_linux",
             "@libcxx//:libcxx.static",
             "@libcxxabi//:libcxxabi.static",
             "@libunwind//:libunwind.static",
@@ -127,12 +104,15 @@ copy_to_directory(
     name = "crt_objects_directory_linux",
     srcs = select({
         "//platforms/config:musl": [
-            "//runtimes/musl:musl_Scrt1.object",
+            # -static
+            "//runtimes/musl:musl_crt1.object",
+            # static-pie
             "//runtimes/musl:musl_rcrt1.object",
+            "//runtimes/musl:musl_Scrt1.object",
         ],
         "//platforms/config:gnu": [
-            "//runtimes/glibc:glibc_Scrt1.object",
             "//runtimes/glibc:glibc_crt1.object",
+            "//runtimes/glibc:glibc_Scrt1.object",
         ],
     }) + [
         ":crti_object",

@@ -177,6 +177,13 @@ cc_args_list(
             "//toolchain/args/linux:glibc_headers_include_search_paths",
         ],
         "//conditions:default": [],
+    }) + select({
+        "//platforms/config:musl": [
+            #TODO: Handle musl dynamic linking
+            # musl implies static linking for now
+            "//toolchain/args:static_link_executable",
+        ],
+        "//conditions:default": [],
     }),
 )
 

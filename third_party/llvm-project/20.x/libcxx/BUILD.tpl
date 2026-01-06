@@ -4,7 +4,7 @@ load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_library.bzl", "cc_runtime_stage0_library")
 load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
-load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_shared_library.bzl", "cc_runtime_stage0_shared_library", "cc_runtime_stage1_shared_library")
+load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_shared_library.bzl", "cc_runtime_stage1_shared_library")
 
 # Should replicate libcxx/include/CMakeLists.txt
 filegroup(
@@ -1419,6 +1419,9 @@ cc_runtime_stage1_shared_library(
     deps = [
         ":libcxx",
     ],
-    shared_lib_name = "libc++.so.1.0",
+    user_link_flags = [
+        "-Wl,-soname,libc++.so.1",
+    ],
+    shared_lib_name = "libc++.so.1",
     visibility = ["//visibility:public"],
 )

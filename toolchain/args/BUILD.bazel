@@ -102,7 +102,7 @@ cc_args(
         "@rules_cc//cc/toolchains/actions:lto_index_for_nodeps_dynamic_library",
     ],
     args = [
-        # "-static-pie",
+        "-static-pie",
     ],
 )
 

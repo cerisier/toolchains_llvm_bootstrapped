@@ -169,6 +169,6 @@ cc_runtime_stage0_shared_library(
     user_link_flags = [
         "-Wl,-soname,libc++abi.so.1",
     ],
-    shared_lib_name = "libc++abi.so.1.0",
+    shared_lib_name = "libc++abi.so.1",
     visibility = ["//visibility:public"],
 )

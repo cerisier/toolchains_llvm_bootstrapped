@@ -1,9 +1,68 @@
 load("@bazel_lib//lib:transitions.bzl", "platform_transition_binary")
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@rules_cc//cc:cc_test.bzl", "cc_test")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("@toolchains_llvm_bootstrapped//:defs.bzl", "exec_test")
 load(":defs.bzl", "ubsan_cc_binary")
+
+
+cc_library(
+    name = "dep",
+    srcs = ["dep.cc"],
+)
+
+# dynamic linker + dynamic runtime libs
+cc_binary(
+    name = "main_dynamic",
+    srcs = ["main.cc"],
+    deps = [":dep"],
+    linkstatic = False,
+    target_compatible_with = select({
+        # We do not support musl libc.so
+        "@toolchains_llvm_bootstrapped//constraints/libc:musl": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+)
+
+# dynamic linker + static runtime libs
+cc_binary(
+    name = "main_default",
+    srcs = ["main.cc"],
+    linkopts = ["-v"]
+)
+
+# same as default
+cc_binary(
+    name = "main_static",
+    srcs = ["main.cc"],
+    linkstatic = True,
+)
+
+# dynamic linker + static runtime libs (even tho -static)
+# but because musl adds -static-pie, no dynamic linker at all.
+cc_binary(
+    name = "main_fully_static",
+    srcs = ["main.cc"],
+    linkstatic = True,
+    features = ["fully_static_link"],
+    target_compatible_with = select({
+        # only musl supports fully static linking.
+        "@toolchains_llvm_bootstrapped//constraints/libc:musl": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+)
+
+# Implies dynamic_runtime_libs
+cc_test(
+    name = "test",
+    srcs = ["main.cc"],
+    target_compatible_with = select({
+        # We do not support musl libc.so
+        "@toolchains_llvm_bootstrapped//constraints/libc:musl": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+)
 
 cc_binary(
     name = "main",

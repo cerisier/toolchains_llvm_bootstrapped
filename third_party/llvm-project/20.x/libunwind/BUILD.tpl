@@ -126,8 +126,7 @@ cc_runtime_stage1_shared_library(
     ],
     user_link_flags = [
         "-Wl,-soname,libunwind.so.1",
-        "-v",
     ],
-    shared_lib_name = "libunwind.so.1.0",
+    shared_lib_name = "libunwind.so.1",
     visibility = ["//visibility:public"],
 )

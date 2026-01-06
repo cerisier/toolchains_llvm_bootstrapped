@@ -192,7 +192,6 @@ copy_file(
 )
 
 MUSL_LIBS = [
-    # "c",
     "m",
     "rt",
     "pthread",
@@ -216,7 +215,7 @@ MUSL_LIBS = [
 copy_to_directory(
     name = "musl_library_search_directory",
     srcs = [
-        # ":musl_libc.a",
+        ":musl_libc.a",
     ] + [
         ":musl_lib{}_stub".format(lib) for lib in MUSL_LIBS
     ],
