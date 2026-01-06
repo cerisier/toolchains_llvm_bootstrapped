@@ -43,11 +43,7 @@ def _osx_extension_impl(mctx):
     if bazel_features.external_deps.extension_metadata_has_reproducible:
         metadata_kwargs["reproducible"] = True
 
-    return mctx.extension_metadata(
-        root_module_direct_deps = ["macosx15.4.sdk"],
-        root_module_direct_dev_deps = [],
-        **metadata_kwargs
-    )
+    return mctx.extension_metadata(**metadata_kwargs)
 
 _framework_tag = tag_class(
     attrs = {
