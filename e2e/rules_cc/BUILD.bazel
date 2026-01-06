@@ -22,7 +22,6 @@ cc_binary(
 cc_binary(
     name = "main_default",
     srcs = ["main.cc"],
-    linkopts = ["-v"]
 )
 
 # same as default
