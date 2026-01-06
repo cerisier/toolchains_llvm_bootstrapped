@@ -6,9 +6,9 @@ package(default_visibility = ["//visibility:public"])
 
 cc_sysroot(
     name = "macos_sdk_sysroot",
-    sysroot = "@macosx15.4.sdk//:sysroot-minimal",
+    sysroot = "@macosx15.4.sdk//:sysroot",
     data = [
-        "@macosx15.4.sdk//:sysroot-minimal",
+        "@macosx15.4.sdk//:sysroot",
     ],
 )
 

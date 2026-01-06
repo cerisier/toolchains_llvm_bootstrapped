@@ -33,32 +33,13 @@ COMMON_EXCLUDES = [
     "usr/include/tidy/**",
 ])
 
-directory(
-    name = "sysroot",
-    srcs = glob(["*/**"], exclude = COMMON_EXCLUDES + glob([
-        "System/Library/Frameworks/Ruby.framework/**",
-        "System/Cryptexes/**",
-        "System/iOSSupport/**",
-        "System/Library/CoreServices/**",
-        "System/Library/Perl/**",
-        "System/Library/PrivateFrameworks/**",
-    ])),
-    visibility = ["//visibility:public"],
-)
-
 # Sandboxing the entire macOS SDK dramatically slows down the build process.
 # Offering a minimal sysroot allows for building basic cross platform applications.
-# We may selectively add more entries to it as needed. 
+# Users can extend the sysroot via `osx.framework` module extension tags.
 directory(
-    name = "sysroot-minimal",
+    name = "sysroot",
     srcs = glob([
-        # Opinionated list of frameworks for minimal macOS SDK.
-        "System/Library/Frameworks/CoreFoundation.framework/**",
-        "System/Library/Frameworks/Foundation.framework/**",
-        "System/Library/Frameworks/Kernel.framework/**",
-        "System/Library/Frameworks/OSLog.framework/**",
-        "System/Library/Frameworks/Security.framework/**",
-        "System/Library/Frameworks/SystemConfiguration.framework/**",
+{frameworks}
 
         "usr/**",
     ], exclude = COMMON_EXCLUDES),
