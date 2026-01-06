@@ -1542,6 +1542,20 @@ cc_stage2_library(
     visibility = ["//visibility:private"],
 )
 
+# https://github.com/jart/cosmopolitan/blob/4.0.2/third_party/getopt/BUILD.mk
+cosmo_cc_library(
+    name = "third_party_getopt",
+    dir = "third_party/getopt",
+    textual_hdrs = [":libc_hdrs"],
+    deps = [
+        ":libc_calls",
+        ":libc_intrin",
+        ":libc_log",
+        ":libc_nexgen32e",
+        ":libc_str",
+    ],
+)
+
 LIBUNWIND_COPTS = COSMO_COMMON_COPTS + [
     "-fexceptions",
     "-ffunction-sections",
@@ -1771,6 +1785,7 @@ cc_stage2_library(
         ":libc_tinymath",
         ":libc_vga",
         ":libc_x",
+        ":third_party_getopt",
         ":third_party_musl",
     ],
     visibility = ["//visibility:public"],
