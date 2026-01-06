@@ -134,10 +134,18 @@ cc_args(
         "-Wl,--push-state",
         "-Wl,--as-needed",
     ] + select({
-        "@toolchains_llvm_bootstrapped//platforms/config:cosmo_x86_64": [
-            # Ensure APE header objects get pulled from the archive on x86.
-            "-Wl,-u,ape_pe",
-        ],
+        #"@toolchains_llvm_bootstrapped//platforms/config:cosmo_x86_64": [
+        #    "-Wl,-T,external/+cosmo+cosmo_libc/ape/ape.lds",
+        #    "-Wl,-z,common-page-size=4096",
+        #    "-Wl,-z,max-page-size=16384",
+        #    # Ensure APE header objects get pulled from the archive on x86.
+        #    "-Wl,-u,ape_pe",
+        #],
+        #"@toolchains_llvm_bootstrapped//platforms/config:cosmo_aarch64": [
+        #    "-Wl,-T,external/+cosmo+cosmo_libc/ape/aarch64.lds",
+        #    "-Wl,-z,common-page-size=16384",
+        #    "-Wl,-z,max-page-size=16384",
+        #],
         "//conditions:default": [],
     }) + [
         "-lc++",

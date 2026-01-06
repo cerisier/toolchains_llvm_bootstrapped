@@ -90,6 +90,7 @@ def cosmo_cc_library(
     dir,
     copts = [],
     conlyopts = [],
+    cxxopts = [],
     x86_srcs = [],
     arm_srcs = [],
     extra_srcs = [],
@@ -128,8 +129,8 @@ def cosmo_cc_library(
             "@platforms//cpu:aarch64": aarch64_safe_assembly_srcs,
         }),
         copts = COSMO_COMMON_COPTS + copts,
-        conlyopts = DEFAULT_CFLAGS + conlyopts + copts,
-        cxxopts = DEFAULT_CXXFLAGS + copts,
+        conlyopts = DEFAULT_CFLAGS + copts + conlyopts,
+        cxxopts = DEFAULT_CXXFLAGS + cxxopts + copts,
         **kwargs,
     )
 
@@ -154,8 +155,8 @@ def cosmo_cc_library(
             name = sanitized_name,
             srcs = srcs,
             copts = COSMO_COMMON_COPTS + copts + per_file_copts[file],
-            conlyopts = DEFAULT_CFLAGS + conlyopts + copts + per_file_copts[file],
-            cxxopts = DEFAULT_CXXFLAGS + copts + per_file_copts[file],
+            conlyopts = DEFAULT_CFLAGS + copts + conlyopts + per_file_copts[file],
+            cxxopts = DEFAULT_CXXFLAGS + copts + cxxopts + per_file_copts[file],
             **kwargs
         )
 

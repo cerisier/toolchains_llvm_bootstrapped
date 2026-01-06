@@ -1,5 +1,6 @@
 load("@bazel_lib//lib:copy_file.bzl", "copy_file")
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_library.bzl", "cc_stage2_library")
 load("@toolchains_llvm_bootstrapped//toolchain/stage2:cc_stage2_object.bzl", "cc_stage2_object")
@@ -1666,25 +1667,22 @@ cc_stage2_library(
     visibility = ["//visibility:private"],
 )
 
-cc_stage2_library(
+
+# https://github.com/jart/cosmopolitan/blob/4.0.2/third_party/libcxxabi/BUILD.mk
+cosmo_cc_library(
     name = "third_party_libcxxabi",
-    srcs = glob(
-        ["third_party/libcxxabi/**/*.%s" % ext for ext in ["cc"]],
-        exclude = ["third_party/libcxxabi/test/**"],
-        allow_empty = True,
-    ),
+    dir = "third_party/libcxxabi",
     textual_hdrs = glob(
         ["third_party/libcxxabi/**/*.%s" % ext for ext in ["h", "inc"]],
         exclude = ["third_party/libcxxabi/test/**"],
         allow_empty = True,
     ),
-    copts = COSMO_COMMON_COPTS + [
+    cxxopts = [
+        "-fno-sanitize=all",
         "-ffunction-sections",
         "-fdata-sections",
         "-fexceptions",
         "-frtti",
-        "-fno-sanitize=all",
-        "-DLIBCXX_BUILDING_LIBCXXABI",
         "-D_LIBCXXABI_BUILDING_LIBRARY",
         "-D_LIBCPP_BUILDING_LIBRARY",
         "-Ithird_party/libcxxabi",
@@ -1701,7 +1699,9 @@ cc_stage2_library(
         ":libc_thread",
         ":third_party_libunwind",
     ],
-    visibility = ["//visibility:private"],
+    excludes = [
+        "third_party/libcxxabi/test/**",
+    ],
 )
 
 # https://github.com/jart/cosmopolitan/blob/4.0.2/third_party/libcxx/BUILD.mk
@@ -1907,4 +1907,16 @@ copy_to_directory(
     root_paths = ["usr"],
     include_external_repositories = ["**"],
     visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "apelink_lib",
+    srcs = ["tool/build/apelink.c"] + glob(["tool/build/lib/*.h"]),
+    copts = COSMO_COMMON_COPTS,
+    textual_hdrs = [":libc_hdrs"],
+)
+
+cc_binary(
+    name = "apelink",
+    deps = [":apelink_lib"],
 )
