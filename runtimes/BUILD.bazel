@@ -60,7 +60,6 @@ filegroup(
     name = "dynamic_runtime_lib",
     srcs = select({
         "@platforms//os:linux": [
-            ":libc_shared_linux",
             "@libcxx//:libcxx.shared",
             "@libcxxabi//:libcxxabi.shared",
             "@libunwind//:libunwind.shared",
