@@ -13,6 +13,7 @@ cc_binary(
     linkstatic = False,
     target_compatible_with = select({
         # We do not support musl libc.so
+        "@platforms//os:windows": ["@platforms//:incompatible"],
         "@toolchains_llvm_bootstrapped//constraints/libc:musl": ["@platforms//:incompatible"],
         "//conditions:default": [],
     }),
