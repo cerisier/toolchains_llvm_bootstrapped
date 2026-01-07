@@ -46,15 +46,17 @@ cc_binary(
 )
 
 # Implies dynamic_runtime_libs
-# cc_test(
-#     name = "test",
-#     srcs = ["main.cc"],
-#     target_compatible_with = select({
-#         # We do not support musl libc.so
-#         "@toolchains_llvm_bootstrapped//constraints/libc:musl": ["@platforms//:incompatible"],
-#         "//conditions:default": [],
-#     }),
-# )
+exec_test(
+    cc_test,
+    name = "test",
+    srcs = ["main.cc"],
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        # We do not support musl libc.so
+        "@toolchains_llvm_bootstrapped//constraints/libc:musl": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+)
 
 cc_binary(
     name = "main",
