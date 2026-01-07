@@ -7,6 +7,7 @@ def cc_toolchain(name, tool_map):
         name = name + "_known_features",
         all_of = [
             "//toolchain/features:static_link_cpp_runtimes",
+            "//toolchain/features/runtime_library_search_directories:feature",
         ] + select({
             "@platforms//os:linux": [
                 "@rules_cc//cc/toolchains/args/thin_lto:feature",
@@ -35,10 +36,12 @@ def cc_toolchain(name, tool_map):
         all_of = select({
             "@platforms//os:linux": [
                 "//toolchain/features:static_link_cpp_runtimes",
+                "//toolchain/features/runtime_library_search_directories:feature",
             ],
             "@platforms//os:macos": [],
             "@platforms//os:windows": [
                 "//toolchain/features:static_link_cpp_runtimes",
+                "//toolchain/features/runtime_library_search_directories:feature",
             ],
             "@platforms//os:none": [],
         }) + [
