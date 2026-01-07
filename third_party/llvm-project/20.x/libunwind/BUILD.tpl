@@ -1,21 +1,29 @@
 
 
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_library.bzl", "cc_runtime_stage0_library")
 load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
 load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_shared_library.bzl", "cc_runtime_stage1_shared_library")
+
+selects.config_setting_group(
+    name = "windows_static",
+    match_all = [
+        "@platforms//os:windows",
+        "@toolchains_llvm_bootstrapped//runtimes:linkmode_static",
+    ],
+)
 
 cc_library(
     name = "libunwind",
     copts = [
         "-Wa,--noexecstack",
     ] + select({
-        "@toolchains_llvm_bootstrapped//runtimes:linkmode_static": [
+        ":windows_static": [
             "-fvisibility=hidden",
-            "-fvisibility-inlines-hidden",
             "-fvisibility-global-new-delete=force-hidden",
         ],
-        "@toolchains_llvm_bootstrapped//runtimes:linkmode_dynamic": [],
+        "//conditions:default": [],
     }) + [
         "-Wno-bitwise-conditional-parentheses",
         "-Wno-visibility",
@@ -49,15 +57,15 @@ cc_library(
         # build for the target specified by compiler defines. Since we pass -target the compiler
         # defines will be correct.
         "_LIBUNWIND_IS_NATIVE_ONLY",
-        "_DEBUG",
+        "_NDEBUG",
         # "_LIBUNWIND_HAS_NO_THREADS", # ANY_NON_SINGLE_THREADED
         # "_DCOMPILER_RT_ARMHF_TARGET", # ARM
         "_LIBUNWIND_USE_FRAME_HEADER_CACHE",
     ] + select({
-        "@toolchains_llvm_bootstrapped//runtimes:linkmode_static": [
+        ":windows_static": [
             "_LIBUNWIND_HIDE_SYMBOLS",
         ],
-        "@toolchains_llvm_bootstrapped//runtimes:linkmode_dynamic": [],
+        "//conditions:default": [],
     }),
     hdrs = glob([
         "include/**",

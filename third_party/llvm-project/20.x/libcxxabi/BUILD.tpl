@@ -1,4 +1,5 @@
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
+load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_library.bzl", "cc_runtime_stage0_library")
 load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
@@ -45,6 +46,14 @@ cc_library(
     visibility = ["//visibility:public"],
 )
 
+selects.config_setting_group(
+    name = "windows_static",
+    match_all = [
+        "@platforms//os:windows",
+        "@toolchains_llvm_bootstrapped//runtimes:linkmode_static",
+    ],
+)
+
 cc_library(
     name = "libcxxabi",
     defines = [
@@ -53,25 +62,16 @@ cc_library(
         "LIBCXX_BUILDING_LIBCXXABI",
         # DHAVE___CXA_THREAD_ATEXIT_IMPL (gnu but not linux and glibc >= 2.18)
     ] + select({
-        "@toolchains_llvm_bootstrapped//runtimes:linkmode_static": [
+        ":windows_static": [
             "_LIBCXXABI_DISABLE_VISIBILITY_ANNOTATIONS",
         ],
-        "@toolchains_llvm_bootstrapped//runtimes:linkmode_dynamic": [],
+        "//conditions:default": [],
     }),
-    copts = select({
-        "@toolchains_llvm_bootstrapped//runtimes:linkmode_static": [
-            "-fvisibility=hidden",
-            "-fvisibility-inlines-hidden",
-        ],
-        "@toolchains_llvm_bootstrapped//runtimes:linkmode_dynamic": [],
-    }) + [
-        "-fPIC", #TODO: Support PIC
-        "-fstrict-aliasing",
+    copts = [
         "-std=c++23",
-        "-Wno-user-defined-literals",
-        "-Wno-covered-switch-default",
-        "-Wno-suggest-override",
-        "-funwind-tables", # if exceptions
+        "-fstrict-aliasing",
+        "-funwind-tables",   # if exceptions
+        # "-fno-exceptions", # if no exceptions
     ] + select({
         "@platforms//os:windows": [
             "-Wno-pragma-pack",

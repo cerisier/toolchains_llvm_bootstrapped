@@ -1,4 +1,5 @@
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
+load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
@@ -1122,6 +1123,10 @@ _CONFIG_SITE_THREAD_API_PTHREAD_LINES = [
     "#define _LIBCPP_HAS_THREAD_API_WIN32   0",
 ]
 
+_CONFIG_SITE_LIBCPP_VISIBILITY_LINES = [
+    "#define _LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS",
+]
+
 _CONFIG_SITE_GENERIC_LINES = [
     "#define _LIBCPP_ABI_VERSION             1",
     "#define _LIBCPP_ABI_NAMESPACE           __1",
@@ -1141,7 +1146,6 @@ _CONFIG_SITE_GENERIC_LINES = [
     "#define _LIBCPP_HAS_WIDE_CHARACTERS     1",
     "#define _LIBCPP_HAS_STD_MODULES         0",
     "#define _LIBCPP_HAS_TIME_ZONE_DATABASE  1",
-    "#define _LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS     ",
     "#define _LIBCPP_HAS_VENDOR_AVAILABILITY_ANNOTATIONS 0",
     "#define _LIBCPP_INSTRUMENTED_WITH_ASAN  0",
     "",
@@ -1155,10 +1159,22 @@ _CONFIG_SITE_GENERIC_LINES = [
     "// \"_LIBCPP_HAS_NO_LIBRARY_ALIGNED_ALLOCATION\", # GLIBC < 2.16",
 ]
 
+selects.config_setting_group(
+    name = "windows_static",
+    match_all = [
+        "@platforms//os:windows",
+        "@toolchains_llvm_bootstrapped//runtimes:linkmode_static",
+    ],
+)
+
 write_file(
     name = "__config_site",
     out = "include/__config_site",
     content = _CONFIG_SITE_GENERIC_LINES +
+              select({
+                  ":windows_static": _CONFIG_SITE_LIBCPP_VISIBILITY_LINES,
+                  "//conditions:default": [],
+              }) +
               select({
                   "@toolchains_llvm_bootstrapped//constraints/libc:musl": _CONFIG_SITE_MUSL_LINES,
                   "//conditions:default": _CONFIG_SITE_NO_MUSL_LINES,
@@ -1224,17 +1240,16 @@ cc_library(
         "_LIBCPP_REMOVE_TRANSITIVE_INCLUDES",
         "LIBCXX_BUILDING_LIBCXXABI",
         "_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER",
-        # "_LIBCXXABI_DISABLE_VISIBILITY_ANNOTATIONS", # Only for satic c++abi"
     ],
-    copts = select({
-        "@toolchains_llvm_bootstrapped//runtimes:linkmode_static": [
-            "-fvisibility=hidden",
-            "-fvisibility-inlines-hidden",
-        ],
-        "@toolchains_llvm_bootstrapped//runtimes:linkmode_dynamic": [],
-    }) + [
+    copts = [
         "-faligned-allocation",
         "-std=c++23",
+
+        "-fvisibility=hidden",
+        "-fvisibility-inlines-hidden",
+
+        # "-fno-exceptions", # if no exceptions
+        # "-fno-rtti",       # if no rtti
 
         # Compiler agnostic warnings to disable
         "-Wno-unused-parameter",
