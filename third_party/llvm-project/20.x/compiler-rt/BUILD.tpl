@@ -447,7 +447,6 @@ cc_runtime_stage0_library(
         ],
         "//conditions:default": [],
     }),
-    features = ["-default_compile_flags"],
     linkstatic = True,
     deps = select({
         "@platforms//cpu:aarch64": [

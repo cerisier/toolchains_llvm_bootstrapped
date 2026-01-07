@@ -1226,7 +1226,6 @@ cc_library(
         "_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER",
         # "_LIBCXXABI_DISABLE_VISIBILITY_ANNOTATIONS", # Only for satic c++abi"
     ],
-    features = ["-default_compile_flags"],
     copts = select({
         "@toolchains_llvm_bootstrapped//runtimes:linkmode_static": [
             "-fvisibility=hidden",

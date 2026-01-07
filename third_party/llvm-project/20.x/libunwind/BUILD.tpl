@@ -44,7 +44,6 @@ cc_library(
     linkopts = [
         "--unwindlib=none",
     ],
-    features = ["-default_compile_flags"],
     local_defines = [
         # This is intentionally always defined because the macro definition means, should it only
         # build for the target specified by compiler defines. Since we pass -target the compiler
