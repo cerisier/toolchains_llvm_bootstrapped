@@ -60,7 +60,7 @@ select_file(
 # To avoid having to compute the proper ld.so name in the linker script, we
 # resort to providing those symbols here.
 #
-# These symbols may not be normally availble for all targets and versions of the
+# These symbols may not be normally available for all targets and versions of the
 # glibc but it should be "mostly" harmless.
 #
 # It might cause faulty programs to successfully link when they should not, even
