@@ -69,13 +69,20 @@ cc_args(
     ],
 )
 
+# Use a stub feature so we can properly control flag ordering.
 cc_feature(
     name = "opt",
-    overrides = "@rules_cc//cc/toolchains/features:opt",
     args = [
         ":opt_compile_flags",
         ":opt_link_flags",
     ],
+    feature_name = "_underlying_opt",
+    requires_any_of = [":opt_stub"],
+)
+
+cc_feature(
+    name = "opt_stub",
+    overrides = "@rules_cc//cc/toolchains/features:opt",
 )
 
 cc_args(
@@ -97,12 +104,19 @@ cc_args(
     ],
 )
 
+# Use a stub feature so we can properly control flag ordering.
 cc_feature(
     name = "dbg",
-    overrides = "@rules_cc//cc/toolchains/features:dbg",
     args = [
         ":dbg_compile_flags",
     ],
+    feature_name = "_underlying_dbg",
+    requires_any_of = [":dbg_stub"],
+)
+
+cc_feature(
+    name = "dbg_stub",
+    overrides = "@rules_cc//cc/toolchains/features:dbg",
 )
 
 ###
@@ -111,7 +125,9 @@ cc_feature_set(
     name = "all_non_legacy_builtin_features",
     all_of = [
         ":opt",
+        ":opt_stub",
         ":dbg",
+        ":dbg_stub",
         ":static_link_cpp_runtimes",
     ],
     visibility = ["//visibility:public"],
