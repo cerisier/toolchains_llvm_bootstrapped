@@ -46,8 +46,7 @@ cc_binary(
 )
 
 # Implies dynamic_runtime_libs
-exec_test(
-    cc_test,
+cc_test(
     name = "test",
     srcs = ["main.cc"],
     target_compatible_with = select({
@@ -56,6 +55,9 @@ exec_test(
         "@toolchains_llvm_bootstrapped//constraints/libc:musl": ["@platforms//:incompatible"],
         "//conditions:default": [],
     }),
+    # remote-exec tests can't run without forcing the target platform to match
+    # the remote exec platform.
+    tags = ["no-remote"],
 )
 
 cc_binary(
