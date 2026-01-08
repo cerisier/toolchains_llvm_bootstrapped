@@ -1,4 +1,5 @@
 load("@bazel_lib//lib:transitions.bzl", "platform_transition_binary")
+load("@platforms//host:constraints.bzl", "HOST_CONSTRAINTS")
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc:cc_test.bzl", "cc_test")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
@@ -55,6 +56,8 @@ cc_test(
         "@toolchains_llvm_bootstrapped//constraints/libc:musl": ["@platforms//:incompatible"],
         "//conditions:default": [],
     }),
+    exec_compatible_with = HOST_CONSTRAINTS,
+    target_compatible_with = HOST_CONSTRAINTS,
     # remote-exec tests can't run without forcing the target platform to match
     # the remote exec platform.
     tags = ["no-remote"],
