@@ -1,8 +1,9 @@
+load("@platforms//host:constraints.bzl", "HOST_CONSTRAINTS")
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
 load("@toolchains_llvm_bootstrapped//constraints/libc:libc_versions.bzl", "LIBCS")
 load("@bazel_lib//lib:transitions.bzl", "platform_transition_binary")
-load("@bazel_skylib//rules:build_test.bzl", "build_test")
 
 cc_library(
     name = "add",
@@ -15,6 +16,15 @@ cc_binary(
     name = "main",
     deps = [":add"],
     srcs = ["test.cc"],
+)
+
+cc_test(
+    name = "hello_test",
+    srcs = ["hello.c"],
+    exec_compatible_with = HOST_CONSTRAINTS,
+    # remote-exec tests can't run without forcing the target platform to match
+    # the remote exec platform.
+    tags = ["no-remote"],
 )
 
 #TODO(cerisier): should the toolchain provide its own list ?
@@ -36,13 +46,5 @@ PLATFORMS = [
         name = "main_" + platform.split(":")[-1],
         target_platform = platform,
         binary = ":main",
-    ) for platform in PLATFORMS
-]
-
-[
-    build_test(
-        name = "test_main_" + platform.split(":")[-1],
-        targets = [":main_" + platform.split(":")[-1]],
-        size = "small",
     ) for platform in PLATFORMS
 ]
