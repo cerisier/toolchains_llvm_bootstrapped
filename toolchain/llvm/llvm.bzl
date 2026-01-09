@@ -5,7 +5,8 @@ load("//:directory.bzl", "headers_directory")
 def declare_llvm_targets(*, suffix = ""):
     headers_directory(
         name = "builtin_headers",
-        path = "lib/clang/21/include",
+        # Grab whichever version-specific dir is there.
+        path = native.glob(["lib/clang/*"], exclude_directories = 0)[0] + "/include",
     )
 
     # Convenient exports

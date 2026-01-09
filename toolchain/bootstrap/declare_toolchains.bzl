@@ -1,7 +1,6 @@
 load("//platforms:common.bzl", "SUPPORTED_TARGETS")
 load("//toolchain:cc_toolchain.bzl", "cc_toolchain")
 load(":bootstrap_binary.bzl", "bootstrap_binary", "bootstrap_directory")
-load("@llvm-project//:vars.bzl", "LLVM_VERSION_MAJOR")
 load("@rules_cc//cc/toolchains:tool.bzl", "cc_tool")
 load("@rules_cc//cc/toolchains:tool_map.bzl", "cc_tool_map")
 
@@ -50,7 +49,10 @@ def declare_tool_map(exec_os, exec_cpu):
         srcs = "@llvm-project//clang:builtin_headers_files",
         # TODO(zbarsky): Probably shouldn't force platform here.
         platform = prefix + "_platform",
-        destination = prefix + "/lib/clang/%s/include" % LLVM_VERSION_MAJOR,
+        # TODO(zbarsky): Previously we did `load("@llvm-project//:vars.bzl", "LLVM_VERSION_MAJOR")`
+        # but that forced an eager fetch of LLVM, so we hardcode 21 for now. Does it actually matter
+        # what the version is?
+        destination = prefix + "/lib/clang/21/include",
         strip_prefix = "clang/lib/Headers",
     )
 

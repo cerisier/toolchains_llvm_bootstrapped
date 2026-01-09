@@ -53,13 +53,17 @@ LLVM_TOOLCHAIN_EXTRAS_SHA256 = {
     "windows-arm64-gnu": "c5b7188a7c6582292a2c2800089cbdb2b4b240c6ad790b4d0074b3507457f0d9",
 }
 
-VERSION="20251219"
+VERSION = "20251219"
+
 [
     http_archive(
         name = "prebuilts-extras-toolchain-artifacts-{target}".format(target = target.replace("-musl", "").replace("-gnu", "")),
         build_file = "//prebuilt/extras:BUILD.extras.tpl",
         sha256 = sha256,
-        urls = ["https://github.com/cerisier/toolchains_llvm_bootstrapped/releases/download/prebuilts-extras-{version}/toolchain-extra-prebuilts-{version}-{target}.tar.zst".format(version = VERSION, target = target)],
+        urls = ["https://github.com/cerisier/toolchains_llvm_bootstrapped/releases/download/prebuilts-extras-{version}/toolchain-extra-prebuilts-{version}-{target}.tar.zst".format(
+            target = target,
+            version = VERSION,
+        )],
     )
     for (target, sha256) in LLVM_TOOLCHAIN_EXTRAS_SHA256.items()
 ]
@@ -68,7 +72,7 @@ LLVM_RELEASE_ASSETS_SHA256 = {
     "compiler-rt": "dd54ae21aee1780fac59445b51ebff601ad016b31ac3a7de3b21126fd3ccb229",
     "libcxx": "6422a58a5c29b7f4fda224cfdc07842be8a208a61301bbba7a219116e3351809",
     "libcxxabi": "709c9a63bde1e36a80d8675becc38073b85f0fa1b4111e34542b885c9e1239da",
-    "libunwind": "03e8adc6c3bdde657dcaedc94886ea70d1f7d551d622fcd8a36a8300e5c36cbc"
+    "libunwind": "03e8adc6c3bdde657dcaedc94886ea70d1f7d551d622fcd8a36a8300e5c36cbc",
 }
 
 [
