@@ -1,4 +1,4 @@
-load("@bazel_skylib//rules:common_settings.bzl", "string_setting", "string_flag")
+load("@bazel_skylib//rules:common_settings.bzl", "string_flag", "string_setting")
 load("@rules_cc//cc/toolchains:artifacts.bzl", "cc_artifact_name_pattern")
 load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 load("//toolchain/bootstrap:declare_toolchains.bzl", declare_bootstrap_toolchains = "declare_toolchains")
@@ -11,24 +11,24 @@ package(default_visibility = ["//toolchain:__subpackages__"])
 # Runtimes without dependencies, runtimes with dependencies, user programs with runtime dependencies...
 string_setting(
     name = "runtime_stage",
+    build_setting_default = "complete",
     values = [
-        "stage0", # depend on compiler-only: CRTs, builtins, libc, static libraries.
-        "stage1", # depends on above: libunwind
+        "stage0",  # depend on compiler-only: CRTs, builtins, libc, static libraries.
+        "stage1",  # depends on above: libunwind
         # "stage2", # depends on above: libc++abi
         # "stage3", # depends on above: libc++
-        "complete", # depends on above: user programs.
+        "complete",  # depends on above: user programs.
     ],
-    build_setting_default = "complete",
 )
 
 # Controls whether targets are built with bootstrapped toolchain or prebuilt toolchain.
 string_flag(
     name = "source",
+    build_setting_default = "prebuilt",
     values = [
         "bootstrapped",
         "prebuilt",
     ],
-    build_setting_default = "prebuilt",
 )
 
 config_setting(
@@ -87,8 +87,11 @@ cc_args_list(
         "@platforms//os:linux": [
             "//toolchain/args:crt_search_directory",
         ],
-        "@platforms//os:windows": [
+        "//platforms/config:abi_gnu": [
             "//toolchain/args:crt_search_directory",
+        ],
+        "//platforms/config:abi_msvc": [
+            # TODO: wire the crt_search_directory too here when it points to something (otherwise it fails validation)
         ],
         "@platforms//os:none": [],
     }),
@@ -192,8 +195,16 @@ cc_args_list(
     name = "windows_toolchain_args",
     args = [
         "//toolchain/args:libcxx_headers_include_search_paths",
-        "//toolchain/args/windows:mingw_headers_include_search_paths",
-    ],
+    ] + select({
+        "//platforms/config:abi_gnu": [
+            # TODO: this is selected, incorreclty when MSVC is selected, why?
+            #"//toolchain/args/windows:mingw_headers_include_search_paths",
+        ],
+        "//platforms/config:abi_msvc": [
+            "//toolchain/args/windows:msvc_headers_include_search_paths",
+        ],
+        "//conditions:default": [],
+    }),
 )
 
 cc_args_list(
@@ -215,7 +226,6 @@ cc_args_list(
         "//toolchain/args:llvm_target_for_platform",
         "//toolchain/args:no_absolute_paths_for_builtins",
         "//toolchain/args:deterministic_compile_flags",
-
         ":sysroot_flags",
         ":hermetic_compile_flags",
         ":hermetic_link_flags",
@@ -240,9 +250,10 @@ cc_args_list(
 cc_artifact_name_pattern(
     name = "windows_executable_pattern",
     category = "@rules_cc//cc/toolchains/artifacts:executable",
-    prefix = "",
     extension = ".exe",
+    prefix = "",
 )
 
 declare_toolchains()
+
 declare_bootstrap_toolchains()

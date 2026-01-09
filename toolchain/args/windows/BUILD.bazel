@@ -7,6 +7,11 @@ cc_args(
     actions = [
         "@rules_cc//cc/toolchains/actions:compile_actions",
     ],
+    allowlist_include_directories = [
+        "@mingw//:mingw_generated_headers_crt_directory",
+        "@mingw//:mingw_w64_headers_include_directory",
+        "@mingw//:mingw_w64_headers_crt_directory",
+    ],
     args = [
         "-isystem",
         "{mingw_generated_headers_crt}",
@@ -15,25 +20,45 @@ cc_args(
         "-isystem",
         "{mingw_w64_headers_crt}",
     ],
+    data = [
+        "@mingw//:mingw_generated_headers_crt_directory",
+        "@mingw//:mingw_w64_headers_crt_directory",
+        "@mingw//:mingw_w64_headers_include_directory",
+    ],
     format = {
         "mingw_generated_headers_crt": "@mingw//:mingw_generated_headers_crt_directory",
         "mingw_w64_headers_include": "@mingw//:mingw_w64_headers_include_directory",
         "mingw_w64_headers_crt": "@mingw//:mingw_w64_headers_crt_directory",
     },
-    allowlist_include_directories = [
-        "@mingw//:mingw_generated_headers_crt_directory",
-        "@mingw//:mingw_w64_headers_include_directory",
-        "@mingw//:mingw_w64_headers_crt_directory",
-    ],
-    data = [
-        "@mingw//:mingw_generated_headers_crt_directory",
-        "@mingw//:mingw_w64_headers_include_directory",
-        "@mingw//:mingw_w64_headers_crt_directory",
-    ],
 )
 
 cc_args(
-    name = "default_libs",
+    name = "msvc_headers_include_search_paths",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:compile_actions",
+    ],
+    allowlist_include_directories = [
+        "@windows_sdk//:headers_include",
+    ],
+    args = [
+        # TODO: add MSVC runtime headers here from a user-customized module extension
+        # "-isystem",
+        #"{msvc_runtime_headers_include}",
+        "-isystem",
+        "{msvc_headers_include}",
+    ],
+    data = [
+        # "@msvc_runtime//:headers_include",
+        "@windows_sdk//:headers_include",
+    ],
+    format = {
+        "windows_sdk_headers_include": "@windows_sdk//:headers_include",
+        # "msvc_runtime_headers_include": "@msvc_runtime//:headers_include",
+    },
+)
+
+cc_args(
+    name = "mingw_libs",
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
@@ -47,12 +72,42 @@ cc_args(
         # TODO(cerisier): make this either a constraint or a build setting
         "-lucrt",
     ],
-    format = {
-        "mingw_crt_library_search_path": "//runtimes/mingw:mingw_crt_library_search_directory",
-        "mingw_import_library_search_path": "//runtimes/mingw:mingw_import_libraries_directory",
-    },
     data = [
         "//runtimes/mingw:mingw_crt_library_search_directory",
         "//runtimes/mingw:mingw_import_libraries_directory",
     ],
+    format = {
+        "mingw_crt_library_search_path": "//runtimes/mingw:mingw_crt_library_search_directory",
+        "mingw_import_library_search_path": "//runtimes/mingw:mingw_import_libraries_directory",
+    },
+)
+
+cc_args(
+    name = "msvc_libs",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = [
+        "-L{msvc_import_library_search_path}",
+        # TODO: add MSVC runtime libraries here from a user-customized module extension
+        # "-L{msvc_runtime_library_search_path}",
+    ],
+    data = [
+        # "@msvc_runtime//:libs_directory",
+        "//runtimes/msvc:msvc_import_libraries_directory",
+    ],
+    format = {
+        # "msvc_runtime_library_search_path": "@msvc_runtime//:libs_directory",
+        "msvc_import_library_search_path": "//runtimes/msvc:msvc_import_libraries_directory",
+    },
+)
+
+cc_args(
+    name = "default_libs",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = [],
+    data = [],
+    format = {},
 )

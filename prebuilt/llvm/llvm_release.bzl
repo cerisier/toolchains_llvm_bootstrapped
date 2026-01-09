@@ -1,6 +1,5 @@
-
-load("@tar.bzl", "tar", "mtree_spec", "mtree_mutate")
 load("@llvm-project//:vars.bzl", "LLVM_VERSION_MAJOR")
+load("@tar.bzl", "mtree_mutate", "mtree_spec", "tar")
 load("//prebuilt:mtree.bzl", "mtree")
 
 def llvm_release(name, bin_suffix = ""):
@@ -43,11 +42,13 @@ def llvm_release(name, bin_suffix = ""):
             "bin/clang-{llvm_major}" + bin_suffix: "clang" + bin_suffix,
             "bin/clang++" + bin_suffix: "clang" + bin_suffix,
             "bin/clang-cpp" + bin_suffix: "clang" + bin_suffix,
+            "bin/clang-cl" + bin_suffix: "clang-cl" + bin_suffix,
             "bin/ld.lld" + bin_suffix: "lld" + bin_suffix,
             "bin/ld64.lld" + bin_suffix: "lld" + bin_suffix,
             "bin/wasm-ld" + bin_suffix: "lld" + bin_suffix,
+            "bin/lld-link" + bin_suffix: "lld-link" + bin_suffix,
             "bin/llvm-dlltool" + bin_suffix: "llvm-ar" + bin_suffix,
-            "bin/llvm-ranlib" + bin_suffix: "llvm-ar"+ bin_suffix,
+            "bin/llvm-ranlib" + bin_suffix: "llvm-ar" + bin_suffix,
             "bin/llvm-install-name-tool" + bin_suffix: "llvm-objcopy" + bin_suffix,
             "bin/llvm-bitcode-strip" + bin_suffix: "llvm-objcopy" + bin_suffix,
             "bin/llvm-strip" + bin_suffix: "llvm-objcopy" + bin_suffix,

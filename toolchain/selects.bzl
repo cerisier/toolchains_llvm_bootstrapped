@@ -18,7 +18,7 @@ def platform_extra_binary(binary):
         "@toolchains_llvm_bootstrapped//platforms/config:windows_x86_64": "@prebuilts-extras-toolchain-artifacts-windows-amd64//:%s" % binary,
     })
 
-def platform_cc_tool_map(exec_os, exec_cpu):
+def platform_cc_tool_map(exec_os, exec_cpu, msvc = False):
     if exec_os == "macos":
         tool_repo = "@llvm-toolchain-minimal-%s-darwin-arm64//" % LLVM_VERSION
     elif exec_cpu == "x86_64":
@@ -32,5 +32,5 @@ def platform_cc_tool_map(exec_os, exec_cpu):
     # See https://github.com/bazelbuild/bazel/issues/27623#issuecomment-3529439585 for more details.
     return select({
         "@rules_cc//cc/toolchains/args/archiver_flags:use_libtool_on_macos_setting": tool_repo + ":tools_with_libtool",
-        "//conditions:default": tool_repo + ":default_tools",
+        "//conditions:default": tool_repo + (":default_tools" if not msvc else ":tools_for_msvc"), # TODO: find better?
     })

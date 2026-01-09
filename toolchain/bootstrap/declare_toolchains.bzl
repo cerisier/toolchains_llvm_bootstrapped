@@ -1,8 +1,8 @@
-load("//platforms:common.bzl", "SUPPORTED_TARGETS")
-load("//toolchain:cc_toolchain.bzl", "cc_toolchain")
-load(":bootstrap_binary.bzl", "bootstrap_binary", "bootstrap_directory")
 load("@rules_cc//cc/toolchains:tool.bzl", "cc_tool")
 load("@rules_cc//cc/toolchains:tool_map.bzl", "cc_tool_map")
+load("//platforms:common.bzl", "ABI_SUPPORTED_TARGETS", "SUPPORTED_TARGETS")
+load("//toolchain:cc_toolchain.bzl", "cc_toolchain")
+load(":bootstrap_binary.bzl", "bootstrap_binary", "bootstrap_directory")
 
 def declare_tool_map(exec_os, exec_cpu):
     prefix = exec_os + "_" + exec_cpu
@@ -35,6 +35,16 @@ def declare_tool_map(exec_os, exec_cpu):
         name = prefix + "/tools_with_libtool",
         tools = COMMON_TOOLS | {
             "@rules_cc//cc/toolchains/actions:ar_actions": prefix + "/llvm-libtool-darwin",
+        },
+    )
+
+    cc_tool_map(
+        name = prefix + "/tools_for_msvc",  # TODO: unsure about that one still
+        tools = COMMON_TOOLS | {
+            # "@rules_cc//cc/toolchains/actions:assembly_actions": prefix + "/clang-cl",
+            # "@rules_cc//cc/toolchains/actions:c_compile": prefix + "/clang-cl",
+            # "@rules_cc//cc/toolchains/actions:cpp_compile_actions": prefix + "/clang-cl",
+            "@rules_cc//cc/toolchains/actions:link_actions": prefix + "/lld-link",
         },
     )
 
@@ -84,9 +94,34 @@ def declare_tool_map(exec_os, exec_cpu):
     )
 
     bootstrap_binary(
+        name = prefix + "/bin/clang-cl",
+        platform = prefix + "_platform",
+        actual = "@llvm-project//clang:clang.stripped",
+        # TODO: is it also the case for clang-cl?
+        # Copy instead of symlink so clang's InstalledDir matches the packaged tree.
+        # This is crucial for properly locating the various linkers, since we don't use `-ld-path`.
+        symlink = False,
+    )
+
+    cc_tool(
+        name = prefix + "/clang-cl",
+        src = prefix + "/bin/clang-cl",
+        data = [
+            prefix + "/clang_builtin_headers_include_directory",
+        ],
+        capabilities = [],  # no pic support when targetting MSVC
+    )
+
+    bootstrap_binary(
         name = prefix + "/bin/ld.lld",
         platform = prefix + "_platform",
         actual = "@llvm-project//lld:lld.stripped",
+    )
+
+    bootstrap_binary(
+        name = prefix + "/bin/lld-link",
+        platform = prefix + "_platform",
+        actual = "@llvm-project//lld:lld-link.stripped",
     )
 
     bootstrap_binary(
@@ -115,6 +150,15 @@ def declare_tool_map(exec_os, exec_cpu):
             prefix + "/bin/ld64.lld",
             prefix + "/bin/lld",
             prefix + "/bin/wasm-ld",
+        ],
+    )
+
+    cc_tool(
+        # TODO: unsure if needed for now
+        name = prefix + "/lld-link",
+        src = prefix + "/bin/lld-link",
+        data = [
+            prefix + "/bin/lld-link",
         ],
     )
 
@@ -162,7 +206,6 @@ def declare_tool_map(exec_os, exec_cpu):
         src = prefix + "/bin/llvm-strip",
     )
 
-
 def declare_toolchains(*, execs = None, targets = SUPPORTED_TARGETS):
     """Declares the configured LLVM toolchains.
 
@@ -177,7 +220,7 @@ def declare_toolchains(*, execs = None, targets = SUPPORTED_TARGETS):
             # If we can compile a compiler for that target, we can use that compiler
             # to compile for any other target.
             for (arch, os) in targets
-            if arch != "none" # wasm is no good for us.
+            if arch != "none"  # wasm is no good for us.
         ]
 
     for (exec_os, exec_cpu) in execs:
@@ -206,11 +249,38 @@ def declare_toolchains(*, execs = None, targets = SUPPORTED_TARGETS):
                 target_compatible_with = [
                     "@platforms//cpu:{}".format(target_cpu),
                     "@platforms//os:{}".format(target_os),
+                    "//constraints/abi:unconstrained",
                 ],
                 target_settings = [
                     "@toolchains_llvm_bootstrapped//toolchain:bootstrapped_toolchain",
                 ],
                 toolchain = cc_toolchain_name,
+                toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
+                visibility = ["//visibility:public"],
+            )
+
+        msvc_cc_toolchain_name = "bootstrap_{}_{}_msvc_cc_toolchain".format(exec_os, exec_cpu)
+        cc_toolchain(
+            name = msvc_cc_toolchain_name,
+            tool_map = ":{}_{}/tools_for_msvc".format(exec_os, exec_cpu),
+            compiler = "clang",  # FIXME: should we change to clang-cl?
+        )
+        for (target_os, target_cpu) in ABI_SUPPORTED_TARGETS:
+            native.toolchain(
+                name = "bootstrap_{}_{}_to_{}_{}_msvc".format(exec_os, exec_cpu, target_os, target_cpu),
+                exec_compatible_with = [
+                    "@platforms//cpu:{}".format(exec_cpu),
+                    "@platforms//os:{}".format(exec_os),
+                ],
+                target_compatible_with = [
+                    "@platforms//cpu:{}".format(target_cpu),
+                    "@platforms//os:{}".format(target_os),
+                    "//constraints/abi:msvc",
+                ],
+                target_settings = [
+                    "@toolchains_llvm_bootstrapped//toolchain:bootstrapped_toolchain",
+                ],
+                toolchain = msvc_cc_toolchain_name,
                 toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
                 visibility = ["//visibility:public"],
             )

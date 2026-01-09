@@ -1,9 +1,9 @@
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
-load("@rules_cc//cc:cc_library.bzl", "cc_library")
-load("//toolchain/runtimes:cc_stage0_object.bzl", "cc_stage0_object")
-load("//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
-load(":copy_to_resource_directory.bzl", "copy_to_resource_directory")
 load("@bazel_skylib//rules:common_settings.bzl", "string_setting")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
+load("//toolchain/runtimes:cc_stage0_object.bzl", "cc_stage0_object")
+load(":copy_to_resource_directory.bzl", "copy_to_resource_directory")
 
 #TODO(cerisier): duplicate this per runtime repo ? or do differently ?
 string_setting(
@@ -46,10 +46,15 @@ filegroup(
             "@libcxxabi//:libcxxabi.static",
             "@libunwind//:libunwind.static",
         ],
-        "@platforms//os:windows": [
+        "//platforms/config:abi_gnu": [
             "@libcxx//:libcxx.static",
             "@libcxxabi//:libcxxabi.static",
             "@libunwind//:libunwind.static",
+        ],
+        "//platforms/config:abi_msvc": [
+            "@libcxx//:libcxx.static",
+            "@libcxxabi//:libcxxabi.static",
+            # TODO: check if we need libunwind support also for MSVC
         ],
         "//conditions:default": [],
     }),
@@ -80,10 +85,10 @@ cc_stage0_object(
     srcs = [
         ":empty",
     ],
+    out = "crti.o",
     copts = [
         "-target",
     ] + LLVM_TARGET_TRIPLE,
-    out = "crti.o",
     visibility = ["//visibility:public"],
 )
 
@@ -92,10 +97,10 @@ cc_stage0_object(
     srcs = [
         ":empty",
     ],
+    out = "crtn.o",
     copts = [
         "-target",
     ] + LLVM_TARGET_TRIPLE,
-    out = "crtn.o",
     visibility = ["//visibility:public"],
 )
 
@@ -110,43 +115,51 @@ copy_to_directory(
             "//runtimes/musl:musl_Scrt1.object",
         ],
         "//platforms/config:gnu": [
-            "//runtimes/glibc:glibc_crt1.object",
             "//runtimes/glibc:glibc_Scrt1.object",
+            "//runtimes/glibc:glibc_crt1.object",
         ],
     }) + [
         ":crti_object",
         ":crtn_object",
-        "@compiler-rt//:crtbegin_object",
         "@compiler-rt//:crtbeginS_object",
         "@compiler-rt//:crtbeginT_object",
-        "@compiler-rt//:crtend_object",
+        "@compiler-rt//:crtbegin_object",
         "@compiler-rt//:crtendS_object",
+        "@compiler-rt//:crtend_object",
     ],
     include_external_repositories = ["**"],
-    target_compatible_with = [
-        "@platforms//os:linux",
-    ],
     root_paths = [
         ".",
         "runtimes/musl",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
     ],
     visibility = ["//visibility:public"],
 )
 
 copy_to_directory(
-    name = "crt_objects_directory_windows",
+    name = "crt_objects_directory_windows_gnu",
     srcs = [
+        "//runtimes/mingw:crt2.o",
         "//runtimes/mingw:crtbegin.o",
         "//runtimes/mingw:crtend.o",
-        "//runtimes/mingw:crt2.o",
         "//runtimes/mingw:dllcrt2.o",
-    ],
-    target_compatible_with = [
-        "@platforms//os:windows",
     ],
     root_paths = [
         "runtimes/mingw",
     ],
+    target_compatible_with = [
+        "@platforms//os:windows",
+        "//constraints/abi:gnu",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+# MSVC doesn't need custom CRT objects - it uses the system CRT
+filegroup(
+    name = "crt_objects_directory_windows_msvc",
+    srcs = [],
     visibility = ["//visibility:public"],
 )
 
@@ -154,7 +167,8 @@ alias(
     name = "crt_objects_directory",
     actual = select({
         "@platforms//os:linux": ":crt_objects_directory_linux",
-        "@platforms//os:windows": ":crt_objects_directory_windows",
+        "//platforms/config:abi_gnu": ":crt_objects_directory_windows_gnu",
+        "//platforms/config:abi_msvc": ":crt_objects_directory_windows_msvc",
     }),
     visibility = ["//visibility:public"],
 )
