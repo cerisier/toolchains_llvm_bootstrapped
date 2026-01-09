@@ -8,6 +8,7 @@ def cc_toolchain(name, tool_map):
         all_of = [
             "//toolchain/features:static_link_cpp_runtimes",
             "//toolchain/features/runtime_library_search_directories:feature",
+            "//toolchain/features:archive_param_file",
         ] + select({
             "@platforms//os:linux": [
                 "@rules_cc//cc/toolchains/args/thin_lto:feature",
@@ -26,6 +27,7 @@ def cc_toolchain(name, tool_map):
     cc_feature_set(
         name = name + "_runtimes_only_known_features",
         all_of = [
+            "//toolchain/features:archive_param_file",
             # Always last (contains user_compile_flags and user_link_flags who should apply last).
             "@rules_cc//cc/toolchains/args:experimental_replace_legacy_action_config_features",
         ],
@@ -45,6 +47,7 @@ def cc_toolchain(name, tool_map):
             ],
             "@platforms//os:none": [],
         }) + [
+            "//toolchain/features:archive_param_file",
             "//toolchain/features/legacy:all_legacy_builtin_features",
             # Always last (contains user_compile_flags and user_link_flags who should apply last).
             "@rules_cc//cc/toolchains/args:experimental_replace_legacy_action_config_features",
@@ -54,6 +57,7 @@ def cc_toolchain(name, tool_map):
     cc_feature_set(
         name = name + "_runtimes_only_enabled_features",
         all_of = [
+            "//toolchain/features:archive_param_file",
             # Always last (contains user_compile_flags and user_link_flags who should apply last).
             "@rules_cc//cc/toolchains/args:experimental_replace_legacy_action_config_features",
         ],

@@ -119,6 +119,11 @@ cc_feature(
     overrides = "@rules_cc//cc/toolchains/features:dbg",
 )
 
+cc_feature(
+    name = "archive_param_file",
+    feature_name = "archive_param_file",
+)
+
 ###
 
 cc_feature_set(
