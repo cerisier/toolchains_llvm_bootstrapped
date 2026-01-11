@@ -1,6 +1,10 @@
+load("@bazel_lib//lib:expand_template.bzl", "expand_template")
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc/toolchains:tool.bzl", "cc_tool")
 load("@rules_cc//cc/toolchains:tool_map.bzl", "cc_tool_map")
+load("@rules_cc//cc/toolchains:actions.bzl", "cc_action_type_set")
 load("//runtimes:module_map.bzl", "module_map", "include_path")
+load("//toolchain/runtimes:cc_runtime_binary.bzl", "cc_runtime_stage0_binary")
 load("//:directory.bzl", "headers_directory")
 
 def declare_llvm_targets(*, suffix = ""):
@@ -13,10 +17,55 @@ def declare_llvm_targets(*, suffix = ""):
     # Convenient exports
     native.exports_files(native.glob(["bin/*"]))
 
+    expand_template(
+        name = "expand_header_parser",
+        template = "@toolchains_llvm_bootstrapped//tools/internal:header_parser.cc",
+        out = "header_parser.cc",
+        substitutions = {
+            "{CLANG_EXEC_PATH}": "$(execpath :clang++)",
+        },
+        data = [
+            ":clang++",
+        ],
+    )
+
+    cc_runtime_stage0_binary(
+        name = "header_parser_binary",
+        srcs = ["header_parser.cc"],
+        data = [
+            ":clang++",
+        ],
+    )
+
+    native.alias(
+        name = "header_parser",
+        actual = select({
+            "@toolchains_llvm_bootstrapped//toolchain:runtimes_none": ":clang++",
+            "@toolchains_llvm_bootstrapped//toolchain:runtimes_stage1": ":clang++",
+            "@toolchains_llvm_bootstrapped//conditions:default": ":header_parser_binary",
+        }),
+    )
+
+
+    cc_action_type_set(
+        name = "cpp_compile_actions_without_header_parsing",
+        # See https://github.com/bazelbuild/rules_cc/blob/6dd2ef1fefbca004da449578c00d8ffb91a459ca/cc/toolchains/actions/BUILD#L224
+        actions = [
+            "@rules_cc//cc/toolchains/actions:linkstamp_compile",
+            "@rules_cc//cc/toolchains/actions:cpp_compile",
+            "@rules_cc//cc/toolchains/actions:cpp_module_compile",
+            "@rules_cc//cc/toolchains/actions:cpp_module_codegen",
+            "@rules_cc//cc/toolchains/actions:lto_backend",
+            "@rules_cc//cc/toolchains/actions:clif_match",
+            "@rules_cc//cc/toolchains/actions:objcpp_compile",
+        ],
+    )
+
     COMMON_TOOLS = {
         "@rules_cc//cc/toolchains/actions:assembly_actions": ":clang",
         "@rules_cc//cc/toolchains/actions:c_compile": ":clang",
-        "@rules_cc//cc/toolchains/actions:cpp_compile_actions": ":clang++",
+        ":cpp_compile_actions_without_header_parsing": ":clang++",
+        "@rules_cc//cc/toolchains/actions:cpp_header_parsing": ":header_parser",
         "@rules_cc//cc/toolchains/actions:link_actions": ":lld",
         "@rules_cc//cc/toolchains/actions:objcopy_embed_data": ":llvm-objcopy",
         "@rules_cc//cc/toolchains/actions:strip": ":llvm-strip",

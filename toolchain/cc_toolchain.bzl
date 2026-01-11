@@ -55,6 +55,7 @@ def cc_toolchain(name, tool_map, module_map = None):
         }) + [
             "@rules_cc//cc/toolchains/args/layering_check:module_maps",
             "//toolchain/features:archive_param_file",
+            "//toolchain/features:parse_headers",
             "//toolchain/features/legacy:all_legacy_builtin_features",
             # Always last (contains user_compile_flags and user_link_flags who should apply last).
             "@rules_cc//cc/toolchains/args:experimental_replace_legacy_action_config_features",
@@ -76,7 +77,11 @@ def cc_toolchain(name, tool_map, module_map = None):
             "//toolchain:runtimes_none": ["//toolchain/runtimes:toolchain_args"],
             "//toolchain:runtimes_stage1": ["//toolchain/runtimes:toolchain_args"],
             "//conditions:default": ["//toolchain:toolchain_args"],
-        }),
+        }) + [
+            # TODO: rules_cc passes extra args to these actions, ideally these would be fixed in rules_cc.
+            "//toolchain/args:ignore_unused_command_line_argument",
+        ],
+        supports_header_parsing = True,
         artifact_name_patterns = select({
             "@platforms//os:windows": [
                 "//toolchain:windows_executable_pattern",

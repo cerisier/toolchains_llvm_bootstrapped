@@ -124,6 +124,14 @@ cc_feature(
     feature_name = "archive_param_file",
 )
 
+cc_feature(
+    name = "parse_headers",
+    feature_name = "parse_headers",
+    args = [
+        "//toolchain/args:parse_header_args",
+    ],
+)
+
 ###
 
 cc_feature_set(
@@ -134,6 +142,7 @@ cc_feature_set(
         ":dbg",
         ":dbg_stub",
         ":static_link_cpp_runtimes",
+        ":parse_headers",
     ],
     visibility = ["//visibility:public"],
 )
