@@ -1,10 +1,12 @@
 TOOLCHAIN_BINARIES = [
     "clang",
     "clang++",
+    "clang-cl",
     "clang-cpp",
     "lld",
     "ld.lld",
     "ld64.lld",
+    "lld-link",
     "wasm-ld",
     "llvm-ar",
     "llvm-as",

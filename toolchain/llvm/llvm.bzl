@@ -37,6 +37,17 @@ def declare_llvm_targets(*, suffix = ""):
         visibility = ["//visibility:public"],
     )
 
+    cc_tool_map(
+        name = "tools_for_msvc",  # TODO: unsure about that
+        tools = COMMON_TOOLS | {
+            "@rules_cc//cc/toolchains/actions:assembly_actions": ":clang-cl",
+            "@rules_cc//cc/toolchains/actions:c_compile": ":clang-cl",
+            "@rules_cc//cc/toolchains/actions:cpp_compile_actions": ":clang-cl",
+            "@rules_cc//cc/toolchains/actions:link_actions": ":lld-link",
+        },
+        visibility = ["//visibility:public"],
+    )
+
     cc_tool(
         name = "clang",
         src = "bin/clang" + suffix,
@@ -58,6 +69,16 @@ def declare_llvm_targets(*, suffix = ""):
     )
 
     cc_tool(
+        name = "clang-cl",
+        src = "bin/clang" + suffix,  # FIXME: use clang-cl actually here!
+        data = [
+            ":builtin_headers",
+        ],
+        capabilities = [],  # no pic support when targetting MSVC
+        allowlist_include_directories = [":builtin_headers"],
+    )
+
+    cc_tool(
         name = "lld",
         src = "bin/clang++" + suffix,
         data = [
@@ -65,6 +86,15 @@ def declare_llvm_targets(*, suffix = ""):
             "bin/ld64.lld" + suffix,
             "bin/lld" + suffix,
             "bin/wasm-ld" + suffix,
+        ],
+    )
+
+    cc_tool(
+        # TODO: unsure if needed
+        name = "link-lld",
+        src = "bin/link-lld" + suffix,
+        data = [
+            "bin/link-lld" + suffix,
         ],
     )
 

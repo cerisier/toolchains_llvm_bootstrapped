@@ -100,6 +100,9 @@ use_repo(musl, "musl_libc")
 mingw = use_extension("//runtimes/mingw/extension:mingw.bzl", "mingw")
 use_repo(mingw, "mingw")
 
+msvc = use_extension("//runtimes/msvc/extension:msvc.bzl", "msvc")
+use_repo(msvc, "windows_sdk", "windows_sdk_arm64", "windows_sdk_x64")
+
 osx = use_extension("//toolchain/extension:osx.bzl", "osx")
 use_repo(osx, "macosx15.4.sdk")
 

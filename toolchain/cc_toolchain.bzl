@@ -1,8 +1,7 @@
-load("@rules_cc//cc/toolchains:toolchain.bzl", _cc_toolchain = "cc_toolchain")
 load("@rules_cc//cc/toolchains:feature_set.bzl", "cc_feature_set")
+load("@rules_cc//cc/toolchains:toolchain.bzl", _cc_toolchain = "cc_toolchain")
 
-def cc_toolchain(name, tool_map):
-
+def cc_toolchain(name, tool_map, compiler = "clang"):
     cc_feature_set(
         name = name + "_known_features",
         all_of = [
@@ -97,5 +96,5 @@ def cc_toolchain(name, tool_map):
             "//toolchain:runtimes_stage1": "//runtimes:none",
             "//conditions:default": "//runtimes:dynamic_runtime_lib",
         }),
-        compiler = "clang",
+        compiler = compiler,  # TODO: actually, I'm not sure `rules_cc` supports `clang-cl` yet, so I'm not sure what it would do (https://github.com/bazelbuild/rules_cc/pull/561)
     )

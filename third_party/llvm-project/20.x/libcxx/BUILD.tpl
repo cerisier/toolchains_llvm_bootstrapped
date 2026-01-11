@@ -1413,8 +1413,11 @@ cc_library(
         "@toolchains_llvm_bootstrapped//platforms/config:gnu": [
             "@glibc//:gnu_libc_headers",
         ],
-        "@platforms//os:windows": [
+        "@toolchains_llvm_bootstrapped//platforms/config:abi_gnu": [
             "@mingw//:mingw_headers",
+        ],
+        "@toolchains_llvm_bootstrapped//platforms/config:abi_msvc": [
+            # TODO: check if it is releavant to wire SDK headers and user-provided MSVC runtime headers here
         ],
         "@platforms//os:macos": [],
     }),
