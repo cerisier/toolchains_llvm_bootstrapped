@@ -1,12 +1,9 @@
-#include <cerrno>
-#include <cstring>
+#include <errno.h>
 #include <fcntl.h>
-#include <cstdio>
-#include <cstdlib>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
-
-#include <memory>
-#include <string>
 
 // Injected at build-time, see `expand_header_parser` in //toolchain/llvm:llvm.bzl .
 static const char kClangExecPath[] = "{CLANG_EXEC_PATH}";
@@ -47,9 +44,6 @@ int main(int argc, char **argv) {
   }
 
   TouchFile("PARSE_HEADER");
-
-  // Intentional failure to verify header parsing is executed.
-  Die("intentional failure in header_parser");
 
   argv[0] = const_cast<char *>(kClangExecPath);
   execv(kClangExecPath, argv);
