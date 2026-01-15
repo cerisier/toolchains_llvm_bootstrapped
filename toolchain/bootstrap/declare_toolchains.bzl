@@ -15,6 +15,8 @@ def declare_tool_map(exec_os, exec_cpu):
         ],
     )
 
+    # TODO(zbarsky): header parsing support
+
     COMMON_TOOLS = {
         "@rules_cc//cc/toolchains/actions:assembly_actions": prefix + "/clang",
         "@rules_cc//cc/toolchains/actions:c_compile": prefix + "/clang",

@@ -1,10 +1,9 @@
 load("@bazel_lib//lib:expand_template.bzl", "expand_template")
-load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc/toolchains:tool.bzl", "cc_tool")
 load("@rules_cc//cc/toolchains:tool_map.bzl", "cc_tool_map")
 load("@rules_cc//cc/toolchains:actions.bzl", "cc_action_type_set")
 load("//runtimes:module_map.bzl", "module_map", "include_path")
-load("//toolchain/runtimes:cc_runtime_binary.bzl", "cc_runtime_stage0_binary")
+load("//toolchain:exec_stage0_binary.bzl", "exec_stage0_binary")
 load("//:directory.bzl", "headers_directory")
 
 def declare_llvm_targets(*, suffix = ""):
@@ -22,27 +21,40 @@ def declare_llvm_targets(*, suffix = ""):
         template = "@toolchains_llvm_bootstrapped//tools/internal:header_parser.cc",
         out = "header_parser.cc",
         substitutions = {
-            "{CLANG_EXEC_PATH}": "$(execpath :clang++)",
+            "{CLANG_EXEC_PATH}": "$(execpath :bin/clang++)",
         },
         data = [
-            ":clang++",
+            ":bin/clang++",
         ],
     )
 
-    cc_runtime_stage0_binary(
-        name = "header_parser_binary",
+    exec_stage0_binary(
+        name = "header_parser",
         srcs = ["header_parser.cc"],
         data = [
-            ":clang++",
+            ":bin/clang++" + suffix
         ],
+        deps = select({
+            "@platforms//os:linux": [
+                "@toolchains_llvm_bootstrapped//runtimes/musl:musl_Scrt1",
+                "@toolchains_llvm_bootstrapped//runtimes/musl:musl_libc",
+                "@musl_libc//:musl_libc_headers",
+            ],
+            "//conditions:default": [],
+        }),
+    )
+
+    cc_tool(
+        name = "header_parser_tool",
+        src = ":header_parser",
     )
 
     native.alias(
-        name = "header_parser",
+        name = "maybe_header_parser",
         actual = select({
             "@toolchains_llvm_bootstrapped//toolchain:runtimes_none": ":clang++",
             "@toolchains_llvm_bootstrapped//toolchain:runtimes_stage1": ":clang++",
-            "@toolchains_llvm_bootstrapped//conditions:default": ":header_parser_binary",
+            "//conditions:default": ":header_parser_tool",
         }),
     )
 
@@ -65,7 +77,7 @@ def declare_llvm_targets(*, suffix = ""):
         "@rules_cc//cc/toolchains/actions:assembly_actions": ":clang",
         "@rules_cc//cc/toolchains/actions:c_compile": ":clang",
         ":cpp_compile_actions_without_header_parsing": ":clang++",
-        "@rules_cc//cc/toolchains/actions:cpp_header_parsing": ":header_parser",
+        "@rules_cc//cc/toolchains/actions:cpp_header_parsing": ":maybe_header_parser",
         "@rules_cc//cc/toolchains/actions:link_actions": ":lld",
         "@rules_cc//cc/toolchains/actions:objcopy_embed_data": ":llvm-objcopy",
         "@rules_cc//cc/toolchains/actions:strip": ":llvm-strip",
