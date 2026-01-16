@@ -30,6 +30,7 @@ string_flag(
         "prebuilt",
     ],
     build_setting_default = "prebuilt",
+    visibility = ["//visibility:public"],
 )
 
 config_setting(

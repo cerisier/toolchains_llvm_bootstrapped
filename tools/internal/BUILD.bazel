@@ -18,3 +18,26 @@ cc_binary(
     srcs = ["expanded_header_parser.cc"],
     visibility = ["//:__subpackages__"],
 )
+
+expand_template(
+    name = "expand_static_library_validator",
+    template = "static_library_validator.cc",
+    out = "expanded_static_library_validator.cc",
+    substitutions = {
+        "{CXXFILT_EXEC_PATH}": "$(execpath //tools:c++filt)",
+        "{NM_EXEC_PATH}": "$(execpath //tools:llvm-nm)",
+    } | select({
+        "@platforms//os:macos": {"{NM_EXTRA_ARGS}": "--no-weak"},
+        "//conditions:default": {}
+    }),
+    data = [
+        "//tools:c++filt",
+        "//tools:llvm-nn",
+    ],
+)
+
+cc_binary(
+    name = "static-library-validator",
+    srcs = ["static_library_validator.cc"],
+    visibility = ["//:__subpackages__"],
+)

@@ -20,6 +20,15 @@ def declare_llvm_targets(*, suffix = ""):
         data = ["//tools:clang++"],
     )
 
+    cc_tool(
+        name = "static_library_validator",
+        src = platform_extra_binary("bin/static-library-validator"),
+        data = [
+            "//tools:c++filt",
+            "//tools:llvm-nn",
+        ],
+    )
+
     COMMON_TOOLS = {
         "@rules_cc//cc/toolchains/actions:assembly_actions": ":clang",
         "@rules_cc//cc/toolchains/actions:c_compile": ":clang",
@@ -30,6 +39,8 @@ def declare_llvm_targets(*, suffix = ""):
         "@rules_cc//cc/toolchains/actions:link_actions": ":lld",
         "@rules_cc//cc/toolchains/actions:objcopy_embed_data": ":llvm-objcopy",
         "@rules_cc//cc/toolchains/actions:strip": ":llvm-strip",
+        # TODO(zbarsky): Enable afer we release prebuilts
+        #"@rules_cc//cc/toolchains/actions:validate_static_library": ":static_library_validator",
     }
 
     cc_tool_map(
