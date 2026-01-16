@@ -2,10 +2,10 @@
 #include <cctype>
 #include <errno.h>
 #include <fcntl.h>
+#include <sstream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -14,135 +14,96 @@
 #include <vector>
 
 // Injected at build-time.
+static const char kCxxfiltExecPath[] = "{CXXFILT_EXEC_PATH}";
 static const char kNmExecPath[] = "{NM_EXEC_PATH}";
 static const char kNmExtraArgs[] = "{NM_EXTRA_ARGS}";
-static const char kCxxfiltExecPath[] = "{CXXFILT_EXEC_PATH}";
 
 struct SymbolEntry {
   std::string symbol;
-  char type;
   std::string object;
-  std::string line;
+  char type;
 };
 
-static void PrintErrno(const char *context) {
-  fprintf(stderr, "static_library_validator: %s: %s\n", context,
-          strerror(errno));
+static void PrintErrno(const char *what) {
+  fprintf(stderr, "static_library_validator: %s: %s\n", what, strerror(errno));
 }
 
-static std::vector<std::string> SplitArgs(const std::string &args) {
-  std::vector<std::string> result;
-  std::string current;
-  for (char c : args) {
-    if (isspace(static_cast<unsigned char>(c))) {
-      if (!current.empty()) {
-        result.push_back(current);
-        current.clear();
-      }
-    } else {
-      current.push_back(c);
-    }
-  }
-  if (!current.empty()) {
-    result.push_back(current);
-  }
-  return result;
+static std::vector<std::string> SplitArgs(const char *raw) {
+  std::istringstream ss(raw ? raw : "");
+  std::vector<std::string> out;
+  std::string arg;
+  while (ss >> arg) out.push_back(arg);
+  return out;
 }
 
 static bool ShouldKeepType(char type) {
-  if (!std::isupper(static_cast<unsigned char>(type))) {
-    return false;
-  }
-  return type != 'U' && type != 'V' && type != 'W';
+  return std::isupper(static_cast<unsigned char>(type)) &&
+         type != 'U' && type != 'V' && type != 'W';
 }
 
-static bool RunCommand(const std::vector<std::string> &args,
-                       const std::string &input, std::string *output) {
-  int to_child[2];
-  int from_child[2];
-  if (pipe(to_child) != 0) {
+static bool ExecWithPipes(const std::vector<std::string> &argv,
+                          const std::string &stdin_data,
+                          std::string *stdout_data) {
+  int in_pipe[2], out_pipe[2];
+  if (pipe(in_pipe) != 0) return PrintErrno("pipe"), false;
+  if (pipe(out_pipe) != 0) {
     PrintErrno("pipe");
-    return false;
-  }
-  if (pipe(from_child) != 0) {
-    PrintErrno("pipe");
-    close(to_child[0]);
-    close(to_child[1]);
+    close(in_pipe[0]); close(in_pipe[1]);
     return false;
   }
 
   pid_t pid = fork();
   if (pid < 0) {
     PrintErrno("fork");
-    close(to_child[0]);
-    close(to_child[1]);
-    close(from_child[0]);
-    close(from_child[1]);
+    close(in_pipe[0]); close(in_pipe[1]);
+    close(out_pipe[0]); close(out_pipe[1]);
     return false;
   }
 
   if (pid == 0) {
-    // Child.
-    if (dup2(to_child[0], STDIN_FILENO) < 0 ||
-        dup2(from_child[1], STDOUT_FILENO) < 0) {
-      PrintErrno("dup2");
-      _exit(127);
-    }
-    close(to_child[0]);
-    close(to_child[1]);
-    close(from_child[0]);
-    close(from_child[1]);
-
-    std::vector<char *> argv;
-    argv.reserve(args.size() + 1);
-    for (const auto &arg : args) {
-      argv.push_back(const_cast<char *>(arg.c_str()));
-    }
-    argv.push_back(nullptr);
-    execv(argv[0], argv.data());
-    PrintErrno("execv");
+    dup2(in_pipe[0], STDIN_FILENO);
+    dup2(out_pipe[1], STDOUT_FILENO);
+    close(in_pipe[0]); close(in_pipe[1]);
+    close(out_pipe[0]); close(out_pipe[1]);
+    std::vector<char *> args;
+    args.reserve(argv.size() + 1);
+    for (const auto &s : argv) args.push_back(const_cast<char *>(s.c_str()));
+    args.push_back(nullptr);
+    execv(args[0], args.data());
     _exit(127);
   }
 
-  // Parent.
-  close(to_child[0]);
-  close(from_child[1]);
+  close(in_pipe[0]);
+  close(out_pipe[1]);
 
   ssize_t written = 0;
-  while (written < static_cast<ssize_t>(input.size())) {
-    ssize_t n = write(to_child[1], input.data() + written,
-                      input.size() - written);
+  while (written < static_cast<ssize_t>(stdin_data.size())) {
+    ssize_t n = write(in_pipe[1], stdin_data.data() + written,
+                      stdin_data.size() - written);
     if (n < 0) {
-      if (errno == EINTR) {
-        continue;
-      }
+      if (errno == EINTR) continue;
       PrintErrno("write");
-      close(to_child[1]);
-      close(from_child[0]);
+      close(in_pipe[1]); close(out_pipe[0]);
       return false;
     }
     written += n;
   }
-  close(to_child[1]);
+  close(in_pipe[1]);
 
-  output->clear();
-  char buffer[4096];
+  stdout_data->clear();
+  char buf[4096];
   while (true) {
-    ssize_t n = read(from_child[0], buffer, sizeof(buffer));
-    if (n == 0) {
-      break;
-    }
+    ssize_t n = read(out_pipe[0], buf, sizeof(buf));
+    if (n == 0) break;
     if (n < 0) {
-      if (errno == EINTR) {
-        continue;
-      }
+      if (errno == EINTR) continue;
       PrintErrno("read");
-      close(from_child[0]);
+      close(out_pipe[0]);
       return false;
     }
-    output->append(buffer, n);
+    stdout_data->append(buf, n);
   }
-  close(from_child[0]);
+  close(out_pipe[0]);
 
   int status = 0;
   if (waitpid(pid, &status, 0) < 0) {
@@ -150,81 +111,37 @@ static bool RunCommand(const std::vector<std::string> &args,
     return false;
   }
   if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
-    int exit_code = WIFEXITED(status) ? WEXITSTATUS(status) : -1;
     fprintf(stderr,
             "static_library_validator: command exited with status %d\n",
-            exit_code);
+            WIFEXITED(status) ? WEXITSTATUS(status) : -1);
     return false;
   }
   return true;
 }
 
 static void ParseNmLine(const std::string &line,
-                        std::vector<SymbolEntry> *entries) {
-  const size_t open = line.find('[');
-  if (open == std::string::npos) {
+                        std::vector<SymbolEntry> *out) {
+  size_t open = line.find('[');
+  size_t close = line.find(']', open == std::string::npos ? 0 : open + 1);
+  size_t sep = line.find("]: ", close == std::string::npos ? 0 : close);
+  if (open == std::string::npos || close == std::string::npos ||
+      sep == std::string::npos) {
     return;
   }
-  const size_t close = line.find(']', open + 1);
-  if (close == std::string::npos) {
-    return;
-  }
-  const size_t after = line.find("]: ", close);
-  if (after == std::string::npos) {
-    return;
-  }
-
   std::string object = line.substr(open + 1, close - open - 1);
-  std::string rest = line.substr(after + 3);
-
-  const size_t last_space = rest.rfind(' ');
-  if (last_space == std::string::npos || last_space == 0) {
-    return;
-  }
-  const size_t second_last_space = rest.rfind(' ', last_space - 1);
-  if (second_last_space == std::string::npos ||
-      second_last_space == 0) {
-    return;
-  }
-  const size_t third_last_space = rest.rfind(' ', second_last_space - 1);
-  if (third_last_space == std::string::npos) {
-    return;
-  }
-
-  const size_t type_len = second_last_space - third_last_space - 1;
-  if (type_len != 1) {
-    return;
-  }
-  const char type = rest[third_last_space + 1];
-  if (!ShouldKeepType(type)) {
-    return;
-  }
-
-  std::string symbol = rest.substr(0, third_last_space);
-  if (symbol.empty()) {
-    return;
-  }
-
-  SymbolEntry entry{symbol, type, object,
-                    object + ": " + std::string(1, type) + " " + symbol};
-  entries->push_back(std::move(entry));
+  std::istringstream rest(line.substr(sep + 3));
+  std::string symbol, type_str, dummy1, dummy2;
+  if (!(rest >> symbol >> type_str >> dummy1 >> dummy2)) return;
+  if (type_str.size() != 1) return;
+  char type = type_str[0];
+  if (!ShouldKeepType(type)) return;
+  out->push_back({symbol, object, type});
 }
 
-static bool TouchFile(const char *path) {
+static bool Touch(const char *path) {
   int fd = open(path, O_WRONLY | O_CREAT, 0666);
-  if (fd < 0) {
-    PrintErrno("open");
-    return false;
-  }
-  if (futimens(fd, nullptr) != 0) {
-    PrintErrno("futimens");
-    close(fd);
-    return false;
-  }
-  if (close(fd) != 0) {
-    PrintErrno("close");
-    return false;
-  }
+  if (fd < 0) return PrintErrno("open"), false;
+  if (close(fd) != 0) return PrintErrno("close"), false;
   return true;
 }
 
@@ -235,75 +152,52 @@ int main(int argc, char **argv) {
     return 2;
   }
 
-  const char *library_path = argv[1];
-  const char *stamp_path = argv[2];
-
   std::vector<std::string> nm_args = {kNmExecPath, "-A", "-g", "-P"};
-  std::vector<std::string> extra_args = SplitArgs(kNmExtraArgs);
-  nm_args.insert(nm_args.end(), extra_args.begin(), extra_args.end());
-  nm_args.push_back(library_path);
+  auto extra = SplitArgs(kNmExtraArgs);
+  nm_args.insert(nm_args.end(), extra.begin(), extra.end());
+  nm_args.push_back(argv[1]);
 
   std::string nm_output;
-  if (!RunCommand(nm_args, "", &nm_output)) {
-    return 2;
-  }
+  if (!ExecWithPipes(nm_args, "", &nm_output)) return 2;
 
   std::vector<SymbolEntry> entries;
-  size_t start = 0;
-  while (start < nm_output.size()) {
-    size_t end = nm_output.find('\n', start);
-    if (end == std::string::npos) {
-      end = nm_output.size();
-    }
-    ParseNmLine(nm_output.substr(start, end - start), &entries);
-    start = end + 1;
+  size_t pos = 0;
+  while (pos <= nm_output.size()) {
+    size_t end = nm_output.find('\n', pos);
+    if (end == std::string::npos) end = nm_output.size();
+    ParseNmLine(nm_output.substr(pos, end - pos), &entries);
+    pos = end + 1;
   }
 
   std::sort(entries.begin(), entries.end(),
             [](const SymbolEntry &a, const SymbolEntry &b) {
-              if (a.symbol != b.symbol) {
-                return a.symbol < b.symbol;
-              }
-              if (a.object != b.object) {
-                return a.object < b.object;
-              }
-              return a.type < b.type;
+              return a.symbol < b.symbol;
             });
 
-  std::vector<std::string> duplicates;
+  std::vector<std::string> dup_lines;
   for (size_t i = 0; i < entries.size();) {
     size_t j = i + 1;
-    while (j < entries.size() && entries[j].symbol == entries[i].symbol) {
-      ++j;
-    }
+    while (j < entries.size() && entries[j].symbol == entries[i].symbol) ++j;
     if (j - i >= 2) {
       for (size_t k = i; k < j; ++k) {
-        duplicates.push_back(entries[k].line);
+        dup_lines.push_back(entries[k].object + ": " +
+                            std::string(1, entries[k].type) + " " +
+                            entries[k].symbol);
       }
     }
     i = j;
   }
 
-  if (duplicates.empty()) {
-    if (!TouchFile(stamp_path)) {
-      return 2;
-    }
-    return 0;
-  }
+  if (dup_lines.empty()) return Touch(argv[2]) ? 0 : 2;
 
-  std::string duplicate_block;
-  for (const auto &line : duplicates) {
-    duplicate_block.append(line);
-    duplicate_block.push_back('\n');
-  }
+  std::string dup_block;
+  for (const auto &l : dup_lines) dup_block.append(l).push_back('\n');
 
-  std::vector<std::string> cxxfilt_args = {kCxxfiltExecPath};
   std::string demangled;
-  if (!RunCommand(cxxfilt_args, duplicate_block, &demangled)) {
-    return 2;
-  }
+  std::vector<std::string> filt_args = {kCxxfiltExecPath};
+  if (!ExecWithPipes(filt_args, dup_block, &demangled)) return 2;
 
-  fprintf(stderr, "Duplicate symbols found in %s:\n", library_path);
+  fprintf(stderr, "Duplicate symbols found in %s:\n", argv[1]);
   fwrite(demangled.data(), 1, demangled.size(), stderr);
   return 1;
 }
