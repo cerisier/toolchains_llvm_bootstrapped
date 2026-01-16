@@ -48,7 +48,7 @@ _exec_test = rule(
     attrs = {
         "inner": attr.label(
             executable = True,
-            cfg = "exec",
+            cfg = config.exec("test"),
             mandatory = True,
         ),
         "data": attr.label_list(
