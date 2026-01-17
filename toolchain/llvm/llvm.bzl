@@ -1,4 +1,5 @@
 load("@bazel_lib//lib:expand_template.bzl", "expand_template")
+load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
 load("@rules_cc//cc/toolchains:tool.bzl", "cc_tool")
 load("@rules_cc//cc/toolchains:tool_map.bzl", "cc_tool_map")
 load("@rules_cc//cc/toolchains:actions.bzl", "cc_action_type_set")
@@ -15,6 +16,60 @@ def declare_llvm_targets(*, suffix = ""):
 
     # Convenient exports
     native.exports_files(native.glob(["bin/*"]))
+
+    copy_file(
+        name = "copy_cxxfilt",
+        src = "@llvm-project//llvm:llvm-cxxfilt",
+        out = "bin/c++filt",
+    )
+
+    expand_template(
+        name = "expand_static_library_validator",
+        template = "@toolchains_llvm_bootstrapped//tools/internal:static_library_validator.cc",
+        out = "static_library_validator.cc",
+        substitutions = {
+            "{CXXFILT_EXEC_PATH}": "$(execpath :bin/c++filt)",
+            "{NM_EXEC_PATH}": "$(execpath :bin/llvm-nm)",
+        } | select({
+            "@platforms//os:macos": {"{NM_EXTRA_ARGS}": "--no-weak"},
+            "//conditions:default": {}
+        }),
+        data = [
+            ":bin/c++filt",
+            ":bin/llvm-nm",
+        ],
+    )
+
+    exec_stage0_binary(
+        name = "static_library_validator",
+        srcs = ["static_library_validator.cc"],
+        data = [
+            ":bin/c++filt",
+            ":bin/llvm-nm",
+        ],
+        deps = select({
+            "@platforms//os:linux": [
+                "@toolchains_llvm_bootstrapped//runtimes/musl:musl_Scrt1",
+                "@toolchains_llvm_bootstrapped//runtimes/musl:musl_libc",
+                "@musl_libc//:musl_libc_headers",
+            ],
+            "//conditions:default": [],
+        }),
+    )
+
+    cc_tool(
+        name = "static_library_validator_tool",
+        src = ":static_library_validator",
+    )
+
+    native.alias(
+        name = "maybe_static_library_validator",
+        actual = select({
+            "@toolchains_llvm_bootstrapped//toolchain:runtimes_none": ":clang++",
+            "@toolchains_llvm_bootstrapped//toolchain:runtimes_stage1": ":clang++",
+            "//conditions:default": ":static_library_validator_tool",
+        }),
+    )
 
     expand_template(
         name = "expand_header_parser",
@@ -58,7 +113,6 @@ def declare_llvm_targets(*, suffix = ""):
         }),
     )
 
-
     cc_action_type_set(
         name = "cpp_compile_actions_without_header_parsing",
         # See https://github.com/bazelbuild/rules_cc/blob/6dd2ef1fefbca004da449578c00d8ffb91a459ca/cc/toolchains/actions/BUILD#L224
@@ -81,6 +135,7 @@ def declare_llvm_targets(*, suffix = ""):
         "@rules_cc//cc/toolchains/actions:link_actions": ":lld",
         "@rules_cc//cc/toolchains/actions:objcopy_embed_data": ":llvm-objcopy",
         "@rules_cc//cc/toolchains/actions:strip": ":llvm-strip",
+        "@rules_cc//cc/toolchains/actions:validate_static_library": ":maybe_static_library_validator",
     }
 
     cc_tool_map(

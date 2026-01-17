@@ -1,12 +1,18 @@
 LLVM_VERSION = "21.1.8"
 
+_BINARY_TO_LABEL = {
+    "clang": "clang",
+    "lld": "lld",
+}
+
 def platform_llvm_binary(binary):
     return select({
-        "@toolchains_llvm_bootstrapped//platforms/config:macos_aarch64": "@llvm-toolchain-minimal-%s-darwin-arm64//:%s" % (LLVM_VERSION, binary),
-        "@toolchains_llvm_bootstrapped//platforms/config:linux_x86_64": "@llvm-toolchain-minimal-%s-linux-amd64//:%s" % (LLVM_VERSION, binary),
-        "@toolchains_llvm_bootstrapped//platforms/config:linux_aarch64": "@llvm-toolchain-minimal-%s-linux-arm64//:%s" % (LLVM_VERSION, binary),
-        "@toolchains_llvm_bootstrapped//platforms/config:windows_aarch64": "@llvm-toolchain-minimal-%s-windows-arm64//:%s.exe" % (LLVM_VERSION, binary),
-        "@toolchains_llvm_bootstrapped//platforms/config:windows_x86_64": "@llvm-toolchain-minimal-%s-windows-amd64//:%s.exe" % (LLVM_VERSION, binary),
+        "@toolchains_llvm_bootstrapped//platforms/config:macos_aarch64_prebuilt": "@llvm-toolchain-minimal-%s-darwin-arm64//:bin/%s" % (LLVM_VERSION, binary),
+        "@toolchains_llvm_bootstrapped//platforms/config:linux_x86_64_prebuilt": "@llvm-toolchain-minimal-%s-linux-amd64//:bin/%s" % (LLVM_VERSION, binary),
+        "@toolchains_llvm_bootstrapped//platforms/config:linux_aarch64_prebuilt": "@llvm-toolchain-minimal-%s-linux-arm64//:bin/%s" % (LLVM_VERSION, binary),
+        "@toolchains_llvm_bootstrapped//platforms/config:windows_aarch64_prebuilt": "@llvm-toolchain-minimal-%s-windows-arm64//:bin/%s.exe" % (LLVM_VERSION, binary),
+        "@toolchains_llvm_bootstrapped//platforms/config:windows_x86_64_prebuilt": "@llvm-toolchain-minimal-%s-windows-amd64//:bin/%s.exe" % (LLVM_VERSION, binary),
+        "@toolchains_llvm_bootstrapped//toolchain:bootstrapped_toolchain": "@llvm-project//%s" % _BINARY_TO_LABEL.get(binary, "llvm:" + binary),
     })
 
 def platform_extra_binary(binary):

@@ -6,7 +6,7 @@ package(default_visibility = ["//visibility:public"])
 [
     alias(
         name = tool,
-        actual = platform_llvm_binary("bin/" + tool),
+        actual = platform_llvm_binary(tool),
     )
     for tool in TOOLCHAIN_BINARIES
 ]

@@ -13,6 +13,18 @@ def declare_config_settings():
             visibility = ["//visibility:public"],
         )
 
+        native.config_setting(
+            name = "{}_{}_prebuilt".format(target_os, target_cpu),
+            constraint_values = [
+                "@platforms//cpu:" + target_cpu,
+                "@platforms//os:" + target_os,
+            ],
+            flag_values = {
+                "//toolchain:source": "prebuilt",
+            },
+            visibility = ["//visibility:public"],
+        )
+
     declare_config_settings_libc_aware()
 
 def declare_config_settings_libc_aware():
