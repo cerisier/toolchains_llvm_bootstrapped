@@ -32,7 +32,12 @@ def llvm_release(name, bin_suffix = ""):
         files = bin_files,
         symlinks = {
             "bin/" + binary + bin_suffix: "llvm" + bin_suffix
-            for binary in ["clang-{llvm_major}"] + TOOLCHAIN_BINARIES
+            for binary in ["clang-{llvm_major}"] + TOOLCHAIN_BINARIES + [
+                # TODO(zbarsky): Move to TOOLCHAIN_BINARIES after next release.
+                "c++filt",
+                "clang-scan-deps",
+                "llvm-cxxfilt",
+            ]
         } | {
             # TODO(zbarsky): Consider adding these?
             "bin/" + binary + bin_suffix: "empty"
