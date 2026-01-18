@@ -43,7 +43,7 @@ def declare_tool_map(exec_os, exec_cpu):
     bootstrap_binary(
         name = prefix + "/bin/clang",
         platform = prefix + "_platform",
-        actual = "@llvm-project//clang:clang.stripped",
+        actual = "//prebuilt/llvm:llvm.stripped",
     )
 
     bootstrap_directory(
@@ -88,25 +88,25 @@ def declare_tool_map(exec_os, exec_cpu):
     bootstrap_binary(
         name = prefix + "/bin/ld.lld",
         platform = prefix + "_platform",
-        actual = "@llvm-project//lld:lld.stripped",
+        actual = "@llvm-project//llvm:llvm.stripped",
     )
 
     bootstrap_binary(
         name = prefix + "/bin/ld64.lld",
         platform = prefix + "_platform",
-        actual = "@llvm-project//lld:lld.stripped",
+        actual = "@llvm-project//llvm:llvm.stripped",
     )
 
     bootstrap_binary(
         name = prefix + "/bin/lld",
         platform = prefix + "_platform",
-        actual = "@llvm-project//lld:lld.stripped",
+        actual = "@llvm-project//llvm:llvm.stripped",
     )
 
     bootstrap_binary(
         name = prefix + "/bin/wasm-ld",
         platform = prefix + "_platform",
-        actual = "@llvm-project//lld:lld.stripped",
+        actual = "@llvm-project//llvm:llvm.stripped",
     )
 
     cc_tool(
@@ -123,7 +123,7 @@ def declare_tool_map(exec_os, exec_cpu):
     bootstrap_binary(
         name = prefix + "/bin/llvm-ar",
         platform = prefix + "_platform",
-        actual = "@llvm-project//llvm:llvm-ar.stripped",
+        actual = "@llvm-project//llvm:llvm.stripped",
     )
 
     cc_tool(
@@ -134,7 +134,7 @@ def declare_tool_map(exec_os, exec_cpu):
     bootstrap_binary(
         name = prefix + "/bin/llvm-libtool-darwin",
         platform = prefix + "_platform",
-        actual = "@llvm-project//llvm:llvm-libtool-darwin.stripped",
+        actual = "@llvm-project//llvm:llvm.stripped",
     )
 
     cc_tool(
@@ -145,18 +145,18 @@ def declare_tool_map(exec_os, exec_cpu):
     bootstrap_binary(
         name = prefix + "/bin/llvm-objcopy",
         platform = prefix + "_platform",
-        actual = "@llvm-project//llvm:llvm-objcopy.stripped",
-    )
-
-    bootstrap_binary(
-        name = prefix + "/bin/llvm-strip",
-        platform = prefix + "_platform",
-        actual = "@llvm-project//llvm:llvm-objcopy.stripped",
+        actual = "@llvm-project//llvm:llvm.stripped",
     )
 
     cc_tool(
         name = prefix + "/llvm-objcopy",
         src = prefix + "/bin/llvm-objcopy",
+    )
+
+    bootstrap_binary(
+        name = prefix + "/bin/llvm-strip",
+        platform = prefix + "_platform",
+        actual = "@llvm-project//llvm:llvm.stripped",
     )
 
     cc_tool(

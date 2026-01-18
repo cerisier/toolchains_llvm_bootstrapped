@@ -2,6 +2,7 @@
 load("@tar.bzl", "tar", "mtree_spec", "mtree_mutate")
 load("@llvm-project//:vars.bzl", "LLVM_VERSION_MAJOR")
 load("//prebuilt:mtree.bzl", "mtree")
+load("//tools:defs.bzl", "TOOLCHAIN_BINARIES")
 
 def llvm_release(name, bin_suffix = ""):
     mtree_spec(
@@ -21,17 +22,7 @@ def llvm_release(name, bin_suffix = ""):
     )
 
     bin_files = {
-        "@llvm-project//clang:clang.stripped": "bin/clang" + bin_suffix,
-        "@llvm-project//lld:lld.stripped": "bin/lld" + bin_suffix,
-        "@llvm-project//llvm:llvm-ar.stripped": "bin/llvm-ar" + bin_suffix,
-        "@llvm-project//llvm:llvm-as.stripped": "bin/llvm-as" + bin_suffix,
-        "@llvm-project//llvm:llvm-libtool-darwin.stripped": "bin/llvm-libtool-darwin" + bin_suffix,
-        "@llvm-project//llvm:llvm-nm.stripped": "bin/llvm-nm" + bin_suffix,
-        "@llvm-project//llvm:llvm-objcopy.stripped": "bin/llvm-objcopy" + bin_suffix,
-        # "@llvm-project//llvm-cov:llvm-cov",
-        # "@llvm-project//llvm-dwp:llvm-dwp",
-        # "@llvm-project//llvm-objdump:llvm-objdump",
-        # "@llvm-project//llvm-profdata:llvm-profdata",
+        "@llvm-project//llvm:llvm.stripped": "bin/llvm" + bin_suffix,
         "@llvm-project//compiler-rt:asan_ignorelist": "lib/clang/{llvm_major}/share/asan_ignorelist.txt",
         "@llvm-project//compiler-rt:msan_ignorelist": "lib/clang/{llvm_major}/share/msan_ignorelist.txt",
     }
@@ -40,24 +31,17 @@ def llvm_release(name, bin_suffix = ""):
         name = name + "_bins_mtree",
         files = bin_files,
         symlinks = {
-            "bin/clang-{llvm_major}" + bin_suffix: "clang" + bin_suffix,
-            "bin/clang++" + bin_suffix: "clang" + bin_suffix,
-            "bin/clang-cl" + bin_suffix: "clang" + bin_suffix,
-            "bin/clang-cpp" + bin_suffix: "clang" + bin_suffix,
-            "bin/ld.lld" + bin_suffix: "lld" + bin_suffix,
-            "bin/ld64.lld" + bin_suffix: "lld" + bin_suffix,
-            "bin/lld-link" + bin_suffix: "lld" + bin_suffix,
-            "bin/wasm-ld" + bin_suffix: "lld" + bin_suffix,
-            "bin/llvm-dlltool" + bin_suffix: "llvm-ar" + bin_suffix,
-            "bin/llvm-ranlib" + bin_suffix: "llvm-ar"+ bin_suffix,
-            "bin/llvm-install-name-tool" + bin_suffix: "llvm-objcopy" + bin_suffix,
-            "bin/llvm-bitcode-strip" + bin_suffix: "llvm-objcopy" + bin_suffix,
-            "bin/llvm-strip" + bin_suffix: "llvm-objcopy" + bin_suffix,
+            "bin/" + binary + bin_suffix: "llvm" + bin_suffix
+            for binary in ["clang-{llvm_major}"] + TOOLCHAIN_BINARIES
+        } | {
             # TODO(zbarsky): Consider adding these?
-            "bin/clang-tidy" + bin_suffix: "empty",
-            "bin/clang-format" + bin_suffix: "empty",
-            "bin/clangd" + bin_suffix: "empty",
-            "bin/llvm-symbolizer" + bin_suffix: "empty",
+            "bin/" + binary + bin_suffix: "empty"
+            for binary in [
+                "clang-tidy",
+                "clang-format",
+                "clangd",
+                "llvm-symbolizer",
+            ]
         },
         format = {
             "llvm_major": LLVM_VERSION_MAJOR,
