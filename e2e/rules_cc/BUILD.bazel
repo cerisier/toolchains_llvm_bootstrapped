@@ -16,6 +16,15 @@ opt_binary(
     }),
 )
 
+opt_binary(
+    name = "optimize",
+    srcs = ["optimize.cc"],
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+)
+
 # dynamic linker + dynamic runtime libs
 cc_binary(
     name = "main_dynamic",

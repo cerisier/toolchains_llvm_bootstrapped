@@ -54,6 +54,10 @@ def cc_toolchain(name, tool_map, module_map = None):
             "@platforms//os:none": [],
         }) + [
             "@rules_cc//cc/toolchains/args/layering_check:module_maps",
+            # These are "enabled" but they only _actually_ get enabled when the underlying compilation mode is set.
+            # This lets us properly order them before user_compile_flags and user_link_flags below.
+            "//toolchain/features:opt",
+            "//toolchain/features:dbg",
             "//toolchain/features:archive_param_file",
             "//toolchain/features:parse_headers",
             "//toolchain/features/legacy:all_legacy_builtin_features",
