@@ -20,7 +20,6 @@ COMMON_EXCLUDES = [
     "usr/include/bank/**",
     "usr/include/cups/**",
     "usr/include/default_pager/**",
-    "usr/include/device/**",
     "usr/include/EndpointSecurity/**",
     "usr/include/libDER/**",
     "usr/include/libexslt/**",
