@@ -1,5 +1,6 @@
-#load run_binary
 load("@bazel_lib//lib:run_binary.bzl", "run_binary")
+load("@bazel_lib//lib:copy_file.bzl", "copy_file")
+load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
 load("//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
 load("//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
 load("//toolchain/runtimes:cc_runtime_shared_library.bzl", "cc_runtime_stage0_shared_library")
@@ -45,7 +46,9 @@ cc_runtime_stage0_shared_library(
     ],
     user_link_flags = [
         "-Wl,--version-script=$(location :gcc_s.version_script)",
+        "-Wl,-soname,libgcc_s.so.1",
     ],
+    shared_lib_name = "libgcc_s.so.1",
     additional_linker_inputs = [":gcc_s.version_script"],
     target_compatible_with = [
         "@platforms//os:linux",
@@ -60,4 +63,32 @@ cc_runtime_stage0_shared_library(
     target_compatible_with = [
         "@platforms//os:linux",
     ],
+)
+
+copy_file(
+    name = "gcc.static",
+    src = ":gcc",
+    out = "libgcc.a",
+)
+
+copy_file(
+    name = "gcc_s.shared",
+    src = ":gcc_s",
+    out = "libgcc_s.so",
+)
+
+copy_file(
+    name = "gcc_eh.static",
+    src = ":gcc_eh",
+    out = "libgcc_eh.a",
+)
+
+copy_to_directory(
+    name = "libgcc_library_search_directory",
+    srcs = [
+        ":gcc.static",
+        ":gcc_eh.static",
+        ":gcc_s.shared",
+    ],
+    visibility = ["//visibility:public"],
 )
