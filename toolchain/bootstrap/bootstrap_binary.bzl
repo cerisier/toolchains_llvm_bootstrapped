@@ -13,7 +13,14 @@ def _bootstrap_transition_impl(settings, attr):
 
         # Some flags to make LLVM build sanely.
         "@llvm_zlib//:llvm_enable_zlib": False,
-        "@llvm-project//llvm:driver-tools": "clang,lld,llvm-ar,llvm-libtool-darwin,llvm-nm,llvm-objcopy",
+        "@llvm-project//llvm:driver-tools": [
+            "clang",
+            "lld",
+            "llvm-ar",
+            "llvm-libtool-darwin",
+            "llvm-nm",
+            "llvm-objcopy",
+        ],
     }
 
 bootstrap_transition = transition(

@@ -43,7 +43,7 @@ def declare_tool_map(exec_os, exec_cpu):
     bootstrap_binary(
         name = prefix + "/bin/clang",
         platform = prefix + "_platform",
-        actual = "//prebuilt/llvm:llvm.stripped",
+        actual = "@llvm-project//llvm:llvm.stripped",
     )
 
     bootstrap_directory(
@@ -70,7 +70,7 @@ def declare_tool_map(exec_os, exec_cpu):
     bootstrap_binary(
         name = prefix + "/bin/clang++",
         platform = prefix + "_platform",
-        actual = "@llvm-project//clang:clang.stripped",
+        actual = "@llvm-project//llvm:llvm.stripped",
         # Copy instead of symlink so clang's InstalledDir matches the packaged tree.
         # This is crucial for properly locating the various linkers, since we don't use `-ld-path`.
         symlink = False,
