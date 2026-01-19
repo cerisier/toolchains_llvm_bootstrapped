@@ -1,3 +1,4 @@
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_library.bzl", "cc_runtime_stage0_library")
 load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
 load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_stage0_object.bzl", "cc_stage0_object")
