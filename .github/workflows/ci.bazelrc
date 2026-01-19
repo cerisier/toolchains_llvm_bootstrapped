@@ -12,6 +12,8 @@ common --config remote
 common --repository_cache=~/.cache/bazel-repo
 common --repo_contents_cache=~/.cache/bazel-repo/contents
 
+startup --experimental_remote_repo_contents_cache
+
 # docs: https://bazel.build/reference/command-line-reference#flag--remote_download_outputs
 common --remote_download_outputs=minimal
 
