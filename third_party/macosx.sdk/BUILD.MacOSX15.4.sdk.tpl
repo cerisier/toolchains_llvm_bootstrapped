@@ -21,7 +21,8 @@ COMMON_EXCLUDES = [
     "usr/include/cups/**",
     "usr/include/default_pager/**",
     "usr/include/EndpointSecurity/**",
-    "usr/include/libDER/**",
+    # "usr/include/device/**", - Used by IOKit.framework
+    # "usr/include/libDER/**", - Used by Security.framework
     "usr/include/libexslt/**",
     "usr/include/libxslt/**",
     "usr/include/net-snmp/**",
