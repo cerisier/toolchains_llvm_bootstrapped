@@ -37,9 +37,10 @@ def _filter_builtin_sources_impl(ctx):
                     break
 
         if not excluded:
-            basename_to_file[f.basename] = f
+            basename = f.basename[:-(len(f.extension) + 1)]
+            basename_to_file[basename] = f
 
-    # Only keep the last occurrence for each basename
+    # Only keep the last occurrence for each basename (without extension)
     unique_files = list(basename_to_file.values())
 
     return [
