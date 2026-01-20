@@ -111,11 +111,9 @@ cc_args_list(
             "//toolchain/args/macos:default_libs",
         ],
         "@platforms//os:linux": [
-            "//toolchain/args:default_libs",
             "//toolchain/args/linux:default_libs",
         ],
         "@platforms//os:windows": [
-            "//toolchain/args:default_libs",
             "//toolchain/args/windows:default_libs",
         ],
         "//conditions:default": [],
@@ -145,11 +143,21 @@ cc_args_list(
 )
 
 cc_args_list(
-    name = "hermetic_link_flags",
+    name = "stdlib",
     args = select({
         "@platforms//os:macos": [],
         "//conditions:default": [
-            "//toolchain/args:hermetic_link_flags",
+            "//toolchain/args:stdlib",
+        ],
+    }),
+)
+
+cc_args_list(
+    name = "unwindlib",
+    args = select({
+        "@platforms//os:macos": [],
+        "//conditions:default": [
+            "//toolchain/args:unwindlib",
         ],
     }),
 )
@@ -219,10 +227,8 @@ cc_args_list(
         "//toolchain/args:no_absolute_paths_for_builtins",
         "//toolchain/args:deterministic_compile_flags",
         "//toolchain/args:module_map",
-
         ":sysroot_flags",
         ":hermetic_compile_flags",
-        ":hermetic_link_flags",
 
         # TODO(cerisier): Explode this into specific args instead
         ":platform_specific_args",
@@ -233,6 +239,8 @@ cc_args_list(
         # Common default link flags.
         "//toolchain/args:force_linker_flags",
         "//toolchain/args:rtlib",
+        ":stdlib",
+        ":unwindlib",
         ":resource_dir",
         ":default_link_flags",
         # Needs to stay out of resource_dir since clang does not always search for crtstuff for all targets.

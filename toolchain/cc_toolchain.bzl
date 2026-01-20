@@ -43,12 +43,10 @@ def cc_toolchain(name, tool_map, module_map = None):
         name = name + "_enabled_features",
         all_of = select({
             "@platforms//os:linux": [
-                "//toolchain/features:static_link_cpp_runtimes",
                 "//toolchain/features/runtime_library_search_directories:feature",
             ],
             "@platforms//os:macos": [],
             "@platforms//os:windows": [
-                "//toolchain/features:static_link_cpp_runtimes",
                 "//toolchain/features/runtime_library_search_directories:feature",
             ],
             "@platforms//os:none": [],
@@ -104,15 +102,5 @@ def cc_toolchain(name, tool_map, module_map = None):
         }),
         tool_map = tool_map,
         module_map = module_map,
-        static_runtime_lib = select({
-            "//toolchain:runtimes_none": "//runtimes:none",
-            "//toolchain:runtimes_stage1": "//runtimes:none",
-            "//conditions:default": "//runtimes:static_runtime_lib",
-        }),
-        dynamic_runtime_lib = select({
-            "//toolchain:runtimes_none": "//runtimes:none",
-            "//toolchain:runtimes_stage1": "//runtimes:none",
-            "//conditions:default": "//runtimes:dynamic_runtime_lib",
-        }),
         compiler = "clang",
     )

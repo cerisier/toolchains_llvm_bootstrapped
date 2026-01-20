@@ -151,6 +151,7 @@ cc_library(
         ],
         "@platforms//os:macos": [],
     }),
+    visibility = ["@libcxx//:__subpackages__"],
 )
 
 cc_runtime_stage0_static_library(

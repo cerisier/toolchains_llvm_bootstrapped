@@ -40,38 +40,6 @@ filegroup(
     visibility = ["//toolchain:__subpackages__"],
 )
 
-filegroup(
-    name = "static_runtime_lib",
-    srcs = select({
-        "@platforms//os:linux": [
-            "@libcxx//:libcxx.static",
-            "@libcxxabi//:libcxxabi.static",
-            "@libunwind//:libunwind.static",
-        ],
-        "@platforms//os:windows": [
-            "@libcxx//:libcxx.static",
-            "@libcxxabi//:libcxxabi.static",
-            "@libunwind//:libunwind.static",
-        ],
-        "//conditions:default": [],
-    }),
-    visibility = ["//toolchain:__subpackages__"],
-)
-
-filegroup(
-    name = "dynamic_runtime_lib",
-    srcs = select({
-        "@platforms//os:linux": [
-            "@libcxx//:libcxx.shared",
-            "@libcxxabi//:libcxxabi.shared",
-            "@libunwind//:libunwind.shared",
-        ],
-        # TODO(zbarsky): windows?
-        "//conditions:default": [],
-    }),
-    visibility = ["//toolchain:__subpackages__"],
-)
-
 cc_library(
     name = "empty",
     srcs = ["empty.c"],
