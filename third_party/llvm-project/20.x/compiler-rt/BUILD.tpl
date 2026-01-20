@@ -73,8 +73,7 @@ BUILTINS_GENERIC_SRCS = [
     "lib/builtins/floatunsisf.c",
     "lib/builtins/floatuntidf.c",
     "lib/builtins/floatuntisf.c",
-    # Generatedby :generic_fp_mode.c
-    "lib/builtins/generic_fp_mode.c",
+    "lib/builtins/fp_mode.c",
     "lib/builtins/int_util.c",
     "lib/builtins/lshrdi3.c",
     "lib/builtins/lshrti3.c",
@@ -177,14 +176,6 @@ BUILTINS_GENERIC_TF_SRCS = [
     "lib/builtins/trunctfhf2.c",
     "lib/builtins/trunctfsf2.c",
 ]
-
-# Avoid duplicate filename warning because of arch specific fp_mode.c
-copy_file(
-    name = "generic_fpmode.c",
-    src = "lib/builtins/fp_mode.c",
-    out = "lib/builtins/generic_fp_mode.c",
-    allow_symlink = True,
-)
 
 # buildifier: disable=constant-glob
 filegroup(
