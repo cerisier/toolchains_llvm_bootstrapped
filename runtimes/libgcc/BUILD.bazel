@@ -22,9 +22,6 @@ run_binary(
         "-o",
         "$(location gcc_s.ver)",
     ],
-    target_compatible_with = [
-        "@platforms//os:linux",
-    ],
     visibility = ["//visibility:public"],
 )
 
@@ -32,9 +29,6 @@ cc_runtime_stage0_static_library(
     name = "gcc_eh",
     deps = [
         "@libunwind//:libunwind",
-    ],
-    target_compatible_with = [
-        "@platforms//os:linux",
     ],
 )
 
@@ -50,18 +44,12 @@ cc_runtime_stage0_shared_library(
     ],
     shared_lib_name = "libgcc_s.so.1",
     additional_linker_inputs = [":gcc_s.version_script"],
-    target_compatible_with = [
-        "@platforms//os:linux",
-    ],
 )
 
 cc_runtime_stage0_static_library(
     name = "gcc",
     deps = [
         "@compiler-rt//:builtins",
-    ],
-    target_compatible_with = [
-        "@platforms//os:linux",
     ],
 )
 
