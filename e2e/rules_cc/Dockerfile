@@ -5,7 +5,7 @@ RUN adduser fakeuser
 USER fakeuser
 
 WORKDIR /repo/examples/rules_cc
-RUN echo "9.0.0rc2" > .bazelversion
+RUN echo "9.0.0" > .bazelversion
 #COPY .bazelversion .
 RUN touch WORKSPACE && bazel help
 RUN echo "bazel test //:all" > ~/.bash_history
