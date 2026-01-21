@@ -111,14 +111,12 @@ cc_args_list(
             "//toolchain/args/macos:default_libs",
         ],
         "@platforms//os:linux": [
-            "//toolchain/args:default_libs",
             "//toolchain/args/linux:default_libs",
         ],
         "@platforms//os:windows": [
-            "//toolchain/args:default_libs",
             "//toolchain/args/windows:default_libs",
         ],
-        "//conditions:default": [],
+        "@platforms//os:none": [],
     }),
 )
 
@@ -145,11 +143,60 @@ cc_args_list(
 )
 
 cc_args_list(
-    name = "hermetic_link_flags",
+    name = "stdlib",
     args = select({
         "@platforms//os:macos": [],
-        "//conditions:default": [
-            "//toolchain/args:hermetic_link_flags",
+        "@platforms//os:linux": [
+            "//toolchain/args:stdlib",
+        ],
+        "@platforms//os:windows": [
+            "//toolchain/args:stdlib",
+        ],
+        "@platforms//os:none": [],
+    }),
+)
+
+cc_args_list(
+    name = "gcc_install_dir",
+    args = select({
+        "@platforms//os:linux": [
+            "//toolchain/args:gcc_install_dir",
+        ],
+        "//conditions:default": [],
+    }),
+)
+
+cc_args_list(
+    name = "rtlib",
+    args = select({
+        "@platforms//os:macos": [
+            "//toolchain/args:rtlib_compiler_rt",
+        ],
+        "@platforms//os:linux": [
+            "//toolchain/args/linux:rtlib",
+        ],
+        "@platforms//os:windows": [
+            "//toolchain/args:rtlib_compiler_rt",
+        ],
+        "@platforms//os:none": [
+            "//toolchain/args:rtlib_compiler_rt",
+        ],
+    }),
+)
+
+
+cc_args_list(
+    name = "unwindlib",
+    args = select({
+        "@platforms//os:macos": [],
+        "@platforms//os:linux": [
+            "//toolchain/args/linux:unwindlib",
+        ],
+        "@platforms//os:windows": [
+            "//toolchain/args:unwindlib_libunwind",
+        ],
+        "@platforms//os:none": [
+            "//toolchain/args:unwindlib_none",
         ],
     }),
 )
@@ -219,10 +266,10 @@ cc_args_list(
         "//toolchain/args:no_absolute_paths_for_builtins",
         "//toolchain/args:deterministic_compile_flags",
         "//toolchain/args:module_map",
-
         ":sysroot_flags",
         ":hermetic_compile_flags",
-        ":hermetic_link_flags",
+
+        ":gcc_install_dir",
 
         # TODO(cerisier): Explode this into specific args instead
         ":platform_specific_args",
@@ -232,7 +279,9 @@ cc_args_list(
 
         # Common default link flags.
         "//toolchain/args:force_linker_flags",
-        "//toolchain/args:rtlib",
+        ":rtlib",
+        ":stdlib",
+        ":unwindlib",
         ":resource_dir",
         ":default_link_flags",
         # Needs to stay out of resource_dir since clang does not always search for crtstuff for all targets.

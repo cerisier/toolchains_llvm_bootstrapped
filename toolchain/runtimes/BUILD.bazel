@@ -1,4 +1,4 @@
-load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
+load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args", "cc_args_list")
 
 cc_args_list(
     name = "hermetic_link_flags",
@@ -55,7 +55,17 @@ cc_args_list(
     name = "rtlib",
     args = select({
         "//toolchain:runtimes_stage1": [
-            "//toolchain/args:rtlib",
+            "//toolchain:rtlib",
+        ],
+        "//toolchain:runtimes_none": [],
+    }),
+)
+
+cc_args_list(
+    name = "gcc_install_dir",
+    args = select({
+        "//toolchain:runtimes_stage1": [
+            "//toolchain:gcc_install_dir",
         ],
         "//toolchain:runtimes_none": [],
     }),
@@ -66,7 +76,7 @@ cc_args_list(
     name = "default_libs",
     args = select({
         "//toolchain:runtimes_stage1": [
-            "//toolchain/args/linux:default_libs",
+            "//toolchain:default_libs",
         ],
         "//toolchain:runtimes_none": [],
     }),
@@ -83,6 +93,9 @@ cc_args_list(
 
         "//toolchain:sysroot_flags",
         "//toolchain:hermetic_compile_flags",
+
+        "//toolchain/runtimes:gcc_install_dir",
+
         "//toolchain/runtimes:hermetic_link_flags",
 
         "//toolchain/runtimes:platform_specific_args",

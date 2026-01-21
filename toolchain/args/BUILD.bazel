@@ -1,3 +1,5 @@
+# Refer to //toolchains:README.md before adding flags here.
+
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 load("//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
@@ -261,43 +263,89 @@ cc_args(
 )
 
 cc_args(
-    # We provide the libc++ and libunwind ourselves through static_runtime_libs
-    # and dynamic_runtime_libs.
-    name = "hermetic_link_flags",
+    name = "gcc_install_dir",
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
     args = [
-        # will prevent clang to choose which libunwind to link against
-        "--unwindlib=none",
-        # will prevent clang to choose which libc++ to link against
-        "-nostdlib++",
+        # Should be --gcc-install-dir= but we'd need to white list that in golang/go.
+        # see https://github.com/golang/go/pull/76858
+        "-L{libgcc_library_search_path}",
+    ],
+    format = {
+        "libgcc_library_search_path": "//runtimes/libgcc:libgcc_library_search_directory",
+    },
+    data = [
+        "//runtimes/libgcc:libgcc_library_search_directory",
     ],
 )
 
 cc_args(
-    name = "default_libs",
+    name = "unwindlib_libgcc",
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
     args = [
-        "-L{libcxx_library_search_path}",
+        "--unwindlib=libgcc",
+    ],
+)
+
+cc_args(
+    name = "unwindlib_none",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = [
+        "--unwindlib=none",
+    ],
+)
+
+cc_args(
+    name = "unwindlib_libunwind",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = [
+        "--unwindlib=libunwind",
         "-L{libunwind_library_search_path}",
     ],
     data = [
-        "//runtimes/libcxx:libcxx_library_search_directory",
         "//runtimes/libunwind:libunwind_library_search_directory",
     ],
     format = {
-        "libcxx_library_search_path": "//runtimes/libcxx:libcxx_library_search_directory",
         "libunwind_library_search_path": "//runtimes/libunwind:libunwind_library_search_directory",
     },
 )
 
-# This makes the clang driver use compiler-rt compliant filenames
-# and paths when resolving compiler runtime libraries from the resource-dir.
 cc_args(
-    name = "rtlib",
+    name = "stdlib",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = [
+        "-stdlib=libc++",
+        "-L{libcxx_library_search_path}",
+    ],
+    data = [
+        "//runtimes/libcxx:libcxx_library_search_directory",
+    ],
+    format = {
+        "libcxx_library_search_path": "//runtimes/libcxx:libcxx_library_search_directory",
+    },
+)
+
+cc_args(
+    name = "rtlib_libgcc",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = [
+        "-rtlib=libgcc",
+    ],
+)
+
+cc_args(
+    name = "rtlib_compiler_rt",
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
