@@ -27,8 +27,12 @@ copy_to_directory(
     name = "libunwind_library_search_directory",
     srcs = [
         "libunwind.static",
-        "libunwind.shared",
-        "libunwind.shared.symlink",
-    ],
+    ] + select({
+        "@platforms//os:windows": [],
+        "//conditions:default": [
+            "libunwind.shared",
+            "libunwind.shared.symlink",
+        ],
+    }),
     visibility = ["//visibility:public"],
 )

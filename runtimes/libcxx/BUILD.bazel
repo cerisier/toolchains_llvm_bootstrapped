@@ -62,13 +62,17 @@ write_file(
 copy_to_directory(
     name = "libcxx_library_search_directory",
     srcs = [
-        "libcxx.shared",
         "libcxx.static",
-        "libcxx.version_script",
-        "libcxxabi.shared",
-        "libcxxabi.shared.symlink",
         "libcxxabi.static",
-    ],
+    ] + select({
+        "@platforms//os:windows": [],
+        "//conditions:default": [
+            "libcxx.version_script",
+            "libcxx.shared",
+            "libcxxabi.shared",
+            "libcxxabi.shared.symlink",
+        ],
+    }),
     visibility = ["//visibility:public"],
 )
 

@@ -76,7 +76,7 @@ cc_args_list(
     name = "default_libs",
     args = select({
         "//toolchain:runtimes_stage1": [
-            "//toolchain/args/linux:default_libs",
+            "//toolchain:default_libs",
         ],
         "//toolchain:runtimes_none": [],
     }),
