@@ -125,7 +125,7 @@ cc_args(
 )
 
 cc_args(
-    name = "force_linker_flags",
+    name = "fuse_ld",
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
@@ -261,49 +261,71 @@ cc_args(
 )
 
 cc_args(
-    # We provide the libc++ and libunwind ourselves through static_runtime_libs
-    # and dynamic_runtime_libs.
-    name = "hermetic_link_flags",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:link_actions",
-    ],
-    args = [
-        # will prevent clang to choose which libunwind to link against
-        "--unwindlib=none",
-        # will prevent clang to choose which libc++ to link against
-        "-nostdlib++",
-    ],
-)
-
-cc_args(
-    name = "default_libs",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:link_actions",
-    ],
-    args = [
-        "-L{libcxx_library_search_path}",
-        "-L{libunwind_library_search_path}",
-    ],
-    data = [
-        "//runtimes/libcxx:libcxx_library_search_directory",
-        "//runtimes/libunwind:libunwind_library_search_directory",
-    ],
-    format = {
-        "libcxx_library_search_path": "//runtimes/libcxx:libcxx_library_search_directory",
-        "libunwind_library_search_path": "//runtimes/libunwind:libunwind_library_search_directory",
-    },
-)
-
-# This makes the clang driver use compiler-rt compliant filenames
-# and paths when resolving compiler runtime libraries from the resource-dir.
-cc_args(
-    name = "rtlib",
+    name = "rtlib_compiler_rt",
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
     args = [
         "-rtlib=compiler-rt",
     ],
+)
+
+cc_args(
+    # We provide the libc++ and libunwind ourselves through static_runtime_libs
+    # and dynamic_runtime_libs.
+    name = "stdlib",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = [
+        # will prevent clang to choose which libc++ to link against
+        "-nostdlib++",
+    ],
+)
+
+cc_args(
+    name = "unwindlib_none",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = [
+        # will prevent clang to choose which libunwind to link against
+        "--unwindlib=none",
+    ],
+)
+
+# Those are stubs since we link against static_runtime_libs / dynamic_runtime_libs.
+cc_args(
+    name = "libcxx_library_search_paths",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = [
+        "-L{libcxx_library_search_path}",
+    ],
+    data = [
+        "//runtimes/libcxx:libcxx_library_search_directory",
+    ],
+    format = {
+        "libcxx_library_search_path": "//runtimes/libcxx:libcxx_library_search_directory",
+    },
+)
+
+# Those are stubs since we link against static_runtime_libs / dynamic_runtime_libs.
+cc_args(
+    name = "libunwind_library_search_paths",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = [
+        "-L{libunwind_library_search_path}",
+    ],
+    data = [
+        "//runtimes/libunwind:libunwind_library_search_directory",
+    ],
+    format = {
+        "libunwind_library_search_path": "//runtimes/libunwind:libunwind_library_search_directory",
+    },
 )
 
 cc_args(

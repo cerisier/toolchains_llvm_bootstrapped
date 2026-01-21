@@ -55,7 +55,7 @@ cc_args_list(
     name = "rtlib",
     args = select({
         "//toolchain:runtimes_stage1": [
-            "//toolchain/args:rtlib",
+            "//toolchain:rtlib",
         ],
         "//toolchain:runtimes_none": [],
     }),
@@ -66,7 +66,7 @@ cc_args_list(
     name = "default_libs",
     args = select({
         "//toolchain:runtimes_stage1": [
-            "//toolchain/args/linux:default_libs",
+            "//toolchain:default_libs",
         ],
         "//toolchain:runtimes_none": [],
     }),
@@ -83,18 +83,18 @@ cc_args_list(
 
         "//toolchain:sysroot_flags",
         "//toolchain:hermetic_compile_flags",
-        "//toolchain/runtimes:hermetic_link_flags",
+        ":hermetic_link_flags",
 
-        "//toolchain/runtimes:platform_specific_args",
+        ":platform_specific_args",
 
         # Optional sanitizers
         "//toolchain/runtimes/args:ubsan_flags",
 
         # Common default link flags.
-        "//toolchain/args:force_linker_flags",
-        "//toolchain/runtimes:rtlib",
-        "//toolchain/runtimes:resource_dir",
-        "//toolchain/runtimes:default_link_flags",
+        "//toolchain/args:fuse_ld",
+        ":rtlib",
+        ":resource_dir",
+        ":default_link_flags",
         # Needs to stay out of resource_dir since clang does not always search for crtstuff for all targets.
         ":default_startfiles",
         ":default_libs",
