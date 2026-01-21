@@ -116,7 +116,7 @@ cc_args_list(
         "@platforms//os:windows": [
             "//toolchain/args/windows:default_libs",
         ],
-        "//conditions:default": [],
+        "@platforms//os:none": [],
     }),
 )
 
@@ -146,9 +146,13 @@ cc_args_list(
     name = "stdlib",
     args = select({
         "@platforms//os:macos": [],
-        "//conditions:default": [
+        "@platforms//os:linux": [
             "//toolchain/args:stdlib",
         ],
+        "@platforms//os:windows": [
+            "//toolchain/args:stdlib",
+        ],
+        "@platforms//os:none": [],
     }),
 )
 
@@ -184,9 +188,7 @@ cc_args_list(
 cc_args_list(
     name = "unwindlib",
     args = select({
-        "@platforms//os:macos": [
-            "//toolchain/args:unwindlib_libunwind",
-        ],
+        "@platforms//os:macos": [],
         "@platforms//os:linux": [
             "//toolchain/args/linux:unwindlib",
         ],
