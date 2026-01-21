@@ -153,11 +153,48 @@ cc_args_list(
 )
 
 cc_args_list(
+    name = "gcc_install_dir",
+    args = select({
+        "@platforms//os:linux": [
+            "//toolchain/args:gcc_install_dir",
+        ],
+        "//conditions:default": [],
+    }),
+)
+
+cc_args_list(
+    name = "rtlib",
+    args = select({
+        "@platforms//os:macos": [
+            "//toolchain/args:rtlib_compiler_rt",
+        ],
+        "@platforms//os:linux": [
+            "//toolchain/args/linux:rtlib",
+        ],
+        "@platforms//os:windows": [
+            "//toolchain/args:rtlib_compiler_rt",
+        ],
+        "@platforms//os:none": [
+            "//toolchain/args:rtlib_compiler_rt",
+        ],
+    }),
+)
+
+
+cc_args_list(
     name = "unwindlib",
     args = select({
-        "@platforms//os:macos": [],
-        "//conditions:default": [
-            "//toolchain/args:unwindlib",
+        "@platforms//os:macos": [
+            "//toolchain/args:unwindlib_libunwind",
+        ],
+        "@platforms//os:linux": [
+            "//toolchain/args/linux:unwindlib",
+        ],
+        "@platforms//os:windows": [
+            "//toolchain/args:unwindlib_libunwind",
+        ],
+        "@platforms//os:none": [
+            "//toolchain/args:unwindlib_none",
         ],
     }),
 )
@@ -230,6 +267,8 @@ cc_args_list(
         ":sysroot_flags",
         ":hermetic_compile_flags",
 
+        ":gcc_install_dir",
+
         # TODO(cerisier): Explode this into specific args instead
         ":platform_specific_args",
 
@@ -238,7 +277,7 @@ cc_args_list(
 
         # Common default link flags.
         "//toolchain/args:force_linker_flags",
-        "//toolchain/args:rtlib",
+        ":rtlib",
         ":stdlib",
         ":unwindlib",
         ":resource_dir",
