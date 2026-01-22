@@ -1,8 +1,9 @@
+load("@rules_cc//cc/toolchains:actions.bzl", "cc_action_type_set")
+load("@rules_cc//cc/toolchains:tool.bzl", "cc_tool")
+load("@rules_cc//cc/toolchains:tool_map.bzl", "cc_tool_map")
 load("//platforms:common.bzl", "SUPPORTED_TARGETS")
 load("//toolchain:cc_toolchain.bzl", "cc_toolchain")
 load(":bootstrap_binary.bzl", "bootstrap_binary", "bootstrap_directory")
-load("@rules_cc//cc/toolchains:tool.bzl", "cc_tool")
-load("@rules_cc//cc/toolchains:tool_map.bzl", "cc_tool_map")
 
 def declare_tool_map(exec_os, exec_cpu):
     prefix = exec_os + "_" + exec_cpu
@@ -15,12 +16,11 @@ def declare_tool_map(exec_os, exec_cpu):
         ],
     )
 
-    # TODO(zbarsky): header parsing support
-
     COMMON_TOOLS = {
         "@rules_cc//cc/toolchains/actions:assembly_actions": prefix + "/clang",
         "@rules_cc//cc/toolchains/actions:c_compile": prefix + "/clang",
-        "@rules_cc//cc/toolchains/actions:cpp_compile_actions": prefix + "/clang++",
+        "//toolchain:cpp_compile_actions_without_header_parsing": prefix + "/clang++",
+        "@rules_cc//cc/toolchains/actions:cpp_header_parsing": prefix + "/header-parser",
         "@rules_cc//cc/toolchains/actions:link_actions": prefix + "/lld",
         "@rules_cc//cc/toolchains/actions:objcopy_embed_data": prefix + "/llvm-objcopy",
         "@rules_cc//cc/toolchains/actions:strip": prefix + "/llvm-strip",
@@ -84,6 +84,23 @@ def declare_tool_map(exec_os, exec_cpu):
         ],
         capabilities = ["@rules_cc//cc/toolchains/capabilities:supports_pic"],
     )
+
+    bootstrap_binary(
+        name = prefix + "/bin/header-parser",
+        platform = prefix + "_platform",
+        actual = "//tools/internal:header-parser",
+    )
+
+    cc_tool(
+        name = prefix + "/header-parser",
+        src = prefix + "/bin/header-parser",
+        data = [
+            prefix + "/clang_builtin_headers_include_directory",
+            # TODO(zbarsky): Not really correct for from-source build...
+            "//tools:clang++",
+        ],
+    )
+
 
     bootstrap_binary(
         name = prefix + "/bin/ld.lld",
