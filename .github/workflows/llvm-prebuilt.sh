@@ -40,6 +40,7 @@ bazel \
   --config=bootstrap \
   --config=prebuilt \
   --config=remote \
+  --remote_download_outputs=toplevel \
   //prebuilt/llvm:all
 
 rm -rf release
