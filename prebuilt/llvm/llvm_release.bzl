@@ -36,16 +36,18 @@ def llvm_release(name, bin_suffix = ""):
                 # TODO(zbarsky): Move to TOOLCHAIN_BINARIES after next release.
                 "c++filt",
                 "clang-scan-deps",
+                "dsymutil",
                 "llvm-cxxfilt",
+                "llvm-size",
+                "llvm-symbolizer",
             ]
         } | {
-            # TODO(zbarsky): Consider adding these?
+            # TODO(zbarsky): Consider adding these once LLVM multicall supports them.
             "bin/" + binary + bin_suffix: "empty"
             for binary in [
                 "clang-tidy",
                 "clang-format",
                 "clangd",
-                "llvm-symbolizer",
             ]
         },
         format = {

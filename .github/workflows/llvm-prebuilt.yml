@@ -1,0 +1,56 @@
+name: LLVM Prebuilt Release
+
+on:
+  push:
+    branches:
+      - "llvm-*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: llvm-prebuilt-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Mount bazel caches
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/bazel-repo
+          key: llvm-prebuilt-bazel-${{ runner.os }}-${{ github.ref_name }}
+          restore-keys: |
+            llvm-prebuilt-bazel-${{ runner.os }}
+
+      - name: Build and package prebuilts
+        id: build_and_package
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: bash .github/workflows/llvm-prebuilt.sh
+
+      - name: Upload workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: llvm-toolchain-minimal-${{ steps.build_and_package.outputs.version }}
+          path: release/*
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          target_commitish: ${{ github.sha }}
+          name: LLVM prebuilts ${{ steps.build_and_package.outputs.version }}
+          files: |
+            release/*.tar.zst
+            release/SHA256.txt
+          draft: false
+          prerelease: false
+          generate_release_notes: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

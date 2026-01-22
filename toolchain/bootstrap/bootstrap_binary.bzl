@@ -15,11 +15,14 @@ def _bootstrap_transition_impl(settings, attr):
         "@llvm_zlib//:llvm_enable_zlib": False,
         "@llvm-project//llvm:driver-tools": [
             "clang",
+            "dsymutil",
             "lld",
             "llvm-ar",
             "llvm-libtool-darwin",
             "llvm-nm",
             "llvm-objcopy",
+            "llvm-size",
+            "llvm-symbolizer",
         ],
     }
 

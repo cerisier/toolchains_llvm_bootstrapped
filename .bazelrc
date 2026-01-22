@@ -33,7 +33,7 @@ common:prebuilt  --copt=-fomit-frame-pointer
 common:prebuilt  --dynamic_mode=off
 common:prebuilt  --extra_toolchains=//toolchain:all
 # See https://github.com/llvm/llvm-project/blob/497a6d672263343f58eae5a5e697484f4899fbdc/utils/bazel/llvm-project-overlay/llvm/driver.bzl#L11
-common:prebuilt --@llvm-project//llvm:driver-tools=clang-scan-deps,clang,lld,llvm-ar,llvm-cxxfilt,llvm-libtool-darwin,llvm-nm,llvm-objcopy
+common:prebuilt --@llvm-project//llvm:driver-tools=clang-scan-deps,clang,dsymutil,lld,llvm-ar,llvm-cxxfilt,llvm-libtool-darwin,llvm-nm,llvm-objcopy,llvm-size,llvm-symbolizer
 
 common:rust    --@rules_cc//cc/toolchains/args/archiver_flags:use_libtool_on_macos=False
 common:rust    --@rules_rust//rust/settings:experimental_use_sh_toolchain_for_bootstrap_process_wrapper
