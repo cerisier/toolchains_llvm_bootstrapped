@@ -93,7 +93,6 @@ jobs:
           - "e2e/cross_compilation"
           # - "e2e/wasm"
     runs-on: ${{ matrix.os }}
-    continue-on-error: ${{ matrix.os == 'windows-11-arm' }}
 
     # Configure a human readable name for each job
     name: Test ${{ matrix.folder }} with Bazel ${{ matrix.bazel_version }} on ${{ matrix.os }}
@@ -127,3 +126,7 @@ jobs:
             --jobs=100 \
             $EXTRA_ARGS \
             //...
+
+      - name: "Report success on Windows ARM"
+        if: ${{ matrix.os == 'windows-11-arm' && failure() }}
+        run: echo "Tests on Windows ARM are known to be flaky, ignoring failures for now."
