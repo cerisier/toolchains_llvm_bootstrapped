@@ -93,7 +93,6 @@ jobs:
           - "e2e/cross_compilation"
           # - "e2e/wasm"
     runs-on: ${{ matrix.os }}
-    continue-on-error: ${{ matrix.os == 'windows-11-arm' }}
 
     # Configure a human readable name for each job
     name: Test ${{ matrix.folder }} with Bazel ${{ matrix.bazel_version }} on ${{ matrix.os }}
@@ -102,6 +101,8 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: bazel test //...
+        id: bazel_test
+        continue-on-error: ${{ matrix.os == 'windows-11-arm' }}
         env:
           USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -128,6 +129,6 @@ jobs:
             $EXTRA_ARGS \
             //...
 
-      - name: "Report success on Windows ARM"
-        if: ${{ matrix.os == 'windows-11-arm' && failure() }}
+      - name: "Skip failures on Windows ARM"
+        if: ${{ matrix.os == 'windows-11-arm' && steps.bazel_test.outcome == 'failure' }}
         run: echo "Tests on Windows ARM are known to be flaky, ignoring failures for now."
