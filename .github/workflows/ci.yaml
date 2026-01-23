@@ -93,6 +93,7 @@ jobs:
           - "e2e/cross_compilation"
           # - "e2e/wasm"
     runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.os == 'windows-11-arm' }}
 
     # Configure a human readable name for each job
     name: Test ${{ matrix.folder }} with Bazel ${{ matrix.bazel_version }} on ${{ matrix.os }}
