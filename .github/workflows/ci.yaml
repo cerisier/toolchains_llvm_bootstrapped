@@ -8,6 +8,10 @@ on:
     branches: [main]
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
+  workflow_call:
+    secrets:
+      BUILDBUDDY_API_KEY:
+        required: true
 concurrency:
   # Cancel previous actions from the same PR or branch except 'main' branch.
   # See https://docs.github.com/en/actions/using-jobs/using-concurrency and https://docs.github.com/en/actions/learn-github-actions/contexts for more info.

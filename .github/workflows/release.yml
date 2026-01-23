@@ -21,10 +21,15 @@ permissions:
   contents: write # Needed to create release
 
 jobs:
+  test:
+    uses: ./.github/workflows/ci.yaml
+    secrets:
+      BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
   release:
+    needs: test
     uses: bazel-contrib/.github/.github/workflows/release_ruleset.yaml@v7.2.2
     with:
-      bazel_test_command: bash tests/e2e.sh
+      bazel_test_command: true
       prerelease: false
       release_files: |
         toolchains_llvm_bootstrapped-*.tar.gz
