@@ -131,4 +131,7 @@ jobs:
 
       - name: "Skip failures on Windows ARM"
         if: ${{ matrix.os == 'windows-11-arm' && steps.bazel_test.outcome == 'failure' }}
-        run: echo "Tests on Windows ARM are known to be flaky, ignoring failures for now."
+        run: |
+          echo "::warning title=Windows ARM tests::Known flakiness; ignoring failures for now."
+          echo "### Windows ARM" >> "$GITHUB_STEP_SUMMARY"
+          echo "Tests failed but were ignored (best-effort)." >> "$GITHUB_STEP_SUMMARY"
