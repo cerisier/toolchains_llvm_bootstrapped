@@ -1,7 +1,7 @@
 ########################
 # Import bazelrc presets
-try-import %workspace%/internal_tools/preset.bazelrc
-try-import %workspace%/../../internal_tools/preset.bazelrc
+try-import %workspace%/tools/preset.bazelrc
+try-import %workspace%/../../tools/preset.bazelrc
 
 # Don’t want to push a rules author to update their deps if not needed.
 # https://bazel.build/reference/command-line-reference#flag--check_direct_dependencies
