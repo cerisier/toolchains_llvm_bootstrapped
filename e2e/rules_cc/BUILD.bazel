@@ -8,25 +8,6 @@ load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("@toolchains_llvm_bootstrapped//:defs.bzl", "exec_test")
 load(":defs.bzl", "opt_binary", "ubsan_cc_binary")
 
-cc_library(
-    name = "duplicate_symbol_a",
-    srcs = ["duplicate_symbol_a.cc"],
-)
-
-cc_library(
-    name = "duplicate_symbol_b",
-    srcs = ["duplicate_symbol_b.cc"],
-)
-
-cc_static_library(
-    name = "duplicate_symbol_lib",
-    deps = [
-        ":duplicate_symbol_a",
-        ":duplicate_symbol_b",
-    ],
-    tags = ["manual"],
-)
-
 opt_binary(
     name = "no_optimize",
     copts = ["-O0"],
@@ -171,12 +152,42 @@ cc_test(
     tags = ["no-remote"],
 )
 
+#######################################################
+
+cc_library(
+    name = "duplicate_symbol_a",
+    srcs = ["duplicate_symbol_a.cc"],
+)
+
+cc_library(
+    name = "duplicate_symbol_b",
+    srcs = ["duplicate_symbol_b.cc"],
+)
+
+cc_static_library(
+    name = "duplicate_symbol_lib",
+    deps = [
+        ":duplicate_symbol_a",
+        ":duplicate_symbol_b",
+    ],
+    tags = ["manual"],
+)
+
 sh_test(
     name = "duplicate_static_library_validator_test",
     srcs = ["duplicate_static_library_failure_test.sh"],
-    tags = ["no-remote"],
+    data = [
+        "BUILD.bazel",
+        "duplicate_symbol_a.cc",
+        "duplicate_symbol_b.cc",
+    ],
+    # TODO(zbarsky): Enable once we ship new prebuilts
+    tags = ["manual", "local"],
+    size = "large",
     target_compatible_with = select({
         "@platforms//os:windows": ["@platforms//:incompatible"],
         "//conditions:default": [],
     }),
 )
+
+#######################################################

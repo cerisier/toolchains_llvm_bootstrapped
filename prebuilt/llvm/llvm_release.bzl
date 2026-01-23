@@ -32,15 +32,7 @@ def llvm_release(name, bin_suffix = ""):
         files = bin_files,
         symlinks = {
             "bin/" + binary + bin_suffix: "llvm" + bin_suffix
-            for binary in ["clang-{llvm_major}"] + TOOLCHAIN_BINARIES + [
-                # TODO(zbarsky): Move to TOOLCHAIN_BINARIES after next release.
-                "c++filt",
-                "clang-scan-deps",
-                "dsymutil",
-                "llvm-cxxfilt",
-                "llvm-size",
-                "llvm-symbolizer",
-            ]
+            for binary in ["clang-{llvm_major}"] + TOOLCHAIN_BINARIES
         } | {
             # TODO(zbarsky): Consider adding these once LLVM multicall supports them.
             "bin/" + binary + bin_suffix: "empty"

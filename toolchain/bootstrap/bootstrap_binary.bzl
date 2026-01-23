@@ -80,6 +80,59 @@ bootstrap_binary = rule(
     toolchains = COPY_FILE_TOOLCHAINS,
 )
 
+# TODO(zbarsky): This should replace bootstrap_binary once rules_cc is fixed.
+def _exec_bootstrap_transition_impl(settings, attr):
+    return {
+        # we are compiling final programs, so we want all runtimes.
+        "//toolchain:runtime_stage": "complete",
+
+        # We want to build those binaries using the prebuilt compiler toolchain
+        "//toolchain:source": "prebuilt",
+
+        # Some flags to make LLVM build sanely.
+        "@llvm_zlib//:llvm_enable_zlib": False,
+        "@llvm-project//llvm:driver-tools": [
+            "clang",
+            "dsymutil",
+            "lld",
+            "llvm-ar",
+            "llvm-libtool-darwin",
+            "llvm-nm",
+            "llvm-objcopy",
+            "llvm-size",
+            "llvm-symbolizer",
+        ],
+    }
+
+exec_bootstrap_transition = transition(
+    implementation = _exec_bootstrap_transition_impl,
+    inputs = [],
+    outputs = [
+        "//toolchain:runtime_stage",
+        "//toolchain:source",
+        "@llvm_zlib//:llvm_enable_zlib",
+        "@llvm-project//llvm:driver-tools",
+    ],
+)
+
+# TODO(zbarsky): This should replace bootstrap_binary once rules_cc is fixed.
+exec_bootstrap_binary = rule(
+    implementation = _bootstrap_binary_impl,
+    executable = True,
+    attrs = {
+        "actual": attr.label(
+            cfg = exec_bootstrap_transition,
+            allow_single_file = True,
+            mandatory = True,
+        ),
+        "symlink": attr.bool(
+            default = True,
+            doc = "If set to False, will copy the tool instead of symlinking",
+        ),
+    },
+    toolchains = COPY_FILE_TOOLCHAINS,
+)
+
 def _bootstrap_directory_impl(ctx):
     copy_to_directory_bin = ctx.toolchains["@bazel_lib//lib:copy_to_directory_toolchain_type"].copy_to_directory_info.bin
 

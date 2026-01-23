@@ -1,24 +1,25 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-WORKSPACE_ROOT="${TEST_SRCDIR:?}/${TEST_WORKSPACE:?}"
+SCRIPT_PATH="$(python3 - <<'PY' "$0"
+import os, sys
+print(os.path.realpath(sys.argv[1]))
+PY
+)"
+# Prefer the module workspace directory (where this script lives).
+WORKSPACE_ROOT="${BUILD_WORKSPACE_DIRECTORY:-$(cd "$(dirname "${SCRIPT_PATH}")" && pwd -P)}"
 LOG="${TEST_TMPDIR:?}/duplicate_static_library.log"
 BAZEL_BIN="${BAZEL_BIN:-bazel}"
 
 cd "${WORKSPACE_ROOT}"
 
 if "${BAZEL_BIN}" \
-    --enable_bzlmod \
-    --experimental_cc_static_library \
-    --repo_env=BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1 \
-    --repo_env=BAZEL_NO_APPLE_CPP_TOOLCHAIN=1 \
+    --bazelrc=.bazelrc \
+    build \
     --remote_cache= \
-    --remote_executor= \
-    --noremote_accept_cached \
-    --noremote_upload_local_results \
     --bes_backend= \
-    --bes_results_url= \
-    build //e2e/rules_cc:duplicate_symbol_lib >"${LOG}" 2>&1; then
+    --config=bootstrap \
+    //:duplicate_symbol_lib 2>&1 | tee "${LOG}"; then
   echo "Expected duplicate_symbol_lib to fail duplicate symbol validation, but build succeeded."
   cat "${LOG}"
   exit 1
