@@ -7,11 +7,20 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-#include <sys/wait.h>
-#include <unistd.h>
-
 #include <string>
 #include <vector>
+
+#if defined(_WIN32)
+  #ifndef NOMINMAX
+  #define NOMINMAX
+  #endif
+  #include <windows.h>
+  #include <process.h>
+  #include <io.h>
+#else
+  #include <sys/wait.h>
+  #include <unistd.h>
+#endif
 
 // Injected at build-time.
 static const char kCxxfiltExecPath[] = "{CXXFILT_EXEC_PATH}";
@@ -40,6 +49,135 @@ static bool ShouldKeepType(char type) {
   return std::isupper(static_cast<unsigned char>(type)) &&
          type != 'U' && type != 'V' && type != 'W';
 }
+
+#if defined(_WIN32)
+
+// ---- Windows helpers ----
+
+static std::wstring Utf8ToWide(const std::string& s) {
+  if (s.empty()) return std::wstring();
+  int len = MultiByteToWideChar(CP_UTF8, 0, s.c_str(), (int)s.size(), nullptr, 0);
+  if (len <= 0) return std::wstring();
+  std::wstring w(len, L'\0');
+  MultiByteToWideChar(CP_UTF8, 0, s.c_str(), (int)s.size(), w.data(), len);
+  return w;
+}
+
+static bool ExecWithPipes(const std::vector<std::string> &argv,
+                          const std::string &stdin_data,
+                          std::string *stdout_data) {
+  int in_pipe[2], out_pipe[2];
+  if (_pipe(in_pipe, 4096, _O_BINARY | _O_NOINHERIT) != 0) {
+    PrintErrno("_pipe(stdin)");
+    return false;
+  }
+  if (_pipe(out_pipe, 4096, _O_BINARY | _O_NOINHERIT) != 0) {
+    PrintErrno("_pipe(stdout)");
+    _close(in_pipe[0]); _close(in_pipe[1]);
+    return false;
+  }
+
+  // Allow the child to inherit only the desired pipe ends.
+  SetHandleInformation((HANDLE)_get_osfhandle(in_pipe[0]),
+                       HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
+  SetHandleInformation((HANDLE)_get_osfhandle(out_pipe[1]),
+                       HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
+
+  int saved_in = _dup(_fileno(stdin));
+  int saved_out = _dup(_fileno(stdout));
+  if (saved_in < 0 || saved_out < 0) {
+    PrintErrno("_dup");
+    if (saved_in >= 0) _close(saved_in);
+    if (saved_out >= 0) _close(saved_out);
+    _close(in_pipe[0]); _close(in_pipe[1]);
+    _close(out_pipe[0]); _close(out_pipe[1]);
+    return false;
+  }
+
+  if (_dup2(in_pipe[0], _fileno(stdin)) != 0 ||
+      _dup2(out_pipe[1], _fileno(stdout)) != 0) {
+    PrintErrno("_dup2");
+    _dup2(saved_in, _fileno(stdin));
+    _dup2(saved_out, _fileno(stdout));
+    _close(saved_in); _close(saved_out);
+    _close(in_pipe[0]); _close(in_pipe[1]);
+    _close(out_pipe[0]); _close(out_pipe[1]);
+    return false;
+  }
+
+  std::vector<std::wstring> wargs;
+  std::vector<const wchar_t *> wargv;
+  wargs.reserve(argv.size());
+  wargv.reserve(argv.size() + 1);
+  for (const auto &a : argv) {
+    wargs.push_back(Utf8ToWide(a));
+    wargv.push_back(wargs.back().c_str());
+  }
+  wargv.push_back(nullptr);
+
+  intptr_t child = _wspawnv(_P_NOWAIT, wargv[0], wargv.data());
+
+  _dup2(saved_in, _fileno(stdin));
+  _dup2(saved_out, _fileno(stdout));
+  _close(saved_in); _close(saved_out);
+  _close(in_pipe[0]); _close(out_pipe[1]);
+
+  if (child == -1) {
+    PrintErrno("_wspawnv");
+    _close(in_pipe[1]); _close(out_pipe[0]);
+    return false;
+  }
+
+  // Write stdin_data to child's stdin.
+  size_t total_written = 0;
+  while (total_written < stdin_data.size()) {
+    int chunk = _write(in_pipe[1],
+                       stdin_data.data() + total_written,
+                       (unsigned int)(stdin_data.size() - total_written));
+    if (chunk < 0) {
+      PrintErrno("_write");
+      _close(in_pipe[1]); _close(out_pipe[0]);
+      int status = 0;
+      _cwait(&status, child, 0);
+      return false;
+    }
+    total_written += static_cast<size_t>(chunk);
+  }
+  _close(in_pipe[1]);
+
+  stdout_data->clear();
+  char buf[4096];
+  while (true) {
+    int n = _read(out_pipe[0], buf, sizeof(buf));
+    if (n == 0) break;
+    if (n < 0) {
+      PrintErrno("_read");
+      _close(out_pipe[0]);
+      int status = 0;
+      _cwait(&status, child, 0);
+      return false;
+    }
+    stdout_data->append(buf, buf + n);
+  }
+  _close(out_pipe[0]);
+
+  int status = 0;
+  if (_cwait(&status, child, 0) == -1) {
+    PrintErrno("_cwait");
+    return false;
+  }
+  if (status != 0) {
+    fprintf(stderr,
+            "static_library_validator: command exited with status %d\n",
+            status);
+    return false;
+  }
+  return true;
+}
+
+#else
+
+// ---- POSIX implementation ----
 
 static bool ExecWithPipes(const std::vector<std::string> &argv,
                           const std::string &stdin_data,
@@ -119,6 +257,8 @@ static bool ExecWithPipes(const std::vector<std::string> &argv,
   return true;
 }
 
+#endif
+
 static void ParseNmLine(const std::string &line,
                         std::vector<SymbolEntry> *out) {
   size_t open = line.find('[');
@@ -139,9 +279,9 @@ static void ParseNmLine(const std::string &line,
 }
 
 static bool Touch(const char *path) {
-  int fd = open(path, O_WRONLY | O_CREAT, 0666);
-  if (fd < 0) return PrintErrno("open"), false;
-  if (close(fd) != 0) return PrintErrno("close"), false;
+  FILE *f = fopen(path, "ab");
+  if (!f) return PrintErrno("fopen"), false;
+  if (fclose(f) != 0) return PrintErrno("fclose"), false;
   return true;
 }
 
@@ -161,12 +301,10 @@ int main(int argc, char **argv) {
   if (!ExecWithPipes(nm_args, "", &nm_output)) return 2;
 
   std::vector<SymbolEntry> entries;
-  size_t pos = 0;
-  while (pos <= nm_output.size()) {
-    size_t end = nm_output.find('\n', pos);
-    if (end == std::string::npos) end = nm_output.size();
-    ParseNmLine(nm_output.substr(pos, end - pos), &entries);
-    pos = end + 1;
+  std::istringstream nm_stream(nm_output);
+  std::string line;
+  while (std::getline(nm_stream, line)) {
+    ParseNmLine(line, &entries);
   }
 
   std::sort(entries.begin(), entries.end(),
