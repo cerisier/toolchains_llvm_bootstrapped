@@ -292,6 +292,7 @@ cc_args_list(
         ":default_startfiles",
         ":default_libs",
     ],
+    visibility = ["//visibility:public"],
 )
 
 cc_artifact_name_pattern(
@@ -299,6 +300,7 @@ cc_artifact_name_pattern(
     category = "@rules_cc//cc/toolchains/artifacts:executable",
     prefix = "",
     extension = ".exe",
+    visibility = ["//visibility:public"],
 )
 
 cc_action_type_set(

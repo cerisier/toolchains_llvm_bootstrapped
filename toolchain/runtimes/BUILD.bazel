@@ -99,5 +99,5 @@ cc_args_list(
         ":default_startfiles",
         ":default_libs",
     ],
-    visibility = ["//toolchain:__subpackages__"],
+    visibility = ["//visibility:public"],
 )

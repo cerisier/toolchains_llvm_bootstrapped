@@ -18,7 +18,7 @@ def declare_tool_map(exec_os, exec_cpu):
     COMMON_TOOLS = {
         "@rules_cc//cc/toolchains/actions:assembly_actions": prefix + "/clang",
         "@rules_cc//cc/toolchains/actions:c_compile": prefix + "/clang",
-        "//toolchain:cpp_compile_actions_without_header_parsing": prefix + "/clang++",
+        "@toolchains_llvm_bootstrapped//toolchain:cpp_compile_actions_without_header_parsing": prefix + "/clang++",
         "@rules_cc//cc/toolchains/actions:cpp_header_parsing": prefix + "/header-parser",
         "@rules_cc//cc/toolchains/actions:link_actions": prefix + "/lld",
         "@rules_cc//cc/toolchains/actions:objcopy_embed_data": prefix + "/llvm-objcopy",
@@ -88,7 +88,7 @@ def declare_tool_map(exec_os, exec_cpu):
     bootstrap_binary(
         name = prefix + "/bin/header-parser",
         platform = prefix + "_platform",
-        actual = "//tools/internal:header-parser",
+        actual = "@toolchains_llvm_bootstrapped//tools/internal:header-parser",
     )
 
     cc_tool(
@@ -96,14 +96,14 @@ def declare_tool_map(exec_os, exec_cpu):
         src = prefix + "/bin/header-parser",
         data = [
             prefix + "/clang_builtin_headers_include_directory",
-            "//tools:clang++",
+            "@toolchains_llvm_bootstrapped//tools:clang++",
         ],
     )
 
     bootstrap_binary(
         name = prefix + "/bin/static-library-validator",
         platform = prefix + "_platform",
-        actual = "//tools/internal:static-library-validator",
+        actual = "@toolchains_llvm_bootstrapped//tools/internal:static-library-validator",
     )
 
     cc_tool(
@@ -111,8 +111,8 @@ def declare_tool_map(exec_os, exec_cpu):
         src = prefix + "/bin/static-library-validator",
         data = [
             prefix + "/clang_builtin_headers_include_directory",
-            "//tools:c++filt",
-            "//tools:llvm-nm",
+            "@toolchains_llvm_bootstrapped//tools:c++filt",
+            "@toolchains_llvm_bootstrapped//tools:llvm-nm",
         ],
     )
 

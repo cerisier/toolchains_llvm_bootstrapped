@@ -37,7 +37,7 @@ config_setting(
 filegroup(
     name = "none",
     srcs = [],
-    visibility = ["//toolchain:__subpackages__"],
+    visibility = ["//visibility:public"],
 )
 
 filegroup(
@@ -55,7 +55,7 @@ filegroup(
         ],
         "//conditions:default": [],
     }),
-    visibility = ["//toolchain:__subpackages__"],
+    visibility = ["//visibility:public"],
 )
 
 filegroup(
@@ -69,7 +69,7 @@ filegroup(
         # TODO(zbarsky): windows?
         "//conditions:default": [],
     }),
-    visibility = ["//toolchain:__subpackages__"],
+    visibility = ["//visibility:public"],
 )
 
 cc_library(

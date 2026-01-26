@@ -165,5 +165,5 @@ def declare_llvm_targets(*, suffix = ""):
             "@platforms//os:windows": ":windows_target_headers",
             "@platforms//os:none": ":wasm_target_headers",
         }),
-        visibility = ["@toolchains_llvm_bootstrapped//toolchain:__subpackages__"],
+        visibility = ["//visibility:public"],
     )

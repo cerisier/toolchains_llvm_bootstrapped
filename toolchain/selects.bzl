@@ -7,7 +7,7 @@ def platform_llvm_binary(binary):
         "@toolchains_llvm_bootstrapped//platforms/config:linux_aarch64_prebuilt": "@llvm-toolchain-minimal-%s-linux-arm64//:bin/%s" % (LLVM_VERSION, binary),
         "@toolchains_llvm_bootstrapped//platforms/config:windows_aarch64_prebuilt": "@llvm-toolchain-minimal-%s-windows-arm64//:bin/%s.exe" % (LLVM_VERSION, binary),
         "@toolchains_llvm_bootstrapped//platforms/config:windows_x86_64_prebuilt": "@llvm-toolchain-minimal-%s-windows-amd64//:bin/%s.exe" % (LLVM_VERSION, binary),
-        "@toolchains_llvm_bootstrapped//toolchain:bootstrapped_toolchain": "//toolchain/bootstrap:" + binary,
+        "@toolchains_llvm_bootstrapped//toolchain:bootstrapped_toolchain": "@toolchains_llvm_bootstrapped//toolchain/bootstrap:" + binary,
     })
 
 def platform_extra_binary(binary):

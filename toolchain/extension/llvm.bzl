@@ -1,4 +1,4 @@
-load("//platforms:common.bzl", "SUPPORTED_EXECS")
+load("//platforms:common.bzl", "SUPPORTED_EXECS", "SUPPORTED_TARGETS")
 
 _BUILD_TEMPLATE = """\
 load("@toolchains_llvm_bootstrapped//toolchain:declare_toolchains.bzl", "declare_toolchains")
@@ -41,6 +41,9 @@ def _llvm_module_extension_impl(mctx):
 
     if not execs:
         execs = SUPPORTED_EXECS
+
+    if not targets:
+        targets = SUPPORTED_TARGETS
 
     _llvm_toolchains_repository(
         name = "llvm_toolchains",
