@@ -8,6 +8,94 @@ load("@toolchains_llvm_bootstrapped//third_party/llvm-project/20.x/compiler-rt:f
 load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
 
+cc_runtime_stage0_library(
+    name = "profile",
+    srcs = [
+        "lib/profile/GCDAProfiling.c",
+        "lib/profile/InstrProfiling.c",
+        "lib/profile/InstrProfilingBuffer.c",
+        "lib/profile/InstrProfilingFile.c",
+        "lib/profile/InstrProfilingInternal.c",
+        "lib/profile/InstrProfilingMerge.c",
+        "lib/profile/InstrProfilingMergeFile.c",
+        "lib/profile/InstrProfilingNameVar.c",
+        "lib/profile/InstrProfilingRuntime.cpp",
+        "lib/profile/InstrProfilingUtil.c",
+        "lib/profile/InstrProfilingValue.c",
+        "lib/profile/InstrProfilingVersionVar.c",
+        "lib/profile/InstrProfilingWriter.c",
+    ] + select({
+        "@platforms//os:windows": [
+            "lib/profile/InstrProfilingPlatformWindows.c",
+            "lib/profile/WindowsMMap.c",
+        ],
+        "@platforms//os:macos": [
+            "lib/profile/InstrProfilingPlatformDarwin.c",
+        ],
+        "@platforms//os:linux": [
+            "lib/profile/InstrProfilingPlatformLinux.c",
+        ],
+        "//conditions:default": [
+            "lib/profile/InstrProfilingPlatformOther.c",
+        ],
+    }),
+    hdrs = [
+        "include/profile/instr_prof_interface.h",
+        "include/profile/InstrProfData.inc",
+        "lib/profile/InstrProfiling.h",
+        "lib/profile/InstrProfilingInternal.h",
+        "lib/profile/InstrProfilingPort.h",
+        "lib/profile/InstrProfilingUtil.h",
+        "lib/profile/WindowsMMap.h",
+    ],
+    includes = [
+        "include",
+        "lib/profile",
+    ],
+    implementation_deps = select({
+        "@platforms//os:macos": [],
+        "@platforms//os:linux": [
+            # TODO(cerisier): Provide only a subset of linux UAPI headers for musl.
+            # https://github.com/cerisier/toolchains_llvm_bootstrapped/issues/146
+            "@kernel_headers//:kernel_headers",
+        ],
+        "@platforms//os:windows": [],
+        "@platforms//os:none": [],
+    }) + select({
+        "@toolchains_llvm_bootstrapped//platforms/config:musl": [
+            "@musl_libc//:musl_libc_headers",
+        ],
+        "@toolchains_llvm_bootstrapped//platforms/config:gnu": [
+            "@glibc//:gnu_libc_headers",
+        ],
+        "@platforms//os:macos": [
+            # on macOS we implicitly use SDK provided headers
+        ],
+        "@platforms//os:windows": [
+            "@mingw//:mingw_headers",
+        ],
+        "@platforms//os:none": [],
+    }),
+    local_defines = [
+        "COMPILER_RT_HAS_ATOMICS",
+    ] + select({
+        "@platforms//os:windows": [],
+        "//conditions:default": [
+            "COMPILER_RT_HAS_FCNTL_LCK",
+            "COMPILER_RT_HAS_FLOCK",
+            "COMPILER_RT_HAS_UNAME",
+        ],
+    }),
+)
+
+cc_runtime_stage0_static_library(
+    name = "clang_rt.profile.static",
+    deps = [
+        ":profile",
+    ],
+    visibility = ["//visibility:public"],
+)
+
 BUILTINS_GENERIC_SRCS = [
     "lib/builtins/absvdi2.c",
     "lib/builtins/absvsi2.c",

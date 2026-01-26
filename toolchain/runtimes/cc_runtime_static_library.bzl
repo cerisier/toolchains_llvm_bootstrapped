@@ -6,6 +6,9 @@ _builder = with_cfg(
     cc_static_library,
 )
 
+# Static library doesn't support these.
+_builder.extend("features", ["-fdo_instrument", "-cs_fdo_instrument"])
+
 # NOTE: runtime static libraries do not have >stage0 dependencies.
 # Those are only needed for shared libraries.
 cc_runtime_stage0_static_library, _cc_stage0_static_library_internal = configure_builder_for_runtimes(_builder.clone(), "stage0").build()
