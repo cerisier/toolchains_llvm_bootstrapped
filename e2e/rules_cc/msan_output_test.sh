@@ -17,9 +17,9 @@ trim() {
 }
 
 if [[ "$(trim "$OUTPUT")" == *"$(trim "$EXPECTED_OUTPUT")"* ]]; then
-  echo "✅ UBSan output contains expected string."
+  echo "✅ Msan output contains expected string."
 else
-  echo "❌ UBSan output does not contain expected string."
+  echo "❌ Msan output does not contain expected string."
   echo
   echo "---- Expected ----"
   printf '%s\n' "$EXPECTED_OUTPUT"

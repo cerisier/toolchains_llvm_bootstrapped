@@ -1,4 +1,3 @@
-load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_library.bzl", "cc_runtime_stage0_library")
 load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_shared_library.bzl", "cc_runtime_stage0_shared_library")
 load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
 load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_stage0_object.bzl", "cc_stage0_object")
@@ -312,12 +311,12 @@ builtins_aarch64_atomic_deps = [
     if pat == "cas" or size != 16
 ]
 
-cc_runtime_stage0_library(
+cc_library(
     name = "builtins_aarch64_atomic",
     deps = builtins_aarch64_atomic_deps,
 )
 
-cc_runtime_stage0_library(
+cc_library(
     name = "builtins",
     includes = ["lib/builtins"],
     srcs = select({
@@ -491,7 +490,7 @@ CRT_DEFINES = [
     "CRT_USE_FRAME_REGISTRY",
 ]
 
-cc_runtime_stage0_library(
+cc_library(
     name = "clang_rt.crtbegin",
     srcs = [
         "lib/builtins/crtbegin.c",
@@ -541,7 +540,7 @@ cc_runtime_stage0_static_library(
     visibility = ["//visibility:public"],
 )
 
-cc_runtime_stage0_library(
+cc_library(
     name = "clang_rt.crtend",
     srcs = [
         "lib/builtins/crtend.c",
@@ -602,7 +601,7 @@ cc_unsanitized_library(
 )
 
 # TODO(zbarsky): It would be nice to not have to jam everything into a single BUILD file
-cc_runtime_stage0_library(
+cc_library(
     name = "linux_libc_headers",
     deps = [
         # linux UAPI headers are needed even for musl here because sanitizers include <sys/vt.h>
@@ -620,7 +619,7 @@ cc_runtime_stage0_library(
     }),
 )
 
-cc_runtime_stage0_library(
+cc_library(
     name = "libcxx_headers",
     deps = select({
         "@platforms//os:macos": [],
@@ -898,7 +897,7 @@ filegroup(
     srcs = INTERCEPTION_IMPL_HEADERS,
 )
 
-cc_runtime_stage0_library(
+cc_library(
     name = "sanitizer_common",
     srcs = [
         ":sanitizer_sources",
@@ -919,48 +918,52 @@ cc_runtime_stage0_library(
         "lib/sanitizer_common/sanitizer_common_interceptors_vfork_x86_64.inc.S",
     ],
     includes = ["lib"],
+    alwayslink = True,
     implementation_deps = [
         ":libcxx_headers",
     ],
 )
 
-cc_runtime_stage0_library(
+cc_library(
     name = "sanitizer_common_libc",
     srcs = [
         ":sanitizer_libcdep_sources",
         ":sanitizer_impl_headers",
     ],
     includes = ["lib"],
+    alwayslink = True,
     implementation_deps = [
         ":libcxx_headers",
     ],
 )
 
-cc_runtime_stage0_library(
+cc_library(
     name = "sanitizer_common_coverage",
     srcs = [
         ":sanitizer_coverage_sources",
         ":sanitizer_impl_headers",
     ],
     includes = ["lib"],
+    alwayslink = True,
     implementation_deps = [
         ":libcxx_headers",
     ],
 )
 
-cc_runtime_stage0_library(
+cc_library(
     name = "sanitizer_common_symbolizer",
     srcs = [
         ":sanitizer_symbolizer_sources",
         ":sanitizer_impl_headers",
     ],
     includes = ["lib"],
+    alwayslink = True,
     implementation_deps = [
         ":libcxx_headers",
     ],
 )
 
-cc_runtime_stage0_library(
+cc_library(
     name = "sanitizer_common_symbolizer_internal",
     srcs = [
         "lib/sanitizer_common/symbolizer/sanitizer_symbolize.cpp",
@@ -970,6 +973,7 @@ cc_runtime_stage0_library(
         ":llvm_Symbolize",
     ],
     includes = ["lib"],
+    alwayslink = True,
     implementation_deps = [
         ":libcxx_headers",
     ],
@@ -1001,7 +1005,7 @@ filegroup(
     srcs = ["lib/interception/" + f for f in INTERCEPTION_HEADERS],
 )
 
-cc_runtime_stage0_library(
+cc_library(
     name = "interception",
     srcs = [
         ":interception_sources",
@@ -1009,6 +1013,7 @@ cc_runtime_stage0_library(
         ":sanitizer_impl_headers",
     ],
     includes = ["lib"],
+    alwayslink = True,
     implementation_deps = [
         ":libcxx_headers",
     ],
@@ -1074,7 +1079,37 @@ filegroup(
     srcs = ["lib/ubsan/" + f for f in UBSAN_HEADERS],
 )
 
-cc_runtime_stage0_library(
+# UBSan without standalone signal interceptors; used when linking into ASan to
+# avoid duplicate interceptor symbols.
+cc_library(
+    name = "ubsan_no_standalone",
+    srcs = [
+        ":ubsan_sources",
+        ":ubsan_cxxabi_sources",
+        ":ubsan_headers",
+    ],
+    textual_hdrs = [
+        "lib/ubsan/ubsan_checks.inc",
+        "lib/ubsan/ubsan_flags.inc",
+    ],
+    alwayslink = True,
+    includes = ["lib"],
+    deps = [
+        ":sanitizer_common",
+        ":sanitizer_common_libc",
+        ":sanitizer_common_coverage",
+        ":sanitizer_common_symbolizer",
+        ":sanitizer_common_symbolizer_internal",
+        ":interception",
+        # if COMPILER_RT_ENABLE_INTERNAL_SYMBOLIZER
+        ":llvm_Symbolize",
+    ],
+    implementation_deps = [
+        ":libcxx_headers",
+    ],
+)
+
+cc_library(
     name = "ubsan",
     srcs = [
         ":ubsan_sources",
@@ -1090,6 +1125,7 @@ cc_runtime_stage0_library(
     #    # User hook?
     #    "-Wl,-U,___ubsan_default_options",
     #],
+    alwayslink = True,
     includes = ["lib"],
     deps = [
         ":sanitizer_common",
@@ -1258,6 +1294,7 @@ cc_library(
         "lib/lsan/lsan_flags.inc",
     ],
     includes = ["lib"],
+    alwayslink = True,
     deps = [
         ":sanitizer_common",
         ":sanitizer_common_libc",
@@ -1423,11 +1460,20 @@ cc_library(
         ":asan_static_sources",
         ":asan_preinit_sources",
         ":asan_headers",
+        ":ubsan_headers",
     ],
     copts = [
         # The AddressSanitizer run-time should not be instrumented by AddressSanitizer.
         "-fno-sanitize=address",
-    ],
+    ] + select({
+        # Upstream adds these via SANITIZER_COMMON_CFLAGS for all supported platforms.
+        "@platforms//os:windows": [],
+        "//conditions:default": [
+            "-fPIC",
+            "-fvisibility=hidden",
+            "-fvisibility-inlines-hidden",
+        ],
+    }),
     textual_hdrs = [
         "lib/asan/asan_activation_flags.inc",
         "lib/asan/asan_flags.inc",
@@ -1442,7 +1488,6 @@ cc_library(
         ":sanitizer_common_symbolizer",
         ":sanitizer_common_symbolizer_internal",
         ":lsan_common",
-        ":ubsan",
     ],
     linkopts = [
         "-Wl,-undefined,dynamic_lookup",
@@ -1467,7 +1512,30 @@ cc_runtime_stage0_static_library(
 
 cc_runtime_stage0_shared_library(
     name = "asan.shared",
-    deps = [":asan"],
+    deps = [
+        ":asan",
+        ":llvm_Symbolize",
+        ":sanitizer_common",
+        ":sanitizer_common_libc",
+        ":sanitizer_common_coverage",
+        ":sanitizer_common_symbolizer",
+        ":sanitizer_common_symbolizer_internal",
+        ":lsan_common",
+        ":ubsan_no_standalone",
+    ],
+    additional_linker_inputs = select({
+        "@toolchains_llvm_bootstrapped//platforms/config:gnu": [
+            "@toolchains_llvm_bootstrapped//runtimes/glibc:glibc_library_search_directory",
+        ],
+        "//conditions:default": [],
+    }),
+    user_link_flags = select({
+        "@toolchains_llvm_bootstrapped//platforms/config:gnu": [
+            "-L$(location @toolchains_llvm_bootstrapped//runtimes/glibc:glibc_library_search_directory)",
+            "-lc",
+        ],
+        "//conditions:default": [],
+    }),
     # ___lsan_default_options
     # ___lsan_default_suppressions
     # ___lsan_is_turned_off

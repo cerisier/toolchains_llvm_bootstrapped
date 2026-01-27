@@ -32,6 +32,9 @@ cc_args(
             "-Wl,--gc-sections",
         ],
     }) + select({
+        "//toolchain/args:asan_enabled": [],
+        "//toolchain/args:msan_enabled": [],
+        "//toolchain/args:ubsan_enabled": [],
         "@platforms//cpu:wasm32": [],
         "@platforms//cpu:wasm64": [],
         "//conditions:default": ["-Wl,--icf=safe"],

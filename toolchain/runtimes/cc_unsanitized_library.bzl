@@ -1,4 +1,5 @@
 load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
+load("@rules_cc//cc/private/rules_impl:cc_shared_library.bzl", "GraphNodeInfo", "graph_structure_aspect")
 
 def _reset_sanitizers_impl(settings, attr):
     return {
@@ -45,6 +46,9 @@ def _cc_unsanitized_library_impl(ctx):
         dep[CcInfo],
     ]
 
+    if GraphNodeInfo in dep:
+        providers.append(dep[GraphNodeInfo])
+
     if OutputGroupInfo in dep:
         providers.append(dep[OutputGroupInfo])
 
@@ -59,6 +63,7 @@ cc_unsanitized_library = rule(
         "dep": attr.label(
             cfg = _reset_sanitizers,
             providers = [CcInfo],
+            aspects = [graph_structure_aspect],
         ),
     },
 )

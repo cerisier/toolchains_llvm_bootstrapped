@@ -147,12 +147,17 @@ exec_test(
 asan_cc_binary(
     name = "asan_fail",
     srcs = ["asan_fail.cc"],
-    linkopts = [
-        "-Wl,-undefined,dynamic_lookup",
-        "-Wl,-U,___lsan_default_options",
-        "-Wl,-U,___lsan_default_suppressions",
-        "-Wl,-U,___lsan_is_turned_off",
-    ],
+    linkopts = select({
+        "@platforms//os:macos": [
+            "-Wl,-undefined,dynamic_lookup",
+            "-Wl,-U,___lsan_default_options",
+            "-Wl,-U,___lsan_default_suppressions",
+            "-Wl,-U,___lsan_is_turned_off",
+        ],
+        "//conditions:default": [
+            "-Wl,--icf=none",
+        ],
+    }),
 )
 
 exec_test(
