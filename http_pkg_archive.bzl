@@ -4,6 +4,7 @@ load(
     "patch",
     "workspace_and_buildfile",
 )
+load("@bazel_lib//lib:repo_utils.bzl", "repo_utils")
 
 def _http_pkg_archive_impl(rctx):
     if rctx.attr.build_file and rctx.attr.build_file_content:
@@ -16,9 +17,10 @@ def _http_pkg_archive_impl(rctx):
         auth = get_auth(rctx, rctx.attr.urls),
     )
 
-    res = rctx.execute(["/usr/sbin/pkgutil", "--expand-full", ".downloaded.pkg", "tmp"])
+    host_pkgutil = Label("@pkgutil_%s//:pkgutil_%s" % (repo_utils.platform(rctx), repo_utils.platform(rctx)))
+    res = rctx.execute([str(rctx.path(host_pkgutil)), "--expand-full", ".downloaded.pkg", "tmp"])
     if res.return_code != 0:
-        fail("Failed to extract package: {}".format(res.stdout))
+        fail("Failed to extract package: {}".format(res.stderr))
     rctx.delete(".downloaded.pkg")
 
     if rctx.attr.strip_files:

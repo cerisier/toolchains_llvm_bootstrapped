@@ -151,6 +151,28 @@ llvm.configure(
 )
 use_repo(llvm, "llvm-project")
 
+PKGUTIL_PREBUILTS_SHA256 = {
+    "darwin_arm64": "22e3f95e3b157f47fffef339318cea810eacffa345c1e22b3aea9fd12f7d75e9",
+    "linux_amd64": "sha256:e3366a62ac3d80c51acd19a3962b0141f1a5cfe4efe10d27d771e09d9c068960",
+    "linux_arm64": "sha256:bf1101e4e534dd4da2e288b96d5892c8263859b4bb7dc531f59ee49d26c1313d",
+    "windows_amd64": "sha256:d9864d2e692cb14bbe092c0fa010f3650d995248489d64350c6aa3b00827b5b9",
+}
+
+[
+    http_archive(
+        name = "pkgutil_{target}".format(target = target),
+        build_file_content = """
+exports_files(glob["*"])
+""".format(target = target, extension = ".exe" if "windows" in target else ""),
+        sha256 = sha256,
+        urls = ["https://github.com/cerisier/pkgutil/releases/download/v1.0.13/pkgutil_{target}{extension}.tar.gz".format(
+            target = target,
+            extension = ".exe" if "windows" in target else "",
+        )],
+    ) for (target, sha256) in PKGUTIL_PREBUILTS_SHA256.items()
+]
+
+
 ## OVERRIDES PORTS FROM DEPENDENCIES
 
 RULES_ZIG_COMMIT = "b9739c615ce62b64ee595ac4bcd9ee7cc06b0422"  # branch=zml
