@@ -82,7 +82,7 @@ LLVM_RELEASE_ASSETS_SHA256 = {
         name = name,
         build_file = "//third_party/llvm-project/20.x/{name}:BUILD.tpl".format(name = name),
         patch_args = ["-p1"],
-        patches = ["//third_party/llvm-project/20.x/libcxx:lgamma_r.patch"] if name == "libcxx" else [],
+        patches = (["//third_party/llvm-project/20.x/libcxx:lgamma_r.patch"] if name == "libcxx" else []) + (["//third_party/llvm-project/20.x/compiler-rt:symbolizer_skip_cxa_atexit.patch"] if name == "compiler-rt" else []),
         sha256 = sha256,
         strip_prefix = "{name}-{llvm_version}.src".format(
             name = name,

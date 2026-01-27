@@ -58,6 +58,32 @@ cc_args_list(
     }),
 )
 
+cc_args_list(
+    name = "msan_flags",
+    args = select({
+        # We just need to recompile with sanitizer flags, don't need linker flags.
+        # And in fact linker flags will cause a cycle. If we ever need a sanitizer
+        # for compilation, we would need an extra bootstrap stage.
+        "//toolchain/args:msan_enabled": [
+            "//toolchain/args:msan_compiler_flags",
+        ],
+        "//conditions:default": [],
+    }),
+)
+
+cc_args_list(
+    name = "asan_flags",
+    args = select({
+        # We just need to recompile with sanitizer flags, don't need linker flags.
+        # And in fact linker flags will cause a cycle. If we ever need a sanitizer
+        # for compilation, we would need an extra bootstrap stage.
+        "//toolchain/args:asan_enabled": [
+            "//toolchain/args:asan_compiler_flags",
+        ],
+        "//conditions:default": [],
+    }),
+)
+
 # TODO(cerisier): this needs to differ per runtime (e.g libc++ still need crtbegin)
 cc_args(
     name = "hermetic_link_flags",

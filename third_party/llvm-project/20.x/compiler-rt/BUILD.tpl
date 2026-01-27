@@ -1,4 +1,4 @@
-load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_library.bzl", "cc_runtime_stage0_library")
+load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_shared_library.bzl", "cc_runtime_stage0_shared_library")
 load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
 load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_stage0_object.bzl", "cc_stage0_object")
 load("@toolchains_llvm_bootstrapped//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
@@ -7,6 +7,21 @@ load("@toolchains_llvm_bootstrapped//third_party/llvm-project/20.x/compiler-rt:t
 load("@toolchains_llvm_bootstrapped//third_party/llvm-project/20.x/compiler-rt:filter_builtin_sources.bzl", "filter_builtin_sources")
 load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
+config_setting(
+    name = "asan_enabled_fwd",
+    flag_values = {
+        "@toolchains_llvm_bootstrapped//config:asan": "1",
+    },
+)
+
+config_setting(
+    name = "msan_enabled_fwd",
+    flag_values = {
+        "@toolchains_llvm_bootstrapped//config:msan": "1",
+    },
+)
 
 BUILTINS_GENERIC_SRCS = [
     "lib/builtins/absvdi2.c",
@@ -310,12 +325,12 @@ builtins_aarch64_atomic_deps = [
     if pat == "cas" or size != 16
 ]
 
-cc_runtime_stage0_library(
+cc_library(
     name = "builtins_aarch64_atomic",
     deps = builtins_aarch64_atomic_deps,
 )
 
-cc_runtime_stage0_library(
+cc_library(
     name = "builtins",
     includes = ["lib/builtins"],
     srcs = select({
@@ -489,7 +504,7 @@ CRT_DEFINES = [
     "CRT_USE_FRAME_REGISTRY",
 ]
 
-cc_runtime_stage0_library(
+cc_library(
     name = "clang_rt.crtbegin",
     srcs = [
         "lib/builtins/crtbegin.c",
@@ -539,7 +554,7 @@ cc_runtime_stage0_static_library(
     visibility = ["//visibility:public"],
 )
 
-cc_runtime_stage0_library(
+cc_library(
     name = "clang_rt.crtend",
     srcs = [
         "lib/builtins/crtend.c",
@@ -600,7 +615,7 @@ cc_unsanitized_library(
 )
 
 # TODO(zbarsky): It would be nice to not have to jam everything into a single BUILD file
-cc_runtime_stage0_library(
+cc_library(
     name = "linux_libc_headers",
     deps = [
         # linux UAPI headers are needed even for musl here because sanitizers include <sys/vt.h>
@@ -618,7 +633,7 @@ cc_runtime_stage0_library(
     }),
 )
 
-cc_runtime_stage0_library(
+cc_library(
     name = "libcxx_headers",
     deps = select({
         "@platforms//os:macos": [],
@@ -783,6 +798,7 @@ SANITIZER_IMPL_HEADERS = [
   "sanitizer_common_interceptors_format.inc",
   "sanitizer_common_interceptors_ioctl.inc",
   "sanitizer_common_interceptors_memintrinsics.inc",
+  "sanitizer_common_interceptors_netbsd_compat.inc",
   "sanitizer_common_interface.inc",
   "sanitizer_common_interface_posix.inc",
   "sanitizer_common_syscalls.inc",
@@ -895,7 +911,7 @@ filegroup(
     srcs = INTERCEPTION_IMPL_HEADERS,
 )
 
-cc_runtime_stage0_library(
+cc_library(
     name = "sanitizer_common",
     srcs = [
         ":sanitizer_sources",
@@ -903,54 +919,101 @@ cc_runtime_stage0_library(
         ":interception_impl_headers",
     ],
     textual_hdrs = [
+        "lib/builtins/assembly.h",
         "lib/sanitizer_common/sancov_flags.inc",
         "lib/sanitizer_common/sanitizer_flags.inc",
         "lib/sanitizer_common/sanitizer_signal_interceptors.inc",
         "lib/sanitizer_common/sanitizer_syscall_generic.inc",
+        "lib/sanitizer_common/sanitizer_common_interceptors_vfork_aarch64.inc.S",
+        "lib/sanitizer_common/sanitizer_common_interceptors_vfork_arm.inc.S",
+        "lib/sanitizer_common/sanitizer_common_interceptors_vfork_i386.inc.S",
+        "lib/sanitizer_common/sanitizer_common_interceptors_vfork_loongarch64.inc.S",
+        "lib/sanitizer_common/sanitizer_common_interceptors_vfork_riscv64.inc.S",
+        "lib/sanitizer_common/sanitizer_common_interceptors_vfork_x86_64.inc.S",
     ],
-    includes = ["lib"],
+    includes = [
+        "lib",
+        "include",
+    ],
+    alwayslink = True,
     implementation_deps = [
         ":libcxx_headers",
-    ],
+    ] + select({
+        "//:asan_enabled_fwd": [":asan_interface"],
+        "//conditions:default": [],
+    }) + select({
+        "//:msan_enabled_fwd": [":msan_interface"],
+        "//conditions:default": [],
+    }),
 )
 
-cc_runtime_stage0_library(
+cc_library(
     name = "sanitizer_common_libc",
     srcs = [
         ":sanitizer_libcdep_sources",
         ":sanitizer_impl_headers",
     ],
-    includes = ["lib"],
+    includes = [
+        "lib",
+        "include",
+    ],
+    alwayslink = True,
     implementation_deps = [
         ":libcxx_headers",
-    ],
+    ] + select({
+        "//:asan_enabled_fwd": [":asan_interface"],
+        "//conditions:default": [],
+    }) + select({
+        "//:msan_enabled_fwd": [":msan_interface"],
+        "//conditions:default": [],
+    }),
 )
 
-cc_runtime_stage0_library(
+cc_library(
     name = "sanitizer_common_coverage",
     srcs = [
         ":sanitizer_coverage_sources",
         ":sanitizer_impl_headers",
     ],
-    includes = ["lib"],
+    includes = [
+        "lib",
+        "include",
+    ],
+    alwayslink = True,
     implementation_deps = [
         ":libcxx_headers",
-    ],
+    ] + select({
+        "//:asan_enabled_fwd": [":asan_interface"],
+        "//conditions:default": [],
+    }) + select({
+        "//:msan_enabled_fwd": [":msan_interface"],
+        "//conditions:default": [],
+    }),
 )
 
-cc_runtime_stage0_library(
+cc_library(
     name = "sanitizer_common_symbolizer",
     srcs = [
         ":sanitizer_symbolizer_sources",
         ":sanitizer_impl_headers",
     ],
-    includes = ["lib"],
+    includes = [
+        "lib",
+        "include",
+    ],
+    alwayslink = True,
     implementation_deps = [
         ":libcxx_headers",
-    ],
+    ] + select({
+        "//:asan_enabled_fwd": [":asan_interface"],
+        "//conditions:default": [],
+    }) + select({
+        "//:msan_enabled_fwd": [":msan_interface"],
+        "//conditions:default": [],
+    }),
 )
 
-cc_runtime_stage0_library(
+cc_library(
     name = "sanitizer_common_symbolizer_internal",
     srcs = [
         "lib/sanitizer_common/symbolizer/sanitizer_symbolize.cpp",
@@ -959,10 +1022,26 @@ cc_runtime_stage0_library(
     deps = [
         ":llvm_Symbolize",
     ],
-    includes = ["lib"],
+    copts = [
+        # The standalone build of the internal symbolizer strips the __cxa_atexit
+        # shim via internalize; do the same explicitly to avoid duplicate symbols
+        # when statically linking against libc implementations that provide it.
+        "-DSANITIZER_SKIP_CXA_ATEXIT_OVERRIDE",
+    ],
+    includes = [
+        "lib",
+        "include",
+    ],
+    alwayslink = True,
     implementation_deps = [
         ":libcxx_headers",
-    ],
+    ] + select({
+        "//:asan_enabled_fwd": [":asan_interface"],
+        "//conditions:default": [],
+    }) + select({
+        "//:msan_enabled_fwd": [":msan_interface"],
+        "//conditions:default": [],
+    }),
 )
 
 ## INTERCEPTION
@@ -991,7 +1070,7 @@ filegroup(
     srcs = ["lib/interception/" + f for f in INTERCEPTION_HEADERS],
 )
 
-cc_runtime_stage0_library(
+cc_library(
     name = "interception",
     srcs = [
         ":interception_sources",
@@ -999,6 +1078,7 @@ cc_runtime_stage0_library(
         ":sanitizer_impl_headers",
     ],
     includes = ["lib"],
+    alwayslink = True,
     implementation_deps = [
         ":libcxx_headers",
     ],
@@ -1064,7 +1144,37 @@ filegroup(
     srcs = ["lib/ubsan/" + f for f in UBSAN_HEADERS],
 )
 
-cc_runtime_stage0_library(
+# UBSan without standalone signal interceptors; used when linking into ASan to
+# avoid duplicate interceptor symbols.
+cc_library(
+    name = "ubsan_no_standalone",
+    srcs = [
+        ":ubsan_sources",
+        ":ubsan_cxxabi_sources",
+        ":ubsan_headers",
+    ],
+    textual_hdrs = [
+        "lib/ubsan/ubsan_checks.inc",
+        "lib/ubsan/ubsan_flags.inc",
+    ],
+    alwayslink = True,
+    includes = ["lib"],
+    deps = [
+        ":sanitizer_common",
+        ":sanitizer_common_libc",
+        ":sanitizer_common_coverage",
+        ":sanitizer_common_symbolizer",
+        ":sanitizer_common_symbolizer_internal",
+        ":interception",
+        # if COMPILER_RT_ENABLE_INTERNAL_SYMBOLIZER
+        ":llvm_Symbolize",
+    ],
+    implementation_deps = [
+        ":libcxx_headers",
+    ],
+)
+
+cc_library(
     name = "ubsan",
     srcs = [
         ":ubsan_sources",
@@ -1080,6 +1190,7 @@ cc_runtime_stage0_library(
     #    # User hook?
     #    "-Wl,-U,___ubsan_default_options",
     #],
+    alwayslink = True,
     includes = ["lib"],
     deps = [
         ":sanitizer_common",
@@ -1099,5 +1210,404 @@ cc_runtime_stage0_library(
 cc_runtime_stage0_static_library(
     name = "ubsan.static",
     deps = [":ubsan"],
+    visibility = ["//visibility:public"],
+)
+
+## MSAN
+
+cc_library(
+    name = "msan_interface",
+    hdrs = [
+        "include/sanitizer/common_interface_defs.h",
+        "include/sanitizer/msan_interface.h",
+    ],
+    strip_include_prefix = "include",
+    visibility = ["//visibility:public"],
+)
+
+MSAN_SOURCES = [
+  "msan.cpp",
+  "msan_allocator.cpp",
+  "msan_chained_origin_depot.cpp",
+  "msan_dl.cpp",
+  "msan_interceptors.cpp",
+  "msan_linux.cpp",
+  "msan_report.cpp",
+  "msan_thread.cpp",
+  "msan_poisoning.cpp",
+]
+
+filegroup(
+    name = "msan_sources",
+    srcs = ["lib/msan/" + f for f in MSAN_SOURCES],
+)
+
+MSAN_CXX_SOURCES = [
+  "msan_new_delete.cpp",
+]
+
+filegroup(
+    name = "msan_cxx_sources",
+    srcs = ["lib/msan/" + f for f in MSAN_CXX_SOURCES],
+)
+
+
+MSAN_HEADERS = [
+    "msan.h",
+    "msan_allocator.h",
+    "msan_chained_origin_depot.h",
+    "msan_dl.h",
+    "msan_flags.h",
+    "msan_flags.inc",
+    "msan_interface_internal.h",
+    "msan_origin.h",
+    "msan_poisoning.h",
+    "msan_report.h",
+    "msan_thread.h",
+]
+
+filegroup(
+    name = "msan_headers",
+    srcs = ["lib/msan/" + f for f in MSAN_HEADERS],
+)
+
+cc_library(
+    name = "msan",
+    srcs = [
+        ":msan_sources",
+        ":msan_cxx_sources",
+        ":msan_headers",
+    ],
+    textual_hdrs = [
+        "lib/msan/msan_flags.inc",
+    ],
+    includes = ["lib"],
+    deps = [
+        ":interception",
+        ":sanitizer_common",
+        ":sanitizer_common_libc",
+        ":sanitizer_common_coverage",
+        ":sanitizer_common_symbolizer",
+        ":sanitizer_common_symbolizer_internal",
+        ":ubsan",
+    ],
+    implementation_deps = [
+        ":libcxx_headers",
+    ],
+)
+
+cc_runtime_stage0_static_library(
+    name = "msan.static",
+    deps = [":msan"],
+    visibility = ["//visibility:public"],
+)
+
+## LSAN
+
+LSAN_COMMON_SOURCES = [
+    "lsan_common.cpp",
+    "lsan_common_fuchsia.cpp",
+    "lsan_common_linux.cpp",
+    "lsan_common_mac.cpp",
+]
+
+filegroup(
+    name = "lsan_common_sources",
+    srcs = ["lib/lsan/" + f for f in LSAN_COMMON_SOURCES],
+)
+
+LSAN_SOURCES = [
+    "lsan.cpp",
+    "lsan_allocator.cpp",
+    "lsan_fuchsia.cpp",
+    "lsan_interceptors.cpp",
+    "lsan_linux.cpp",
+    "lsan_mac.cpp",
+    "lsan_malloc_mac.cpp",
+    "lsan_posix.cpp",
+    "lsan_preinit.cpp",
+    "lsan_thread.cpp",
+]
+
+filegroup(
+    name = "lsan_sources",
+    srcs = ["lib/lsan/" + f for f in LSAN_SOURCES],
+)
+
+LSAN_HEADERS = [
+    "lsan.h",
+    "lsan_allocator.h",
+    "lsan_common.h",
+    "lsan_flags.inc",
+    "lsan_thread.h",
+]
+
+filegroup(
+    name = "lsan_headers",
+    srcs = ["lib/lsan/" + f for f in LSAN_HEADERS],
+)
+
+# This corresponds to RTLSanCommon in CMake: used by asan/hwasan even if LSan
+# itself is not enabled.
+cc_library(
+    name = "lsan_common",
+    srcs = [
+        ":lsan_common_sources",
+        ":lsan_headers",
+    ],
+    textual_hdrs = [
+        "lib/lsan/lsan_flags.inc",
+    ],
+    includes = ["lib"],
+    alwayslink = True,
+    deps = [
+        ":sanitizer_common",
+        ":sanitizer_common_libc",
+        ":sanitizer_common_coverage",
+        ":sanitizer_common_symbolizer",
+        ":sanitizer_common_symbolizer_internal",
+    ],
+    implementation_deps = [
+        ":libcxx_headers",
+    ],
+)
+
+cc_library(
+    name = "lsan",
+    srcs = [
+        ":lsan_sources",
+        ":lsan_headers",
+    ],
+    textual_hdrs = [
+        "lib/lsan/lsan_flags.inc",
+    ],
+    includes = ["lib"],
+    deps = [
+        ":lsan_common",
+        ":interception",
+        ":sanitizer_common",
+        ":sanitizer_common_libc",
+        ":sanitizer_common_coverage",
+        ":sanitizer_common_symbolizer",
+        ":sanitizer_common_symbolizer_internal",
+    ],
+    implementation_deps = [
+        ":libcxx_headers",
+    ],
+)
+
+cc_runtime_stage0_static_library(
+    name = "lsan.static",
+    deps = [":lsan"],
+    visibility = ["//visibility:public"],
+)
+
+## ASAN
+
+cc_library(
+    name = "asan_interface",
+    hdrs = [
+        "include/sanitizer/common_interface_defs.h",
+        "include/sanitizer/asan_interface.h",
+    ],
+    strip_include_prefix = "include",
+    visibility = ["//visibility:public"],
+)
+
+ASAN_SOURCES = [
+    # "asan_aix.cpp",
+    "asan_allocator.cpp",
+    "asan_activation.cpp",
+    "asan_debugging.cpp",
+    "asan_descriptions.cpp",
+    "asan_errors.cpp",
+    "asan_fake_stack.cpp",
+    "asan_flags.cpp",
+    "asan_fuchsia.cpp",
+    "asan_globals.cpp",
+    "asan_globals_win.cpp",
+    "asan_interceptors.cpp",
+    "asan_interceptors_memintrinsics.cpp",
+    "asan_linux.cpp",
+    "asan_mac.cpp",
+    "asan_malloc_linux.cpp",
+    "asan_malloc_mac.cpp",
+    "asan_malloc_win.cpp",
+    "asan_memory_profile.cpp",
+    "asan_poisoning.cpp",
+    "asan_posix.cpp",
+    "asan_premap_shadow.cpp",
+    "asan_report.cpp",
+    "asan_rtl.cpp",
+    "asan_shadow_setup.cpp",
+    "asan_stack.cpp",
+    "asan_stats.cpp",
+    "asan_suppressions.cpp",
+    "asan_thread.cpp",
+    "asan_win.cpp",
+]
+
+filegroup(
+    name = "asan_sources",
+    srcs = ["lib/asan/" + f for f in ASAN_SOURCES] + select({
+        "@platforms//os:linux": [
+            "lib/asan/asan_interceptors_vfork.S",
+        ],
+        "//conditions:default": [],
+    })
+)
+
+ASAN_CXX_SOURCES = [
+    "asan_new_delete.cpp",
+]
+
+filegroup(
+    name = "asan_cxx_sources",
+    srcs = ["lib/asan/" + f for f in ASAN_CXX_SOURCES],
+)
+
+ASAN_STATIC_SOURCES = [
+    "asan_rtl_static.cpp",
+    # CMake adds this only for x86_64 and non-Windows, non-Apple:
+    # "asan_rtl_x86_64.S",
+]
+
+filegroup(
+    name = "asan_static_sources",
+    srcs = ["lib/asan/" + f for f in ASAN_STATIC_SOURCES],
+)
+
+ASAN_PREINIT_SOURCES = [
+    "asan_preinit.cpp",
+]
+
+filegroup(
+    name = "asan_preinit_sources",
+    srcs = ["lib/asan/" + f for f in ASAN_PREINIT_SOURCES],
+)
+
+ASAN_HEADERS = [
+    "asan_activation.h",
+    "asan_activation_flags.inc",
+    "asan_allocator.h",
+    "asan_descriptions.h",
+    "asan_errors.h",
+    "asan_fake_stack.h",
+    "asan_flags.h",
+    "asan_flags.inc",
+    "asan_init_version.h",
+    "asan_interceptors.h",
+    "asan_interceptors_memintrinsics.h",
+    "asan_interface.inc",
+    "asan_interface_internal.h",
+    "asan_internal.h",
+    "asan_mapping.h",
+    "asan_poisoning.h",
+    "asan_premap_shadow.h",
+    "asan_report.h",
+    "asan_scariness_score.h",
+    "asan_stack.h",
+    "asan_stats.h",
+    "asan_suppressions.h",
+    "asan_thread.h",
+]
+
+filegroup(
+    name = "asan_headers",
+    srcs = ["lib/asan/" + f for f in ASAN_HEADERS],
+)
+
+cc_library(
+    name = "asan",
+    srcs = [
+        ":asan_sources",
+        ":asan_cxx_sources",
+        ":asan_static_sources",
+        ":asan_preinit_sources",
+        ":asan_headers",
+        ":ubsan_headers",
+    ],
+    copts = [
+        # The AddressSanitizer run-time should not be instrumented by AddressSanitizer.
+        "-fno-sanitize=address",
+    ] + select({
+        # Upstream adds these via SANITIZER_COMMON_CFLAGS for all supported platforms.
+        "@platforms//os:windows": [],
+        "//conditions:default": [
+            "-fPIC",
+            "-fvisibility=hidden",
+            "-fvisibility-inlines-hidden",
+        ],
+    }),
+    textual_hdrs = [
+        "lib/asan/asan_activation_flags.inc",
+        "lib/asan/asan_flags.inc",
+        "lib/asan/asan_interface.inc",
+    ],
+    includes = ["lib"],
+    deps = [
+        ":interception",
+        ":sanitizer_common",
+        ":sanitizer_common_libc",
+        ":sanitizer_common_coverage",
+        ":sanitizer_common_symbolizer",
+        ":sanitizer_common_symbolizer_internal",
+        ":lsan_common",
+    ],
+    linkopts = [
+        "-Wl,-undefined,dynamic_lookup",
+        #"-Wl,-U,___lsan_default_options",
+        #"-Wl,-U,___lsan_default_suppressions",
+        #"-Wl,-U,___lsan_is_turned_off",
+    ],
+    implementation_deps = [
+        ":libcxx_headers",
+    ],
+)
+
+cc_runtime_stage0_static_library(
+    name = "asan.static",
+    deps = [
+        ":asan",
+        ":ubsan_no_standalone",
+    ],
+    # ___lsan_default_options
+    # ___lsan_default_suppressions
+    # ___lsan_is_turned_off
+
+    visibility = ["//visibility:public"],
+)
+
+cc_runtime_stage0_shared_library(
+    name = "asan.shared",
+    deps = [
+        ":asan",
+        ":llvm_Symbolize",
+        ":sanitizer_common",
+        ":sanitizer_common_libc",
+        ":sanitizer_common_coverage",
+        ":sanitizer_common_symbolizer",
+        ":sanitizer_common_symbolizer_internal",
+        ":lsan_common",
+        ":ubsan_no_standalone",
+    ],
+    additional_linker_inputs = select({
+        "@toolchains_llvm_bootstrapped//platforms/config:gnu": [
+            "@toolchains_llvm_bootstrapped//runtimes/glibc:glibc_library_search_directory",
+        ],
+        "//conditions:default": [],
+    }),
+    user_link_flags = select({
+        "@toolchains_llvm_bootstrapped//platforms/config:gnu": [
+            "-L$(location @toolchains_llvm_bootstrapped//runtimes/glibc:glibc_library_search_directory)",
+            "-lc",
+        ],
+        "//conditions:default": [],
+    }),
+    shared_lib_name = "libasan.shared.so",
+    # ___lsan_default_options
+    # ___lsan_default_suppressions
+    # ___lsan_is_turned_off
+
     visibility = ["//visibility:public"],
 )

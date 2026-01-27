@@ -8,10 +8,23 @@ bootstrap_transition = transition(
     implementation = lambda settings, attr: {
         # we are compiling runtimes without any kind of other dependencies
         "//toolchain:runtime_stage": "stage0",
+        # Stage0 objects must never be built with sanitizers enabled.
+        "//config:asan": False,
+        "//config:msan": False,
+        "//config:ubsan": False,
+        "//config/bootstrap:asan": False,
+        "//config/bootstrap:msan": False,
+        "//config/bootstrap:ubsan": False,
     },
     inputs = [],
     outputs = [
         "//toolchain:runtime_stage",
+        "//config:asan",
+        "//config:msan",
+        "//config:ubsan",
+        "//config/bootstrap:asan",
+        "//config/bootstrap:msan",
+        "//config/bootstrap:ubsan",
     ],
 )
 
