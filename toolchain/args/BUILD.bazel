@@ -302,9 +302,11 @@ cc_args(
         "{asan_path}",
     ],
     format = {
-        "asan_path": "@compiler-rt//:asan.shared",
+        "asan_path": "//runtimes/compiler-rt:clang_rt.asan.static",
     },
-    data = ["@compiler-rt//:asan.shared"],
+    data = [
+        "//runtimes/compiler-rt:clang_rt.asan.static",
+    ],
 )
 
 alias(

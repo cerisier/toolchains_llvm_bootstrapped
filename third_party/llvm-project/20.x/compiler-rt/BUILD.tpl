@@ -9,6 +9,20 @@ load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
+config_setting(
+    name = "asan_enabled_fwd",
+    flag_values = {
+        "@toolchains_llvm_bootstrapped//config:asan": "1",
+    },
+)
+
+config_setting(
+    name = "msan_enabled_fwd",
+    flag_values = {
+        "@toolchains_llvm_bootstrapped//config:msan": "1",
+    },
+)
+
 BUILTINS_GENERIC_SRCS = [
     "lib/builtins/absvdi2.c",
     "lib/builtins/absvsi2.c",
@@ -917,11 +931,20 @@ cc_library(
         "lib/sanitizer_common/sanitizer_common_interceptors_vfork_riscv64.inc.S",
         "lib/sanitizer_common/sanitizer_common_interceptors_vfork_x86_64.inc.S",
     ],
-    includes = ["lib"],
+    includes = [
+        "lib",
+        "include",
+    ],
     alwayslink = True,
     implementation_deps = [
         ":libcxx_headers",
-    ],
+    ] + select({
+        "//:asan_enabled_fwd": [":asan_interface"],
+        "//conditions:default": [],
+    }) + select({
+        "//:msan_enabled_fwd": [":msan_interface"],
+        "//conditions:default": [],
+    }),
 )
 
 cc_library(
@@ -930,11 +953,20 @@ cc_library(
         ":sanitizer_libcdep_sources",
         ":sanitizer_impl_headers",
     ],
-    includes = ["lib"],
+    includes = [
+        "lib",
+        "include",
+    ],
     alwayslink = True,
     implementation_deps = [
         ":libcxx_headers",
-    ],
+    ] + select({
+        "//:asan_enabled_fwd": [":asan_interface"],
+        "//conditions:default": [],
+    }) + select({
+        "//:msan_enabled_fwd": [":msan_interface"],
+        "//conditions:default": [],
+    }),
 )
 
 cc_library(
@@ -943,11 +975,20 @@ cc_library(
         ":sanitizer_coverage_sources",
         ":sanitizer_impl_headers",
     ],
-    includes = ["lib"],
+    includes = [
+        "lib",
+        "include",
+    ],
     alwayslink = True,
     implementation_deps = [
         ":libcxx_headers",
-    ],
+    ] + select({
+        "//:asan_enabled_fwd": [":asan_interface"],
+        "//conditions:default": [],
+    }) + select({
+        "//:msan_enabled_fwd": [":msan_interface"],
+        "//conditions:default": [],
+    }),
 )
 
 cc_library(
@@ -956,11 +997,20 @@ cc_library(
         ":sanitizer_symbolizer_sources",
         ":sanitizer_impl_headers",
     ],
-    includes = ["lib"],
+    includes = [
+        "lib",
+        "include",
+    ],
     alwayslink = True,
     implementation_deps = [
         ":libcxx_headers",
-    ],
+    ] + select({
+        "//:asan_enabled_fwd": [":asan_interface"],
+        "//conditions:default": [],
+    }) + select({
+        "//:msan_enabled_fwd": [":msan_interface"],
+        "//conditions:default": [],
+    }),
 )
 
 cc_library(
@@ -972,11 +1022,26 @@ cc_library(
     deps = [
         ":llvm_Symbolize",
     ],
-    includes = ["lib"],
+    copts = [
+        # The standalone build of the internal symbolizer strips the __cxa_atexit
+        # shim via internalize; do the same explicitly to avoid duplicate symbols
+        # when statically linking against libc implementations that provide it.
+        "-DSANITIZER_SKIP_CXA_ATEXIT_OVERRIDE",
+    ],
+    includes = [
+        "lib",
+        "include",
+    ],
     alwayslink = True,
     implementation_deps = [
         ":libcxx_headers",
-    ],
+    ] + select({
+        "//:asan_enabled_fwd": [":asan_interface"],
+        "//conditions:default": [],
+    }) + select({
+        "//:msan_enabled_fwd": [":msan_interface"],
+        "//conditions:default": [],
+    }),
 )
 
 ## INTERCEPTION
@@ -1502,7 +1567,10 @@ cc_library(
 
 cc_runtime_stage0_static_library(
     name = "asan.static",
-    deps = [":asan"],
+    deps = [
+        ":asan",
+        ":ubsan_no_standalone",
+    ],
     # ___lsan_default_options
     # ___lsan_default_suppressions
     # ___lsan_is_turned_off
@@ -1536,6 +1604,7 @@ cc_runtime_stage0_shared_library(
         ],
         "//conditions:default": [],
     }),
+    shared_lib_name = "libasan.shared.so",
     # ___lsan_default_options
     # ___lsan_default_suppressions
     # ___lsan_is_turned_off
