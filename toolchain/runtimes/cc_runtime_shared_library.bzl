@@ -8,6 +8,9 @@ _builder = with_cfg(
     extra_providers = [CcSharedLibraryInfo],
 )
 
+# Avoid dependency on libclang_rt.profile.a
+_builder.extend("features", ["-fdo_instrument", "-cs_fdo_instrument"])
+
 cc_runtime_stage0_shared_library, _cc_stage0_shared_library_internal = configure_builder_for_runtimes(_builder.clone(), "stage0", "dynamic").build()
 cc_runtime_stage1_shared_library, _cc_stage1_shared_library_internal = configure_builder_for_runtimes(_builder.clone(), "stage1", "dynamic").build()
 cc_runtime_stage2_shared_library, _cc_stage2_shared_library_internal = configure_builder_for_runtimes(_builder.clone(), "stage2", "dynamic").build()

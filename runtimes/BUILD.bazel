@@ -170,6 +170,11 @@ copy_to_resource_directory(
             "//runtimes/compiler-rt:clang_rt.ubsan.static": "libclang_rt.ubsan_standalone",
         },
         "//conditions:default": {},
+    }) | select({
+        "@platforms//os:none": {},
+        "//conditions:default": {
+            "//runtimes/compiler-rt:clang_rt.profile.static": "libclang_rt.profile",
+        },
     }),
     visibility = ["//visibility:public"],
 )
