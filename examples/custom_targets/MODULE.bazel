@@ -9,6 +9,8 @@ local_path_override(
     path = "../../",
 )
 
+bazel_dep(name = "rules_cc", version = "0.2.16")
+
 llvm_toolchains = use_extension("@toolchains_llvm_bootstrapped//toolchain/extension:llvm.bzl", "llvm")
 llvm_toolchains.exec(
     arch = "x86_64",
