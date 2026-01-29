@@ -11,8 +11,7 @@ def _bootstrap_transition_impl(settings, attr):
         # We want to build those binaries using the prebuilt compiler toolchain
         "//toolchain:source": "prebuilt",
 
-        # Some flags to make LLVM build sanely.
-        "@llvm_zlib//:llvm_enable_zlib": False,
+        # Enable the same set of tools we provide with prebuilts.
         "@llvm-project//llvm:driver-tools": [
             "clang",
             "dsymutil",
@@ -33,7 +32,6 @@ bootstrap_transition = transition(
         "//command_line_option:platforms",
         "//toolchain:runtime_stage",
         "//toolchain:source",
-        "@llvm_zlib//:llvm_enable_zlib",
         "@llvm-project//llvm:driver-tools",
     ],
 )
@@ -89,8 +87,7 @@ def _exec_bootstrap_transition_impl(settings, attr):
         # We want to build those binaries using the prebuilt compiler toolchain
         "//toolchain:source": "prebuilt",
 
-        # Some flags to make LLVM build sanely.
-        "@llvm_zlib//:llvm_enable_zlib": False,
+        # Enable the same set of tools we provide with prebuilts.
         "@llvm-project//llvm:driver-tools": [
             "clang",
             "dsymutil",
@@ -110,7 +107,6 @@ exec_bootstrap_transition = transition(
     outputs = [
         "//toolchain:runtime_stage",
         "//toolchain:source",
-        "@llvm_zlib//:llvm_enable_zlib",
         "@llvm-project//llvm:driver-tools",
     ],
 )

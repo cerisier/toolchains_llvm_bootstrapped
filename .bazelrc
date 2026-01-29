@@ -21,8 +21,6 @@ common:bootstrap   --@toolchains_llvm_bootstrapped//toolchain:source=bootstrappe
 # Workaround lack of cgo support for now
 common:wasm       --@rules_go//go/config:pure
 
-# TODO: LLVM doesn't compile otherwise due to "zlib.h" vs <zlib.h> usage.
-common:prebuilt --@llvm_zlib//:llvm_enable_zlib=false
 common:prebuilt  -c opt
 common:prebuilt  --strip=always
 common:prebuilt  --stripopt=--strip-all
