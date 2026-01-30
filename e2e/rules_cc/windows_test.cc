@@ -31,6 +31,12 @@ int main() {
     BCRYPT_ALG_HANDLE alg_handle = nullptr;
     (void)alg_handle;
 
+    // Exercise the mingw-provided RtlSecureZeroMemory implementation.
+    unsigned char secret[16] = {0xde, 0xad, 0xbe, 0xef};
+    RtlSecureZeroMemory(secret, sizeof(secret));
+    volatile unsigned char zero = secret[0];
+    (void)zero;
+
     static_assert(std::is_same<DWORD, unsigned long>::value, "DWORD changed");
 
     return 0;
