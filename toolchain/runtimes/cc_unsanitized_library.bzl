@@ -1,9 +1,14 @@
 load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
+load("@rules_cc//cc/private/rules_impl:cc_shared_library.bzl", "GraphNodeInfo", "graph_structure_aspect")
 
 def _reset_sanitizers_impl(settings, attr):
     return {
         "//config:ubsan": False,
+        "//config:msan": False,
+        "//config:asan": False,
         "//config/bootstrap:ubsan": False,
+        "//config/bootstrap:msan": False,
+        "//config/bootstrap:asan": False,
 
         # we are compiling sanitizers, so we want all runtimes except sanitizers.
         # TODO(cerisier): Should this be exressed with a dedicated stage ?
@@ -18,7 +23,11 @@ _reset_sanitizers = transition(
     inputs = [],
     outputs = [
         "//config:ubsan",
+        "//config:msan",
+        "//config:asan",
         "//config/bootstrap:ubsan",
+        "//config/bootstrap:msan",
+        "//config/bootstrap:asan",
         "//toolchain:runtime_stage",
         "//toolchain:source",
     ],
@@ -32,6 +41,9 @@ def _cc_unsanitized_library_impl(ctx):
         dep[DefaultInfo],
         dep[CcInfo],
     ]
+
+    if GraphNodeInfo in dep:
+        providers.append(dep[GraphNodeInfo])
 
     if OutputGroupInfo in dep:
         providers.append(dep[OutputGroupInfo])
@@ -47,6 +59,7 @@ cc_unsanitized_library = rule(
         "dep": attr.label(
             cfg = _reset_sanitizers,
             providers = [CcInfo],
+            aspects = [graph_structure_aspect],
         ),
     },
 )
