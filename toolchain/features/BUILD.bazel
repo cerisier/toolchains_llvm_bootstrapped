@@ -32,6 +32,11 @@ cc_args(
             "-Wl,--gc-sections",
         ],
     }) + select({
+        "@platforms//os:linux": [
+            "-Wl,--pack-dyn-relocs=relr",
+        ],
+        "//conditions:default": [],
+    }) + select({
         "@platforms//cpu:wasm32": [],
         "@platforms//cpu:wasm64": [],
         "//conditions:default": ["-Wl,--icf=safe"],
