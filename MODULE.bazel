@@ -48,18 +48,17 @@ LLVM_TOOLCHAIN_MINIMAL_SHA256 = {
 ]
 
 LLVM_TOOLCHAIN_EXTRAS_SHA256 = {
-    "darwin-arm64": "a50386d09cf70ea6c6a9b30b8d04be48de96d97ca73e5cbe2320dfad93b77efd",
-    "linux-amd64-musl": "034044d9284e3142604d793e8b20dffdd8a46af42db9094d5043b802748902cb",
-    "linux-arm64-musl": "98357273d7bc7e6b4d04648e9a7bdd6220b11e129ad2eca581a7c7b8d980ed1e",
-    "windows-amd64-gnu": "39782cb163129e20faf26a1e52391b4c97999e2d59cfdb7a09873117855143e2",
-    "windows-arm64-gnu": "c5b7188a7c6582292a2c2800089cbdb2b4b240c6ad790b4d0074b3507457f0d9",
+    "darwin-arm64": "c1fbb456d7798d46269d1ffebc688c98252e7d66ddbada8fab797d4401808fff",
+    "linux-amd64-musl": "2a68aff77bb9f1c615fcee9a744f4a6f5487eec677ad59a5c13b1fac7b76d536",
+    "linux-arm64-musl": "ecd739f98a8d85986808f66607107ec723d7f3f993f205ee364b79df988cb637",
+    "windows-amd64-gnu": "de03c8fd8f4a6f4b9f484eecd30cbbe63d7b8507d5261496243fa0e2d4536d44",
 }
 
-TOOLCHAIN_EXTRAS_VERSION = "20251219"
+TOOLCHAIN_EXTRAS_VERSION = "20260202"
 
 [
     http_archive(
-        name = "prebuilts-extras-toolchain-artifacts-{target}".format(target = target.replace("-musl", "").replace("-gnu", "")),
+        name = "toolchain-extra-prebuilts-{target}".format(target = target.replace("-musl", "").replace("-gnu", "")),
         build_file = "//prebuilt/extras:BUILD.extras.tpl",
         sha256 = sha256,
         urls = ["https://github.com/cerisier/toolchains_llvm_bootstrapped/releases/download/prebuilts-extras-{version}/toolchain-extra-prebuilts-{version}-{target}.tar.zst".format(
