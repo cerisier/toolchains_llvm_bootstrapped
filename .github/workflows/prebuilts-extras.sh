@@ -20,7 +20,7 @@ bazel \
   --bazelrc=".github/workflows/ci.bazelrc" \
   build \
   --remote_header="x-buildbuddy-api-key=${BUILDBUDDY_API_KEY}" \
-  --config=bootstrap \
+  --@libarchive//:use_mbedtls=true \
   --config=prebuilt \
   --config=remote \
   --remote_download_outputs=toplevel \
