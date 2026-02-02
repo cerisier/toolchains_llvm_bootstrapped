@@ -31,8 +31,8 @@ cc_test(
 PLATFORMS = [
     "@toolchains_llvm_bootstrapped//platforms:linux_x86_64",
     "@toolchains_llvm_bootstrapped//platforms:linux_aarch64",
-    # "@toolchains_llvm_bootstrapped//platforms:macos_x86_64",
-    # "@toolchains_llvm_bootstrapped//platforms:macos_aarch64",
+    "@toolchains_llvm_bootstrapped//platforms:macos_x86_64",
+    "@toolchains_llvm_bootstrapped//platforms:macos_aarch64",
     "@toolchains_llvm_bootstrapped//platforms:windows_amd64",
     "@toolchains_llvm_bootstrapped//platforms:windows_arm64",
 ] + [
