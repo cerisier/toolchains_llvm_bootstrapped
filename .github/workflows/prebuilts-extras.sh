@@ -21,6 +21,7 @@ bazel \
   build \
   --remote_header="x-buildbuddy-api-key=${BUILDBUDDY_API_KEY}" \
   --@libarchive//:use_mbedtls=true \
+  --config=bootstrap \
   --config=prebuilt \
   --config=remote \
   --remote_download_outputs=toplevel \
@@ -30,18 +31,17 @@ rm -rf release
 mkdir -p release
 
 PLATFORMS=(
-  linux_amd64_musl linux-amd64-musl extra_bins
-  linux_arm64_musl linux-arm64-musl extra_bins
-  macos_arm64      darwin-arm64     extra_bins
-  windows_amd64    windows-amd64-gnu extra_bins
+  linux_amd64_musl linux-amd64-musl
+  linux_arm64_musl linux-arm64-musl
+  macos_arm64      darwin-arm64
+  windows_amd64    windows-amd64-gnu
 )
 
-for ((i=0; i<${#PLATFORMS[@]}; i+=3)); do
+for ((i=0; i<${#PLATFORMS[@]}; i+=2)); do
   platform_dir=${PLATFORMS[i]}
   archive_suffix=${PLATFORMS[i+1]}
-  target_name=${PLATFORMS[i+2]}
 
-  src="bazel-out/${platform_dir}-opt/bin/prebuilt/extras/${target_name}.tar.zst"
+  src="bazel-out/${platform_dir}-opt/bin/prebuilt/extras/extra_bins.tar.zst"
   dest="release/toolchain-extra-prebuilts-${BRANCH_PAYLOAD}-${archive_suffix}.tar.zst"
 
   if [[ ! -f "${src}" ]]; then
