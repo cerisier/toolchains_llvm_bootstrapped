@@ -30,11 +30,10 @@ rm -rf release
 mkdir -p release
 
 PLATFORMS=(
-  linux_amd64_musl linux-amd64-musl linux_amd64_musl
-  linux_arm64_musl linux-arm64-musl linux_arm64_musl
-  macos_arm64      darwin-arm64     macos_arm64
-  windows_amd64    windows-amd64-gnu windows_amd64
-  windows_arm64    windows-arm64-gnu windows_arm64
+  linux_amd64_musl linux-amd64-musl extra_bins
+  linux_arm64_musl linux-arm64-musl extra_bins
+  macos_arm64      darwin-arm64     extra_bins
+  windows_amd64    windows-amd64-gnu extra_bins
 )
 
 for ((i=0; i<${#PLATFORMS[@]}; i+=3)); do
