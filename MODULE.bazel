@@ -55,7 +55,7 @@ LLVM_TOOLCHAIN_EXTRAS_SHA256 = {
     "windows-arm64-gnu": "c5b7188a7c6582292a2c2800089cbdb2b4b240c6ad790b4d0074b3507457f0d9",
 }
 
-VERSION = "20251219"
+TOOLCHAIN_EXTRAS_VERSION = "20251219"
 
 [
     http_archive(
@@ -64,7 +64,7 @@ VERSION = "20251219"
         sha256 = sha256,
         urls = ["https://github.com/cerisier/toolchains_llvm_bootstrapped/releases/download/prebuilts-extras-{version}/toolchain-extra-prebuilts-{version}-{target}.tar.zst".format(
             target = target,
-            version = VERSION,
+            version = TOOLCHAIN_EXTRAS_VERSION,
         )],
     )
     for (target, sha256) in LLVM_TOOLCHAIN_EXTRAS_SHA256.items()
@@ -138,6 +138,47 @@ archive_override(
     urls = ["https://github.com/cerisier/libstdcxx-stubs-generator/archive/{}.tar.gz".format(LIBSTDCXX_STUBS_GENERATOR_COMMIT)],
 )
 
+PKGUTIL_COMMIT = "e609614143d81833d392255f6d434089b7e83bc7"
+bazel_dep(name = "xpkgutil", version = "1.0.13", dev_dependency = True)
+archive_override(
+    module_name = "xpkgutil",
+    integrity = "sha256-OQ7VtsPYS0msuzVFoSc3oIV/iviQf+cW7ATys4yy11w=",
+    strip_prefix = "pkgutil-{}".format(PKGUTIL_COMMIT),
+    urls = ["https://github.com/cerisier/pkgutil/archive/{}.tar.gz".format(PKGUTIL_COMMIT)],
+)
+
+# pbzx support for libarchive
+single_version_override(
+    module_name = "libarchive",
+    patches = [
+        "//third_party/libarchive:0001-libarchive_enable_xar_support.patch",
+        "//third_party/libarchive:0002-feat-add-pbzx-read-filter.patch",
+        "//third_party/libarchive:0003-give-mingw-acceptable-posix-types.patch",
+    ],
+    patch_strip = 1,
+)
+
+# bazel9 support: to be upstreamed to libarchive
+single_version_override(
+    module_name = "bzip2",
+    version = "1.0.8.bcr.3",
+)
+
+single_version_override(
+    module_name = "zstd",
+    version = "1.5.7.bcr.1",
+)
+
+single_version_override(
+    module_name = "xz",
+    version = "5.4.5.bcr.7",
+)
+
+single_version_override(
+    module_name = "mbedtls",
+    version = "3.6.0.bcr.1",
+)
+
 llvm_raw = use_extension("//:llvm_raw.bzl", "llvm_raw")
 use_repo(llvm_raw, "llvm-raw", "llvm_zlib", "llvm_zstd")
 
@@ -150,28 +191,6 @@ llvm.configure(
     ],
 )
 use_repo(llvm, "llvm-project")
-
-PKGUTIL_PREBUILTS_SHA256 = {
-    "darwin_arm64": "22e3f95e3b157f47fffef339318cea810eacffa345c1e22b3aea9fd12f7d75e9",
-    "linux_amd64": "sha256:e3366a62ac3d80c51acd19a3962b0141f1a5cfe4efe10d27d771e09d9c068960",
-    "linux_arm64": "sha256:bf1101e4e534dd4da2e288b96d5892c8263859b4bb7dc531f59ee49d26c1313d",
-    "windows_amd64": "sha256:d9864d2e692cb14bbe092c0fa010f3650d995248489d64350c6aa3b00827b5b9",
-}
-
-[
-    http_archive(
-        name = "pkgutil_{target}".format(target = target),
-        build_file_content = """
-exports_files(glob["*"])
-""".format(target = target, extension = ".exe" if "windows" in target else ""),
-        sha256 = sha256,
-        urls = ["https://github.com/cerisier/pkgutil/releases/download/v1.0.13/pkgutil_{target}{extension}.tar.gz".format(
-            target = target,
-            extension = ".exe" if "windows" in target else "",
-        )],
-    ) for (target, sha256) in PKGUTIL_PREBUILTS_SHA256.items()
-]
-
 
 ## OVERRIDES PORTS FROM DEPENDENCIES
 

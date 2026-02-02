@@ -17,8 +17,7 @@ def _http_pkg_archive_impl(rctx):
         auth = get_auth(rctx, rctx.attr.urls),
     )
 
-    host_pkgutil = Label("@pkgutil_%s//:pkgutil_%s" % (repo_utils.platform(rctx), repo_utils.platform(rctx)))
-    res = rctx.execute([str(rctx.path(host_pkgutil)), "--expand-full", ".downloaded.pkg", "tmp"])
+    res = rctx.execute(["/usr/sbin/pkgutil", "--expand-full", ".downloaded.pkg", "tmp"])
     if res.return_code != 0:
         fail("Failed to extract package: {}".format(res.stderr))
     rctx.delete(".downloaded.pkg")
