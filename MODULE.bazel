@@ -20,6 +20,7 @@ bazel_dep(name = "bazelrc-preset.bzl", version = "1.6.0", dev_dependency = True)
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 LLVM_VERSION = "21.1.8"
+
 PREBUILT_LLVM_SUFFIX = "-3"
 
 LLVM_TOOLCHAIN_MINIMAL_SHA256 = {
@@ -138,6 +139,7 @@ archive_override(
 )
 
 PKGUTIL_COMMIT = "e609614143d81833d392255f6d434089b7e83bc7"
+
 bazel_dep(name = "xpkgutil", version = "1.0.13", dev_dependency = True)
 archive_override(
     module_name = "xpkgutil",
@@ -150,12 +152,12 @@ archive_override(
 bazel_dep(name = "libarchive", version = "3.8.1", dev_dependency = True)
 single_version_override(
     module_name = "libarchive",
+    patch_strip = 1,
     patches = [
         "//third_party/libarchive:0001-libarchive_enable_xar_support.patch",
         "//third_party/libarchive:0002-feat-add-pbzx-read-filter.patch",
         "//third_party/libarchive:0003-give-mingw-acceptable-posix-types.patch",
     ],
-    patch_strip = 1,
 )
 
 # bazel9 support: to be upstreamed to libarchive
@@ -177,6 +179,13 @@ single_version_override(
 single_version_override(
     module_name = "mbedtls",
     version = "3.6.0.bcr.1",
+)
+
+single_version_override(
+    module_name = "rules_swift",
+    patch_strip = 1,
+    patches = ["//third_party/rules_swift:0001-allow-disabling-autoconfiguration.patch"],
+    version = "3.1.2",
 )
 
 llvm_raw = use_extension("//:llvm_raw.bzl", "llvm_raw")
