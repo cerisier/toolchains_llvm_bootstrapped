@@ -96,7 +96,7 @@ def declare_tool_map(exec_os, exec_cpu):
         src = prefix + "/bin/header-parser",
         data = [
             prefix + "/clang_builtin_headers_include_directory",
-            "@toolchains_llvm_bootstrapped//tools:clang++",
+            prefix + "/bin/clang++",
         ],
     )
 
@@ -106,13 +106,24 @@ def declare_tool_map(exec_os, exec_cpu):
         actual = "@toolchains_llvm_bootstrapped//tools/internal:static-library-validator",
     )
 
+    bootstrap_binary(
+        name = prefix + "/bin/llvm-nm",
+        platform = prefix + "_platform",
+        actual = "@llvm-project//llvm:llvm.stripped",
+    )
+
+    bootstrap_binary(
+        name = prefix + "/bin/c++filt",
+        platform = prefix + "_platform",
+        actual = "@llvm-project//llvm:llvm.stripped",
+    )
+
     cc_tool(
         name = prefix + "/static-library-validator",
         src = prefix + "/bin/static-library-validator",
         data = [
-            prefix + "/clang_builtin_headers_include_directory",
-            "@toolchains_llvm_bootstrapped//tools:c++filt",
-            "@toolchains_llvm_bootstrapped//tools:llvm-nm",
+            prefix + "/bin/c++filt",
+            prefix + "/bin/llvm-nm",
         ],
     )
 

@@ -33,7 +33,8 @@ def declare_llvm_targets(*, suffix = ""):
         "@rules_cc//cc/toolchains/actions:assembly_actions": ":clang",
         "@rules_cc//cc/toolchains/actions:c_compile": ":clang",
         "@toolchains_llvm_bootstrapped//toolchain:cpp_compile_actions_without_header_parsing": ":clang++",
-        "@rules_cc//cc/toolchains/actions:cpp_header_parsing": ":header_parser",
+        # TODO(zbarsky): Enable afer we release prebuilts
+        "@rules_cc//cc/toolchains/actions:cpp_header_parsing": ":clang++",
         "@rules_cc//cc/toolchains/actions:link_actions": ":lld",
         "@rules_cc//cc/toolchains/actions:objcopy_embed_data": ":llvm-objcopy",
         "@rules_cc//cc/toolchains/actions:strip": ":llvm-strip",

@@ -342,6 +342,17 @@ cc_args(
     requires_not_none = "@rules_cc//cc/toolchains/variables:output_file",
 )
 
+cc_args(
+    name = "validate_static_library_args",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:validate_static_library",
+    ],
+    env = select({
+        "@platforms//os:macos": {"DARWIN_TARGET": "1"},
+        "//conditions:default": {},
+    }),
+)
+
 # TODO: rules_cc passes extra args to these actions, ideally these would be fixed in rules_cc.
 cc_args(
     name = "ignore_unused_command_line_argument",
