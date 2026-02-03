@@ -2,7 +2,6 @@ load(":bootstrap_binary.bzl", "exec_bootstrap_binary")
 load("//tools:defs.bzl", "TOOLCHAIN_BINARIES")
 
 # bootstrap toolchains are declared top level
-
 [
     exec_bootstrap_binary(
         name = tool,

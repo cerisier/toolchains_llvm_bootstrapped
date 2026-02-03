@@ -337,9 +337,40 @@ cc_args(
     ],
     env = {
         "PARSE_HEADER": "{output_file}",
+        "CLANG_PATH": "{clang}",
     },
-    format = {"output_file": "@rules_cc//cc/toolchains/variables:output_file"},
+    format = {
+        "output_file": "@rules_cc//cc/toolchains/variables:output_file",
+        "clang": "//tools:clang++",
+    },
     requires_not_none = "@rules_cc//cc/toolchains/variables:output_file",
+    data = [
+        "//tools:clang++",
+    ],
+)
+
+cc_args(
+    name = "validate_static_library_args",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:validate_static_library",
+    ],
+    env = {
+        "CXXFILT_PATH": "{cxxfilt}",
+        "NM_PATH": "{nm}",
+    } | select({
+        "@platforms//os:macos": {
+            "DARWIN_TARGET": "1",
+        },
+        "//conditions:default": {}
+    }),
+    format = {
+        "cxxfilt": "//tools:c++filt",
+        "nm": "//tools:llvm-nm",
+    },
+    data = [
+        "//tools:c++filt",
+        "//tools:llvm-nm",
+    ],
 )
 
 # TODO: rules_cc passes extra args to these actions, ideally these would be fixed in rules_cc.

@@ -14,6 +14,15 @@ bazel_dep(name = "rules_shell", version = "0.6.1")
 bazel_dep(name = "with_cfg.bzl", version = "0.12.0")
 bazel_dep(name = "tar.bzl", version = "0.6.0")
 
+single_version_override(
+    module_name = "rules_cc",
+    version = "0.2.16",
+    patches = [
+        "//third_party/rules_cc:0001-allow-files-in-format-dict.patch",
+    ],
+    patch_strip = 1,
+)
+
 bazel_dep(name = "buildifier_prebuilt", version = "8.2.1", dev_dependency = True)
 bazel_dep(name = "bazelrc-preset.bzl", version = "1.6.0", dev_dependency = True)
 

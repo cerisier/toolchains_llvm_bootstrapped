@@ -111,8 +111,6 @@ def declare_tool_map(exec_os, exec_cpu):
         src = prefix + "/bin/static-library-validator",
         data = [
             prefix + "/clang_builtin_headers_include_directory",
-            "@toolchains_llvm_bootstrapped//tools:c++filt",
-            "@toolchains_llvm_bootstrapped//tools:llvm-nm",
         ],
     )
 

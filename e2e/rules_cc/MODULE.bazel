@@ -8,6 +8,14 @@ local_path_override(
     module_name = "toolchains_llvm_bootstrapped",
     path = "../../",
 )
+single_version_override(
+    module_name = "rules_cc",
+    version = "0.2.16",
+    patches = [
+        "0001-allow-files-in-format-dict.patch",
+    ],
+    patch_strip = 1,
+)
 
 # Register toolchains through the scoped repo to ensure this codepath works.
 llvm_toolchains = use_extension("@toolchains_llvm_bootstrapped//toolchain/extension:llvm.bzl", "llvm")

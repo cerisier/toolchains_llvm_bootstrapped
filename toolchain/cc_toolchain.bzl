@@ -6,8 +6,6 @@ def cc_toolchain(name, tool_map, module_map = None):
     cc_feature_set(
         name = name + "_known_features",
         all_of = [
-            "@rules_cc//cc/toolchains/args/layering_check:layering_check",
-            "@rules_cc//cc/toolchains/args/layering_check:use_module_maps",
             "@toolchains_llvm_bootstrapped//toolchain/features:static_link_cpp_runtimes",
             "@toolchains_llvm_bootstrapped//toolchain/features/runtime_library_search_directories:feature",
             "@toolchains_llvm_bootstrapped//toolchain/features:archive_param_file",
@@ -53,7 +51,6 @@ def cc_toolchain(name, tool_map, module_map = None):
             ],
             "@platforms//os:none": [],
         }) + [
-            "@rules_cc//cc/toolchains/args/layering_check:module_maps",
             # These are "enabled" but they only _actually_ get enabled when the underlying compilation mode is set.
             # This lets us properly order them before user_compile_flags and user_link_flags below.
             "@toolchains_llvm_bootstrapped//toolchain/features:opt",

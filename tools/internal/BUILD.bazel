@@ -1,47 +1,13 @@
-load("@bazel_lib//lib:expand_template.bzl", "expand_template")
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
-
-expand_template(
-    name = "expand_header_parser",
-    template = "header_parser.cc",
-    out = "expanded_header_parser.cc",
-    substitutions = {
-        "{CLANG_EXEC_PATH}": "$(execpath //tools:clang++)",
-    },
-    data = [
-        "//tools:clang++",
-    ],
-)
 
 cc_binary(
     name = "header-parser",
-    srcs = ["expanded_header_parser.cc"],
+    srcs = ["header_parser.cc"],
     visibility = ["//visibility:public"],
-)
-
-expand_template(
-    name = "expand_static_library_validator",
-    template = "static_library_validator.cc",
-    out = "expanded_static_library_validator.cc",
-    substitutions = {
-        "{CXXFILT_EXEC_PATH}": "$(execpath //tools:c++filt)",
-        "{NM_EXEC_PATH}": "$(execpath //tools:llvm-nm)",
-    } | select({
-        "@platforms//os:macos": {"{NM_EXTRA_ARGS}": "--no-weak"},
-        "//conditions:default": {"{NM_EXTRA_ARGS}": ""},
-    }),
-    data = [
-        "//tools:c++filt",
-        "//tools:llvm-nm",
-    ],
 )
 
 cc_binary(
     name = "static-library-validator",
-    srcs = ["expanded_static_library_validator.cc"],
-    data = [
-        "//tools:c++filt",
-        "//tools:llvm-nm",
-    ],
+    srcs = ["static_library_validator.cc"],
     visibility = ["//visibility:public"],
 )

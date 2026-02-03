@@ -292,6 +292,7 @@ cc_args_list(
         ":stdlib",
         ":unwindlib",
         ":resource_dir",
+        "//toolchain/args:validate_static_library_args",
         ":default_link_flags",
         # Needs to stay out of resource_dir since clang does not always search for crtstuff for all targets.
         ":default_startfiles",

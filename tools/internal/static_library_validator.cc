@@ -2,11 +2,11 @@
 #include <cctype>
 #include <errno.h>
 #include <fcntl.h>
-#include <sstream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -22,10 +22,7 @@
   #include <unistd.h>
 #endif
 
-// Injected at build-time.
-static const char kCxxfiltExecPath[] = "{CXXFILT_EXEC_PATH}";
-static const char kNmExecPath[] = "{NM_EXEC_PATH}";
-static const char kNmExtraArgs[] = "{NM_EXTRA_ARGS}";
+// Exec paths are provided via environment variables.
 
 struct SymbolEntry {
   std::string symbol;
@@ -37,17 +34,16 @@ static void PrintErrno(const char *what) {
   fprintf(stderr, "static_library_validator: %s: %s\n", what, strerror(errno));
 }
 
-static std::vector<std::string> SplitArgs(const char *raw) {
-  std::istringstream ss(raw ? raw : "");
-  std::vector<std::string> out;
-  std::string arg;
-  while (ss >> arg) out.push_back(arg);
-  return out;
-}
-
 static bool ShouldKeepType(char type) {
   return std::isupper(static_cast<unsigned char>(type)) &&
          type != 'U' && type != 'V' && type != 'W';
+}
+
+static std::string ResolveExecPath(const char *env_var) {
+  const char *from_env = getenv(env_var);
+  if (from_env && from_env[0]) return std::string(from_env);
+  fprintf(stderr, "static_library_validator: required env var %s is not set\n", env_var);
+  exit(2);
 }
 
 #if defined(_WIN32)
@@ -208,6 +204,8 @@ static bool ExecWithPipes(const std::vector<std::string> &argv,
     for (const auto &s : argv) args.push_back(const_cast<char *>(s.c_str()));
     args.push_back(nullptr);
     execv(args[0], args.data());
+    fprintf(stderr, "static_library_validator: execv(%s): %s\n",
+            args[0], strerror(errno));
     _exit(127);
   }
 
@@ -292,9 +290,14 @@ int main(int argc, char **argv) {
     return 2;
   }
 
-  std::vector<std::string> nm_args = {kNmExecPath, "-A", "-g", "-P"};
-  auto extra = SplitArgs(kNmExtraArgs);
-  nm_args.insert(nm_args.end(), extra.begin(), extra.end());
+  std::string nm_path = ResolveExecPath("NM_PATH");
+  std::string cxxfilt_path = ResolveExecPath("CXXFILT_PATH");
+
+  std::vector<std::string> nm_args = {nm_path, "-A", "-g", "-P"};
+  const char *darwin_target = getenv("DARWIN_TARGET");
+  if (darwin_target && strcmp(darwin_target, "1") == 0) {
+    nm_args.push_back("--no-weak");
+  }
   nm_args.push_back(argv[1]);
 
   std::string nm_output;
@@ -332,7 +335,7 @@ int main(int argc, char **argv) {
   for (const auto &l : dup_lines) dup_block.append(l).push_back('\n');
 
   std::string demangled;
-  std::vector<std::string> filt_args = {kCxxfiltExecPath};
+  std::vector<std::string> filt_args = {cxxfilt_path};
   if (!ExecWithPipes(filt_args, dup_block, &demangled)) return 2;
 
   fprintf(stderr, "Duplicate symbols found in %s:\n", argv[1]);

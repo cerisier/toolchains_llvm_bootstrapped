@@ -5,9 +5,6 @@
 #include <string.h>
 #include <unistd.h>
 
-// Injected at build-time, see `expand_header_parser` in //toolchain/llvm:llvm.bzl .
-static const char kClangExecPath[] = "{CLANG_EXEC_PATH}";
-
 int main(int argc, char **argv) {
   const char *path = getenv("PARSE_HEADER");
   if (path == nullptr || path[0] == '\0') {
@@ -27,7 +24,13 @@ int main(int argc, char **argv) {
     exit(2);
   }
 
-  argv[0] = const_cast<char *>(kClangExecPath);
-  execv(kClangExecPath, argv);
+  const char *clang_env = getenv("CLANG_PATH");
+  if (clang_env == nullptr || clang_env[0] == '\0') {
+    fprintf(stderr, "header_parser: required env var HEADER_PARSER_CLANG is not set\n");
+    exit(2);
+  }
+
+  argv[0] = const_cast<char *>(clang_env);
+  execv(clang_env, argv);
   fprintf(stderr, "header_parser: execv failed: %s\n", strerror(errno));
 }

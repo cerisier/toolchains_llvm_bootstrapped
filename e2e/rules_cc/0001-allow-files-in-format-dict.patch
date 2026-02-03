@@ -1,0 +1,67 @@
+diff --git a/cc/private/rules_impl/cc_static_library.bzl b/cc/private/rules_impl/cc_static_library.bzl
+index 7460f2a..92b15d5 100644
+--- a/cc/private/rules_impl/cc_static_library.bzl
++++ b/cc/private/rules_impl/cc_static_library.bzl
+@@ -122,6 +122,12 @@ def _validate_static_library(*, name, actions, cc_toolchain, feature_configurati
+     args.add(static_library)
+     args.add(validation_output)
+ 
++    env = cc_common.get_environment_variables(
++        feature_configuration = feature_configuration,
++        action_name = ACTION_NAMES.validate_static_library,
++        variables = cc_common.empty_variables(),
++    )
++
+     execution_requirements_keys = cc_common.get_execution_requirements(
+         feature_configuration = feature_configuration,
+         action_name = ACTION_NAMES.validate_static_library,
+@@ -130,6 +136,7 @@ def _validate_static_library(*, name, actions, cc_toolchain, feature_configurati
+     actions.run(
+         executable = validator_path,
+         arguments = [args],
++        env = env,
+         execution_requirements = {k: "" for k in execution_requirements_keys},
+         inputs = depset(
+             direct = [static_library],
+diff --git a/cc/toolchains/args.bzl b/cc/toolchains/args.bzl
+index a852292..bb651c6 100644
+--- a/cc/toolchains/args.bzl
++++ b/cc/toolchains/args.bzl
+@@ -44,11 +44,15 @@ visibility("public")
+ def _cc_args_impl(ctx):
+     actions = collect_action_types(ctx.attr.actions)
+ 
++    format_dict = {k: v for v, k in ctx.attr.format.items()}
+     formatted_env, used_format_vars = format_dict_values(
+         env = ctx.attr.env,
+         must_use = [],  # checking for unused variables in done when formatting `args`.
+-        format = {k: v for v, k in ctx.attr.format.items()},
++        format = format_dict,
+     )
++    vars_for_validation = [
++        var for var in used_format_vars if VariableInfo in format_dict[var]
++    ]
+ 
+     for path in ctx.attr.allowlist_absolute_include_directories:
+         if not is_path_absolute(path):
+@@ -80,7 +84,7 @@ def _cc_args_impl(ctx):
+         actions = actions.to_list(),
+         env = env,
+         variables = ctx.attr._variables[BuiltinVariablesInfo].variables,
+-        used_format_vars = used_format_vars,
++        used_format_vars = vars_for_validation,
+     )
+ 
+     args = ArgsInfo(
+diff --git a/cc/toolchains/impl/nested_args.bzl b/cc/toolchains/impl/nested_args.bzl
+index fa17d79..bd9c792 100644
+--- a/cc/toolchains/impl/nested_args.bzl
++++ b/cc/toolchains/impl/nested_args.bzl
+@@ -67,6 +67,7 @@ directory as additional files.
+     ),
+     "format": attr.label_keyed_string_dict(
+         doc = "Variables to be used in substitutions",
++        allow_files = True,
+     ),
+     "iterate_over": attr.label(providers = [VariableInfo], doc = "Replacement for flag_group.iterate_over"),
+     "requires_not_none": attr.label(providers = [VariableInfo], doc = "Replacement for flag_group.expand_if_available"),
