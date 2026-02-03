@@ -16,7 +16,7 @@ expand_template(
 cc_binary(
     name = "header-parser",
     srcs = ["expanded_header_parser.cc"],
-    visibility = ["//:__subpackages__"],
+    visibility = ["//visibility:public"],
 )
 
 expand_template(
@@ -43,5 +43,5 @@ cc_binary(
         "//tools:c++filt",
         "//tools:llvm-nm",
     ],
-    visibility = ["//:__subpackages__"],
+    visibility = ["//visibility:public"],
 )
