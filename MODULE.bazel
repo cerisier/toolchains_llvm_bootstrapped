@@ -102,7 +102,7 @@ use_repo(musl, "musl_libc")
 mingw = use_extension("//runtimes/mingw/extension:mingw.bzl", "mingw")
 use_repo(mingw, "mingw")
 
-osx = use_extension("//toolchain/extension:osx.bzl", "osx")
+osx = use_extension("//extensions:osx.bzl", "osx")
 use_repo(osx, "macosx15.4.sdk")
 
 glibc = use_extension("//runtimes/glibc/extension:glibc.bzl", "glibc")

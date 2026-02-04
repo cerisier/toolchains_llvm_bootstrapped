@@ -40,14 +40,14 @@ This will register all toolchains declared by this module for all supported targ
 If you wish to register only a subset of all possible toolchains, use the `@toolchains_llvm_bootstrapped//toolchain/extension:llvm.bzl` module extension like so:
 
 ```sh
-llvm_toolchains = use_extension("@toolchains_llvm_bootstrapped//toolchain/extension:llvm.bzl", "llvm")
+toolchain = use_extension("@toolchains_llvm_bootstrapped//extensions:toolchain.bzl", "toolchain")
 
-llvm_toolchains.exec(arch = "x86_64", os = "linux")
-llvm_toolchains.exec(arch = "aarch64", os = "linux")
-llvm_toolchains.target(arch = "x86_64", os = "linux")
-llvm_toolchains.target(arch = "aarch64", os = "linux")
+toolchain.exec(arch = "x86_64", os = "linux")
+toolchain.exec(arch = "aarch64", os = "linux")
+toolchain.target(arch = "x86_64", os = "linux")
+toolchain.target(arch = "aarch64", os = "linux")
 
-use_repo(llvm_toolchains, "llvm_toolchains")
+use_repo(toolchain, "llvm_toolchains")
 
 register_toolchains("@llvm_toolchains//:all")
 ```
