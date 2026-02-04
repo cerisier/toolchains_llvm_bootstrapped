@@ -138,14 +138,22 @@ archive_override(
     urls = ["https://github.com/cerisier/libstdcxx-stubs-generator/archive/{}.tar.gz".format(LIBSTDCXX_STUBS_GENERATOR_COMMIT)],
 )
 
-PKGUTIL_COMMIT = "e609614143d81833d392255f6d434089b7e83bc7"
+PKGUTIL_COMMIT = "328997cd5cf53fef8d54fb0303d011a426f6f840"
 
-bazel_dep(name = "xpkgutil", version = "1.0.13", dev_dependency = True)
+bazel_dep(name = "xpkgutil", version = "1.0.14", dev_dependency = True)
 archive_override(
     module_name = "xpkgutil",
-    integrity = "sha256-OQ7VtsPYS0msuzVFoSc3oIV/iviQf+cW7ATys4yy11w=",
     strip_prefix = "pkgutil-{}".format(PKGUTIL_COMMIT),
     urls = ["https://github.com/cerisier/pkgutil/archive/{}.tar.gz".format(PKGUTIL_COMMIT)],
+)
+
+http_archive(
+    name = "xpkgutilprebuilt",
+    urls = ["https://github.com/cerisier/pkgutil/releases/download/v1.1.0/pkgutil_darwin_arm64.tar.gz"],
+    integrity = "sha256-L68cizUs98GCMG9c1/0z+5H1EgRPge2ZTsh5ie42NnM=",
+    build_file_content = """
+exports_files(["pkgutil_darwin_arm64"])
+    """,
 )
 
 # pbzx support for libarchive

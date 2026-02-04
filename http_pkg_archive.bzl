@@ -17,26 +17,21 @@ def _http_pkg_archive_impl(rctx):
         auth = get_auth(rctx, rctx.attr.urls),
     )
 
-    host_pkgutil = Label("@toolchain-extra-prebuilts-%s//:bin/pkgutil" % (repo_utils.platform(rctx).replace("_", "-")))
-    res = rctx.execute([str(rctx.path(host_pkgutil)), "--expand-full", ".downloaded.pkg", "tmp"])
-    if res.return_code != 0:
-        fail("Failed to extract package: {}".format(res.stderr))
-    rctx.delete(".downloaded.pkg")
-
+    args = []
     if rctx.attr.strip_files:
         for file in rctx.attr.strip_files:
-            rctx.delete("tmp/Payload/" + file)
-
-    strip_prefix = "tmp/Payload/"
+            args.extend(["--exclude", file])
     if rctx.attr.strip_prefix:
-        strip_prefix += rctx.attr.strip_prefix + "/"
-    extracted = rctx.path(strip_prefix)
-    if not extracted.is_dir or not extracted.exists:
-        fail("Extracted package does not contain expected directory: {}".format(strip_prefix))
-    entries = extracted.readdir(watch = "no")
-    for entry in entries:
-        rctx.execute(["mv", str(entry), entry.basename])
-    rctx.delete(extracted)
+        args.extend(["--strip-components", str(len(rctx.attr.strip_prefix.split("/")))])
+    args.extend(["--expand-full", ".downloaded.pkg", "."])
+
+    # host_pkgutil = Label("@toolchain-extra-prebuilts-%s//:bin/pkgutil" % (repo_utils.platform(rctx).replace("_", "-")))
+    host_pkgutil = Label("@xpkgutilprebuilt//:pkgutil_darwin_arm64")
+    res = rctx.execute([str(rctx.path(host_pkgutil))] + args)
+    if res.return_code != 0:
+        fail("Failed to extract package: {}".format(res.stderr))
+
+    rctx.delete(".downloaded.pkg")
     workspace_and_buildfile(rctx)
     patch(rctx)
 

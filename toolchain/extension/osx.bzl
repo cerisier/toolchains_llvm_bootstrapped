@@ -32,9 +32,9 @@ def _osx_extension_impl(mctx):
         build_file_content = build_file_content,
         sha256 = "ba3453d62b3d2babf67f3a4a44e8073d6555c85f114856f4390a1f53bd76e24a",
         strip_files = [
-            "Library/Developer/CommandLineTools/SDKs/MacOSX15.5.sdk/System/Library/Frameworks/Ruby.framework/Versions/Current/Headers/ruby",
+            "Payload/Library/Developer/CommandLineTools/SDKs/MacOSX15.5.sdk/System/Library/Frameworks/Ruby.framework/Versions/Current/Headers/ruby",
         ],
-        strip_prefix = "Library/Developer/CommandLineTools/SDKs/MacOSX15.5.sdk",
+        strip_prefix = "Payload/Library/Developer/CommandLineTools/SDKs/MacOSX15.5.sdk",
         # urls = ["https://swcdn.apple.com/content/downloads/10/32/082-12052-A_AHPGDY76PT/1a419zaf3vh8o9t3c0usblyr8eystpnsh5/CLTools_macOSNMOS_SDK.pkg"],
         urls = ["https://swcdn.apple.com/content/downloads/52/01/082-41241-A_0747ZN8FHV/dectd075r63pppkkzsb75qk61s0lfee22j/CLTools_macOSNMOS_SDK.pkg"],
     )
