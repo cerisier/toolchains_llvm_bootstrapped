@@ -14,9 +14,6 @@ bazel_dep(name = "rules_shell", version = "0.6.1")
 bazel_dep(name = "with_cfg.bzl", version = "0.12.0")
 bazel_dep(name = "tar.bzl", version = "0.6.0")
 
-bazel_dep(name = "buildifier_prebuilt", version = "8.2.1", dev_dependency = True)
-bazel_dep(name = "bazelrc-preset.bzl", version = "1.6.0", dev_dependency = True)
-
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 LLVM_VERSION = "21.1.8"
@@ -48,7 +45,7 @@ LLVM_TOOLCHAIN_MINIMAL_SHA256 = {
     for (target, sha256) in LLVM_TOOLCHAIN_MINIMAL_SHA256.items()
 ]
 
-LLVM_TOOLCHAIN_EXTRAS_SHA256 = {
+TOOLCHAIN_EXTRAS_SHA256 = {
     "darwin-arm64": "8dcd48d1033cbb6a7f6546a15210bb1bd00b6f1af88c048c609e9f3e55552983",
     "linux-amd64-musl": "4df04fb7b6c9cc444fa19e02071439bee7364850bfd2b4b949bbb4bd63c639b4",
     "linux-arm64-musl": "0afd56654ee29c8cf9ffbfa28dd052f0a89d81d8c6a96be5498c3eeda83b024d",
@@ -67,34 +64,21 @@ TOOLCHAIN_EXTRAS_VERSION = "20260204"
             version = TOOLCHAIN_EXTRAS_VERSION,
         )],
     )
-    for (target, sha256) in LLVM_TOOLCHAIN_EXTRAS_SHA256.items()
+    for (target, sha256) in TOOLCHAIN_EXTRAS_SHA256.items()
 ]
 
-LLVM_RELEASE_ASSETS_SHA256 = {
-    "compiler-rt": "dd54ae21aee1780fac59445b51ebff601ad016b31ac3a7de3b21126fd3ccb229",
-    "libcxx": "6422a58a5c29b7f4fda224cfdc07842be8a208a61301bbba7a219116e3351809",
-    "libcxxabi": "709c9a63bde1e36a80d8675becc38073b85f0fa1b4111e34542b885c9e1239da",
-    "libunwind": "03e8adc6c3bdde657dcaedc94886ea70d1f7d551d622fcd8a36a8300e5c36cbc",
-}
+llvm_source = use_extension("//extensions:llvm_source.bzl", "llvm_source")
+use_repo(llvm_source, "compiler-rt", "libcxx", "libcxxabi", "libunwind", "llvm-raw", "llvm_zlib", "llvm_zstd")
 
-[
-    http_archive(
-        name = name,
-        build_file = "//third_party/llvm-project/20.x/{name}:BUILD.tpl".format(name = name),
-        patch_args = ["-p1"],
-        patches = ["//third_party/llvm-project/20.x/libcxx:lgamma_r.patch"] if name == "libcxx" else [],
-        sha256 = sha256,
-        strip_prefix = "{name}-{llvm_version}.src".format(
-            name = name,
-            llvm_version = LLVM_VERSION,
-        ),
-        urls = ["https://github.com/llvm/llvm-project/releases/download/llvmorg-{llvm_version}/{name}-{llvm_version}.src.tar.xz".format(
-            name = name,
-            llvm_version = LLVM_VERSION,
-        )],
-    )
-    for (name, sha256) in LLVM_RELEASE_ASSETS_SHA256.items()
-]
+llvm = use_extension("//extensions:llvm.bzl", "llvm")
+llvm.configure(
+    targets = [
+        "AArch64",
+        "X86",
+        "WebAssembly",
+    ],
+)
+use_repo(llvm, "llvm-project")
 
 musl = use_extension("//runtimes/musl/extension:musl.bzl", "musl")
 use_repo(musl, "musl_libc")
@@ -117,7 +101,11 @@ kernel_headers = use_extension("//kernel/extension:kernel_headers.bzl", "kernel_
 kernel_headers.index(file = "//kernel/extension:kernel_headers_index.json")
 use_repo(kernel_headers, "kernel_headers")
 
-## DEV DEPENDENCIES
+######################### DEV DEPENDENCIES ###################################
+
+bazel_dep(name = "buildifier_prebuilt", version = "8.2.1", dev_dependency = True)
+bazel_dep(name = "bazelrc-preset.bzl", version = "1.6.0", dev_dependency = True)
+
 GLIBC_STUBS_GENERATOR_COMMIT = "33276300351d5a3cbedd308f4d21669b8e8ef83d"
 
 bazel_dep(name = "glibc-stubs-generator", version = "2.0.1", dev_dependency = True)
@@ -188,22 +176,7 @@ single_version_override(
     version = "3.1.2",
 )
 
-llvm_raw = use_extension("//:llvm_raw.bzl", "llvm_raw")
-use_repo(llvm_raw, "llvm-raw", "llvm_zlib", "llvm_zstd")
-
-llvm = use_extension("//:llvm.bzl", "llvm")
-llvm.configure(
-    targets = [
-        "AArch64",
-        "X86",
-        "WebAssembly",
-    ],
-)
-use_repo(llvm, "llvm-project")
-
 ## OVERRIDES PORTS FROM DEPENDENCIES
-
-RULES_ZIG_COMMIT = "b9739c615ce62b64ee595ac4bcd9ee7cc06b0422"  # branch=zml
 
 bazel_dep(name = "rules_zig", version = "0.12.2", dev_dependency = True)
 
