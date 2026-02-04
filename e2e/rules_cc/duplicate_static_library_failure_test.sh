@@ -6,6 +6,8 @@ LOG="${TEST_TMPDIR:?}/duplicate_static_library.log"
 BAZEL_BIN="${BAZEL_BIN:-bazel}"
 
 cd "${WORKSPACE_ROOT}"
+# Bazelisk fails early if neither HOME nor XDG_CACHE_HOME are exported.
+export HOME="${TEST_TMPDIR}"
 
 if "${BAZEL_BIN}" \
     --bazelrc=.bazelrc \
@@ -14,7 +16,6 @@ if "${BAZEL_BIN}" \
     --curses=yes \
     --remote_cache= \
     --bes_backend= \
-    --config=bootstrap \
     //:duplicate_symbol_lib 2>&1 | tee "${LOG}"; then
   echo "Expected duplicate_symbol_lib to fail duplicate symbol validation, but build succeeded."
   exit 1

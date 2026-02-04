@@ -15,8 +15,8 @@ def platform_extra_binary(binary):
         "@toolchains_llvm_bootstrapped//platforms/config:macos_aarch64": "@toolchain-extra-prebuilts-darwin-arm64//:%s" % binary,
         "@toolchains_llvm_bootstrapped//platforms/config:linux_x86_64": "@toolchain-extra-prebuilts-linux-amd64//:%s" % binary,
         "@toolchains_llvm_bootstrapped//platforms/config:linux_aarch64": "@toolchain-extra-prebuilts-linux-arm64//:%s" % binary,
-        "@toolchains_llvm_bootstrapped//platforms/config:windows_aarch64": "@toolchain-extra-prebuilts-windows-arm64//:%s" % binary,
-        "@toolchains_llvm_bootstrapped//platforms/config:windows_x86_64": "@toolchain-extra-prebuilts-windows-amd64//:%s" % binary,
+        "@toolchains_llvm_bootstrapped//platforms/config:windows_aarch64": "@toolchain-extra-prebuilts-windows-arm64//:%s.exe" % binary,
+        "@toolchains_llvm_bootstrapped//platforms/config:windows_x86_64": "@toolchain-extra-prebuilts-windows-amd64//:%s.exe" % binary,
     })
 
 def _tool_repo(exec_os, exec_cpu):
