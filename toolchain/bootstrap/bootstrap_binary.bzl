@@ -1,6 +1,33 @@
 load("@bazel_lib//lib:copy_file.bzl", "COPY_FILE_TOOLCHAINS", "copy_file_action")
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory_bin_action")
 
+# Enable the same set of tools we provide with prebuilts.
+_LLVM_TOOLS = [
+    "clang",
+    "clang-scan-deps",
+    "dsymutil",
+    "lld",
+    "llvm-ar",
+    "llvm-cgdata",
+    "llvm-cxxfilt",
+    "llvm-debuginfod-find",
+    "llvm-dwp",
+    "llvm-gsymutil",
+    "llvm-ifs",
+    "llvm-libtool-darwin",
+    "llvm-lipo",
+    "llvm-ml",
+    "llvm-mt",
+    "llvm-nm",
+    "llvm-objcopy",
+    "llvm-objdump",
+    "llvm-rc",
+    "llvm-readobj",
+    "llvm-size",
+    "llvm-symbolizer",
+    "sancov",
+]
+
 def _bootstrap_transition_impl(settings, attr):
     return {
         "//command_line_option:platforms": str(attr.platform),
@@ -11,19 +38,7 @@ def _bootstrap_transition_impl(settings, attr):
         # We want to build those binaries using the prebuilt compiler toolchain
         "//toolchain:source": "prebuilt",
 
-        # Enable the same set of tools we provide with prebuilts.
-        "@llvm-project//llvm:driver-tools": [
-            "clang",
-            "dsymutil",
-            "lld",
-            "llvm-ar",
-            "llvm-cxxfilt",
-            "llvm-libtool-darwin",
-            "llvm-nm",
-            "llvm-objcopy",
-            "llvm-size",
-            "llvm-symbolizer",
-        ],
+        "@llvm-project//llvm:driver-tools": _LLVM_TOOLS,
     }
 
 bootstrap_transition = transition(
@@ -89,18 +104,7 @@ def _exec_bootstrap_transition_impl(settings, attr):
         "//toolchain:source": "prebuilt",
 
         # Enable the same set of tools we provide with prebuilts.
-        "@llvm-project//llvm:driver-tools": [
-            "clang",
-            "dsymutil",
-            "lld",
-            "llvm-ar",
-            "llvm-cxxfilt",
-            "llvm-libtool-darwin",
-            "llvm-nm",
-            "llvm-objcopy",
-            "llvm-size",
-            "llvm-symbolizer",
-        ],
+        "@llvm-project//llvm:driver-tools": _LLVM_TOOLS,
     }
 
 exec_bootstrap_transition = transition(

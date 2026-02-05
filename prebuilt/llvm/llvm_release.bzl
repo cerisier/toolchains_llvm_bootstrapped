@@ -2,56 +2,7 @@
 load("@tar.bzl", "tar", "mtree_spec", "mtree_mutate")
 load("@llvm-project//:vars.bzl", "LLVM_VERSION_MAJOR")
 load("//prebuilt:mtree.bzl", "mtree")
-#load("//tools:defs.bzl", "TOOLCHAIN_BINARIES")
-
-# TODO(zbarsky): Remove thise after we release
-TOOLCHAIN_BINARIES = [
-    "c++filt",
-    "clang",
-    "clang++",
-    "clang-cl",
-    "clang-cpp",
-    "clang-scan-deps",
-    "dsymutil",
-    "lld",
-    "ld.lld",
-    "ld64.lld",
-    "lld-link",
-    "wasm-ld",
-    "llvm-ar",
-    "llvm-cgdata",
-    "llvm-cxxfilt",
-    "llvm-debuginfod-find",
-    "llvm-dwp",
-    "llvm-dlltool",
-    "llvm-gsymutil",
-    "llvm-ifs",
-    "llvm-libtool-darwin",
-    "llvm-lipo",
-    "llvm-ml",
-    "llvm-mt",
-    "llvm-nm",
-    "llvm-ranlib",
-    "llvm-objcopy",
-    "llvm-install-name-tool",
-    "llvm-bitcode-strip",
-    "llvm-objdump",
-    "llvm-rc",
-    "windres",
-    "llvm-readobj",
-    "readelf",
-    "llvm-size",
-    "llvm-strip",
-    "llvm-symbolizer",
-    "addr2line",
-    # "clang-tidy",
-    # "clang-format",
-    # "clangd",
-    # "llvm-profdata",
-    # "llvm-cov",
-    "otool",
-    "sancov",
-]
+load("//tools:defs.bzl", "TOOLCHAIN_BINARIES")
 
 def llvm_release(name, bin_suffix = ""):
     mtree_spec(

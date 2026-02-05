@@ -18,14 +18,14 @@ http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "ht
 
 LLVM_VERSION = "21.1.8"
 
-PREBUILT_LLVM_SUFFIX = "-3"
+PREBUILT_LLVM_SUFFIX = "-5"
 
 LLVM_TOOLCHAIN_MINIMAL_SHA256 = {
-    "darwin-arm64": "680ac53e1b0e47b39970a92351f719e2c6608dbe767ab9aaa011cc69f21a2e69",
-    "linux-amd64-musl": "69ace4e9c71ce74d827b4cf182a3c886d8abad48dbf0acceba20397b5d100a26",
-    "linux-arm64-musl": "8cdb101e50585371498b1215eaa76d90d953c6ae27ab17936037ee21f365c533",
-    "windows-amd64": "bdbe6a839f05af341e5f2a82d3248f7b9055d1e6987f766f2b25c1119498390b",
-    "windows-arm64": "f24b0527c1de96877725e90ed4707d39de200641136a982196dc35fe02a1b3b1",
+    "darwin-arm64": "7f3067e14e65acd1bce873136e01ab17e680f25ba7d83d32c09af215d8fb546a",
+    "linux-amd64-musl": "906985c22134e13c5356542e7f04cf1ef8f1ad1711d7161f89da4c42ac079e8b",
+    "linux-arm64-musl": "80b947a8424ccbe2808b3fef62bfbf5a1a9942b8e0af569b53d62b1e54dfdbda",
+    "windows-amd64": "9ba42717946ab0c90ceb0db45fcd033dd1e3a46bf7d8b13e7c7d50feb68b8ef7",
+    "windows-arm64": "24049b3fe7f8ac6c6a59ed0795492b7e427cfbc8511691274b6a412869c4dc73",
 }
 
 [

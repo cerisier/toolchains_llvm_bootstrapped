@@ -20,6 +20,7 @@ def declare_tool_map(exec_os, exec_cpu):
         "@rules_cc//cc/toolchains/actions:c_compile": prefix + "/clang",
         "@toolchains_llvm_bootstrapped//toolchain:cpp_compile_actions_without_header_parsing": prefix + "/clang++",
         "@rules_cc//cc/toolchains/actions:cpp_header_parsing": prefix + "/header-parser",
+        "@rules_cc//cc/toolchains/actions:dwp": prefix + "/llvm-dwp",
         "@rules_cc//cc/toolchains/actions:link_actions": prefix + "/lld",
         "@rules_cc//cc/toolchains/actions:objcopy_embed_data": prefix + "/llvm-objcopy",
         "@rules_cc//cc/toolchains/actions:strip": prefix + "/llvm-strip",
@@ -182,6 +183,17 @@ def declare_tool_map(exec_os, exec_cpu):
     cc_tool(
         name = prefix + "/llvm-libtool-darwin",
         src = prefix + "/bin/llvm-libtool-darwin",
+    )
+
+    bootstrap_binary(
+        name = prefix + "/bin/llvm-dwp",
+        platform = prefix + "_platform",
+        actual = "@llvm-project//llvm:llvm.stripped",
+    )
+
+    cc_tool(
+        name = prefix + "/llvm-dwp",
+        src = prefix + "/bin/llvm-dwp",
     )
 
     bootstrap_binary(

@@ -95,6 +95,7 @@ def declare_llvm_targets(*, suffix = ""):
         "@rules_cc//cc/toolchains/actions:cpp_header_parsing": ":header_parser",
         "@rules_cc//cc/toolchains/actions:link_actions": ":lld",
         "@rules_cc//cc/toolchains/actions:objcopy_embed_data": ":llvm-objcopy",
+        "@rules_cc//cc/toolchains/actions:dwp": ":llvm-dwp",
         "@rules_cc//cc/toolchains/actions:strip": ":llvm-strip",
         "@rules_cc//cc/toolchains/actions:validate_static_library": ":static_library_validator",
     }
@@ -159,6 +160,11 @@ def declare_llvm_targets(*, suffix = ""):
     cc_tool(
         name = "llvm-objcopy",
         src = "bin/llvm-objcopy" + suffix,
+    )
+
+    cc_tool(
+        name = "llvm-dwp",
+        src = "bin/llvm-dwp" + suffix,
     )
 
     cc_tool(
