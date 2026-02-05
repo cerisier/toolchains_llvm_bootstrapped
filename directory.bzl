@@ -42,7 +42,9 @@ def _headers_directory_impl(ctx):
         ctx.attr.directory[DirectoryInfo],
         SourceDirectoryInfo(),
         DefaultInfo(
-            files = ctx.attr.source_directory[DefaultInfo].files,
+            # Surface the actual files so actions get individual artifacts instead of
+            # a directory placeholder, which some actions reject.
+            files = ctx.attr.directory[DefaultInfo].files,
         ),
     ]
 
@@ -53,4 +55,3 @@ _headers_directory = rule(
         "source_directory": attr.label(),
     },
 )
-

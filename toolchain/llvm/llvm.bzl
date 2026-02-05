@@ -170,6 +170,8 @@ def declare_llvm_targets(*, suffix = ""):
         name = "macos_target_headers",
         srcs = [
             ":builtin_headers",
+            "@toolchains_llvm_bootstrapped//runtimes/libcxx:libcxx_headers_include_search_directory",
+            "@toolchains_llvm_bootstrapped//runtimes/libcxx:libcxxabi_headers_include_search_directory",
             "@macosx15.4.sdk//:sysroot",
         ],
     )

@@ -72,11 +72,14 @@ def _include_path_impl(ctx):
     textual_headers_depsets = []
 
     for src in ctx.attr.srcs:
-        if SourceDirectoryInfo in src or DirectoryInfo not in src:
-            # We're either a source directory or an output directory (Tree Artifact).
-            submodule_directories.append(src[DefaultInfo].files)
-        else:
+        if SourceDirectoryInfo in src:
+            # Source directories expose the DirectoryInfo so we can point umbrella
+            # modules at the actual directory path.
+            submodule_directories.append(depset([src[DirectoryInfo]]))
+        elif DirectoryInfo in src:
             textual_headers_depsets.append(src[DirectoryInfo].transitive_files)
+        else:
+            textual_headers_depsets.append(src[DefaultInfo].files)
 
     return [
         IncludePathInfo(
