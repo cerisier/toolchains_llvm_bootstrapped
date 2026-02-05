@@ -1,14 +1,7 @@
-load(
-    "@bazel_tools//tools/build_defs/repo:utils.bzl",
-    "get_auth",
-    "workspace_and_buildfile",
-)
+load("@bazel_tools//tools/build_defs/repo:utils.bzl", "get_auth")
 load("@bazel_lib//lib:repo_utils.bzl", "repo_utils")
 
 def _http_pkg_archive_impl(rctx):
-    if rctx.attr.build_file and rctx.attr.build_file_content:
-        fail("Only one of build_file and build_file_content can be provided.")
-
     rctx.download(
         url = rctx.attr.urls,
         output = ".downloaded.pkg",
@@ -32,7 +25,7 @@ def _http_pkg_archive_impl(rctx):
     if strip_prefix:
         args.extend(["--strip-components", str(len(strip_prefix.split("/")))])
 
-    args.extend(["--expand-full", ".downloaded.pkg", "."])
+    args.extend(["--expand-full", ".downloaded.pkg", rctx.attr.dst])
 
     # host_pkgutil = Label("@toolchain-extra-prebuilts-%s//:bin/pkgutil" % (repo_utils.platform(rctx).replace("_", "-")))
     host_pkgutil = Label("@xpkgutilprebuilt//:pkgutil_darwin_arm64")
@@ -41,7 +34,9 @@ def _http_pkg_archive_impl(rctx):
         fail("Failed to extract package: {}".format(res.stderr))
 
     rctx.delete(".downloaded.pkg")
-    workspace_and_buildfile(rctx)
+
+    for file, label in rctx.attr.files.items():
+        rctx.file(file, rctx.read(label))
 
     return rctx.repo_metadata(reproducible = True)
 
@@ -50,12 +45,10 @@ http_pkg_archive = repository_rule(
     attrs = {
         "urls": attr.string_list(mandatory = True),
         "sha256": attr.string(mandatory = True),
+        "dst": attr.string(mandatory = True),
         "includes": attr.string_list(),
         "excludes": attr.string_list(),
         "strip_prefix": attr.string(),
-        "build_file": attr.label(allow_single_file = True),
-        "build_file_content": attr.string(),
-        "workspace_file": attr.label(allow_single_file = True),
-        "workspace_file_content": attr.string(),
+        "files": attr.string_keyed_label_dict(),
     },
 )
