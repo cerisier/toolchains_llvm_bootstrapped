@@ -25,7 +25,19 @@ def _osx_extension_impl(mctx):
     # Offering a minimal sysroot allows for building basic cross platform applications.
     # Users can extend the sysroot via `osx.framework` module extension tags.
 
-    includes = ["usr/*"]
+    includes = [
+        "usr/include/*",
+        "usr/lib/libc.tbd",
+        "usr/lib/libc++*",
+        "usr/lib/libcharset*",
+        "usr/lib/libiconv*",
+        "usr/lib/libm.tbd",
+        "usr/lib/libobjc*",
+        "usr/lib/libresolv*",
+        "usr/lib/libpthread.tbd",
+        "usr/lib/libSystem*",
+    ]
+
     for framework in frameworks:
         includes.append("System/Library/Frameworks/%s.framework/*" % framework)
 
@@ -63,6 +75,10 @@ def _osx_extension_impl(mctx):
         excludes.append("usr/include/device/*")
     if "Security" not in frameworks:
         excludes.append("usr/include/libDER/*")
+    if "Tcl" not in frameworks:
+        excludes.append("usr/include/tcl*")
+    if "Tk" not in frameworks:
+        excludes.append("usr/include/tk*")
 
     http_pkg_archive(
         name = "macosx15.4.sdk",
