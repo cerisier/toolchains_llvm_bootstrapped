@@ -149,8 +149,8 @@ archive_override(
 
 http_archive(
     name = "xpkgutilprebuilt",
-    urls = ["https://github.com/cerisier/pkgutil/releases/download/v1.1.0/pkgutil_darwin_arm64.tar.gz"],
-    integrity = "sha256-L68cizUs98GCMG9c1/0z+5H1EgRPge2ZTsh5ie42NnM=",
+    urls = ["https://github.com/cerisier/pkgutil/releases/download/v1.1.1/pkgutil_darwin_arm64.tar.gz"],
+    integrity = "sha256-IEp3E9X6ZeGB9x1GiKVLjOuf019RrBHYlN5d0ga0uSE=",
     build_file_content = """
 exports_files(["pkgutil_darwin_arm64"])
     """,
