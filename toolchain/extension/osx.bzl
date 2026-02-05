@@ -64,27 +64,13 @@ def _osx_extension_impl(mctx):
     if "Security" not in frameworks:
         excludes.append("usr/include/libDER/**")
 
-    sdk_prefix = "Payload/Library/Developer/CommandLineTools/SDKs/MacOSX15.5.sdk"
-    archive_includes = ["Payload"] + [
-        sdk_prefix + "/" + include
-        for include in includes
-    ]
-    archive_excludes = [
-        sdk_prefix + "/" + exclude
-        for exclude in excludes
-    ] + [
-        sdk_prefix + "/System/Library/Frameworks/Ruby.framework/**",
-        # Drop the older SDK that ships in the package.
-        "Payload/Library/Developer/CommandLineTools/SDKs/MacOSX15.sdk/**",
-    ]
-
     http_pkg_archive(
         name = "macosx15.4.sdk",
         build_file = "//third_party/macosx.sdk:BUILD.MacOSX15.4.sdk.tpl",
         sha256 = "ba3453d62b3d2babf67f3a4a44e8073d6555c85f114856f4390a1f53bd76e24a",
-        includes = archive_includes,
-        excludes = archive_excludes,
-        strip_prefix = sdk_prefix,
+        includes = ["Payload/" + i for i in includes],
+        excludes = ["Payload/" + e for e in excludes],
+        strip_prefix = "Payload/Library/Developer/CommandLineTools/SDKs/MacOSX15.5.sdk",
         # urls = ["https://swcdn.apple.com/content/downloads/10/32/082-12052-A_AHPGDY76PT/1a419zaf3vh8o9t3c0usblyr8eystpnsh5/CLTools_macOSNMOS_SDK.pkg"],
         urls = ["https://swcdn.apple.com/content/downloads/52/01/082-41241-A_0747ZN8FHV/dectd075r63pppkkzsb75qk61s0lfee22j/CLTools_macOSNMOS_SDK.pkg"],
     )
@@ -108,3 +94,4 @@ osx = module_extension(
         "framework": _framework_tag,
     },
 )
+
