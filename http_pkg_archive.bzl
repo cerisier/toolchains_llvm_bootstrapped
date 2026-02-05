@@ -17,16 +17,20 @@ def _http_pkg_archive_impl(rctx):
         auth = get_auth(rctx, rctx.attr.urls),
     )
 
+    strip_prefix = ""
+    if rctx.attr.strip_prefix:
+        strip_prefix = rctx.attr.strip_prefix
+
     args = []
 
     for include in rctx.attr.includes:
-        args.extend(["--include", include])
+        args.extend(["--include", strip_prefix + "/" + include])
 
     for exclude in rctx.attr.excludes:
-        args.extend(["--exclude", exclude])
+        args.extend(["--exclude", strip_prefix + "/" + exclude])
 
-    if rctx.attr.strip_prefix:
-        args.extend(["--strip-components", str(len(rctx.attr.strip_prefix.split("/")))])
+    if strip_prefix:
+        args.extend(["--strip-components", str(len(strip_prefix.split("/")))])
 
     args.extend(["--expand-full", ".downloaded.pkg", "."])
 

@@ -25,9 +25,9 @@ def _osx_extension_impl(mctx):
     # Offering a minimal sysroot allows for building basic cross platform applications.
     # Users can extend the sysroot via `osx.framework` module extension tags.
 
-    includes = ["usr/**"]
+    includes = ["usr/*"]
     for framework in frameworks:
-        includes.append("System/Library/Frameworks/%s.framework/**" % framework)
+        includes.append("System/Library/Frameworks/%s.framework/*" % framework)
 
     # The following directories are unused, deprecated, or private headers.
     # These components:
@@ -36,40 +36,40 @@ def _osx_extension_impl(mctx):
     # - May require entitlements or special privileges to use
     excludes = [
         "usr/include/device.modulemap",
-        "usr/share/**",
-        "usr/libexec/**",
-        # "usr/lib/log/**", # SIGNPOST ??
-        "usr/lib/swift/**",
-        "usr/lib/updaters/**",
-        "usr/include/apache2/**",
-        "usr/include/AppleArchive/**",
-        "usr/include/apr-1/**",
-        "usr/include/atm/**",
-        "usr/include/bank/**",
-        "usr/include/cups/**",
-        "usr/include/default_pager/**",
-        "usr/include/EndpointSecurity/**",
-        "usr/include/libexslt/**",
-        "usr/include/libxslt/**",
-        "usr/include/net-snmp/**",
-        "usr/include/netkey/**",
-        "usr/include/networkext/**",
-        "usr/include/pexpert/**",
-        "usr/include/Spatial/**",
-        "usr/include/tidy/**",
+        "usr/share/*",
+        "usr/libexec/*",
+        # "usr/lib/log/*", # SIGNPOST ??
+        "usr/lib/swift/*",
+        "usr/lib/updaters/*",
+        "usr/include/apache2/*",
+        "usr/include/AppleArchive/*",
+        "usr/include/apr-1/*",
+        "usr/include/atm/*",
+        "usr/include/bank/*",
+        "usr/include/cups/*",
+        "usr/include/default_pager/*",
+        "usr/include/EndpointSecurity/*",
+        "usr/include/libexslt/*",
+        "usr/include/libxslt/*",
+        "usr/include/net-snmp/*",
+        "usr/include/netkey/*",
+        "usr/include/networkext/*",
+        "usr/include/pexpert/*",
+        "usr/include/Spatial/*",
+        "usr/include/tidy/*",
     ]
 
     if "IOKit" not in frameworks:
-        excludes.append("usr/include/device/**")
+        excludes.append("usr/include/device/*")
     if "Security" not in frameworks:
-        excludes.append("usr/include/libDER/**")
+        excludes.append("usr/include/libDER/*")
 
     http_pkg_archive(
         name = "macosx15.4.sdk",
         build_file = "//third_party/macosx.sdk:BUILD.MacOSX15.4.sdk.tpl",
         sha256 = "ba3453d62b3d2babf67f3a4a44e8073d6555c85f114856f4390a1f53bd76e24a",
-        includes = ["Payload/" + i for i in includes],
-        excludes = ["Payload/" + e for e in excludes],
+        includes = includes,
+        excludes = excludes,
         strip_prefix = "Payload/Library/Developer/CommandLineTools/SDKs/MacOSX15.5.sdk",
         # urls = ["https://swcdn.apple.com/content/downloads/10/32/082-12052-A_AHPGDY76PT/1a419zaf3vh8o9t3c0usblyr8eystpnsh5/CLTools_macOSNMOS_SDK.pkg"],
         urls = ["https://swcdn.apple.com/content/downloads/52/01/082-41241-A_0747ZN8FHV/dectd075r63pppkkzsb75qk61s0lfee22j/CLTools_macOSNMOS_SDK.pkg"],
