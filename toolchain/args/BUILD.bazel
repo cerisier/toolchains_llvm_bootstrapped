@@ -119,9 +119,10 @@ cc_args(
         "@rules_cc//cc/toolchains/actions:lto_index_for_dynamic_library",
         "@rules_cc//cc/toolchains/actions:lto_index_for_nodeps_dynamic_library",
     ],
-    args = [
-        "-static-pie",
-    ],
+    args = select({
+        "//constraints/pie:on": ["-static-pie"],
+        "//constraints/pie:off": ["-static"],
+    }),
 )
 
 cc_args(
