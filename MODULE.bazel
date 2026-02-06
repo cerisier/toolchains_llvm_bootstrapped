@@ -126,12 +126,12 @@ archive_override(
     urls = ["https://github.com/cerisier/libstdcxx-stubs-generator/archive/{}.tar.gz".format(LIBSTDCXX_STUBS_GENERATOR_COMMIT)],
 )
 
-PKGUTIL_COMMIT = "e609614143d81833d392255f6d434089b7e83bc7"
+PKGUTIL_COMMIT = "1209fe63e55da16e897aaab2c210b4e828064cd8" #v1.1.1
 
 bazel_dep(name = "xpkgutil", version = "1.0.13", dev_dependency = True)
 archive_override(
     module_name = "xpkgutil",
-    integrity = "sha256-OQ7VtsPYS0msuzVFoSc3oIV/iviQf+cW7ATys4yy11w=",
+    integrity = "sha256-2+8EfvVHefQpH84/IvzBslqvXcJ6iOeApL8CvTi1Uog=",
     strip_prefix = "pkgutil-{}".format(PKGUTIL_COMMIT),
     urls = ["https://github.com/cerisier/pkgutil/archive/{}.tar.gz".format(PKGUTIL_COMMIT)],
 )
