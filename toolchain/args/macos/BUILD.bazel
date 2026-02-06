@@ -6,9 +6,12 @@ package(default_visibility = ["//visibility:public"])
 
 cc_sysroot(
     name = "macos_sdk_sysroot",
-    sysroot = "@macosx15.4.sdk//:sysroot",
+    sysroot = "@macosx15.4.sdk//sysroot",
     data = [
-        "@macosx15.4.sdk//:sysroot",
+        "@macosx15.4.sdk//sysroot",
+    ],
+    allowlist_include_directories = [
+        "@macosx15.4.sdk//sysroot",
     ],
 )
 
@@ -58,4 +61,3 @@ cc_args(
         "//runtimes/compiler-rt:clang_rt.builtins.static",
     ],
 )
-

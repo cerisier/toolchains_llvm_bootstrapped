@@ -170,7 +170,7 @@ def declare_llvm_targets(*, suffix = ""):
         name = "macos_target_headers",
         srcs = [
             ":builtin_headers",
-            "@macosx15.4.sdk//:sysroot",
+            "@macosx15.4.sdk//sysroot",
         ],
     )
 
