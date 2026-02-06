@@ -8,6 +8,8 @@ load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_static_librar
 load("//runtimes:defs.bzl", "stub_library")
 load(":crt_object.bzl", "crt_object")
 
+exports_files(["mingw.BUILD.bazel"])
+
 MINGW_CRT_COMMON_COPTS = [
     "-D_CRTBLD",
     "-D_WIN32_WINNT=0x0f00",

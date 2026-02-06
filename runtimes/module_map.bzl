@@ -61,7 +61,7 @@ module_map = rule(
             mandatory = True,
         ),
         "_module_map_template": attr.label(
-            default = "//runtimes:module_map.tpl",
+            default = "//runtimes:module_map.BUILD.bazel",
             allow_single_file = True,
         ),
     },

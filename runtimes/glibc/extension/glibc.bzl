@@ -48,7 +48,7 @@ _glibc_trampoline_repository = repository_rule(
     attrs = {
         "_build_file": attr.label(
             allow_single_file = True,
-            default = ":BUILD.trampoline.tpl",
+            default = ":trampoline.BUILD.bazel",
         ),
     }
 )
@@ -72,7 +72,7 @@ def _glibc_impl(module_ctx):
                 urls = ["https://github.com/bminor/glibc/archive/{}.tar.gz".format(GLIBC_RELEASE_COMMITS.get(version))],
                 strip_prefix = "glibc-{}".format(GLIBC_RELEASE_COMMITS.get(version)),
                 sha256 = GLIBC_RELEASE_INTEGRITY.get(version),
-                build_file = "//third_party/libc/glibc:BUILD.tpl",
+                build_file = "//third_party/libc/glibc:glibc.BUILD.bazel",
                 patches = [
                     # This file is generated when compiling the glibc.
                     #
@@ -112,7 +112,7 @@ def _glibc_impl(module_ctx):
                 url = index_entry.get("url"),
                 sha256 = index_entry.get("sha256"),
                 strip_prefix = target,
-                build_file = ":BUILD.glibc-headers.tpl",
+                build_file = ":glibc-headers.BUILD.bazel",
             )
 
     _glibc_trampoline_repository(

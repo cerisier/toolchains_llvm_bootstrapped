@@ -84,7 +84,7 @@ def _osx_extension_impl(mctx):
     http_pkg_archive(
         name = "macosx15.4.sdk",
         files = {
-            "sysroot/BUILD.bazel": "//third_party/macosx.sdk:BUILD.MacOSX15.4.sdk.tpl",
+            "sysroot/BUILD.bazel": "//third_party/macosx.sdk:MacOSX15.4.sdk.BUILD.bazel",
         },
         dst = "sysroot",
         sha256 = "ba3453d62b3d2babf67f3a4a44e8073d6555c85f114856f4390a1f53bd76e24a",

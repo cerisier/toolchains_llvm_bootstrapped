@@ -9,7 +9,7 @@ def _mingw_extension_impl(module_ctx):
         urls = ["https://sourceforge.net/projects/mingw-w64/files/mingw-w64/mingw-w64-release/mingw-w64-v13.0.0.tar.bz2"],
         integrity = "sha256-Wv6CKvXE7b9n2q9F7sYdU49J7vaxlSTeZIl8a5WCjK8=",
         strip_prefix = "mingw-w64-v13.0.0",
-        build_file = "//runtimes/mingw:BUILD.tpl",
+        build_file = "//runtimes/mingw:mingw.BUILD.bazel",
     )
 
     metadata_kwargs = {}

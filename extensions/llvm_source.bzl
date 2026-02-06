@@ -119,7 +119,7 @@ def _llvm_source_impl(mctx):
         for name in _LLVM_RELEASE_ASSETS_SHA256.keys():
             _llvm_subproject_repository(
                 name = name,
-                build_file = "@toolchains_llvm_bootstrapped//third_party/llvm-project/21.x/{name}:BUILD.tpl".format(name = name),
+                build_file = "@toolchains_llvm_bootstrapped//third_party/llvm-project/21.x/{name}:{name}.BUILD.bazel".format(name = name),
                 dir = name,
             )
 
@@ -127,7 +127,7 @@ def _llvm_source_impl(mctx):
         for (name, sha256) in _LLVM_RELEASE_ASSETS_SHA256.items():
             http_archive(
                 name = name,
-                build_file = "//third_party/llvm-project/21.x/{name}:BUILD.tpl".format(name = name),
+                build_file = "//third_party/llvm-project/21.x/{name}:{name}.BUILD.bazel".format(name = name),
                 patch_args = ["-p1"],
                 patches = ["//third_party/llvm-project/21.x/libcxx:lgamma_r.patch"] if name == "libcxx" else [],
                 sha256 = sha256,

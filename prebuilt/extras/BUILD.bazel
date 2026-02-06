@@ -2,6 +2,8 @@ load("@bazel_lib//lib:transitions.bzl", "platform_transition_filegroup")
 load("//prebuilt:platforms.bzl", "PLATFORMS")
 load("//prebuilt/extras:extra_bins_release.bzl", "extra_bins_release")
 
+exports_files(["extras.BUILD.bazel"])
+
 extra_bins_release(name = "extra_bins")
 
 [

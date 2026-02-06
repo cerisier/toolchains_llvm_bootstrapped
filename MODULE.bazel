@@ -34,7 +34,7 @@ LLVM_TOOLCHAIN_MINIMAL_SHA256 = {
             llvm_version = LLVM_VERSION,
             target = target.replace("-musl", "").replace("-gnu", ""),
         ),
-        build_file = "//toolchain/llvm:BUILD.llvm_release.tpl" if "windows" not in target else "//toolchain/llvm:BUILD.llvm_release_windows.tpl",
+        build_file = "//toolchain/llvm:llvm_release.BUILD.bazel" if "windows" not in target else "//toolchain/llvm:llvm_release_windows.BUILD.bazel",
         sha256 = sha256,
         urls = ["https://github.com/cerisier/toolchains_llvm_bootstrapped/releases/download/llvm-{llvm_version}{prebuilt_llvm_suffix}/llvm-toolchain-minimal-{llvm_version}-{target}.tar.zst".format(
             llvm_version = LLVM_VERSION,
@@ -57,7 +57,7 @@ TOOLCHAIN_EXTRAS_VERSION = "20260206"
 [
     http_archive(
         name = "toolchain-extra-prebuilts-{target}".format(target = target.replace("-musl", "").replace("-gnu", "")),
-        build_file = "//prebuilt/extras:BUILD.extras.tpl",
+        build_file = "//prebuilt/extras:extras.BUILD.bazel",
         sha256 = sha256,
         urls = ["https://github.com/cerisier/toolchains_llvm_bootstrapped/releases/download/prebuilts-extras-{version}/toolchain-extra-prebuilts-{version}-{target}.tar.zst".format(
             target = target,
