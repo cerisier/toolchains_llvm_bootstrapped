@@ -16,11 +16,12 @@ declare_toolchains(execs = _EXECS, targets = _TARGETS)
 declare_bootstrap_toolchains(execs = _EXECS, targets = _TARGETS)
 """
 
-def _llvm_toolchains_repository_impl(ctx):
-    ctx.file("BUILD.bazel", ctx.attr.build_file_content)
+def _toolchains_repository_impl(rctx):
+    rctx.file("BUILD.bazel", rctx.attr.build_file_content)
+    return rctx.repo_metadata(reproducible = True)
 
-_llvm_toolchains_repository = repository_rule(
-    implementation = _llvm_toolchains_repository_impl,
+_toolchains_repository = repository_rule(
+    implementation = _toolchains_repository_impl,
     attrs = {
         "build_file_content": attr.string(mandatory = True),
     },
@@ -29,13 +30,13 @@ _llvm_toolchains_repository = repository_rule(
 def _format_platform_list(platforms):
     return ",\n    ".join([repr(platform) for platform in platforms])
 
-def _llvm_module_extension_impl(mctx):
+def _toolchain_impl(mctx):
     execs = []
     targets = []
 
     for module in mctx.modules:
-        for exec_tag in module.tags.exec:
-            execs.append((exec_tag.os, exec_tag.arch))
+        for exec in module.tags.exec:
+            execs.append((exec.os, exec.arch))
         for target in module.tags.target:
             targets.append((target.os, target.arch))
 
@@ -45,7 +46,7 @@ def _llvm_module_extension_impl(mctx):
     if not targets:
         targets = SUPPORTED_TARGETS
 
-    _llvm_toolchains_repository(
+    _toolchains_repository(
         name = "llvm_toolchains",
         build_file_content = _BUILD_TEMPLATE.format(
             execs = _format_platform_list(execs),
@@ -72,8 +73,8 @@ _platform_tag = tag_class(
     },
 )
 
-llvm = module_extension(
-    implementation = _llvm_module_extension_impl,
+toolchain = module_extension(
+    implementation = _toolchain_impl,
     doc = "Generates LLVM toolchains for the requested target/exec platform pairs.",
     tag_classes = {
         "target": _platform_tag,
