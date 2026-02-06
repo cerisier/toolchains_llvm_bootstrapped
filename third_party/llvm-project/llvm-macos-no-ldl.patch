@@ -1,0 +1,12 @@
+diff --git a/utils/bazel/llvm-project-overlay/llvm/BUILD.bazel b/utils/bazel/llvm-project-overlay/llvm/BUILD.bazel
+index 025e63ec36ce..51e48c6a23e4 100644
+--- a/utils/bazel/llvm-project-overlay/llvm/BUILD.bazel
++++ b/utils/bazel/llvm-project-overlay/llvm/BUILD.bazel
+@@ -304,7 +304,6 @@ cc_library(
+         ],
+         "@platforms//os:macos": [
+             "-pthread",
+-            "-ldl",
+         ],
+         "//conditions:default": [
+             "-pthread",

@@ -11,6 +11,7 @@ def _llvm_raw_impl(mctx):
         patches = [
             "//third_party/llvm-project:llvm-extra.patch",
             "//third_party/llvm-project:llvm-bazel9.patch",
+            "//third_party/llvm-project:llvm-macos-no-ldl.patch",
             "//third_party/llvm-project:llvm-dsymutil-corefoundation.patch",
             "//third_party/llvm-project:llvm-sanitizers-ignorelists.patch",
             "//third_party/llvm-project:windows_link_and_genrule.patch",

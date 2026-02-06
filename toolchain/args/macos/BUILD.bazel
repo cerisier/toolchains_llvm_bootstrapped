@@ -10,6 +10,9 @@ cc_sysroot(
     data = [
         "@macosx15.4.sdk//sysroot",
     ],
+    allowlist_include_directories = [
+        "@macosx15.4.sdk//sysroot",
+    ],
 )
 
 cc_args(
@@ -58,4 +61,3 @@ cc_args(
         "//runtimes/compiler-rt:clang_rt.builtins.static",
     ],
 )
-
