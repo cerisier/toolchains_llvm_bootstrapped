@@ -131,6 +131,7 @@ PKGUTIL_COMMIT = "328997cd5cf53fef8d54fb0303d011a426f6f840"
 bazel_dep(name = "xpkgutil", version = "1.0.14", dev_dependency = True)
 archive_override(
     module_name = "xpkgutil",
+    integrity = "sha256-1WJk7V8Q2Y3g0mxKinJBVPwKFEK5WnZwEBK6yUl09KY=",
     strip_prefix = "pkgutil-{}".format(PKGUTIL_COMMIT),
     urls = ["https://github.com/cerisier/pkgutil/archive/{}.tar.gz".format(PKGUTIL_COMMIT)],
 )
