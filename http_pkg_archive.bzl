@@ -27,8 +27,7 @@ def _http_pkg_archive_impl(rctx):
 
     args.extend(["--expand-full", ".downloaded.pkg", rctx.attr.dst])
 
-    # host_pkgutil = Label("@toolchain-extra-prebuilts-%s//:bin/pkgutil" % (repo_utils.platform(rctx).replace("_", "-")))
-    host_pkgutil = Label("@xpkgutilprebuilt//:pkgutil_darwin_arm64")
+    host_pkgutil = Label("@toolchain-extra-prebuilts-%s//:bin/pkgutil" % (repo_utils.platform(rctx).replace("_", "-")))
     res = rctx.execute([rctx.path(host_pkgutil)] + args)
     if res.return_code != 0:
         fail("Failed to extract package: {}".format(res.stderr))
