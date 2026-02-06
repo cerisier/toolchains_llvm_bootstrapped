@@ -30,6 +30,7 @@ def _osx_extension_impl(mctx):
         "usr/lib/libc.tbd",
         "usr/lib/libc++*",
         "usr/lib/libcharset*",
+        "usr/lib/libdl*",
         "usr/lib/libiconv*",
         "usr/lib/libm.tbd",
         "usr/lib/libobjc*",
