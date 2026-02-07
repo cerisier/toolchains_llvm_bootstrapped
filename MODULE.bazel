@@ -126,18 +126,18 @@ archive_override(
     urls = ["https://github.com/cerisier/libstdcxx-stubs-generator/archive/{}.tar.gz".format(LIBSTDCXX_STUBS_GENERATOR_COMMIT)],
 )
 
-PKGUTIL_COMMIT = "1209fe63e55da16e897aaab2c210b4e828064cd8" #v1.1.1
+PKGUTIL_COMMIT = "66cd442f953f53e3709e2d6c71c68e9aed14cddf" #main
 
 bazel_dep(name = "xpkgutil", version = "1.0.14", dev_dependency = True)
 archive_override(
     module_name = "xpkgutil",
-    integrity = "sha256-2+8EfvVHefQpH84/IvzBslqvXcJ6iOeApL8CvTi1Uog=",
+    integrity = "sha256-u3GzYimX/fkC/W2aYiULDVzgN5SCkek/nfLr9BU9Nbo=",
     strip_prefix = "pkgutil-{}".format(PKGUTIL_COMMIT),
     urls = ["https://github.com/cerisier/pkgutil/archive/{}.tar.gz".format(PKGUTIL_COMMIT)],
 )
 
 # pbzx support for libarchive
-bazel_dep(name = "libarchive", version = "3.8.1", dev_dependency = True)
+bazel_dep(name = "libarchive", version = "3.8.1.bcr.2", dev_dependency = True)
 single_version_override(
     module_name = "libarchive",
     patch_strip = 1,
@@ -146,27 +146,6 @@ single_version_override(
         "//third_party/libarchive:0002-feat-add-pbzx-read-filter.patch",
         "//third_party/libarchive:0003-give-mingw-acceptable-posix-types.patch",
     ],
-)
-
-# bazel9 support: to be upstreamed to libarchive
-single_version_override(
-    module_name = "bzip2",
-    version = "1.0.8.bcr.3",
-)
-
-single_version_override(
-    module_name = "zstd",
-    version = "1.5.7.bcr.1",
-)
-
-single_version_override(
-    module_name = "xz",
-    version = "5.4.5.bcr.7",
-)
-
-single_version_override(
-    module_name = "mbedtls",
-    version = "3.6.0.bcr.1",
 )
 
 # Workaround for their terrible toolchains...
