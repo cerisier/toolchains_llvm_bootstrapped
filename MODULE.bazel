@@ -14,20 +14,18 @@ bazel_dep(name = "rules_shell", version = "0.6.1")
 bazel_dep(name = "with_cfg.bzl", version = "0.12.0")
 bazel_dep(name = "tar.bzl", version = "0.6.0")
 
-bazel_dep(name = "buildifier_prebuilt", version = "8.2.1", dev_dependency = True)
-bazel_dep(name = "bazelrc-preset.bzl", version = "1.6.0", dev_dependency = True)
-
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 LLVM_VERSION = "21.1.8"
-PREBUILT_LLVM_SUFFIX = "-3"
+
+PREBUILT_LLVM_SUFFIX = "-5"
 
 LLVM_TOOLCHAIN_MINIMAL_SHA256 = {
-    "darwin-arm64": "680ac53e1b0e47b39970a92351f719e2c6608dbe767ab9aaa011cc69f21a2e69",
-    "linux-amd64-musl": "69ace4e9c71ce74d827b4cf182a3c886d8abad48dbf0acceba20397b5d100a26",
-    "linux-arm64-musl": "8cdb101e50585371498b1215eaa76d90d953c6ae27ab17936037ee21f365c533",
-    "windows-amd64": "bdbe6a839f05af341e5f2a82d3248f7b9055d1e6987f766f2b25c1119498390b",
-    "windows-arm64": "f24b0527c1de96877725e90ed4707d39de200641136a982196dc35fe02a1b3b1",
+    "darwin-arm64": "7f3067e14e65acd1bce873136e01ab17e680f25ba7d83d32c09af215d8fb546a",
+    "linux-amd64-musl": "906985c22134e13c5356542e7f04cf1ef8f1ad1711d7161f89da4c42ac079e8b",
+    "linux-arm64-musl": "80b947a8424ccbe2808b3fef62bfbf5a1a9942b8e0af569b53d62b1e54dfdbda",
+    "windows-amd64": "9ba42717946ab0c90ceb0db45fcd033dd1e3a46bf7d8b13e7c7d50feb68b8ef7",
+    "windows-arm64": "24049b3fe7f8ac6c6a59ed0795492b7e427cfbc8511691274b6a412869c4dc73",
 }
 
 [
@@ -36,7 +34,7 @@ LLVM_TOOLCHAIN_MINIMAL_SHA256 = {
             llvm_version = LLVM_VERSION,
             target = target.replace("-musl", "").replace("-gnu", ""),
         ),
-        build_file = "//toolchain/llvm:BUILD.llvm_release.tpl" if "windows" not in target else "//toolchain/llvm:BUILD.llvm_release_windows.tpl",
+        build_file = "//toolchain/llvm:llvm_release.BUILD.bazel" if "windows" not in target else "//toolchain/llvm:llvm_release_windows.BUILD.bazel",
         sha256 = sha256,
         urls = ["https://github.com/cerisier/toolchains_llvm_bootstrapped/releases/download/llvm-{llvm_version}{prebuilt_llvm_suffix}/llvm-toolchain-minimal-{llvm_version}-{target}.tar.zst".format(
             llvm_version = LLVM_VERSION,
@@ -47,54 +45,40 @@ LLVM_TOOLCHAIN_MINIMAL_SHA256 = {
     for (target, sha256) in LLVM_TOOLCHAIN_MINIMAL_SHA256.items()
 ]
 
-LLVM_TOOLCHAIN_EXTRAS_SHA256 = {
-    "darwin-arm64": "a50386d09cf70ea6c6a9b30b8d04be48de96d97ca73e5cbe2320dfad93b77efd",
-    "linux-amd64-musl": "034044d9284e3142604d793e8b20dffdd8a46af42db9094d5043b802748902cb",
-    "linux-arm64-musl": "98357273d7bc7e6b4d04648e9a7bdd6220b11e129ad2eca581a7c7b8d980ed1e",
-    "windows-amd64-gnu": "39782cb163129e20faf26a1e52391b4c97999e2d59cfdb7a09873117855143e2",
-    "windows-arm64-gnu": "c5b7188a7c6582292a2c2800089cbdb2b4b240c6ad790b4d0074b3507457f0d9",
+TOOLCHAIN_EXTRAS_SHA256 = {
+    "darwin-arm64": "70d4847b6b062512b96fec8546adffd34a01786f3731722d2d6ee432b82ae2ae",
+    "linux-amd64-musl": "ba1f512c8c7582c81955a31531cb16e3eaa361ed379fba9c4279329d4040ae1c",
+    "linux-arm64-musl": "0275de455fbf0ea3b2c402bca1a90367822034d6f718a94bca0ebd9671fc6e1a",
+    "windows-amd64-gnu": "5655e757acec1a8e0b54f3e680400c8ee7256b9b2274845898e62d90b1ff68ad",
 }
 
-VERSION = "20251219"
+TOOLCHAIN_EXTRAS_VERSION = "20260206"
 
 [
     http_archive(
-        name = "prebuilts-extras-toolchain-artifacts-{target}".format(target = target.replace("-musl", "").replace("-gnu", "")),
-        build_file = "//prebuilt/extras:BUILD.extras.tpl",
+        name = "toolchain-extra-prebuilts-{target}".format(target = target.replace("-musl", "").replace("-gnu", "")),
+        build_file = "//prebuilt/extras:extras.BUILD.bazel",
         sha256 = sha256,
         urls = ["https://github.com/cerisier/toolchains_llvm_bootstrapped/releases/download/prebuilts-extras-{version}/toolchain-extra-prebuilts-{version}-{target}.tar.zst".format(
             target = target,
-            version = VERSION,
+            version = TOOLCHAIN_EXTRAS_VERSION,
         )],
     )
-    for (target, sha256) in LLVM_TOOLCHAIN_EXTRAS_SHA256.items()
+    for (target, sha256) in TOOLCHAIN_EXTRAS_SHA256.items()
 ]
 
-LLVM_RELEASE_ASSETS_SHA256 = {
-    "compiler-rt": "dd54ae21aee1780fac59445b51ebff601ad016b31ac3a7de3b21126fd3ccb229",
-    "libcxx": "6422a58a5c29b7f4fda224cfdc07842be8a208a61301bbba7a219116e3351809",
-    "libcxxabi": "709c9a63bde1e36a80d8675becc38073b85f0fa1b4111e34542b885c9e1239da",
-    "libunwind": "03e8adc6c3bdde657dcaedc94886ea70d1f7d551d622fcd8a36a8300e5c36cbc",
-}
+llvm_source = use_extension("//extensions:llvm_source.bzl", "llvm_source")
+use_repo(llvm_source, "compiler-rt", "libcxx", "libcxxabi", "libunwind", "llvm-raw", "llvm_zlib", "llvm_zstd")
 
-[
-    http_archive(
-        name = name,
-        build_file = "//third_party/llvm-project/20.x/{name}:BUILD.tpl".format(name = name),
-        patch_args = ["-p1"],
-        patches = (["//third_party/llvm-project/20.x/libcxx:lgamma_r.patch"] if name == "libcxx" else []) + (["//third_party/llvm-project/20.x/compiler-rt:symbolizer_skip_cxa_atexit.patch"] if name == "compiler-rt" else []),
-        sha256 = sha256,
-        strip_prefix = "{name}-{llvm_version}.src".format(
-            name = name,
-            llvm_version = LLVM_VERSION,
-        ),
-        urls = ["https://github.com/llvm/llvm-project/releases/download/llvmorg-{llvm_version}/{name}-{llvm_version}.src.tar.xz".format(
-            name = name,
-            llvm_version = LLVM_VERSION,
-        )],
-    )
-    for (name, sha256) in LLVM_RELEASE_ASSETS_SHA256.items()
-]
+llvm = use_extension("//extensions:llvm.bzl", "llvm")
+llvm.configure(
+    targets = [
+        "AArch64",
+        "X86",
+        "WebAssembly",
+    ],
+)
+use_repo(llvm, "llvm-project")
 
 musl = use_extension("//runtimes/musl/extension:musl.bzl", "musl")
 use_repo(musl, "musl_libc")
@@ -102,7 +86,7 @@ use_repo(musl, "musl_libc")
 mingw = use_extension("//runtimes/mingw/extension:mingw.bzl", "mingw")
 use_repo(mingw, "mingw")
 
-osx = use_extension("//toolchain/extension:osx.bzl", "osx")
+osx = use_extension("//extensions:osx.bzl", "osx")
 use_repo(osx, "macosx15.4.sdk")
 
 glibc = use_extension("//runtimes/glibc/extension:glibc.bzl", "glibc")
@@ -117,7 +101,11 @@ kernel_headers = use_extension("//kernel/extension:kernel_headers.bzl", "kernel_
 kernel_headers.index(file = "//kernel/extension:kernel_headers_index.json")
 use_repo(kernel_headers, "kernel_headers")
 
-## DEV DEPENDENCIES
+######################### DEV DEPENDENCIES ###################################
+
+bazel_dep(name = "buildifier_prebuilt", version = "8.2.1", dev_dependency = True)
+bazel_dep(name = "bazelrc-preset.bzl", version = "1.6.0", dev_dependency = True)
+
 GLIBC_STUBS_GENERATOR_COMMIT = "33276300351d5a3cbedd308f4d21669b8e8ef83d"
 
 bazel_dep(name = "glibc-stubs-generator", version = "2.0.1", dev_dependency = True)
@@ -138,22 +126,38 @@ archive_override(
     urls = ["https://github.com/cerisier/libstdcxx-stubs-generator/archive/{}.tar.gz".format(LIBSTDCXX_STUBS_GENERATOR_COMMIT)],
 )
 
-llvm_raw = use_extension("//:llvm_raw.bzl", "llvm_raw")
-use_repo(llvm_raw, "llvm-raw", "llvm_zlib", "llvm_zstd")
+PKGUTIL_COMMIT = "66cd442f953f53e3709e2d6c71c68e9aed14cddf" #main
 
-llvm = use_extension("//:llvm.bzl", "llvm")
-llvm.configure(
-    targets = [
-        "AArch64",
-        "X86",
-        "WebAssembly",
+bazel_dep(name = "xpkgutil", version = "1.0.14", dev_dependency = True)
+archive_override(
+    module_name = "xpkgutil",
+    integrity = "sha256-u3GzYimX/fkC/W2aYiULDVzgN5SCkek/nfLr9BU9Nbo=",
+    strip_prefix = "pkgutil-{}".format(PKGUTIL_COMMIT),
+    urls = ["https://github.com/cerisier/pkgutil/archive/{}.tar.gz".format(PKGUTIL_COMMIT)],
+)
+
+# pbzx support for libarchive
+bazel_dep(name = "libarchive", version = "3.8.1.bcr.2", dev_dependency = True)
+single_version_override(
+    module_name = "libarchive",
+    patch_strip = 1,
+    patches = [
+        "//third_party/libarchive:0001-libarchive_enable_xar_support.patch",
+        "//third_party/libarchive:0002-feat-add-pbzx-read-filter.patch",
+        "//third_party/libarchive:0003-give-mingw-acceptable-posix-types.patch",
     ],
 )
-use_repo(llvm, "llvm-project")
+
+# Workaround for their terrible toolchains...
+bazel_dep(name = "rules_swift", version = "3.4.2", dev_dependency = True)
+single_version_override(
+    module_name = "rules_swift",
+    patch_strip = 1,
+    patches = ["//third_party/rules_swift:0001-allow-disabling-autoconfiguration.patch"],
+    version = "3.4.2",
+)
 
 ## OVERRIDES PORTS FROM DEPENDENCIES
-
-RULES_ZIG_COMMIT = "b9739c615ce62b64ee595ac4bcd9ee7cc06b0422"  # branch=zml
 
 bazel_dep(name = "rules_zig", version = "0.12.2", dev_dependency = True)
 

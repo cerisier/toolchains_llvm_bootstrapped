@@ -85,7 +85,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, windows-11-arm]
+        # Add windows-11-arm when bazel supports it better.
+        os: [windows-latest]
         bazel_version: [last_rc]
         folder:
           - "e2e/rules_cc"
@@ -102,7 +103,6 @@ jobs:
 
       - name: bazel test //...
         id: bazel_test
-        continue-on-error: ${{ matrix.os == 'windows-11-arm' }}
         env:
           USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -112,6 +112,9 @@ jobs:
           EXTRA_ARGS=""
           if [[ "${{ matrix.folder }}" == *"rules_rust"* ]]; then
             EXTRA_ARGS="--config=rust"
+          fi
+          if [[ "${{ matrix.folder }}" == *"cross_compilation"* ]]; then
+            EXTRA_ARGS="--//:test_glibc_versions=none"
           fi
           if [[ "${{ matrix.folder }}" == *"wasm"* ]]; then
             EXTRA_ARGS="--config=wasm"
@@ -128,10 +131,3 @@ jobs:
             --jobs=100 \
             $EXTRA_ARGS \
             //...
-
-      - name: "Skip failures on Windows ARM"
-        if: ${{ matrix.os == 'windows-11-arm' && steps.bazel_test.outcome == 'failure' }}
-        run: |
-          echo "::warning title=Windows ARM tests::Known flakiness; ignoring failures for now."
-          echo "### Windows ARM" >> "$GITHUB_STEP_SUMMARY"
-          echo "Tests failed but were ignored (best-effort)." >> "$GITHUB_STEP_SUMMARY"

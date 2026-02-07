@@ -5,16 +5,22 @@ load("@bazel_skylib//rules/directory:subdirectory.bzl", "subdirectory")
 # We want to put a source directory into the DefaultInfo but still propagate
 # the DirectoryInfo for header inclusion checking.
 def headers_directory(name, path, visibility = None):
-    directory(
-        name = name + "_files",
-        srcs = native.glob([path + "/**"]),
-    )
+    if path == ".":
+        directory(
+            name = name + "_directory",
+            srcs = native.glob(["**"]),
+        )
+    else:
+        directory(
+            name = name + "_files",
+            srcs = native.glob([path + "/**"]),
+        )
 
-    subdirectory(
-        name = name + "_directory",
-        path = path,
-        parent = name + "_files",
-    )
+        subdirectory(
+            name = name + "_directory",
+            path = path,
+            parent = name + "_files",
+        )
 
     native.filegroup(
         name = name + "_source_directory",

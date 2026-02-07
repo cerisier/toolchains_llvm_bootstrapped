@@ -40,14 +40,14 @@ This will register all toolchains declared by this module for all supported targ
 If you wish to register only a subset of all possible toolchains, use the `@toolchains_llvm_bootstrapped//toolchain/extension:llvm.bzl` module extension like so:
 
 ```sh
-llvm_toolchains = use_extension("@toolchains_llvm_bootstrapped//toolchain/extension:llvm.bzl", "llvm")
+toolchain = use_extension("@toolchains_llvm_bootstrapped//extensions:toolchain.bzl", "toolchain")
 
-llvm_toolchains.exec(arch = "x86_64", os = "linux")
-llvm_toolchains.exec(arch = "aarch64", os = "linux")
-llvm_toolchains.target(arch = "x86_64", os = "linux")
-llvm_toolchains.target(arch = "aarch64", os = "linux")
+toolchain.exec(arch = "x86_64", os = "linux")
+toolchain.exec(arch = "aarch64", os = "linux")
+toolchain.target(arch = "x86_64", os = "linux")
+toolchain.target(arch = "aarch64", os = "linux")
 
-use_repo(llvm_toolchains, "llvm_toolchains")
+use_repo(toolchain, "llvm_toolchains")
 
 register_toolchains("@llvm_toolchains//:all")
 ```
@@ -63,18 +63,18 @@ bazel query 'kind(toolchain, @toolchains_llvm_bootstrapped//toolchain:all)'
 
 ✅ Currently supports cross-compilation between all combinations of the following platforms:
 
-| To ↓ / From → | macOS aarch64 | Linux aarch64 | Linux x86_64 | Windows aarch64 | Windows x86_64 |
-|---------------|---------------|--------------|---------------|--------------|-----------------|
-| **aarch64-apple-darwin** | ✅ | 🚧 In Progress | 🚧 In Progress | 🚧 In Progress | 🚧 In Progress |
-| **x86_64-apple-darwin**  | ✅ | 🚧 In Progress | 🚧 In Progress | 🚧 In Progress | 🚧 In Progress |
-| **aarch64-linux-gnu ¹**    | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **x86_64-linux-gnu ¹**     | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **aarch64-linux-musl**    | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **x86_64-linux-musl**     | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **aarch64-windows-gnu ²**    | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **x86_64-windows-gnu ²**     | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **wasm32-unknown-unknown**  | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **wasm64-unknown-unknown**  | ✅ | ✅ | ✅ | ✅ | ✅ |
+| To ↓ / From → | macOS aarch64 | Linux aarch64 | Linux x86_64 | Windows x86_64 |
+|---------------|---------------|--------------|---------------|--------------|
+| **aarch64-apple-darwin** | ✅ | ✅ | ✅ | ✅ |
+| **x86_64-apple-darwin**  | ✅ | ✅ | ✅ | ✅ |
+| **aarch64-linux-gnu ¹**    | ✅ | ✅ | ✅ | ✅ |
+| **x86_64-linux-gnu ¹**     | ✅ | ✅ | ✅ | ✅ |
+| **aarch64-linux-musl**    | ✅ | ✅ | ✅ | ✅ |
+| **x86_64-linux-musl**     | ✅ | ✅ | ✅ | ✅ |
+| **aarch64-windows-gnu ²**    | ✅ | ✅ | ✅ | ✅ |
+| **x86_64-windows-gnu ²**     | ✅ | ✅ | ✅ | ✅ |
+| **wasm32-unknown-unknown**  | ✅ | ✅ | ✅ | ✅ |
+| **wasm64-unknown-unknown**  | ✅ | ✅ | ✅ | ✅ |
 
 ¹ See "GNU C Library" section for glibc version selection.
 
@@ -111,10 +111,10 @@ MSVCRT-based MinGW and native MSVC targets are not supported.
 
 ### macOS notes
 
-🚧 Cross-compiling to macOS from non-macOS hosts is not currently available. <br />
-✅ Compilation from macOS to macOS is supported.
+Cross-compiling to macOS from any hosts is supported. <br />
 
 By default, the official macOS SDK is downlaoded from apple CDN and used hermetically.
+We use a cross-platform reimplementation of pkgutil to unpack the SDK on other platforms.
 
 ### Other platforms
 

@@ -16,9 +16,6 @@ def _reset_sanitizers_impl(settings, attr):
 
         # We want to build those binaries using the prebuilt compiler toolchain
         "//toolchain:source": "prebuilt",
-
-        # And LLVM uses <zlib.h> instead of "zlib.h" so we disable it here too.
-        "@llvm_zlib//:llvm_enable_zlib": False,
     }
 
 _reset_sanitizers = transition(
@@ -33,7 +30,6 @@ _reset_sanitizers = transition(
         "//config/bootstrap:asan",
         "//toolchain:runtime_stage",
         "//toolchain:source",
-        "@llvm_zlib//:llvm_enable_zlib",
     ],
 )
 

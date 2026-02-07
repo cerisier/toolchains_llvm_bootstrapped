@@ -1,3 +1,7 @@
+load("@bazel_lib//lib:copy_file.bzl", "copy_file")
+load("@bazel_skylib//rules/directory:directory.bzl", "directory")
+load("@bazel_skylib//rules/directory:subdirectory.bzl", "subdirectory")
+load("@bazel_skylib//rules:native_binary.bzl", "native_binary")
 load("@rules_cc//cc/toolchains:tool.bzl", "cc_tool")
 load("@rules_cc//cc/toolchains:tool_map.bzl", "cc_tool_map")
 load("//runtimes:module_map.bzl", "module_map", "include_path")
@@ -14,18 +18,73 @@ def declare_llvm_targets(*, suffix = ""):
     # Convenient exports
     native.exports_files(native.glob(["bin/*"]))
 
+    copied_headers = []
+    for file in native.glob(["lib/clang/**"]):
+        copy_file(
+            name  = "copy_" + file,
+            src = file,
+            out = "prebuilts/" + file,
+        )
+        copied_headers.append("prebuilts/" + file)
+
+    directory(
+        name = "builtin_headers_for_header_parser_directory",
+        srcs = copied_headers,
+    )
+
+    subdirectory(
+        name = "builtin_headers_for_header_parser_subdirectory",
+        # Grab whichever version-specific dir is there.
+        path = "prebuilts/" + native.glob(["lib/clang/*"], exclude_directories = 0)[0] + "/include",
+        parent = "builtin_headers_for_header_parser_directory",
+    )
+
+    native_binary(
+        name = "header-parser",
+        src = platform_extra_binary("bin/header-parser"),
+        out = "prebuilts/bin/header-parser" + suffix,
+    )
+
+    native_binary(
+        name = "prebuilt-clang++",
+        src = "bin/clang++" + suffix,
+        out = "prebuilts/bin/clang++" + suffix,
+    )
+
     cc_tool(
         name = "header_parser",
-        src = platform_extra_binary("bin/header-parser"),
-        data = ["//tools:clang++"],
+        src = ":header-parser",
+        data = [
+            ":builtin_headers_for_header_parser_subdirectory",
+            ":prebuilt-clang++",
+        ],
+    )
+
+    # TODO(zbarsky): If we could specify the paths to these via env vars, we wouldn't need to copy things around.
+    native_binary(
+        name = "static-library-validator",
+        src = platform_extra_binary("bin/static-library-validator"),
+        out = "prebuilts/bin/static-library-validator" + suffix,
+    )
+
+    native_binary(
+        name = "llvm-nm",
+        src = "bin/llvm-nm" + suffix,
+        out = "prebuilts/bin/llvm-nm" + suffix,
+    )
+
+    native_binary(
+        name = "c++filt",
+        src = "bin/c++filt" + suffix,
+        out = "prebuilts/bin/c++filt" + suffix,
     )
 
     cc_tool(
         name = "static_library_validator",
-        src = platform_extra_binary("bin/static-library-validator"),
+        src = ":static-library-validator",
         data = [
-            "//tools:c++filt",
-            "//tools:llvm-nn",
+            ":c++filt",
+            ":llvm-nm",
         ],
     )
 
@@ -33,14 +92,12 @@ def declare_llvm_targets(*, suffix = ""):
         "@rules_cc//cc/toolchains/actions:assembly_actions": ":clang",
         "@rules_cc//cc/toolchains/actions:c_compile": ":clang",
         "@toolchains_llvm_bootstrapped//toolchain:cpp_compile_actions_without_header_parsing": ":clang++",
-        # TODO(zbarsky): Enable afer we release prebuilts
-        #"@rules_cc//cc/toolchains/actions:cpp_header_parsing": ":header_parser",
-        "@rules_cc//cc/toolchains/actions:cpp_header_parsing": ":clang++",
+        "@rules_cc//cc/toolchains/actions:cpp_header_parsing": ":header_parser",
         "@rules_cc//cc/toolchains/actions:link_actions": ":lld",
         "@rules_cc//cc/toolchains/actions:objcopy_embed_data": ":llvm-objcopy",
+        "@rules_cc//cc/toolchains/actions:dwp": ":llvm-dwp",
         "@rules_cc//cc/toolchains/actions:strip": ":llvm-strip",
-        # TODO(zbarsky): Enable afer we release prebuilts
-        #"@rules_cc//cc/toolchains/actions:validate_static_library": ":static_library_validator",
+        "@rules_cc//cc/toolchains/actions:validate_static_library": ":static_library_validator",
     }
 
     cc_tool_map(
@@ -106,6 +163,11 @@ def declare_llvm_targets(*, suffix = ""):
     )
 
     cc_tool(
+        name = "llvm-dwp",
+        src = "bin/llvm-dwp" + suffix,
+    )
+
+    cc_tool(
         name = "llvm-strip",
         src = "bin/llvm-strip" + suffix,
     )
@@ -114,7 +176,7 @@ def declare_llvm_targets(*, suffix = ""):
         name = "macos_target_headers",
         srcs = [
             ":builtin_headers",
-            "@macosx15.4.sdk//:sysroot",
+            "@macosx15.4.sdk//sysroot",
         ],
     )
 

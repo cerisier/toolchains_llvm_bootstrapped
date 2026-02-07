@@ -227,8 +227,7 @@ sh_test(
         "duplicate_symbol_a.cc",
         "duplicate_symbol_b.cc",
     ],
-    # TODO(zbarsky): Enable once we ship new prebuilts
-    tags = ["manual", "local"],
+    tags = ["local"],
     size = "large",
     target_compatible_with = select({
         "@platforms//os:windows": ["@platforms//:incompatible"],

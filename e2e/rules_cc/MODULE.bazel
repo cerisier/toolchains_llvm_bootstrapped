@@ -10,8 +10,9 @@ local_path_override(
 )
 
 # Register toolchains through the scoped repo to ensure this codepath works.
-llvm_toolchains = use_extension("@toolchains_llvm_bootstrapped//toolchain/extension:llvm.bzl", "llvm")
+llvm_toolchains = use_extension("@toolchains_llvm_bootstrapped//extensions:toolchain.bzl", "toolchain")
 use_repo(llvm_toolchains, "llvm_toolchains")
+
 register_toolchains("@llvm_toolchains//:all")
 
 # Bump transitive zlib version to avoid genrules.

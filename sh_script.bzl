@@ -1,21 +1,42 @@
 load("@bazel_lib//lib:run_binary.bzl", "run_binary")
-load("@bazel_skylib//rules:write_file.bzl", "write_file")
-load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 
-def sh_script(name, cmd, env = {}, **kwargs):
-    write_file(
-        name = name + "_sh",
-        out = name + ".sh",
-        content = [
-            "#!/usr/bin/env bash",
+_SH_TOOLCHAIN_TYPE = Label("@rules_shell//shell:toolchain_type")
+
+def _sh_script_impl(ctx):
+    shell_path = ctx.toolchains[_SH_TOOLCHAIN_TYPE].path
+    if not shell_path:
+        fail("No sh_toolchain.path is set for the execution platform")
+
+    ctx.actions.write(
+        output = ctx.outputs.out,
+        content = "\n".join([
+            "#!{}".format(shell_path),
             "set -euo pipefail",
-            cmd,
-        ],
+            ctx.attr.cmd,
+            "",
+        ]),
+        is_executable = True,
     )
 
-    sh_binary(
+    return DefaultInfo(
+        executable = ctx.outputs.out,
+        files = depset([ctx.outputs.out]),
+    )
+
+_sh_script = rule(
+    implementation = _sh_script_impl,
+    attrs = {
+        "cmd": attr.string(mandatory = True),
+        "out": attr.output(mandatory = True),
+    },
+    toolchains = [_SH_TOOLCHAIN_TYPE],
+)
+
+def sh_script(name, cmd, env = {}, **kwargs):
+    _sh_script(
         name = name + "_bin",
-        srcs = [name + ".sh"],
+        out = name + ".sh",
+        cmd = cmd,
     )
 
     run_binary(
@@ -30,4 +51,3 @@ def sh_script(name, cmd, env = {}, **kwargs):
         } | env,
         **kwargs
     )
-

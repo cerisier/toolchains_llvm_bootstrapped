@@ -14,7 +14,7 @@ def _musl_extension_impl(module_ctx):
             "//third_party/libc/musl:1.2.5-CVE-2025-26519-2.patch",
         ],
         integrity = "sha256-qaEYu+hNh2TaDqDSizqz+uhHf8fkCF2QECuFlvx8deQ=",
-        build_file = "//third_party/libc/musl:BUILD.tpl",
+        build_file = "//third_party/libc/musl:musl.BUILD.bazel",
     )
 
     metadata_kwargs = {}

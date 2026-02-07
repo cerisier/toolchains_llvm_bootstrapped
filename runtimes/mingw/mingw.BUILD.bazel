@@ -31,6 +31,7 @@ exports_files([
     "mingw-w64-crt/crt/crtdll.c",
     "mingw-w64-crt/crt/crtexe.c",
     "mingw-w64-crt/crt/crtend.c",
+    "mingw-w64-crt/intrincs/RtlSecureZeroMemory.c",
 ])
 
 write_file(

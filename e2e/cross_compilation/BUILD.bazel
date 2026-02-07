@@ -1,9 +1,23 @@
+load("@bazel_lib//lib:transitions.bzl", "platform_transition_binary")
+load("@bazel_skylib//rules:common_settings.bzl", "string_flag")
 load("@platforms//host:constraints.bzl", "HOST_CONSTRAINTS")
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@rules_cc//cc:cc_test.bzl", "cc_test")
 load("@toolchains_llvm_bootstrapped//constraints/libc:libc_versions.bzl", "LIBCS")
-load("@bazel_lib//lib:transitions.bzl", "platform_transition_binary")
+
+string_flag(
+    name = "test_glibc_versions",
+    build_setting_default = "all",
+    values = ["all", "none"],
+)
+
+config_setting(
+    name = "no_test_glibc_versions",
+    flag_values = {
+        ":test_glibc_versions": "none",
+    },
+)
 
 cc_library(
     name = "add",
@@ -31,8 +45,8 @@ cc_test(
 PLATFORMS = [
     "@toolchains_llvm_bootstrapped//platforms:linux_x86_64",
     "@toolchains_llvm_bootstrapped//platforms:linux_aarch64",
-    # "@toolchains_llvm_bootstrapped//platforms:macos_x86_64",
-    # "@toolchains_llvm_bootstrapped//platforms:macos_aarch64",
+    "@toolchains_llvm_bootstrapped//platforms:macos_x86_64",
+    "@toolchains_llvm_bootstrapped//platforms:macos_aarch64",
     "@toolchains_llvm_bootstrapped//platforms:windows_amd64",
     "@toolchains_llvm_bootstrapped//platforms:windows_arm64",
 ] + [
@@ -44,7 +58,12 @@ PLATFORMS = [
 [
     platform_transition_binary(
         name = "main_" + platform.split(":")[-1],
-        target_platform = platform,
         binary = ":main",
-    ) for platform in PLATFORMS
+        target_compatible_with = select({
+            ":no_test_glibc_versions": ["@platforms//:incompatible"] if "gnu" in platform else [],
+            "//conditions:default": [],
+        }),
+        target_platform = platform,
+    )
+    for platform in PLATFORMS
 ]

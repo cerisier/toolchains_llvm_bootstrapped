@@ -133,7 +133,7 @@ def mingw_import_libraries(name, directory):
         # the generated targets available for direct deps, but do not expose
         # them via the directory filegroup to avoid shadowing the merged libs.
         # libws2_32 is merged with additional objects similarly.
-        if lib_name not in ["ucrtbase", "ucrtbased", "ws2_32"]:
+        if lib_name not in ["ucrtbase", "ucrtbased", "ws2_32", "kernel32"]:
             import_targets.append(target)
 
     native.filegroup(

@@ -119,9 +119,10 @@ cc_args(
         "@rules_cc//cc/toolchains/actions:lto_index_for_dynamic_library",
         "@rules_cc//cc/toolchains/actions:lto_index_for_nodeps_dynamic_library",
     ],
-    args = [
-        "-static-pie",
-    ],
+    args = select({
+        "//constraints/pie:on": ["-static-pie"],
+        "//constraints/pie:off": ["-static"],
+    }),
 )
 
 cc_args(
@@ -452,6 +453,17 @@ cc_args(
     },
     format = {"output_file": "@rules_cc//cc/toolchains/variables:output_file"},
     requires_not_none = "@rules_cc//cc/toolchains/variables:output_file",
+)
+
+cc_args(
+    name = "validate_static_library_args",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:validate_static_library",
+    ],
+    env = select({
+        "@platforms//os:macos": {"DARWIN_TARGET": "1"},
+        "//conditions:default": {},
+    }),
 )
 
 # TODO: rules_cc passes extra args to these actions, ideally these would be fixed in rules_cc.

@@ -8,6 +8,8 @@ load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_static_librar
 load("//runtimes:defs.bzl", "stub_library")
 load(":crt_object.bzl", "crt_object")
 
+exports_files(["mingw.BUILD.bazel"])
+
 MINGW_CRT_COMMON_COPTS = [
     "-D_CRTBLD",
     "-D_WIN32_WINNT=0x0f00",
@@ -230,6 +232,42 @@ run_binary(
 )
 
 cc_runtime_stage0_library(
+    name = "kernel32_intrinsics_lib",
+    srcs = [
+        "@mingw//:mingw-w64-crt/intrincs/RtlSecureZeroMemory.c",
+    ],
+    implementation_deps = [
+        "@mingw//:mingw_headers",
+        "@mingw//:mingw_crt_headers",
+    ],
+    copts = MINGW_CRT_COMMON_COPTS,
+)
+
+cc_runtime_stage0_static_library(
+    name = "kernel32_intrinsics",
+    deps = [":kernel32_intrinsics_lib"],
+)
+
+# Match mingw's build by adding the RtlSecureZeroMemory object into the
+# kernel32 import library archive.
+run_binary(
+    name = "kernel32",
+    srcs = [
+        "@mingw//:import_lib_kernel32",
+        ":kernel32_intrinsics",
+    ],
+    outs = ["libkernel32.a"],
+    tool = "//tools:llvm-ar",
+    args = [
+        "qcsDL",
+        "$(location libkernel32.a)",
+        "$(location @mingw//:import_lib_kernel32)",
+        "$(location :kernel32_intrinsics)",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+cc_runtime_stage0_library(
     name = "uuid_lib",
     srcs = ["@mingw//:mingw_uuid_srcs"],
     implementation_deps = [
@@ -277,6 +315,7 @@ copy_to_directory(
     name = "mingw_import_libraries_directory",
     srcs = [
         "@mingw//:mingw_import_libraries_common",
+        ":libkernel32.a",
         ":libsynchronization.a",
         ":libws2_32.a",
     ] + select({

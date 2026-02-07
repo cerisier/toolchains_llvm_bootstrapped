@@ -1,5 +1,0 @@
-alias(
-    name = "libc_headers",
-    actual = "//third_party/llvm-project/20.x/libc:libc_headers",
-    visibility = ["//visibility:public"],
-)

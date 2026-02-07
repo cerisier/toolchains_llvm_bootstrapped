@@ -5,7 +5,7 @@ load("//toolchain/runtimes:cc_stage0_object.bzl", "cc_stage0_object")
 load("//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
 load(":copy_to_resource_directory.bzl", "copy_to_resource_directory")
 
-exports_files(["module_map.tpl"])
+exports_files(["module_map.BUILD.bazel"])
 
 #TODO(cerisier): duplicate this per runtime repo ? or do differently ?
 string_setting(

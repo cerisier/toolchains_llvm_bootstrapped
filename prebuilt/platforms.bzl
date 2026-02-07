@@ -5,5 +5,5 @@ PLATFORMS = [
     "//platforms:linux_arm64_musl",
     "//platforms:macos_arm64",
     "//platforms:windows_amd64",
-    "//platforms:windows_arm64",
+    # "//platforms:windows_arm64",
 ]

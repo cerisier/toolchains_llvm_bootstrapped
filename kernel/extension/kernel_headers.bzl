@@ -10,7 +10,7 @@ _kernel_headers_trampoline_repository = repository_rule(
     attrs = {
         "_build_file": attr.label(
             allow_single_file = True,
-            default = ":BUILD.trampoline.tpl",
+            default = ":trampoline.BUILD.bazel",
         ),
     }
 )
@@ -37,7 +37,7 @@ def _kernel_headers_impl(module_ctx):
                 url = index_entry.get("url"),
                 sha256 = index_entry.get("sha256"),
                 strip_prefix = kernel_arch,
-                build_file = ":BUILD.kernel-headers.tpl",
+                build_file = ":kernel-headers.BUILD.bazel",
             )
 
     _kernel_headers_trampoline_repository(

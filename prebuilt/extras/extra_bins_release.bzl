@@ -5,6 +5,7 @@ def extra_bins_release(name):
     files = {
         "@glibc-stubs-generator//:glibc-stubs-generator": "bin/glibc-stubs-generator",
         "@libstdcxx-stubs-generator//:libstdc++-stubs-generator": "bin/libstdcxx-stubs-generator",
+        "@xpkgutil//:pkgutil": "bin/pkgutil",
         "//tools/internal:header-parser": "bin/header-parser",
         "//tools/internal:static-library-validator": "bin/static-library-validator",
     }

@@ -1,0 +1,4 @@
+exports_files([
+    "kernel-headers.BUILD.bazel",
+    "trampoline.BUILD.bazel",
+])

@@ -1,0 +1,4 @@
+exports_files([
+    "compiler-rt.BUILD.bazel",
+    "symbolizer_skip_cxa_atexit.patch",
+])
