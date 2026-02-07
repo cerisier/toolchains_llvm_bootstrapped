@@ -113,6 +113,9 @@ jobs:
           if [[ "${{ matrix.folder }}" == *"rules_rust"* ]]; then
             EXTRA_ARGS="--config=rust"
           fi
+          if [[ "${{ matrix.folder }}" == *"cross_compilation"* ]]; then
+            EXTRA_ARGS="--//:test_glibc_versions=none"
+          fi
           if [[ "${{ matrix.folder }}" == *"wasm"* ]]; then
             EXTRA_ARGS="--config=wasm"
           fi
