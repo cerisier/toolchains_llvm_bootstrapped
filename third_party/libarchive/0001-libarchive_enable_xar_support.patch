@@ -5,7 +5,7 @@ index cdf2d5b66..1ff04b45c 100644
 @@ -14,3 +14,4 @@ bazel_dep(name = "platforms", version = "0.0.10")
  bazel_dep(name = "rules_cc", version = "0.0.9")
  bazel_dep(name = "bazel_skylib", version = "1.6.1")
- bazel_dep(name = "mbedtls", version = "3.6.0")
+ bazel_dep(name = "mbedtls", version = "3.6.0.bcr.1")
 +bazel_dep(name = "libxml2", version = "2.15.1.bcr.1")
 diff --git a/BUILD.bazel b/BUILD.bazel
 index e74107039..fb9fec383 100644
