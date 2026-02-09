@@ -15,6 +15,7 @@ _LLVM_RAW_ARCHIVE = struct(
         "//third_party/llvm-project/21.x/patches:llvm-extra.patch",
         "//third_party/llvm-project/21.x/patches:llvm-bazel9.patch",
         "//third_party/llvm-project/21.x/patches:llvm-dsymutil-corefoundation.patch",
+        "//third_party/llvm-project/21.x/patches:llvm-driver-tool-order.patch",
         "//third_party/llvm-project/21.x/patches:llvm-sanitizers-ignorelists.patch",
         "//third_party/llvm-project/21.x/patches:windows_link_and_genrule.patch",
         "//third_party/llvm-project/21.x/patches:bundle_resources_no_python.patch",
