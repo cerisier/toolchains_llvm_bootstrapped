@@ -3,8 +3,8 @@ load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_static_librar
 load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_stage0_object.bzl", "cc_stage0_object")
 load("@toolchains_llvm_bootstrapped//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
 load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_unsanitized_library.bzl", "cc_unsanitized_library")
-load("@toolchains_llvm_bootstrapped//third_party/llvm-project/21.x/compiler-rt:targets.bzl", "atomic_helper_cc_library")
-load("@toolchains_llvm_bootstrapped//third_party/llvm-project/21.x/compiler-rt:filter_builtin_sources.bzl", "filter_builtin_sources")
+load("@toolchains_llvm_bootstrapped//3rd_party/llvm-project/21.x/compiler-rt:targets.bzl", "atomic_helper_cc_library")
+load("@toolchains_llvm_bootstrapped//3rd_party/llvm-project/21.x/compiler-rt:filter_builtin_sources.bzl", "filter_builtin_sources")
 load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
 

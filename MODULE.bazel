@@ -142,9 +142,9 @@ single_version_override(
     module_name = "libarchive",
     patch_strip = 1,
     patches = [
-        "//third_party/libarchive:0001-libarchive_enable_xar_support.patch",
-        "//third_party/libarchive:0002-feat-add-pbzx-read-filter.patch",
-        "//third_party/libarchive:0003-give-mingw-acceptable-posix-types.patch",
+        "//3rd_party/libarchive:0001-libarchive_enable_xar_support.patch",
+        "//3rd_party/libarchive:0002-feat-add-pbzx-read-filter.patch",
+        "//3rd_party/libarchive:0003-give-mingw-acceptable-posix-types.patch",
     ],
 )
 
@@ -153,7 +153,7 @@ bazel_dep(name = "rules_swift", version = "3.4.2", dev_dependency = True)
 single_version_override(
     module_name = "rules_swift",
     patch_strip = 1,
-    patches = ["//third_party/rules_swift:0001-allow-disabling-autoconfiguration.patch"],
+    patches = ["//3rd_party/rules_swift:0001-allow-disabling-autoconfiguration.patch"],
     version = "3.4.2",
 )
 
