@@ -69,7 +69,7 @@ rust.toolchain(
         "x86_64-pc-windows-gnullvm",
         "riscv64gc-unknown-linux-gnu",
     ],
-    versions = ["1.81.0"],
+    versions = ["1.93.0"],
 )
 use_repo(rust, "rust_toolchains")
 
@@ -92,5 +92,19 @@ crate.spec(
     package = "serde_derive",
     version = "1.0.228",
 )
-crate.from_specs()
+crate.from_specs(
+    supported_platform_triples = [
+        # Default reduced set from rules_rust, plus additional triples
+        # required by the test platforms in this repo.
+        "aarch64-apple-darwin",
+        "aarch64-unknown-linux-gnu",
+        "wasm32-unknown-unknown",
+        "wasm32-wasip1",
+        "x86_64-pc-windows-msvc",
+        "x86_64-unknown-linux-gnu",
+        "x86_64-unknown-nixos-gnu",
+        "x86_64-apple-darwin",
+        "aarch64-pc-windows-msvc",
+    ],
+)
 use_repo(crate, "crates")

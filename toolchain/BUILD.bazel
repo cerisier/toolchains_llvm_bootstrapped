@@ -23,6 +23,34 @@ string_setting(
     ],
 )
 
+# Selects the Windows CRT flavor to link against.
+string_flag(
+    name = "windows_crt",
+    values = [
+        "ucrt",
+        "msvcrt",
+    ],
+    build_setting_default = "ucrt",
+    visibility = ["//visibility:public"],
+)
+
+# CRT selection config_settings.
+config_setting(
+    name = "windows_crt_ucrt",
+    flag_values = {
+        ":windows_crt": "ucrt",
+    },
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "windows_crt_msvcrt",
+    flag_values = {
+        ":windows_crt": "msvcrt",
+    },
+    visibility = ["//visibility:public"],
+)
+
 # Controls whether targets are built with bootstrapped toolchain or prebuilt toolchain.
 string_flag(
     name = "source",
