@@ -212,6 +212,15 @@ def declare_llvm_targets(*, suffix = ""):
     )
 
     include_path(
+        name = "uefi_target_headers",
+        srcs = [
+            ":builtin_headers",
+            "@toolchains_llvm_bootstrapped//runtimes/libcxx:libcxx_headers_include_search_directory",
+            "@toolchains_llvm_bootstrapped//runtimes/libcxx:libcxxabi_headers_include_search_directory",
+        ],
+    )
+
+    include_path(
         name = "wasm_target_headers",
         srcs = [
             ":builtin_headers",
@@ -225,6 +234,7 @@ def declare_llvm_targets(*, suffix = ""):
             "@platforms//os:macos": ":macos_target_headers",
             "@platforms//os:linux": ":linux_target_headers",
             "@platforms//os:windows": ":windows_target_headers",
+            "@platforms//os:uefi": ":uefi_target_headers",
             "@platforms//os:none": ":wasm_target_headers",
         }),
         visibility = ["//visibility:public"],

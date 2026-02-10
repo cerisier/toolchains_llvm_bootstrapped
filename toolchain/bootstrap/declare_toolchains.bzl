@@ -141,6 +141,12 @@ def declare_tool_map(exec_os, exec_cpu):
     )
 
     bootstrap_binary(
+        name = prefix + "/bin/lld-link",
+        platform = prefix + "_platform",
+        actual = "@llvm-project//llvm:llvm.stripped",
+    )
+
+    bootstrap_binary(
         name = prefix + "/bin/lld",
         platform = prefix + "_platform",
         actual = "@llvm-project//llvm:llvm.stripped",
@@ -159,6 +165,7 @@ def declare_tool_map(exec_os, exec_cpu):
             prefix + "/bin/ld.lld",
             prefix + "/bin/ld64.lld",
             prefix + "/bin/lld",
+            prefix + "/bin/lld-link",
             prefix + "/bin/wasm-ld",
         ],
     )
