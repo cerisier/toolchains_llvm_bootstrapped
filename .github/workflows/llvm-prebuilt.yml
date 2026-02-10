@@ -52,5 +52,6 @@ jobs:
           draft: false
           prerelease: false
           generate_release_notes: false
+          make_latest: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
