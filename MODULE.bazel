@@ -46,13 +46,13 @@ LLVM_TOOLCHAIN_MINIMAL_SHA256 = {
 ]
 
 TOOLCHAIN_EXTRAS_SHA256 = {
-    "darwin-arm64": "70d4847b6b062512b96fec8546adffd34a01786f3731722d2d6ee432b82ae2ae",
-    "linux-amd64-musl": "ba1f512c8c7582c81955a31531cb16e3eaa361ed379fba9c4279329d4040ae1c",
-    "linux-arm64-musl": "0275de455fbf0ea3b2c402bca1a90367822034d6f718a94bca0ebd9671fc6e1a",
-    "windows-amd64-gnu": "5655e757acec1a8e0b54f3e680400c8ee7256b9b2274845898e62d90b1ff68ad",
+    "darwin-arm64": "4348eab38e8d1952661d7908b9fffaecd005431252e5d5026036a6c803b17e01",
+    "linux-amd64-musl": "1ef49ff0d3212914e456a038fc3d8be69ab02a12d8a641e6e6baade7b507e0de",
+    "linux-arm64-musl": "567da9faa12ff9d3af159417e9366a067aa8bebb46df3705208c63f76d74b508",
+    "windows-amd64-gnu": "24e68f4fef8b5da38e2d74c64ea1d90d9fd08845d3ffc0b7a24fd2e6baffe42c",
 }
 
-TOOLCHAIN_EXTRAS_VERSION = "20260206"
+TOOLCHAIN_EXTRAS_VERSION = "20260210"
 
 [
     http_archive(
