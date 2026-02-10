@@ -18,14 +18,14 @@ http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "ht
 
 LLVM_VERSION = "21.1.8"
 
-PREBUILT_LLVM_SUFFIX = "-5"
+PREBUILT_LLVM_SUFFIX = "-6"
 
 LLVM_TOOLCHAIN_MINIMAL_SHA256 = {
-    "darwin-arm64": "7f3067e14e65acd1bce873136e01ab17e680f25ba7d83d32c09af215d8fb546a",
-    "linux-amd64-musl": "906985c22134e13c5356542e7f04cf1ef8f1ad1711d7161f89da4c42ac079e8b",
-    "linux-arm64-musl": "80b947a8424ccbe2808b3fef62bfbf5a1a9942b8e0af569b53d62b1e54dfdbda",
-    "windows-amd64": "9ba42717946ab0c90ceb0db45fcd033dd1e3a46bf7d8b13e7c7d50feb68b8ef7",
-    "windows-arm64": "24049b3fe7f8ac6c6a59ed0795492b7e427cfbc8511691274b6a412869c4dc73",
+    "darwin-arm64": "4f00d3892674eab66e1c6b95c4335e1103444d9bf6e7625e9d1f537a4caf6410",
+    "linux-amd64-musl": "db487e9be3911712953f227c5d626318ba7d10cd08a94b2a7c81226823383188",
+    "linux-arm64-musl": "d84d4637d4eba57317539c1814799d0740e39c4d9467ec5afb2c1cbdf3af3484",
+    "windows-amd64": "620583faa7c6513f4f8a5e4eb17e6819ec2c4cd0041b8e248635bfb4a692d121",
+    "windows-arm64": "f7ea32db012b2e38c454e883cc72d1d3f919c2233aa7a0e6a3a1bd0e8d7e02a3",
 }
 
 [
@@ -126,7 +126,7 @@ archive_override(
     urls = ["https://github.com/cerisier/libstdcxx-stubs-generator/archive/{}.tar.gz".format(LIBSTDCXX_STUBS_GENERATOR_COMMIT)],
 )
 
-PKGUTIL_COMMIT = "66cd442f953f53e3709e2d6c71c68e9aed14cddf" #main
+PKGUTIL_COMMIT = "66cd442f953f53e3709e2d6c71c68e9aed14cddf"  #main
 
 bazel_dep(name = "xpkgutil", version = "1.0.14", dev_dependency = True)
 archive_override(
