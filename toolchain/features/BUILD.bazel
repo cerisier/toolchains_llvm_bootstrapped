@@ -27,6 +27,7 @@ cc_args(
              #TODO: should be on a config that match ld64 specifically
             "-Wl,-dead_strip",
         ],
+        "@platforms//os:uefi": [],
         "//conditions:default": [
             #TODO: should be somehow done only if the choosen linker supports it
             "-Wl,--gc-sections",
@@ -34,6 +35,7 @@ cc_args(
     }) + select({
         "@platforms//cpu:wasm32": [],
         "@platforms//cpu:wasm64": [],
+        "@platforms//os:uefi": [],
         "//conditions:default": ["-Wl,--icf=safe"],
     }),
 )

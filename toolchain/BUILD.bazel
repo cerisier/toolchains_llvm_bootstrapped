@@ -83,6 +83,7 @@ cc_args_list(
             "//toolchain/args/linux:default_link_flags",
         ],
         "@platforms//os:windows": [],
+        "@platforms//os:uefi": [],
         "@platforms//os:none": [],
     }),
 )
@@ -97,6 +98,7 @@ cc_args_list(
         "@platforms//os:windows": [
             "//toolchain/args:crt_search_directory",
         ],
+        "@platforms//os:uefi": [],
         "@platforms//os:none": [],
     }),
 )
@@ -105,6 +107,9 @@ cc_args_list(
     name = "resource_dir",
     args = select({
         "@platforms//os:macos": [],
+        "@platforms//os:uefi": [
+            "//toolchain/args:resource_dir",
+        ],
         "//conditions:default": [
             "//toolchain/args:resource_dir",
         ],
@@ -123,6 +128,7 @@ cc_args_list(
         "@platforms//os:windows": [
             "//toolchain/args/windows:default_libs",
         ],
+        "@platforms//os:uefi": [],
         "//conditions:default": [],
     }),
 )
@@ -139,6 +145,7 @@ cc_args_list(
         "@platforms//os:windows": [
             "//toolchain/args:libcxx_library_search_paths",
         ],
+        "@platforms//os:uefi": [],
         "//conditions:default": [],
     }),
 )
@@ -157,6 +164,7 @@ cc_args_list(
         "@platforms//os:windows": [
             "//toolchain/args:libunwind_library_search_paths",
         ],
+        "@platforms//os:uefi": [],
         "//conditions:default": [],
     }),
 )
@@ -166,6 +174,9 @@ cc_args_list(
     args = select({
         "@platforms//os:macos": [
             "//toolchain/args/macos:macos_sdk_sysroot",
+        ],
+        "@platforms//os:uefi": [
+            "//toolchain/args:empty_sysroot_flags",
         ],
         "//conditions:default": [
             "//toolchain/args:empty_sysroot_flags",
@@ -177,6 +188,9 @@ cc_args_list(
     name = "hermetic_compile_flags",
     args = select({
         "@platforms//os:macos": [],
+        "@platforms//os:uefi": [
+            "//toolchain/args:hermetic_compile_flags",
+        ],
         "//conditions:default": [
             "//toolchain/args:hermetic_compile_flags",
         ],
@@ -187,6 +201,9 @@ cc_args_list(
     name = "stdlib",
     args = select({
         "@platforms//os:macos": [],
+        "@platforms//os:uefi": [
+            "//toolchain/args:stdlib",
+        ],
         "//conditions:default": [
             "//toolchain/args:stdlib",
         ],
@@ -255,12 +272,20 @@ cc_args_list(
 )
 
 cc_args_list(
+    name = "uefi_toolchain_args",
+    args = [
+        "//toolchain/args:libcxx_headers_include_search_paths",
+    ],
+)
+
+cc_args_list(
     name = "platform_specific_args",
     args = select({
         # Platform specific flags.
         "@platforms//os:macos": [":macos_toolchain_args"],
         "@platforms//os:linux": [":linux_toolchain_args"],
         "@platforms//os:windows": [":windows_toolchain_args"],
+        "@platforms//os:uefi": [":uefi_toolchain_args"],
         "@platforms//os:none": [],
         "//conditions:default": [],
     }),
@@ -306,6 +331,14 @@ cc_artifact_name_pattern(
     category = "@rules_cc//cc/toolchains/artifacts:executable",
     prefix = "",
     extension = ".exe",
+    visibility = ["//visibility:public"],
+)
+
+cc_artifact_name_pattern(
+    name = "uefi_executable_pattern",
+    category = "@rules_cc//cc/toolchains/artifacts:executable",
+    prefix = "",
+    extension = ".efi",
     visibility = ["//visibility:public"],
 )
 

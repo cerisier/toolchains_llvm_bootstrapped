@@ -15,6 +15,7 @@ def cc_toolchain(name, tool_map, module_map = None):
             "@platforms//os:linux": [
                 "@rules_cc//cc/toolchains/args/thin_lto:feature",
             ],
+            "@platforms//os:uefi": [],
             "//conditions:default": [],
         }) + [
             # Those features are enabled internally by --compilation_mode flags family.
@@ -51,6 +52,7 @@ def cc_toolchain(name, tool_map, module_map = None):
                 "@toolchains_llvm_bootstrapped//toolchain/features:static_link_cpp_runtimes",
                 "@toolchains_llvm_bootstrapped//toolchain/features/runtime_library_search_directories:feature",
             ],
+            "@platforms//os:uefi": [],
             "@platforms//os:none": [],
         }) + [
             "@rules_cc//cc/toolchains/args/layering_check:module_maps",
@@ -89,6 +91,9 @@ def cc_toolchain(name, tool_map, module_map = None):
         artifact_name_patterns = select({
             "@platforms//os:windows": [
                 "@toolchains_llvm_bootstrapped//toolchain:windows_executable_pattern",
+            ],
+            "@platforms//os:uefi": [
+                "@toolchains_llvm_bootstrapped//toolchain:uefi_executable_pattern",
             ],
             "//conditions:default": [],
         }),

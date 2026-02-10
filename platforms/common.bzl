@@ -10,6 +10,7 @@ SUPPORTED_TARGETS = [
     ("linux", "aarch64"),
     ("windows", "x86_64"),
     ("windows", "aarch64"),
+    ("uefi", "x86_64"),
     ("none", "wasm32"),
     ("none", "wasm64"),
 ]

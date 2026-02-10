@@ -40,6 +40,7 @@ cc_nested_args(
         "-Xlinker",
     ] + select({
         "@platforms//os:macos": ["@loader_path/{search_path}"],
+        "@platforms//os:uefi": ["$ORIGIN/{search_path}"],
         "//conditions:default": ["$ORIGIN/{search_path}"],
     }),
     format = {
