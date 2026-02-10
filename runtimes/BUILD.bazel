@@ -170,10 +170,11 @@ copy_to_resource_directory(
             "//runtimes/compiler-rt:clang_rt.ubsan.static": "libclang_rt.ubsan_standalone",
         },
         "//config:msan_enabled": {
-            "//runtimes/compiler-rt:clang_rt.msan.static": "libclang_rt.msan_standalone",
+            "//runtimes/compiler-rt:clang_rt.msan.static": "libclang_rt.msan_static",
         },
         "//config:asan_enabled": {
-            "//runtimes/compiler-rt:clang_rt.asan.static": "libclang_rt.asan_standalone",
+            "//runtimes/compiler-rt:clang_rt.asan.static": "libclang_rt.asan_static",
+            "//runtimes/compiler-rt:clang_rt.asan.dynamic": "libclang_rt.asan",
         },
         "//conditions:default": {},
     }),

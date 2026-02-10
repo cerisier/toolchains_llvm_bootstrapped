@@ -298,16 +298,16 @@ cc_args(
     ],
     args = [
         "-fsanitize=address",
-        "-fno-sanitize-link-runtime",
-        "-fno-sanitize-link-c++-runtime",
-        "{asan_path}",
+        # "-fno-sanitize-link-runtime",
+        # "-fno-sanitize-link-c++-runtime",
+        # "{asan_path}",
     ],
-    format = {
-        "asan_path": "//runtimes/compiler-rt:clang_rt.asan.static",
-    },
-    data = [
-        "//runtimes/compiler-rt:clang_rt.asan.static",
-    ],
+    # format = {
+    #     "asan_path": "//runtimes/compiler-rt:clang_rt.asan.static",
+    # },
+    # data = [
+    #     "//runtimes/compiler-rt:clang_rt.asan.static",
+    # ],
 )
 
 alias(

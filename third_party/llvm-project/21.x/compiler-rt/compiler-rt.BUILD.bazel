@@ -888,8 +888,16 @@ SANITIZER_IMPL_HEADERS = [
 ]
 
 filegroup(
-    name = "sanitizer_impl_headers",
+    name = "sanitizer_impl_headers_sources",
     srcs = ["lib/sanitizer_common/" + f for f in SANITIZER_IMPL_HEADERS],
+)
+
+cc_library(
+    name = "sanitizer_impl_headers",
+    srcs = [
+        ":sanitizer_impl_headers_sources",
+    ],
+    includes = ["lib"],
 )
 
 INTERCEPTION_IMPL_HEADERS = [
@@ -907,16 +915,36 @@ INTERCEPTION_IMPL_HEADERS = [
 })
 
 filegroup(
-    name = "interception_impl_headers",
+    name = "interception_impl_headers_sources",
     srcs = INTERCEPTION_IMPL_HEADERS,
+)
+
+cc_library(
+    name = "interception_impl_headers",
+    srcs = [
+        ":interception_impl_headers_sources",
+    ],
+    includes = ["lib"],
+)
+
+filegroup(
+    name = "sanitizer_common_interceptors_vfork_sources",
+    srcs = [
+        "lib/sanitizer_common/sanitizer_common_interceptors_vfork_aarch64.inc.S",
+        "lib/sanitizer_common/sanitizer_common_interceptors_vfork_arm.inc.S",
+        "lib/sanitizer_common/sanitizer_common_interceptors_vfork_i386.inc.S",
+        "lib/sanitizer_common/sanitizer_common_interceptors_vfork_loongarch64.inc.S",
+        "lib/sanitizer_common/sanitizer_common_interceptors_vfork_riscv64.inc.S",
+        "lib/sanitizer_common/sanitizer_common_interceptors_vfork_x86_64.inc.S",
+    ],
 )
 
 cc_library(
     name = "sanitizer_common",
     srcs = [
         ":sanitizer_sources",
-        ":sanitizer_impl_headers",
-        ":interception_impl_headers",
+        ":sanitizer_impl_headers_sources",
+        ":interception_impl_headers_sources",
     ],
     textual_hdrs = [
         "lib/builtins/assembly.h",
@@ -924,12 +952,7 @@ cc_library(
         "lib/sanitizer_common/sanitizer_flags.inc",
         "lib/sanitizer_common/sanitizer_signal_interceptors.inc",
         "lib/sanitizer_common/sanitizer_syscall_generic.inc",
-        "lib/sanitizer_common/sanitizer_common_interceptors_vfork_aarch64.inc.S",
-        "lib/sanitizer_common/sanitizer_common_interceptors_vfork_arm.inc.S",
-        "lib/sanitizer_common/sanitizer_common_interceptors_vfork_i386.inc.S",
-        "lib/sanitizer_common/sanitizer_common_interceptors_vfork_loongarch64.inc.S",
-        "lib/sanitizer_common/sanitizer_common_interceptors_vfork_riscv64.inc.S",
-        "lib/sanitizer_common/sanitizer_common_interceptors_vfork_x86_64.inc.S",
+        ":sanitizer_common_interceptors_vfork_sources",
     ],
     includes = [
         "lib",
@@ -951,7 +974,7 @@ cc_library(
     name = "sanitizer_common_libc",
     srcs = [
         ":sanitizer_libcdep_sources",
-        ":sanitizer_impl_headers",
+        ":sanitizer_impl_headers_sources",
     ],
     includes = [
         "lib",
@@ -973,7 +996,7 @@ cc_library(
     name = "sanitizer_common_coverage",
     srcs = [
         ":sanitizer_coverage_sources",
-        ":sanitizer_impl_headers",
+        ":sanitizer_impl_headers_sources",
     ],
     includes = [
         "lib",
@@ -995,7 +1018,7 @@ cc_library(
     name = "sanitizer_common_symbolizer",
     srcs = [
         ":sanitizer_symbolizer_sources",
-        ":sanitizer_impl_headers",
+        ":sanitizer_impl_headers_sources",
     ],
     includes = [
         "lib",
@@ -1017,7 +1040,7 @@ cc_library(
     name = "sanitizer_common_symbolizer_internal",
     srcs = [
         "lib/sanitizer_common/symbolizer/sanitizer_symbolize.cpp",
-        ":sanitizer_impl_headers",
+        ":sanitizer_impl_headers_sources",
     ],
     deps = [
         ":llvm_Symbolize",
@@ -1075,7 +1098,7 @@ cc_library(
     srcs = [
         ":interception_sources",
         ":interception_headers",
-        ":sanitizer_impl_headers",
+        ":sanitizer_impl_headers_sources",
     ],
     includes = ["lib"],
     alwayslink = True,
@@ -1347,6 +1370,14 @@ filegroup(
     srcs = ["lib/lsan/" + f for f in LSAN_HEADERS],
 )
 
+cc_library(
+    name = "lsan_common_headers",
+    hdrs = [
+        ":lsan_headers",
+    ],
+    includes = ["lib"],
+)
+
 # This corresponds to RTLSanCommon in CMake: used by asan/hwasan even if LSan
 # itself is not enabled.
 cc_library(
@@ -1518,7 +1549,60 @@ filegroup(
 )
 
 cc_library(
-    name = "asan",
+    name = "asan_common_runtime",
+    deps = [
+        ":interception",
+        ":sanitizer_common",
+        ":sanitizer_common_libc",
+        ":sanitizer_common_coverage",
+        ":sanitizer_common_symbolizer",
+        ":sanitizer_common_symbolizer_internal",
+        ":lsan_common",
+        ":ubsan_no_standalone",
+    ],
+)
+
+cc_library(
+    name = "asan_cxx",
+    srcs = [
+        ":asan_cxx_sources",
+        ":asan_headers",
+    ],
+    deps = [
+        ":sanitizer_impl_headers",
+        ":interception_impl_headers",
+    ],
+    implementation_deps = [
+        ":libcxx_headers",
+    ],
+)
+
+cc_library(
+    name = "asan_preinit",
+    srcs = [
+        ":asan_preinit_sources",
+        ":asan_headers",
+    ],
+    deps = [
+        ":sanitizer_impl_headers",
+        ":interception_impl_headers",
+    ],
+)
+
+cc_library(
+    name = "asan_static",
+    srcs = [
+        ":asan_static_sources",
+        ":asan_headers",
+    ],
+    deps = [
+        ":sanitizer_impl_headers",
+        ":interception_impl_headers",
+    ],
+)
+
+cc_library(
+    name = "asan2",
     srcs = [
         ":asan_sources",
         ":asan_cxx_sources",
@@ -1564,11 +1648,86 @@ cc_library(
         ":libcxx_headers",
     ],
 )
+cc_library(
+    name = "asan",
+    srcs = [
+        ":asan_sources",
+        ":asan_headers",
+        ":ubsan_headers",
+    ],
+    copts = [
+        # The AddressSanitizer run-time should not be instrumented by AddressSanitizer.
+        "-fno-sanitize=address",
+    ] + select({
+        # Upstream adds these via SANITIZER_COMMON_CFLAGS for all supported platforms.
+        "@platforms//os:windows": [],
+        "//conditions:default": [
+            "-fPIC",
+            "-fvisibility=hidden",
+            "-fvisibility-inlines-hidden",
+        ],
+    }),
+    textual_hdrs = [
+        "lib/asan/asan_activation_flags.inc",
+        "lib/asan/asan_flags.inc",
+        "lib/asan/asan_interface.inc",
+        ":sanitizer_common_interceptors_vfork_sources",
+    ],
+    includes = ["lib"],
+    linkopts = [
+        "-Wl,-undefined,dynamic_lookup",
+        #"-Wl,-U,___lsan_default_options",
+        #"-Wl,-U,___lsan_default_suppressions",
+        #"-Wl,-U,___lsan_is_turned_off",
+    ],
+    implementation_deps = [
+        ":libcxx_headers",
+        ":sanitizer_impl_headers",
+        ":interception_impl_headers",
+        ":lsan_common_headers",
+    ],
+    deps = [
+        ":interception",
+        ":sanitizer_common",
+        ":sanitizer_common_libc",
+        ":sanitizer_common_coverage",
+        ":sanitizer_common_symbolizer",
+        ":sanitizer_common_symbolizer_internal",
+        ":lsan_common",
+    ],
+)
+
+cc_library(
+    name = "asan_dynamic",
+    deps = [
+        ":asan",
+        ":asan_cxx",
+    ],
+    implementation_deps = [
+        ":libcxx_headers",
+    ],
+)
+
+##
 
 cc_runtime_stage0_static_library(
     name = "asan.static",
     deps = [
+        ":asan_preinit",
         ":asan",
+        # ":ubsan_no_standalone",
+    ],
+    # ___lsan_default_options
+    # ___lsan_default_suppressions
+    # ___lsan_is_turned_off
+
+    visibility = ["//visibility:public"],
+)
+
+cc_runtime_stage0_static_library(
+    name = "asan2.static",
+    deps = [
+        ":asan2",
         ":ubsan_no_standalone",
     ],
     # ___lsan_default_options
@@ -1578,18 +1737,42 @@ cc_runtime_stage0_static_library(
     visibility = ["//visibility:public"],
 )
 
+cc_runtime_stage0_static_library(
+    name = "asan_cxx.static",
+    deps = [
+        ":asan_cxx",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+# asan_static.static
+cc_runtime_stage0_static_library(
+    name = "asan_static.static",
+    deps = [
+        ":asan_static",
+    ],
+    # ___lsan_default_options
+    # ___lsan_default_suppressions
+    # ___lsan_is_turned_off
+
+    visibility = ["//visibility:public"],
+)
+
+cc_runtime_stage0_static_library(
+    name = "asan_preinit.static",
+    deps = [
+        ":asan_preinit",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+
 cc_runtime_stage0_shared_library(
     name = "asan.shared",
     deps = [
-        ":asan",
-        ":llvm_Symbolize",
-        ":sanitizer_common",
-        ":sanitizer_common_libc",
-        ":sanitizer_common_coverage",
-        ":sanitizer_common_symbolizer",
-        ":sanitizer_common_symbolizer_internal",
-        ":lsan_common",
-        ":ubsan_no_standalone",
+        ":asan_common_runtime",
+        ":asan_dynamic",
+        # ":asan",
     ],
     additional_linker_inputs = select({
         "@toolchains_llvm_bootstrapped//platforms/config:gnu": [

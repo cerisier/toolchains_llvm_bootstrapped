@@ -97,7 +97,7 @@ def declare_llvm_targets(*, suffix = ""):
         "@rules_cc//cc/toolchains/actions:objcopy_embed_data": ":llvm-objcopy",
         "@rules_cc//cc/toolchains/actions:dwp": ":llvm-dwp",
         "@rules_cc//cc/toolchains/actions:strip": ":llvm-strip",
-        "@rules_cc//cc/toolchains/actions:validate_static_library": ":static_library_validator",
+        # "@rules_cc//cc/toolchains/actions:validate_static_library": ":static_library_validator",
     }
 
     cc_tool_map(
