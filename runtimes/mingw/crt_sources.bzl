@@ -337,6 +337,7 @@ MINGWEX_HDRS = [
 ]
 
 MINGWEX_X86_SRCS = [
+    "cfguard/guard_dispatch.S",
     "math/cbrtl.c",
     "math/erfl.c",
     "math/fdiml.c",
