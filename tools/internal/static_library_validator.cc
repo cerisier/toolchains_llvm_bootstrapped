@@ -34,7 +34,7 @@ static void PrintErrno(const char *what) {
 
 static bool ShouldKeepType(char type) {
   return std::isupper(static_cast<unsigned char>(type)) &&
-         type != 'U' && type != 'V' && type != 'W';
+         type != 'U' && type != 'V' && type != 'W' && type != 'C';
 }
 
 #if defined(_WIN32)
