@@ -72,13 +72,13 @@ def _glibc_impl(module_ctx):
                 urls = ["https://github.com/bminor/glibc/archive/{}.tar.gz".format(GLIBC_RELEASE_COMMITS.get(version))],
                 strip_prefix = "glibc-{}".format(GLIBC_RELEASE_COMMITS.get(version)),
                 sha256 = GLIBC_RELEASE_INTEGRITY.get(version),
-                build_file = "//third_party/libc/glibc:glibc.BUILD.bazel",
+                build_file = "//3rd_party/libc/glibc:glibc.BUILD.bazel",
                 patches = [
                     # This file is generated when compiling the glibc.
                     #
                     # We add it as an empty file because all the constant it
                     # normally defines are manually passed as `defines`
-                    "//third_party/libc/glibc:0001-Add-empty-config.h.patch",
+                    "//3rd_party/libc/glibc:0001-Add-empty-config.h.patch",
 
                     # This file is generated when compiling the glibc.
                     #
@@ -87,7 +87,7 @@ def _glibc_impl(module_ctx):
                     #
                     # On linux, it is the same value all the time:
                     # .*-.*-linux.* 0 2.0.0 # earliest compatible kernel version
-                    "//third_party/libc/glibc:0002-Add-abi-tag.h.patch",
+                    "//3rd_party/libc/glibc:0002-Add-abi-tag.h.patch",
 
                     # This file is generated when compiling the glibc.
                     #
@@ -95,7 +95,7 @@ def _glibc_impl(module_ctx):
                     # files compilation. We can hardcode the values safely as
                     # long as every module that existed in the range of libc 
                     # we support is listed in this file with a value associated.
-                    "//third_party/libc/glibc:0003-Adding-libc-modules.h.patch",
+                    "//3rd_party/libc/glibc:0003-Adding-libc-modules.h.patch",
                 ],
                 patch_args = [
                     "-p1",

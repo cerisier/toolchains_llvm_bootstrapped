@@ -138,7 +138,7 @@ cc_library(
         # libcxx depends on a set of internal llvm-libc headers. (libc/shared)
         # See project hand-in-hand.
         # https://discourse.llvm.org/t/rfc-project-hand-in-hand-llvm-libc-libc-code-sharing/77701
-        "@toolchains_llvm_bootstrapped//third_party/llvm-project/21.x/libc:libc_headers",
+        "@toolchains_llvm_bootstrapped//3rd_party/llvm-project/21.x/libc:libc_headers",
     ] + select({
         "@toolchains_llvm_bootstrapped//platforms/config:musl": [
             "@musl_libc//:musl_libc_headers",

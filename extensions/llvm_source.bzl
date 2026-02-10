@@ -12,16 +12,17 @@ _LLVM_RAW_ARCHIVE = struct(
     urls = ["https://github.com/llvm/llvm-project/releases/download/llvmorg-{LLVM_VERSION}/llvm-project-{LLVM_VERSION}.src.tar.xz".format(LLVM_VERSION = LLVM_VERSION)],
     patch_args = ["-p1"],
     patches = [
-        "//third_party/llvm-project/21.x/patches:llvm-extra.patch",
-        "//third_party/llvm-project/21.x/patches:llvm-bazel9.patch",
-        "//third_party/llvm-project/21.x/patches:llvm-dsymutil-corefoundation.patch",
-        "//third_party/llvm-project/21.x/patches:llvm-sanitizers-ignorelists.patch",
-        "//third_party/llvm-project/21.x/patches:windows_link_and_genrule.patch",
-        "//third_party/llvm-project/21.x/patches:bundle_resources_no_python.patch",
-        "//third_party/llvm-project/21.x/patches:no_frontend_builtin_headers.patch",
-        "//third_party/llvm-project/21.x/patches:no_zlib_genrule.patch",
-        "//third_party/llvm-project/21.x/patches:no_rules_python.patch",
-        "//third_party/llvm-project/21.x/patches:llvm-overlay-starlark.patch",
+        "//3rd_party/llvm-project/21.x/patches:llvm-extra.patch",
+        "//3rd_party/llvm-project/21.x/patches:llvm-bazel9.patch",
+        "//3rd_party/llvm-project/21.x/patches:llvm-dsymutil-corefoundation.patch",
+        "//3rd_party/llvm-project/21.x/patches:llvm-driver-tool-order.patch",
+        "//3rd_party/llvm-project/21.x/patches:llvm-sanitizers-ignorelists.patch",
+        "//3rd_party/llvm-project/21.x/patches:windows_link_and_genrule.patch",
+        "//3rd_party/llvm-project/21.x/patches:bundle_resources_no_python.patch",
+        "//3rd_party/llvm-project/21.x/patches:no_frontend_builtin_headers.patch",
+        "//3rd_party/llvm-project/21.x/patches:no_zlib_genrule.patch",
+        "//3rd_party/llvm-project/21.x/patches:no_rules_python.patch",
+        "//3rd_party/llvm-project/21.x/patches:llvm-overlay-starlark.patch",
     ],
 )
 
@@ -119,7 +120,7 @@ def _llvm_source_impl(mctx):
         for name in _LLVM_RELEASE_ASSETS_SHA256.keys():
             _llvm_subproject_repository(
                 name = name,
-                build_file = "@toolchains_llvm_bootstrapped//third_party/llvm-project/21.x/{name}:{name}.BUILD.bazel".format(name = name),
+                build_file = "@toolchains_llvm_bootstrapped//3rd_party/llvm-project/21.x/{name}:{name}.BUILD.bazel".format(name = name),
                 dir = name,
             )
 
@@ -127,15 +128,9 @@ def _llvm_source_impl(mctx):
         for (name, sha256) in _LLVM_RELEASE_ASSETS_SHA256.items():
             http_archive(
                 name = name,
-                build_file = "//third_party/llvm-project/21.x/{name}:{name}.BUILD.bazel".format(name = name),
+                build_file = "//3rd_party/llvm-project/21.x/{name}:{name}.BUILD.bazel".format(name = name),
                 patch_args = ["-p1"],
-                patches = (
-                    ["//third_party/llvm-project/21.x/libcxx:lgamma_r.patch"]
-                    if name == "libcxx"
-                    else ["//third_party/llvm-project/21.x/compiler-rt:symbolizer_skip_cxa_atexit.patch"]
-                    if name == "compiler-rt"
-                    else []
-                ),
+                patches = ["//3rd_party/llvm-project/21.x/libcxx:lgamma_r.patch"] if name == "libcxx" else [],
                 sha256 = sha256,
                 strip_prefix = "{name}-{llvm_version}.src".format(
                     name = name,

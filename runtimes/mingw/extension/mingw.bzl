@@ -10,6 +10,10 @@ def _mingw_extension_impl(module_ctx):
         integrity = "sha256-Wv6CKvXE7b9n2q9F7sYdU49J7vaxlSTeZIl8a5WCjK8=",
         strip_prefix = "mingw-w64-v13.0.0",
         build_file = "//runtimes/mingw:mingw.BUILD.bazel",
+        patches = [
+            "//runtimes/mingw/patches:remove-fpreset-from-msvcrt-def.patch",
+        ],
+        patch_args = ["-p1"],
     )
 
     metadata_kwargs = {}

@@ -10,11 +10,11 @@ def _musl_extension_impl(module_ctx):
         strip_prefix = "musl-1.2.5",
         patch_args = ["-p1"],
         patches = [
-            "//third_party/libc/musl:1.2.5-CVE-2025-26519-1.patch",
-            "//third_party/libc/musl:1.2.5-CVE-2025-26519-2.patch",
+            "//3rd_party/libc/musl:1.2.5-CVE-2025-26519-1.patch",
+            "//3rd_party/libc/musl:1.2.5-CVE-2025-26519-2.patch",
         ],
         integrity = "sha256-qaEYu+hNh2TaDqDSizqz+uhHf8fkCF2QECuFlvx8deQ=",
-        build_file = "//third_party/libc/musl:musl.BUILD.bazel",
+        build_file = "//3rd_party/libc/musl:musl.BUILD.bazel",
     )
 
     metadata_kwargs = {}

@@ -1,6 +1,6 @@
 load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
-load("@toolchains_llvm_bootstrapped//third_party/libc/glibc:helpers.bzl", "glibc_includes")
+load("@toolchains_llvm_bootstrapped//3rd_party/libc/glibc:helpers.bzl", "glibc_includes")
 load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_library.bzl", "cc_runtime_stage0_library")
 load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
 load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_stage0_object.bzl", "cc_stage0_object")
@@ -68,7 +68,7 @@ cc_runtime_stage0_library(
 cc_runtime_stage0_library(
     name = "glibc_abi_note",
     srcs = [
-        "@toolchains_llvm_bootstrapped//third_party/libc/glibc/csu:abi-note-2.31.S",
+        "@toolchains_llvm_bootstrapped//3rd_party/libc/glibc/csu:abi-note-2.31.S",
     ],
     copts = [
         # Normally, we would pass -nostdinc, but since we pass -nostdlibinc
@@ -237,10 +237,10 @@ cc_runtime_stage0_library(
     }),
     srcs = [
         # From stdlib/Makefile
-        "@toolchains_llvm_bootstrapped//third_party/libc/glibc/stdlib:atexit.c",
-        "@toolchains_llvm_bootstrapped//third_party/libc/glibc/stdlib:at_quick_exit.c",
+        "@toolchains_llvm_bootstrapped//3rd_party/libc/glibc/stdlib:atexit.c",
+        "@toolchains_llvm_bootstrapped//3rd_party/libc/glibc/stdlib:at_quick_exit.c",
         # From nptl/Makefile
-        "@toolchains_llvm_bootstrapped//third_party/libc/glibc/nptl:pthread_atfork.c",
+        "@toolchains_llvm_bootstrapped//3rd_party/libc/glibc/nptl:pthread_atfork.c",
         # From debug/Makefile
         "debug/stack_chk_fail_local.c",
     ] + selects.with_or({
@@ -273,13 +273,13 @@ cc_runtime_stage0_library(
 
             # if libc <= 2.32 but also <= 2.33
             # From csu/Makefile
-            "@toolchains_llvm_bootstrapped//third_party/libc/glibc/csu:elf-init-2.31.c",
+            "@toolchains_llvm_bootstrapped//3rd_party/libc/glibc/csu:elf-init-2.31.c",
         ],
         "@toolchains_llvm_bootstrapped//constraints/libc:gnu.2.33": [
             # if libc <= 2.32 but also <= 2.33
             # __libc_start_main used to require statically linked init/fini callbacks
             # until glibc 2.34 when they were assimilated into the shared library.
-            "@toolchains_llvm_bootstrapped//third_party/libc/glibc/csu:elf-init-2.31.c",
+            "@toolchains_llvm_bootstrapped//3rd_party/libc/glibc/csu:elf-init-2.31.c",
         ],
         "//conditions:default": [],
     }),

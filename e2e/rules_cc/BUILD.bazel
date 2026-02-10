@@ -219,6 +219,20 @@ cc_static_library(
     tags = ["manual"],
 )
 
+cc_library(
+    name = "comm_symbol_defs",
+    srcs = [
+        "comm_symbol_strong.c",
+        "comm_symbol_tentative.S",
+    ],
+    tags = ["manual"],
+)
+
+cc_static_library(
+    name = "comm_symbol_static_lib",
+    deps = [":comm_symbol_defs"],
+)
+
 sh_test(
     name = "duplicate_static_library_validator_test",
     srcs = ["duplicate_static_library_failure_test.sh"],

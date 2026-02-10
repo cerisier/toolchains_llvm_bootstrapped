@@ -5,7 +5,7 @@ module(
     compatibility_level = 0,
 )
 
-bazel_dep(name = "bazel_lib", version = "3.0.0")
+bazel_dep(name = "bazel_lib", version = "3.2.0")
 bazel_dep(name = "bazel_skylib", version = "1.8.2")
 bazel_dep(name = "bazel_features", version = "1.34.0")
 bazel_dep(name = "platforms", version = "1.0.0")
@@ -18,14 +18,14 @@ http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "ht
 
 LLVM_VERSION = "21.1.8"
 
-PREBUILT_LLVM_SUFFIX = "-5"
+PREBUILT_LLVM_SUFFIX = "-6"
 
 LLVM_TOOLCHAIN_MINIMAL_SHA256 = {
-    "darwin-arm64": "7f3067e14e65acd1bce873136e01ab17e680f25ba7d83d32c09af215d8fb546a",
-    "linux-amd64-musl": "906985c22134e13c5356542e7f04cf1ef8f1ad1711d7161f89da4c42ac079e8b",
-    "linux-arm64-musl": "80b947a8424ccbe2808b3fef62bfbf5a1a9942b8e0af569b53d62b1e54dfdbda",
-    "windows-amd64": "9ba42717946ab0c90ceb0db45fcd033dd1e3a46bf7d8b13e7c7d50feb68b8ef7",
-    "windows-arm64": "24049b3fe7f8ac6c6a59ed0795492b7e427cfbc8511691274b6a412869c4dc73",
+    "darwin-arm64": "4f00d3892674eab66e1c6b95c4335e1103444d9bf6e7625e9d1f537a4caf6410",
+    "linux-amd64-musl": "db487e9be3911712953f227c5d626318ba7d10cd08a94b2a7c81226823383188",
+    "linux-arm64-musl": "d84d4637d4eba57317539c1814799d0740e39c4d9467ec5afb2c1cbdf3af3484",
+    "windows-amd64": "620583faa7c6513f4f8a5e4eb17e6819ec2c4cd0041b8e248635bfb4a692d121",
+    "windows-arm64": "f7ea32db012b2e38c454e883cc72d1d3f919c2233aa7a0e6a3a1bd0e8d7e02a3",
 }
 
 [
@@ -46,13 +46,13 @@ LLVM_TOOLCHAIN_MINIMAL_SHA256 = {
 ]
 
 TOOLCHAIN_EXTRAS_SHA256 = {
-    "darwin-arm64": "70d4847b6b062512b96fec8546adffd34a01786f3731722d2d6ee432b82ae2ae",
-    "linux-amd64-musl": "ba1f512c8c7582c81955a31531cb16e3eaa361ed379fba9c4279329d4040ae1c",
-    "linux-arm64-musl": "0275de455fbf0ea3b2c402bca1a90367822034d6f718a94bca0ebd9671fc6e1a",
-    "windows-amd64-gnu": "5655e757acec1a8e0b54f3e680400c8ee7256b9b2274845898e62d90b1ff68ad",
+    "darwin-arm64": "4348eab38e8d1952661d7908b9fffaecd005431252e5d5026036a6c803b17e01",
+    "linux-amd64-musl": "1ef49ff0d3212914e456a038fc3d8be69ab02a12d8a641e6e6baade7b507e0de",
+    "linux-arm64-musl": "567da9faa12ff9d3af159417e9366a067aa8bebb46df3705208c63f76d74b508",
+    "windows-amd64-gnu": "24e68f4fef8b5da38e2d74c64ea1d90d9fd08845d3ffc0b7a24fd2e6baffe42c",
 }
 
-TOOLCHAIN_EXTRAS_VERSION = "20260206"
+TOOLCHAIN_EXTRAS_VERSION = "20260210"
 
 [
     http_archive(
@@ -126,7 +126,7 @@ archive_override(
     urls = ["https://github.com/cerisier/libstdcxx-stubs-generator/archive/{}.tar.gz".format(LIBSTDCXX_STUBS_GENERATOR_COMMIT)],
 )
 
-PKGUTIL_COMMIT = "66cd442f953f53e3709e2d6c71c68e9aed14cddf" #main
+PKGUTIL_COMMIT = "66cd442f953f53e3709e2d6c71c68e9aed14cddf"  #main
 
 bazel_dep(name = "xpkgutil", version = "1.0.14", dev_dependency = True)
 archive_override(
@@ -142,9 +142,9 @@ single_version_override(
     module_name = "libarchive",
     patch_strip = 1,
     patches = [
-        "//third_party/libarchive:0001-libarchive_enable_xar_support.patch",
-        "//third_party/libarchive:0002-feat-add-pbzx-read-filter.patch",
-        "//third_party/libarchive:0003-give-mingw-acceptable-posix-types.patch",
+        "//3rd_party/libarchive:0001-libarchive_enable_xar_support.patch",
+        "//3rd_party/libarchive:0002-feat-add-pbzx-read-filter.patch",
+        "//3rd_party/libarchive:0003-give-mingw-acceptable-posix-types.patch",
     ],
 )
 
@@ -153,7 +153,7 @@ bazel_dep(name = "rules_swift", version = "3.4.2", dev_dependency = True)
 single_version_override(
     module_name = "rules_swift",
     patch_strip = 1,
-    patches = ["//third_party/rules_swift:0001-allow-disabling-autoconfiguration.patch"],
+    patches = ["//3rd_party/rules_swift:0001-allow-disabling-autoconfiguration.patch"],
     version = "3.4.2",
 )
 
