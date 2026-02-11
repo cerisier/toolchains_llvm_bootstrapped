@@ -213,6 +213,9 @@ cc_runtime_stage0_library(
         "$(location include/libc-modules.h)",
         "-include",
         "$(location include/libc-symbols.h)",
+
+        # glibc has compile-time checks ensuring we compile it optimized.
+        "-O2",
     ],
     local_defines = [
         "NO_INITFINI",
