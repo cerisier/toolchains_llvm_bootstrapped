@@ -173,8 +173,10 @@ copy_to_resource_directory(
             "//runtimes/compiler-rt:clang_rt.msan.static": "libclang_rt.msan_static",
         },
         "//config:asan_enabled": {
-            "//runtimes/compiler-rt:clang_rt.asan.static": "libclang_rt.asan_static",
-            "//runtimes/compiler-rt:clang_rt.asan.dynamic": "libclang_rt.asan",
+            "//runtimes/compiler-rt:clang_rt.asan_cxx.static": "libclang_rt.asan_cxx",
+            "//runtimes/compiler-rt:clang_rt.asan_static.static": "libclang_rt.asan_static",
+            "//runtimes/compiler-rt:clang_rt.asan.static": "libclang_rt.asan",
+            "//runtimes/compiler-rt:clang_rt.asan.shared": "libclang_rt.asan",
         },
         "//conditions:default": {},
     }),

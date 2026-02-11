@@ -130,7 +130,7 @@ def _llvm_source_impl(mctx):
                 name = name,
                 build_file = "//3rd_party/llvm-project/21.x/{name}:{name}.BUILD.bazel".format(name = name),
                 patch_args = ["-p1"],
-                patches = ["//3rd_party/llvm-project/21.x/libcxx:lgamma_r.patch"] if name == "libcxx" else [],
+                patches = (["//3rd_party/llvm-project/21.x/libcxx:lgamma_r.patch"] if name == "libcxx" else []) + (["//3rd_party/llvm-project/21.x/compiler-rt:symbolizer_skip_cxa_atexit.patch"] if name == "compiler-rt" else []),
                 sha256 = sha256,
                 strip_prefix = "{name}-{llvm_version}.src".format(
                     name = name,

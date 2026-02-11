@@ -23,6 +23,24 @@ alias(
 )
 
 alias(
+    name = "clang_rt.asan_static.static",
+    actual = "@compiler-rt//:asan_static.static",
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "clang_rt.asan_cxx.static",
+    actual = "@compiler-rt//:asan_cxx.static",
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "clang_rt.asan.shared",
+    actual = "@compiler-rt//:asan.shared",
+    visibility = ["//visibility:public"],
+)
+
+alias(
     name = "clang_rt.crtbegin",
     actual = "@compiler-rt//:clang_rt.crtbegin.static",
     visibility = ["//visibility:public"],

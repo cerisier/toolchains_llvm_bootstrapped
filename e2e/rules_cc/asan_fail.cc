@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 int main(void) {
+    printf("Hello, ASan!\n");
     int *p = (int*)malloc(sizeof(int));
     *p = 123;
 

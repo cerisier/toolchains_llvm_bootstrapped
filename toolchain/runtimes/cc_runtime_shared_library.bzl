@@ -8,7 +8,12 @@ _builder = with_cfg(
     extra_providers = [CcSharedLibraryInfo],
 )
 
-cc_runtime_stage0_shared_library, _cc_stage0_shared_library_internal = configure_builder_for_runtimes(_builder.clone(), "stage0", "dynamic").build()
-cc_runtime_stage1_shared_library, _cc_stage1_shared_library_internal = configure_builder_for_runtimes(_builder.clone(), "stage1", "dynamic").build()
-cc_runtime_stage2_shared_library, _cc_stage2_shared_library_internal = configure_builder_for_runtimes(_builder.clone(), "stage2", "dynamic").build()
-cc_runtime_stage3_shared_library, _cc_stage3_shared_library_internal = configure_builder_for_runtimes(_builder.clone(), "stage3", "dynamic").build()
+cc_runtime_stage0_shared_library, _cc_stage0_shared_library_internal = configure_builder_for_runtimes(_builder.clone(), "stage0", "dynamic", sanitizers = False).build()
+cc_runtime_stage1_shared_library, _cc_stage1_shared_library_internal = configure_builder_for_runtimes(_builder.clone(), "stage1", "dynamic", sanitizers = False).build()
+cc_runtime_stage2_shared_library, _cc_stage2_shared_library_internal = configure_builder_for_runtimes(_builder.clone(), "stage2", "dynamic", sanitizers = False).build()
+cc_runtime_stage3_shared_library, _cc_stage3_shared_library_internal = configure_builder_for_runtimes(_builder.clone(), "stage3", "dynamic", sanitizers = False).build()
+
+cc_runtime_stage0_unsanitized_shared_library, _cc_stage0_unsanitized_shared_library_internal = configure_builder_for_runtimes(_builder.clone(), "stage0", "dynamic", sanitizers = False).build()
+cc_runtime_stage1_unsanitized_shared_library, _cc_stage1_unsanitized_shared_library_internal = configure_builder_for_runtimes(_builder.clone(), "stage1", "dynamic", sanitizers = False).build()
+cc_runtime_stage2_unsanitized_shared_library, _cc_stage2_unsanitized_shared_library_internal = configure_builder_for_runtimes(_builder.clone(), "stage2", "dynamic", sanitizers = False).build()
+cc_runtime_stage3_unsanitized_shared_library, _cc_stage3_unsanitized_shared_library_internal = configure_builder_for_runtimes(_builder.clone(), "stage3", "dynamic", sanitizers = False).build()
