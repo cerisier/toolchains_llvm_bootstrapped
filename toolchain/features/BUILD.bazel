@@ -17,6 +17,11 @@ cc_feature(
     overrides = "@rules_cc//cc/toolchains/features:static_link_cpp_runtimes",
 )
 
+cc_feature(
+    name = "prefer_pic_for_opt_binaries",
+    feature_name = "prefer_pic_for_opt_binaries",
+)
+
 cc_args(
     name = "opt_link_flags",
     actions = [

@@ -11,6 +11,7 @@ def cc_toolchain(name, tool_map, module_map = None):
             "@toolchains_llvm_bootstrapped//toolchain/features:static_link_cpp_runtimes",
             "@toolchains_llvm_bootstrapped//toolchain/features/runtime_library_search_directories:feature",
             "@toolchains_llvm_bootstrapped//toolchain/features:archive_param_file",
+            "@toolchains_llvm_bootstrapped//toolchain/features:prefer_pic_for_opt_binaries",
         ] + select({
             "@platforms//os:linux": [
                 "@rules_cc//cc/toolchains/args/thin_lto:feature",
@@ -34,6 +35,7 @@ def cc_toolchain(name, tool_map, module_map = None):
             #"@rules_cc//cc/toolchains/args/layering_check:use_module_maps",
 
             "@toolchains_llvm_bootstrapped//toolchain/features:archive_param_file",
+            "@toolchains_llvm_bootstrapped//toolchain/features:prefer_pic_for_opt_binaries",
             # Always last (contains user_compile_flags and user_link_flags who should apply last).
             "@rules_cc//cc/toolchains/args:experimental_replace_legacy_action_config_features",
         ],
@@ -53,6 +55,7 @@ def cc_toolchain(name, tool_map, module_map = None):
             ],
             "@platforms//os:none": [],
         }) + [
+            "@toolchains_llvm_bootstrapped//toolchain/features:prefer_pic_for_opt_binaries",
             "@rules_cc//cc/toolchains/args/layering_check:module_maps",
             # These are "enabled" but they only _actually_ get enabled when the underlying compilation mode is set.
             # This lets us properly order them before user_compile_flags and user_link_flags below.
@@ -69,6 +72,7 @@ def cc_toolchain(name, tool_map, module_map = None):
     cc_feature_set(
         name = name + "_runtimes_only_enabled_features",
         all_of = [
+            "@toolchains_llvm_bootstrapped//toolchain/features:prefer_pic_for_opt_binaries",
             "@toolchains_llvm_bootstrapped//toolchain/features:archive_param_file",
             # Always last (contains user_compile_flags and user_link_flags who should apply last).
             "@rules_cc//cc/toolchains/args:experimental_replace_legacy_action_config_features",
