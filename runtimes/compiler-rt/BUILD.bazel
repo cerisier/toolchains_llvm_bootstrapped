@@ -11,8 +11,8 @@ alias(
 )
 
 alias(
-    name = "clang_rt.ubsan_cxx.static",
-    actual = "@compiler-rt//:ubsan_cxx.static",
+    name = "clang_rt.ubsan_standalone_cxx.static",
+    actual = "@compiler-rt//:ubsan_standalone_cxx.static",
     visibility = ["//visibility:public"],
 )
 

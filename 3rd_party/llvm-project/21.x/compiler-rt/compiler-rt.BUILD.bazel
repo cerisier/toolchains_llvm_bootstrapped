@@ -1300,7 +1300,7 @@ cc_runtime_stage0_static_library(
 )
 
 cc_runtime_stage0_static_library(
-    name = "ubsan_cxx.static",
+    name = "ubsan_standalone_cxx.static",
     deps = [
         ":ubsan_cxx",
     ],

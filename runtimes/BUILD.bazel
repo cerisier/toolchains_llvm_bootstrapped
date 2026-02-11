@@ -168,7 +168,7 @@ copy_to_resource_directory(
     } | select({
         "//config:ubsan_enabled": {
             "//runtimes/compiler-rt:clang_rt.ubsan_standalone.static": "libclang_rt.ubsan_standalone",
-            "//runtimes/compiler-rt:clang_rt.ubsan_cxx.static": "libclang_rt.ubsan_cxx",
+            "//runtimes/compiler-rt:clang_rt.ubsan_standalone_cxx.static": "libclang_rt.ubsan_standalone_cxx",
         },
         "//config:msan_enabled": {
             "//runtimes/compiler-rt:clang_rt.msan.static": "libclang_rt.msan",
