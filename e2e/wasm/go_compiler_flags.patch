@@ -1,0 +1,83 @@
+From 99d7121934a9cfa7963d3a9bfd840779fd2869f6 Mon Sep 17 00:00:00 2001
+From: Corentin Kerisit <corentin.kerisit@gmail.com>
+Date: Tue, 16 Dec 2025 23:53:01 +0000
+Subject: [PATCH] cmd/link: add more clang driver flags when testing flag
+
+This changes does 2 things:
+
+- Move `-L` to `prefixesToKeep` since it allows providing a custom
+default libs search path.
+
+- Allow various flags that impact the behaviour of the clang driver.
+
+The latter allows for LLVM only toolchains to be compatible with
+linkerFlagSupported checks.
+
+The end goal of this PR is to allow fully hermetic toolchains,
+especially pure LLVM ones, to be used to cross-compile CGO.
+
+Fixes #76825
+
+Change-Id: I2311c9566ce9c7e8f6b325258af58eb333663cf0
+GitHub-Last-Rev: 74342aae35124cf174a3f8b888999ffd4cea191f
+GitHub-Pull-Request: golang/go#76858
+Reviewed-on: https://go-review.googlesource.com/c/go/+/730561
+Auto-Submit: Ian Lance Taylor <iant@golang.org>
+Reviewed-by: Dmitri Shuralyov <dmitshur@google.com>
+LUCI-TryBot-Result: Go LUCI <golang-scoped@luci-project-accounts.iam.gserviceaccount.com>
+Reviewed-by: Michael Pratt <mpratt@google.com>
+Reviewed-by: Ian Lance Taylor <iant@golang.org>
+---
+ src/cmd/link/internal/ld/lib.go | 19 ++++++++++++++++++-
+ 1 file changed, 18 insertions(+), 1 deletion(-)
+
+diff --git a/src/cmd/link/internal/ld/lib.go b/src/cmd/link/internal/ld/lib.go
+index bcad5add4abe19..3799aafac769fa 100644
+--- a/src/cmd/link/internal/ld/lib.go
++++ b/src/cmd/link/internal/ld/lib.go
+@@ -2208,20 +2208,30 @@ func trimLinkerArgv(argv []string) []string {
+ 	flagsWithNextArgSkip := []string{
+ 		"-F",
+ 		"-l",
+-		"-L",
+ 		"-framework",
+ 		"-Wl,-framework",
+ 		"-Wl,-rpath",
+ 		"-Wl,-undefined",
+ 	}
+ 	flagsWithNextArgKeep := []string{
++		"-B",
++		"-L",
+ 		"-arch",
+ 		"-isysroot",
+ 		"--sysroot",
+ 		"-target",
+ 		"--target",
++		"-resource-dir",
++		"-rtlib",
++		"--rtlib",
++		"-stdlib",
++		"--stdlib",
++		"-unwindlib",
++		"--unwindlib",
+ 	}
+ 	prefixesToKeep := []string{
++		"-B",
++		"-L",
+ 		"-f",
+ 		"-m",
+ 		"-p",
+@@ -2231,6 +2241,13 @@ func trimLinkerArgv(argv []string) []string {
+ 		"--sysroot",
+ 		"-target",
+ 		"--target",
++		"-resource-dir",
++		"-rtlib",
++		"--rtlib",
++		"-stdlib",
++		"--stdlib",
++		"-unwindlib",
++		"--unwindlib",
+ 	}
+ 
+ 	var flags []string

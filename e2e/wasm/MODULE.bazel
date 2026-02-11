@@ -10,8 +10,32 @@ register_toolchains(
 )
 
 bazel_dep(name = "rules_platform", version = "0.1.0")
-bazel_dep(name = "rules_go", version = "0.59.0")
+bazel_dep(name = "rules_go", version = "0.60.0")
+single_version_override(
+    module_name = "rules_go",
+    patch_strip = 1,
+    patches = ["//:rules_go.patch"],
+    version = "0.60.0",
+)
+
 bazel_dep(name = "gazelle", version = "0.46.0")
+
+go_sdk = use_extension("@rules_go//go:extensions.bzl", "go_sdk")
+go_sdk.from_file(
+    name = "go_prebuilt_sdk_local",
+    go_mod = "//:go.mod",
+)
+go_sdk.bootstrap(
+    name = "go_bootstrap_sdk_patched",
+    go_mod = "//:go.mod",
+    patch_strip = 1,
+    patches = ["//:go_compiler_flags.patch"],
+)
+use_repo(
+    go_sdk,
+    "go_bootstrap_sdk_patched",
+    "go_prebuilt_sdk_local",
+)
 
 go_deps = use_extension("@gazelle//:extensions.bzl", "go_deps")
 go_deps.from_file(go_mod = "//:go.mod")

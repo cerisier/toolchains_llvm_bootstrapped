@@ -19,8 +19,9 @@ common --incompatible_config_setting_private_default_visibility
 
 common:bootstrap   --@toolchains_llvm_bootstrapped//toolchain:source=bootstrapped
 
-# Workaround lack of cgo support for now
-common:wasm       --@rules_go//go/config:pure
+# Bootstrap Go compilers from source with our patch.
+common:wasm --@rules_go//go/toolchain:source=bootstrapped
+common:wasm --@rules_go//go/toolchain:sdk_name=go_bootstrap_sdk_patched
 
 common:prebuilt  -c opt
 common:prebuilt  --strip=always
