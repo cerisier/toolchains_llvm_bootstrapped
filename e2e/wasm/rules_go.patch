@@ -749,9 +749,6 @@ index a5deab41..9cdb0720 100644
 +            fail("goos set but goarch not set")
 +        goos, goarch = ctx.attr.goos, ctx.attr.goarch
 +
-+    if goos != host_goos or goarch != host_goarch:
-+        fail("go_bootstrap_sdk requires host platform {}, got {}_{}".format(host_goos + "_" + host_goarch, goos, goarch))
-+
 +    platform = goos + "_" + goarch
 +    version = ctx.attr.version
 +    sdks = ctx.attr.sdks

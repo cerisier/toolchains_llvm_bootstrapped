@@ -1,0 +1,29 @@
+diff --git a/internal/gazelle_binary.bzl b/internal/gazelle_binary.bzl
+--- a/internal/gazelle_binary.bzl
++++ b/internal/gazelle_binary.bzl
+@@ -19,6 +19,17 @@ load(
+     "new_go_info",
+ )
+ 
++def _gazelle_binary_pure_transition_impl(_settings, _attr):
++    return {
++        "@io_bazel_rules_go//go/config:pure": True,
++    }
++
++_gazelle_binary_pure_transition = transition(
++    implementation = _gazelle_binary_pure_transition_impl,
++    inputs = [],
++    outputs = ["@io_bazel_rules_go//go/config:pure"],
++)
++
+ def _gazelle_binary_impl(ctx):
+     go = go_context(ctx)
+ 
+@@ -75,6 +86,7 @@ _gazelle_binary_kwargs = {
+     ]
+ 
+ _gazelle_binary_kwargs = {
++    "cfg": _gazelle_binary_pure_transition,
+     "implementation": _gazelle_binary_impl,
+     "doc": """The `gazelle_binary` rule builds a Go binary that incorporates a list of
+ language extensions. This requires generating a small amount of code that

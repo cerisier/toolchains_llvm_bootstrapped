@@ -19,6 +19,12 @@ single_version_override(
 )
 
 bazel_dep(name = "gazelle", version = "0.46.0")
+single_version_override(
+    module_name = "gazelle",
+    patch_strip = 1,
+    patches = ["//:gazelle_pure.patch"],
+    version = "0.46.0",
+)
 
 go_sdk = use_extension("@rules_go//go:extensions.bzl", "go_sdk")
 go_sdk.from_file(
@@ -28,6 +34,8 @@ go_sdk.from_file(
 go_sdk.bootstrap(
     name = "go_bootstrap_sdk_patched",
     go_mod = "//:go.mod",
+    goarch = "amd64",
+    goos = "linux",
     patch_strip = 1,
     patches = ["//:go_compiler_flags.patch"],
 )
