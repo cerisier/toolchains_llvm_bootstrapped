@@ -17,20 +17,6 @@ load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
-config_setting(
-    name = "asan_enabled_fwd",
-    flag_values = {
-        "@toolchains_llvm_bootstrapped//config:asan": "1",
-    },
-)
-
-config_setting(
-    name = "msan_enabled_fwd",
-    flag_values = {
-        "@toolchains_llvm_bootstrapped//config:msan": "1",
-    },
-)
-
 ###
 ### compiler-rt/lib/builtins/CMakeLists.txt.
 ###
@@ -1018,13 +1004,7 @@ cc_library(
     alwayslink = True,
     implementation_deps = [
         ":libcxx_headers",
-    ] + select({
-        "//:asan_enabled_fwd": [":asan_interface"],
-        "//conditions:default": [],
-    }) + select({
-        "//:msan_enabled_fwd": [":msan_interface"],
-        "//conditions:default": [],
-    }),
+    ],
 )
 
 cc_library(
@@ -1041,13 +1021,7 @@ cc_library(
     alwayslink = True,
     implementation_deps = [
         ":libcxx_headers",
-    ] + select({
-        "//:asan_enabled_fwd": [":asan_interface"],
-        "//conditions:default": [],
-    }) + select({
-        "//:msan_enabled_fwd": [":msan_interface"],
-        "//conditions:default": [],
-    }),
+    ],
 )
 
 cc_library(
@@ -1064,13 +1038,7 @@ cc_library(
     alwayslink = True,
     implementation_deps = [
         ":libcxx_headers",
-    ] + select({
-        "//:asan_enabled_fwd": [":asan_interface"],
-        "//conditions:default": [],
-    }) + select({
-        "//:msan_enabled_fwd": [":msan_interface"],
-        "//conditions:default": [],
-    }),
+    ],
 )
 
 cc_library(
@@ -1087,13 +1055,7 @@ cc_library(
     alwayslink = True,
     implementation_deps = [
         ":libcxx_headers",
-    ] + select({
-        "//:asan_enabled_fwd": [":asan_interface"],
-        "//conditions:default": [],
-    }) + select({
-        "//:msan_enabled_fwd": [":msan_interface"],
-        "//conditions:default": [],
-    }),
+    ],
 )
 
 cc_library(
@@ -1118,13 +1080,7 @@ cc_library(
     alwayslink = True,
     implementation_deps = [
         ":libcxx_headers",
-    ] + select({
-        "//:asan_enabled_fwd": [":asan_interface"],
-        "//conditions:default": [],
-    }) + select({
-        "//:msan_enabled_fwd": [":msan_interface"],
-        "//conditions:default": [],
-    }),
+    ],
 )
 
 ###
@@ -1354,16 +1310,6 @@ cc_runtime_stage0_static_library(
 ###
 ### compiler-rt/lib/msan/CMakeLists.txt.
 ###
-
-cc_library(
-    name = "msan_interface",
-    hdrs = [
-        "include/sanitizer/common_interface_defs.h",
-        "include/sanitizer/msan_interface.h",
-    ],
-    strip_include_prefix = "include",
-    visibility = ["//visibility:public"],
-)
 
 MSAN_RTL_SOURCES = [
   "msan.cpp",
@@ -1603,16 +1549,6 @@ cc_runtime_stage0_static_library(
 ###
 ### compiler-rt/lib/asan/CMakeLists.txt.
 ###
-
-cc_library(
-    name = "asan_interface",
-    hdrs = [
-        "include/sanitizer/common_interface_defs.h",
-        "include/sanitizer/asan_interface.h",
-    ],
-    strip_include_prefix = "include",
-    visibility = ["//visibility:public"],
-)
 
 ASAN_SOURCES = [
     # "asan_aix.cpp",
