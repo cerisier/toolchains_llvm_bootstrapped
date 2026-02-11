@@ -194,12 +194,8 @@ cc_args(
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
     args = [
-        "{ubsan_path}",
+        "-fsanitize=undefined",
     ],
-    format = {
-        "ubsan_path": "@compiler-rt//:ubsan.static",
-    },
-    data = ["@compiler-rt//:ubsan.static"],
 )
 
 alias(
@@ -244,15 +240,9 @@ cc_args(
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
     args = [
+        "-fno-omit-frame-pointer",
         "-fsanitize=memory",
-        "-fno-sanitize-link-runtime",
-        "-fno-sanitize-link-c++-runtime",
-        "{msan_path}",
     ],
-    format = {
-        "msan_path": "@compiler-rt//:msan.static",
-    },
-    data = ["@compiler-rt//:msan.static"],
 )
 
 alias(
@@ -298,16 +288,7 @@ cc_args(
     ],
     args = [
         "-fsanitize=address",
-        # "-fno-sanitize-link-runtime",
-        # "-fno-sanitize-link-c++-runtime",
-        # "{asan_path}",
     ],
-    # format = {
-    #     "asan_path": "//runtimes/compiler-rt:clang_rt.asan.static",
-    # },
-    # data = [
-    #     "//runtimes/compiler-rt:clang_rt.asan.static",
-    # ],
 )
 
 alias(

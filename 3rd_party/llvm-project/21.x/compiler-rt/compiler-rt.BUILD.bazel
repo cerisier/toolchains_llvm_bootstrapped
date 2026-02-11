@@ -997,7 +997,7 @@ SANITIZER_COMMON_DEFINITIONS = [
 
 cc_library(
     name = "sanitizer_common",
-    copts = ["-O0"],
+    copts = SANITIZER_CFLAGS,
     srcs = [
         ":sanitizer_sources",
         ":sanitizer_impl_headers_sources",
@@ -1029,6 +1029,7 @@ cc_library(
 
 cc_library(
     name = "sanitizer_common_libc",
+    copts = SANITIZER_CFLAGS,
     srcs = [
         ":sanitizer_libcdep_sources",
         ":sanitizer_impl_headers_sources",
@@ -1051,6 +1052,7 @@ cc_library(
 
 cc_library(
     name = "sanitizer_common_coverage",
+    copts = SANITIZER_CFLAGS,
     srcs = [
         ":sanitizer_coverage_sources",
         ":sanitizer_impl_headers_sources",
@@ -1073,6 +1075,7 @@ cc_library(
 
 cc_library(
     name = "sanitizer_common_symbolizer",
+    copts = SANITIZER_CFLAGS,
     srcs = [
         ":sanitizer_symbolizer_sources",
         ":sanitizer_impl_headers_sources",
@@ -1095,18 +1098,18 @@ cc_library(
 
 cc_library(
     name = "sanitizer_common_symbolizer_internal",
+    copts = SANITIZER_CFLAGS + [
+        # The standalone build of the internal symbolizer strips the __cxa_atexit
+        # shim via internalize; do the same explicitly to avoid duplicate symbols
+        # when statically linking against libc implementations that provide it.
+        "-DSANITIZER_SKIP_CXA_ATEXIT_OVERRIDE",
+    ],
     srcs = [
         "lib/sanitizer_common/symbolizer/sanitizer_symbolize.cpp",
         ":sanitizer_impl_headers_sources",
     ],
     deps = [
         ":llvm_Symbolize",
-    ],
-    copts = [
-        # The standalone build of the internal symbolizer strips the __cxa_atexit
-        # shim via internalize; do the same explicitly to avoid duplicate symbols
-        # when statically linking against libc implementations that provide it.
-        "-DSANITIZER_SKIP_CXA_ATEXIT_OVERRIDE",
     ],
     includes = [
         "lib",
@@ -1158,6 +1161,7 @@ INTERCEPTION_FLAGS = SANITIZER_COMMON_CFLAGS + [
 
 cc_library(
     name = "interception",
+    copts = INTERCEPTION_FLAGS,
     srcs = [
         ":interception_sources",
         ":interception_headers",
@@ -1249,9 +1253,9 @@ UBSAN_CXXFLAGS = SANITIZER_COMMON_CFLAGS + [
 # avoid duplicate interceptor symbols.
 cc_library(
     name = "ubsan_no_standalone",
+    copts = UBSAN_CFLAGS,
     srcs = [
         ":ubsan_sources",
-        ":ubsan_cxxabi_sources",
         ":ubsan_headers",
     ],
     textual_hdrs = [
@@ -1260,27 +1264,49 @@ cc_library(
     ],
     alwayslink = True,
     includes = ["lib"],
-    deps = [
-        ":sanitizer_common",
-        ":sanitizer_common_libc",
-        ":sanitizer_common_coverage",
-        ":sanitizer_common_symbolizer",
-        ":sanitizer_common_symbolizer_internal",
-        ":interception",
-        # if COMPILER_RT_ENABLE_INTERNAL_SYMBOLIZER
-        ":llvm_Symbolize",
-    ],
     implementation_deps = [
         ":libcxx_headers",
+        ":sanitizer_impl_headers",
+        ":interception_impl_headers",
+    ],
+)
+
+UBSAN_CXX_SOURCES = [
+    ":ubsan_cxxabi_sources",
+]
+
+cc_library(
+    name = "ubsan_cxx",
+    copts = UBSAN_CXXFLAGS,
+    srcs = UBSAN_CXX_SOURCES + [
+        ":ubsan_headers",
+    ],
+    deps = [
+        ":libcxx_headers",
+        ":sanitizer_impl_headers",
+        ":interception_impl_headers",
     ],
 )
 
 cc_library(
-    name = "ubsan",
+    name = "ubsan_preinit",
+    copts = UBSAN_CFLAGS,
+    srcs = [
+        "lib/ubsan/ubsan_init_standalone_preinit.cpp",
+        ":ubsan_headers",
+    ],
+    implementation_deps = [
+        ":libcxx_headers",
+        ":sanitizer_impl_headers",
+        ":interception_impl_headers",
+    ],
+)
+
+cc_library(
+    name = "ubsan_standalone",
     srcs = [
         ":ubsan_sources",
         ":ubsan_standalone_sources",
-        ":ubsan_cxxabi_sources",
         ":ubsan_headers",
     ],
     textual_hdrs = [
@@ -1293,7 +1319,18 @@ cc_library(
     #],
     alwayslink = True,
     includes = ["lib"],
+    implementation_deps = [
+        ":libcxx_headers",
+        ":sanitizer_impl_headers",
+        ":interception_impl_headers",
+    ],
+)
+
+cc_runtime_stage0_static_library(
+    name = "ubsan_standalone.static",
     deps = [
+        ":ubsan_preinit",
+        ":ubsan_standalone",
         ":sanitizer_common",
         ":sanitizer_common_libc",
         ":sanitizer_common_coverage",
@@ -1303,14 +1340,14 @@ cc_library(
         # if COMPILER_RT_ENABLE_INTERNAL_SYMBOLIZER
         ":llvm_Symbolize",
     ],
-    implementation_deps = [
-        ":libcxx_headers",
-    ],
+    visibility = ["//visibility:public"],
 )
 
 cc_runtime_stage0_static_library(
-    name = "ubsan.static",
-    deps = [":ubsan"],
+    name = "ubsan_cxx.static",
+    deps = [
+        ":ubsan_cxx",
+    ],
     visibility = ["//visibility:public"],
 )
 
@@ -1382,6 +1419,7 @@ MSAN_RTL_CFLAGS = SANITIZER_COMMON_CFLAGS + [
 
 cc_library(
     name = "msan",
+    copts = MSAN_RTL_CFLAGS,
     srcs = [
         ":msan_rtl_sources",
         ":msan_rtl_headers",
@@ -1400,6 +1438,7 @@ cc_library(
 
 cc_library(
     name = "msan_cxx",
+    copts = MSAN_RTL_CFLAGS,
     srcs = [
         ":msan_rtl_cxx_sources",
         ":msan_rtl_headers",
@@ -1426,7 +1465,7 @@ cc_runtime_stage0_static_library(
         ":sanitizer_common_coverage",
         ":sanitizer_common_symbolizer",
         ":sanitizer_common_symbolizer_internal",
-        ":ubsan",
+        ":ubsan_no_standalone",
     ],
     visibility = ["//visibility:public"],
 )
@@ -1506,6 +1545,7 @@ LSAN_CFLAGS = SANITIZER_COMMON_CFLAGS + [
 # itself is not enabled.
 cc_library(
     name = "lsan_common",
+    copts = LSAN_CFLAGS,
     srcs = [
         ":lsan_common_sources",
         ":lsan_headers",
@@ -1529,6 +1569,7 @@ cc_library(
 
 cc_library(
     name = "lsan",
+    copts = LSAN_CFLAGS,
     srcs = [
         ":lsan_sources",
         ":lsan_headers",
@@ -1548,13 +1589,13 @@ cc_runtime_stage0_static_library(
     name = "lsan.static",
     deps = [
         ":lsan",
-        ":lsan_common",
         ":interception",
         ":sanitizer_common",
         ":sanitizer_common_libc",
         ":sanitizer_common_coverage",
         ":sanitizer_common_symbolizer",
         ":sanitizer_common_symbolizer_internal",
+        ":lsan_common",
     ],
     visibility = ["//visibility:public"],
 )
@@ -1562,20 +1603,6 @@ cc_runtime_stage0_static_library(
 ###
 ### compiler-rt/lib/asan/CMakeLists.txt.
 ###
-
-# See compiler-rt/lib/asan/CMakeLists.txt for the list of ASan-specific flags.
-ASAN_CFLAGS = SANITIZER_COMMON_CFLAGS + [
-    "-fno-rtti",
-    "-Wno-format",
-]
-
-ASAN_DYNAMIC_CFLAGS = [
-    "-ftls-model=initial-exec",
-]
-
-ASAN_DYNAMIC_COMMON_DEFINITIONS = [
-    "ASAN_DYNAMIC=1",
-]
 
 cc_library(
     name = "asan_interface",
@@ -1690,9 +1717,23 @@ filegroup(
     srcs = ["lib/asan/" + f for f in ASAN_HEADERS],
 )
 
+# See compiler-rt/lib/asan/CMakeLists.txt for the list of ASan-specific flags.
+ASAN_CFLAGS = SANITIZER_COMMON_CFLAGS + [
+    "-fno-rtti",
+    "-Wno-format",
+]
+
+ASAN_DYNAMIC_CFLAGS = [
+    "-ftls-model=initial-exec",
+]
+
+ASAN_DYNAMIC_COMMON_DEFINITIONS = [
+    "ASAN_DYNAMIC=1",
+]
+
 cc_library(
     name = "asan_common_runtime",
-    copts = ["-O0"],
+    copts = ASAN_CFLAGS,
     deps = [
         ":interception",
         ":sanitizer_common",
@@ -1707,7 +1748,7 @@ cc_library(
 
 cc_library(
     name = "asan_cxx",
-    copts = ["-O0"],
+    copts = ASAN_CFLAGS,
     srcs = [
         ":asan_cxx_sources",
         ":asan_headers",
@@ -1723,7 +1764,7 @@ cc_library(
 
 cc_library(
     name = "asan_preinit",
-    copts = ["-O0"],
+    copts = ASAN_CFLAGS,
     srcs = [
         ":asan_preinit_sources",
         ":asan_headers",
@@ -1736,7 +1777,7 @@ cc_library(
 
 cc_library(
     name = "asan_static",
-    copts = ["-O0"],
+    copts = ASAN_CFLAGS,
     srcs = [
         ":asan_static_sources",
         ":asan_headers",

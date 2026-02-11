@@ -147,10 +147,7 @@ exec_test(
 asan_cc_binary(
     name = "asan_fail",
     srcs = ["asan_fail.cc"],
-    linkopts = [
-        # "-Wl,-Map=/tmp/link.map",
-        "-Wl,--trace-symbol=_ZN11__sanitizer15internal_strlenEPKc",
-    ] + select({
+    linkopts = select({
         "@platforms//os:macos": [
             "-Wl,-undefined,dynamic_lookup",
             "-Wl,-U,___lsan_default_options",

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-EXPECTED_OUTPUT="runtime error: call to function (unknown) through pointer to incorrect function type 'void (*)(int, char **, char **)'"
+EXPECTED_OUTPUT="ERROR: AddressSanitizer: heap-use-after-free on address"
 
 if [[ "$(uname -s)" == "Darwin" ]]; then
   echo "Skipping ASan runtime check on Darwin; runtime is only provided for Linux."

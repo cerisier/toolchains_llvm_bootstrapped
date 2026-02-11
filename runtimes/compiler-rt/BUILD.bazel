@@ -5,14 +5,26 @@ alias(
 )
 
 alias(
-    name = "clang_rt.ubsan.static",
-    actual = "@compiler-rt//:ubsan.static",
+    name = "clang_rt.ubsan_standalone.static",
+    actual = "@compiler-rt//:ubsan_standalone.static",
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "clang_rt.ubsan_cxx.static",
+    actual = "@compiler-rt//:ubsan_cxx.static",
     visibility = ["//visibility:public"],
 )
 
 alias(
     name = "clang_rt.msan.static",
     actual = "@compiler-rt//:msan.static",
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "clang_rt.msan_cxx.static",
+    actual = "@compiler-rt//:msan_cxx.static",
     visibility = ["//visibility:public"],
 )
 
