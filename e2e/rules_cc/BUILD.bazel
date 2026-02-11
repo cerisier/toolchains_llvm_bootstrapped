@@ -158,6 +158,10 @@ asan_cc_binary(
             "-Wl,--icf=none",
         ],
     }),
+    target_compatible_with = select({
+        "@platforms//os:linux": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
 )
 
 exec_test(
