@@ -241,7 +241,9 @@ cc_args_list(
             "//toolchain/args:static_link_executable",
         ],
         "//conditions:default": [],
-    }),
+    }) + [
+        "//toolchain/args/linux:sanitizer_headers_include_search_paths",
+    ],
 )
 
 # TODO(cerisier): extract those into proper semantic args list.

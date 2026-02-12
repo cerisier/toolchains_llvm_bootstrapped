@@ -8,6 +8,7 @@ load(
     "cc_runtime_stage0_static_library",
     "cc_runtime_stage0_unsanitized_static_library",
 )
+load("@toolchains_llvm_bootstrapped//:directory.bzl", "headers_directory")
 load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_stage0_object.bzl", "cc_stage0_object")
 load("@toolchains_llvm_bootstrapped//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
 load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_unsanitized_library.bzl", "cc_unsanitized_library")
@@ -612,6 +613,19 @@ cc_unsanitized_library(
     dep = "@llvm-project//llvm:Symbolize",
 )
 
+cc_library(
+    name = "sanitizers_interface_headers",
+    hdrs = glob(["include/sanitizer/*.h"]),
+    includes = ["include"],
+    visibility = ["//visibility:public"],
+)
+
+headers_directory(
+    name = "sanitizers_headers_include_search_directory",
+    path = "include",
+    visibility = ["//visibility:public"],
+)
+
 # TODO(zbarsky): It would be nice to not have to jam everything into a single BUILD file
 cc_library(
     name = "linux_libc_headers",
@@ -1004,6 +1018,7 @@ cc_library(
     alwayslink = True,
     implementation_deps = [
         ":libcxx_headers",
+        ":sanitizers_interface_headers",
     ],
 )
 
@@ -1021,6 +1036,7 @@ cc_library(
     alwayslink = True,
     implementation_deps = [
         ":libcxx_headers",
+        ":sanitizers_interface_headers",
     ],
 )
 
@@ -1038,6 +1054,7 @@ cc_library(
     alwayslink = True,
     implementation_deps = [
         ":libcxx_headers",
+        ":sanitizers_interface_headers",
     ],
 )
 
@@ -1055,6 +1072,7 @@ cc_library(
     alwayslink = True,
     implementation_deps = [
         ":libcxx_headers",
+        ":sanitizers_interface_headers",
     ],
 )
 
@@ -1080,6 +1098,7 @@ cc_library(
     alwayslink = True,
     implementation_deps = [
         ":libcxx_headers",
+        ":sanitizers_interface_headers",
     ],
 )
 

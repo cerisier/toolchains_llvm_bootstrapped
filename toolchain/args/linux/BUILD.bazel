@@ -59,6 +59,26 @@ cc_args(
 )
 
 cc_args(
+    name = "sanitizer_headers_include_search_paths",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:source_compile_actions",
+    ],
+    args = [
+        "-isystem",
+        "{sanitizer_headers_include_search_paths}",
+    ],
+    format = {
+        "sanitizer_headers_include_search_paths": "//sanitizers:sanitizers_headers_include_search_directory",
+    },
+    allowlist_include_directories = [
+        "//sanitizers:sanitizers_headers_include_search_directory",
+    ],
+    data = [
+        "//sanitizers:sanitizers_headers_include_search_directory",
+    ],
+)
+
+cc_args(
     name = "default_libs_gnu",
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",

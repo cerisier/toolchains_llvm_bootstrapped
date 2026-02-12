@@ -4,3 +4,9 @@ filegroup(
     srcs = ["ubsan_ignore.txt"],
     visibility = ["//visibility:public"],
 )
+
+alias(
+    name = "sanitizers_headers_include_search_directory",
+    actual = "@compiler-rt//:sanitizers_headers_include_search_directory",
+    visibility = ["//visibility:public"],
+)

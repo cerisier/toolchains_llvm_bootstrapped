@@ -188,6 +188,7 @@ def declare_llvm_targets(*, suffix = ""):
             "@toolchains_llvm_bootstrapped//runtimes/libcxx:libcxx_headers_include_search_directory",
             "@toolchains_llvm_bootstrapped//runtimes/libcxx:libcxxabi_headers_include_search_directory",
             "@kernel_headers//:kernel_headers_directory",
+            "@toolchains_llvm_bootstrapped//sanitizers:sanitizers_headers_include_search_directory",
         ] + select({
             "@toolchains_llvm_bootstrapped//platforms/config:musl": [
                 "@toolchains_llvm_bootstrapped//runtimes/musl:musl_headers_include_search_directory"
