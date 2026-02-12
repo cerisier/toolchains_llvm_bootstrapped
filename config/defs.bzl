@@ -1,9 +1,74 @@
-load("@bazel_skylib//rules:common_settings.bzl", "bool_flag", "string_flag")
+load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo", "bool_flag", "string_flag")
 
 OPTIMIZATION_MODES = [
     "debug",
     "optimized",
 ]
+
+SANITIZERS = [
+    "ubsan",
+    "msan",
+    "asan",
+]
+
+def is_exec_configuration(ctx):
+    # TODO(cerisier): Is there a better way to detect cfg=exec?
+    return ctx.genfiles_dir.path.find("-exec") != -1
+
+def _target_bool_flag_impl(ctx):
+    value = str(ctx.attr.setting[BuildSettingInfo].value).lower()
+    if is_exec_configuration(ctx):
+        value = "false"
+    return [config_common.FeatureFlagInfo(value = value)]
+
+_target_bool_flag = rule(
+    implementation = _target_bool_flag_impl,
+    attrs = {
+        "setting": attr.label(mandatory = True),
+    },
+)
+
+def _host_bool_flag_impl(ctx):
+    value = str(ctx.attr.setting[BuildSettingInfo].value).lower()
+    if not is_exec_configuration(ctx):
+        value = "false"
+    return [config_common.FeatureFlagInfo(value = value)]
+
+_host_bool_flag = rule(
+    implementation = _host_bool_flag_impl,
+    attrs = {
+        "setting": attr.label(mandatory = True),
+    },
+)
+
+def _declare_target_sanitizer_config_settings():
+    for sanitizer in SANITIZERS:
+        feature_name = "{}_target_config".format(sanitizer)
+        _target_bool_flag(
+            name = feature_name,
+            setting = ":{}".format(sanitizer),
+        )
+        native.config_setting(
+            name = "{}_enabled".format(sanitizer),
+            flag_values = {
+                ":{}".format(feature_name): "true",
+            },
+        )
+
+def _declare_host_sanitizer_config_settings():
+    for sanitizer in SANITIZERS:
+        setting_name = "host_{}".format(sanitizer)
+        feature_name = "{}_host_config".format(sanitizer)
+        _host_bool_flag(
+            name = feature_name,
+            setting = ":{}".format(setting_name),
+        )
+        native.config_setting(
+            name = "{}_enabled".format(setting_name),
+            flag_values = {
+                ":{}".format(feature_name): "true",
+            },
+        )
 
 def config_settings():
     # This flag controls the optimization mode for the compilation of the target
@@ -59,34 +124,17 @@ def config_settings():
         build_setting_default = False,
     )
 
-    # TODO(zbarsky): Some sanitizers are mutually exclusive, some can be stacked.
-    # Think about the right interface here.
-    bool_flag(
-        name = "ubsan",
-        build_setting_default = False,
-    )
+    for sanitizer in SANITIZERS:
+        bool_flag(
+            name = sanitizer,
+            build_setting_default = False,
+        )
 
-    native.config_setting(
-        name = "ubsan_enabled",
-        flag_values = {":ubsan": "1"},
-    )
+    for sanitizer in SANITIZERS:
+        bool_flag(
+            name = "host_{}".format(sanitizer),
+            build_setting_default = False,
+        )
 
-    bool_flag(
-        name = "msan",
-        build_setting_default = False,
-    )
-
-    native.config_setting(
-        name = "msan_enabled",
-        flag_values = {":msan": "1"},
-    )
-
-    bool_flag(
-        name = "asan",
-        build_setting_default = False,
-    )
-
-    native.config_setting(
-        name = "asan_enabled",
-        flag_values = {":asan": "1"},
-    )
+    _declare_target_sanitizer_config_settings()
+    _declare_host_sanitizer_config_settings()

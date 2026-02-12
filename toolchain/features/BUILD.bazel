@@ -38,8 +38,11 @@ cc_args(
         ],
     }) + select({
         "//toolchain/args:asan_enabled": [],
+        "//toolchain/args:host_asan_enabled": [],
         "//toolchain/args:msan_enabled": [],
+        "//toolchain/args:host_msan_enabled": [],
         "//toolchain/args:ubsan_enabled": [],
+        "//toolchain/args:host_ubsan_enabled": [],
         "@platforms//cpu:wasm32": [],
         "@platforms//cpu:wasm64": [],
         "//conditions:default": ["-Wl,--icf=safe"],
