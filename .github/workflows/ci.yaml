@@ -72,12 +72,16 @@ jobs:
           if [[ "${{ matrix.folder }}" == *"wasm"* ]]; then
             EXTRA_ARGS="--config=wasm"
           fi
+          if [[ "${{ matrix.folder }}" == *"rules_cc"* ]]; then
+            EXTRA_ARGS="--config=rules_cc"
+          fi
+
+          echo "common --remote_header=x-buildbuddy-api-key=${BUILDBUDDY_API_KEY}" >> "${HOME}/.bazelrc"
 
           bazel \
             --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc \
             --bazelrc=.bazelrc \
             test \
-            --remote_header=x-buildbuddy-api-key=$BUILDBUDDY_API_KEY \
             $EXTRA_ARGS \
             //...
 
@@ -120,6 +124,8 @@ jobs:
             EXTRA_ARGS="--config=wasm"
           fi
 
+          echo "common --remote_header=x-buildbuddy-api-key=${BUILDBUDDY_API_KEY}" >> "${HOME}/.bazelrc"
+
           bazel \
             --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc \
             --bazelrc=.bazelrc \
@@ -127,7 +133,6 @@ jobs:
             test \
             --repository_cache= \
             --repo_contents_cache= \
-            --remote_header=x-buildbuddy-api-key=$BUILDBUDDY_API_KEY \
             --jobs=100 \
             $EXTRA_ARGS \
             //...
