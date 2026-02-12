@@ -198,32 +198,14 @@ cc_args(
     ],
 )
 
-alias(
-    name = "ubsan_enabled",
-    actual = select({
-        "//toolchain:bootstrapped_toolchain": "//config/bootstrap:ubsan_enabled",
-        "//conditions:default": "//config:ubsan_enabled",
-    }),
-    visibility = ["//toolchain:__subpackages__"],
-)
-
-alias(
-    name = "host_ubsan_enabled",
-    actual = select({
-        "//toolchain:bootstrapped_toolchain": "//config/bootstrap:host_ubsan_enabled",
-        "//conditions:default": "//config:host_ubsan_enabled",
-    }),
-    visibility = ["//toolchain:__subpackages__"],
-)
-
 cc_args_list(
     name = "ubsan_flags",
     args = select({
-        ":ubsan_enabled": [
+        "//config:ubsan_enabled": [
             ":ubsan_compiler_flags",
             ":ubsan_linker_flags",
         ],
-        ":host_ubsan_enabled": [
+        "//config:host_ubsan_enabled": [
             ":ubsan_compiler_flags",
             ":ubsan_linker_flags",
         ],
@@ -257,32 +239,14 @@ cc_args(
     ],
 )
 
-alias(
-    name = "msan_enabled",
-    actual = select({
-        "//toolchain:bootstrapped_toolchain": "//config/bootstrap:msan_enabled",
-        "//conditions:default": "//config:msan_enabled",
-    }),
-    visibility = ["//toolchain:__subpackages__"],
-)
-
-alias(
-    name = "host_msan_enabled",
-    actual = select({
-        "//toolchain:bootstrapped_toolchain": "//config/bootstrap:host_msan_enabled",
-        "//conditions:default": "//config:host_msan_enabled",
-    }),
-    visibility = ["//toolchain:__subpackages__"],
-)
-
 cc_args_list(
     name = "msan_flags",
     args = select({
-        ":msan_enabled": [
+        "//config:msan_enabled": [
             ":msan_compiler_flags",
             ":msan_linker_flags",
         ],
-        ":host_msan_enabled": [
+        "//config:host_msan_enabled": [
             ":msan_compiler_flags",
             ":msan_linker_flags",
         ],
@@ -316,32 +280,14 @@ cc_args(
     ],
 )
 
-alias(
-    name = "asan_enabled",
-    actual = select({
-        "//toolchain:bootstrapped_toolchain": "//config/bootstrap:asan_enabled",
-        "//conditions:default": "//config:asan_enabled",
-    }),
-    visibility = ["//toolchain:__subpackages__"],
-)
-
-alias(
-    name = "host_asan_enabled",
-    actual = select({
-        "//toolchain:bootstrapped_toolchain": "//config/bootstrap:host_asan_enabled",
-        "//conditions:default": "//config:host_asan_enabled",
-    }),
-    visibility = ["//toolchain:__subpackages__"],
-)
-
 cc_args_list(
     name = "asan_flags",
     args = select({
-        ":asan_enabled": [
+        "//config:asan_enabled": [
             ":asan_compiler_flags",
             ":asan_linker_flags",
         ],
-        ":host_asan_enabled": [
+        "//config:host_asan_enabled": [
             ":asan_compiler_flags",
             ":asan_linker_flags",
         ],

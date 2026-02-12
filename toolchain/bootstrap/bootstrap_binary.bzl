@@ -32,6 +32,14 @@ def _bootstrap_transition_impl(settings, attr):
     return {
         "//command_line_option:platforms": str(attr.platform),
 
+        # we don't want to pass sanitizers up the compiler toolchain for now
+        "//config:ubsan": False,
+        "//config:msan": False,
+        "//config:asan": False,
+        "//config:host_ubsan": False,
+        "//config:host_msan": False,
+        "//config:host_asan": False,
+
         # we are compiling final programs, so we want all runtimes.
         "//toolchain:runtime_stage": "complete",
 
@@ -46,6 +54,14 @@ bootstrap_transition = transition(
     inputs = [],
     outputs = [
         "//command_line_option:platforms",
+
+        "//config:ubsan",
+        "//config:msan",
+        "//config:asan",
+        "//config:host_ubsan",
+        "//config:host_msan",
+        "//config:host_asan",
+
         "//toolchain:runtime_stage",
         "//toolchain:source",
         "@llvm-project//llvm:driver-tools",
@@ -97,6 +113,13 @@ bootstrap_binary = rule(
 # TODO(zbarsky): This should replace bootstrap_binary once rules_cc is fixed.
 def _exec_bootstrap_transition_impl(settings, attr):
     return {
+        "//config:ubsan": False,
+        "//config:msan": False,
+        "//config:asan": False,
+        "//config:host_ubsan": False,
+        "//config:host_msan": False,
+        "//config:host_asan": False,
+
         # we are compiling final programs, so we want all runtimes.
         "//toolchain:runtime_stage": "complete",
 
@@ -111,6 +134,13 @@ exec_bootstrap_transition = transition(
     implementation = _exec_bootstrap_transition_impl,
     inputs = [],
     outputs = [
+        "//config:ubsan",
+        "//config:msan",
+        "//config:asan",
+        "//config:host_ubsan",
+        "//config:host_msan",
+        "//config:host_asan",
+
         "//toolchain:runtime_stage",
         "//toolchain:source",
         "@llvm-project//llvm:driver-tools",

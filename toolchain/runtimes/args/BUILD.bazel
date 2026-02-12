@@ -51,7 +51,7 @@ cc_args_list(
         # We just need to recompile with sanitizer flags, don't need linker flags.
         # And in fact linker flags will cause a cycle. If we ever need a sanitizer
         # for compilation, we would need an extra bootstrap stage.
-        "//toolchain/args:ubsan_enabled": [
+        "//config:ubsan_enabled": [
             "//toolchain/args:ubsan_compiler_flags",
         ],
         "//conditions:default": [],
@@ -64,7 +64,7 @@ cc_args_list(
         # We just need to recompile with sanitizer flags, don't need linker flags.
         # And in fact linker flags will cause a cycle. If we ever need a sanitizer
         # for compilation, we would need an extra bootstrap stage.
-        "//toolchain/args:msan_enabled": [
+        "//config:msan_enabled": [
             "//toolchain/args:msan_compiler_flags",
         ],
         "//conditions:default": [],
@@ -77,7 +77,7 @@ cc_args_list(
         # We just need to recompile with sanitizer flags, don't need linker flags.
         # And in fact linker flags will cause a cycle. If we ever need a sanitizer
         # for compilation, we would need an extra bootstrap stage.
-        "//toolchain/args:asan_enabled": [
+        "//config:asan_enabled": [
             "//toolchain/args:asan_compiler_flags",
         ],
         "//conditions:default": [],
