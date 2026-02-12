@@ -1269,10 +1269,6 @@ cc_library(
         "lib/ubsan/ubsan_checks.inc",
         "lib/ubsan/ubsan_flags.inc",
     ],
-    #linkopts = [
-    #    # User hook?
-    #    "-Wl,-U,___ubsan_default_options",
-    #],
     alwayslink = True,
     includes = ["lib"],
     implementation_deps = [
@@ -1750,12 +1746,6 @@ cc_library(
         ":sanitizer_common_interceptors_vfork_sources",
     ],
     includes = ["lib"],
-    linkopts = [
-        "-Wl,-undefined,dynamic_lookup",
-        #"-Wl,-U,___lsan_default_options",
-        #"-Wl,-U,___lsan_default_suppressions",
-        #"-Wl,-U,___lsan_is_turned_off",
-    ],
     implementation_deps = [
         ":libcxx_headers",
         ":sanitizer_impl_headers",
@@ -1790,10 +1780,6 @@ cc_runtime_stage0_unsanitized_static_library(
         ":asan",
         ":asan_common_runtime",
     ],
-    # ___lsan_default_options
-    # ___lsan_default_suppressions
-    # ___lsan_is_turned_off
-
     visibility = ["//visibility:public"],
 )
 
@@ -1811,9 +1797,6 @@ cc_runtime_stage0_unsanitized_static_library(
     deps = [
         ":asan_static",
     ],
-    # ___lsan_default_options
-    # ___lsan_default_suppressions
-    # ___lsan_is_turned_off
     visibility = ["//visibility:public"],
 )
 
@@ -1831,7 +1814,6 @@ cc_runtime_stage0_unsanitized_shared_library(
     deps = [
         ":asan_common_runtime",
         ":asan_dynamic",
-        # ":asan",
     ],
     additional_linker_inputs = select({
         "@toolchains_llvm_bootstrapped//platforms/config:gnu": [
@@ -1854,9 +1836,5 @@ cc_runtime_stage0_unsanitized_shared_library(
         "//conditions:default": [],
     }),
     shared_lib_name = "libasan.shared.so",
-    # ___lsan_default_options
-    # ___lsan_default_suppressions
-    # ___lsan_is_turned_off
-
     visibility = ["//visibility:public"],
 )
