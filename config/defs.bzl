@@ -1,4 +1,5 @@
 load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo", "bool_flag", "string_flag")
+load("@bazel_skylib//lib:selects.bzl", "selects")
 
 OPTIMIZATION_MODES = [
     "debug",
@@ -41,34 +42,41 @@ _host_bool_flag = rule(
     },
 )
 
-def _declare_target_sanitizer_config_settings():
-    for sanitizer in SANITIZERS:
-        feature_name = "{}_target_config".format(sanitizer)
-        _target_bool_flag(
-            name = feature_name,
-            setting = ":{}".format(sanitizer),
-        )
-        native.config_setting(
-            name = "{}_enabled".format(sanitizer),
-            flag_values = {
-                ":{}".format(feature_name): "true",
-            },
-        )
+def _declare_sanitizer_config_setting(sanitizer):
+    target_feature_name = "{}_target_config".format(sanitizer)
+    target_config_setting = "target_{}_enabled".format(sanitizer)
+    _target_bool_flag(
+        name = target_feature_name,
+        setting = ":{}".format(sanitizer),
+    )
+    native.config_setting(
+        name = target_config_setting,
+        flag_values = {
+            ":{}".format(target_feature_name): "true",
+        },
+    )
 
-def _declare_host_sanitizer_config_settings():
-    for sanitizer in SANITIZERS:
-        setting_name = "host_{}".format(sanitizer)
-        feature_name = "{}_host_config".format(sanitizer)
-        _host_bool_flag(
-            name = feature_name,
-            setting = ":{}".format(setting_name),
-        )
-        native.config_setting(
-            name = "{}_enabled".format(setting_name),
-            flag_values = {
-                ":{}".format(feature_name): "true",
-            },
-        )
+    host_setting_name = "host_{}".format(sanitizer)
+    host_feature_name = "{}_host_config".format(sanitizer)
+    host_config_setting = "{}_enabled".format(host_setting_name)
+    _host_bool_flag(
+        name = host_feature_name,
+        setting = ":{}".format(host_setting_name),
+    )
+    native.config_setting(
+        name = host_config_setting,
+        flag_values = {
+            ":{}".format(host_feature_name): "true",
+        },
+    )
+
+    selects.config_setting_group(
+        name = "{}_enabled".format(sanitizer),
+        match_any = [
+            ":{}".format(target_config_setting),
+            ":{}".format(host_config_setting),
+        ],
+    )
 
 def config_settings():
     # This flag controls the optimization mode for the compilation of the target
@@ -129,12 +137,8 @@ def config_settings():
             name = sanitizer,
             build_setting_default = False,
         )
-
-    for sanitizer in SANITIZERS:
         bool_flag(
             name = "host_{}".format(sanitizer),
             build_setting_default = False,
         )
-
-    _declare_target_sanitizer_config_settings()
-    _declare_host_sanitizer_config_settings()
+        _declare_sanitizer_config_setting(sanitizer)

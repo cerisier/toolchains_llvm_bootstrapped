@@ -1,13 +1,5 @@
-load(
-    "@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_shared_library.bzl",
-    "cc_runtime_stage0_shared_library",
-    "cc_runtime_stage0_unsanitized_shared_library",
-)
-load(
-    "@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_static_library.bzl",
-    "cc_runtime_stage0_static_library",
-    "cc_runtime_stage0_unsanitized_static_library",
-)
+load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_shared_library.bzl", "cc_runtime_stage0_shared_library")
+load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
 load("@toolchains_llvm_bootstrapped//:directory.bzl", "headers_directory")
 load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_stage0_object.bzl", "cc_stage0_object")
 load("@toolchains_llvm_bootstrapped//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
@@ -1792,7 +1784,7 @@ cc_library(
 
 ##
 
-cc_runtime_stage0_unsanitized_static_library(
+cc_runtime_stage0_static_library(
     name = "asan.static",
     deps = [
         ":asan_preinit",
@@ -1802,7 +1794,7 @@ cc_runtime_stage0_unsanitized_static_library(
     visibility = ["//visibility:public"],
 )
 
-cc_runtime_stage0_unsanitized_static_library(
+cc_runtime_stage0_static_library(
     name = "asan_cxx.static",
     deps = [
         ":asan_cxx",
@@ -1811,7 +1803,7 @@ cc_runtime_stage0_unsanitized_static_library(
 )
 
 # asan_static.static
-cc_runtime_stage0_unsanitized_static_library(
+cc_runtime_stage0_static_library(
     name = "asan_static.static",
     deps = [
         ":asan_static",
@@ -1819,7 +1811,7 @@ cc_runtime_stage0_unsanitized_static_library(
     visibility = ["//visibility:public"],
 )
 
-cc_runtime_stage0_unsanitized_static_library(
+cc_runtime_stage0_static_library(
     name = "asan_preinit.static",
     deps = [
         ":asan_preinit",
@@ -1828,7 +1820,7 @@ cc_runtime_stage0_unsanitized_static_library(
 )
 
 
-cc_runtime_stage0_unsanitized_shared_library(
+cc_runtime_stage0_shared_library(
     name = "asan.shared",
     deps = [
         ":asan_common_runtime",

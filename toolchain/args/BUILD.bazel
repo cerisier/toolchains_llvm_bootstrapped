@@ -205,10 +205,6 @@ cc_args_list(
             ":ubsan_compiler_flags",
             ":ubsan_linker_flags",
         ],
-        "//config:host_ubsan_enabled": [
-            ":ubsan_compiler_flags",
-            ":ubsan_linker_flags",
-        ],
         "//conditions:default": [],
     }),
 )

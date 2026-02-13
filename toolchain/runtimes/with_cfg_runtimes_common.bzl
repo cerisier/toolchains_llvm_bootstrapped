@@ -1,4 +1,4 @@
-def configure_builder_for_runtimes(builder, runtime_stage, linkmode = "static", sanitizers = True):
+def configure_builder_for_runtimes(builder, runtime_stage, linkmode = "static", sanitizers = False):
     # The problem is that compiler-rt and start libs can only be compiled with
     # a specific set of flags and compilation mode. It is not safe to let the user
     # interfere with them using default command line flags.
