@@ -43,38 +43,40 @@ _host_bool_flag = rule(
 )
 
 def _declare_sanitizer_config_setting(sanitizer):
-    target_feature_name = "{}_target_config".format(sanitizer)
-    target_config_setting = "target_{}_enabled".format(sanitizer)
+    target_setting_name = "target_" + sanitizer
+    target_feature_name = sanitizer + "_target_config"
+    target_config_setting = target_setting_name + "_enabled"
     _target_bool_flag(
         name = target_feature_name,
-        setting = ":{}".format(sanitizer),
+        # not target_setting_name
+        setting = sanitizer,
     )
     native.config_setting(
         name = target_config_setting,
         flag_values = {
-            ":{}".format(target_feature_name): "true",
+            target_feature_name: "true",
         },
     )
 
-    host_setting_name = "host_{}".format(sanitizer)
-    host_feature_name = "{}_host_config".format(sanitizer)
-    host_config_setting = "{}_enabled".format(host_setting_name)
+    host_setting_name = "host_" + sanitizer
+    host_feature_name = sanitizer + "_host_config"
+    host_config_setting = host_setting_name + "_enabled"
     _host_bool_flag(
         name = host_feature_name,
-        setting = ":{}".format(host_setting_name),
+        setting = host_setting_name,
     )
     native.config_setting(
         name = host_config_setting,
         flag_values = {
-            ":{}".format(host_feature_name): "true",
+            host_feature_name: "true",
         },
     )
 
     selects.config_setting_group(
-        name = "{}_enabled".format(sanitizer),
+        name = sanitizer + "_enabled",
         match_any = [
-            ":{}".format(target_config_setting),
-            ":{}".format(host_config_setting),
+            target_config_setting,
+            host_config_setting,
         ],
     )
 
