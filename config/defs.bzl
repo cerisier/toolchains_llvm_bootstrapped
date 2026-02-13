@@ -12,13 +12,13 @@ SANITIZERS = [
     "asan",
 ]
 
-def is_exec_configuration(ctx):
+def _is_exec_configuration(ctx):
     # TODO(cerisier): Is there a better way to detect cfg=exec?
     return ctx.genfiles_dir.path.find("-exec") != -1
 
 def _target_bool_flag_impl(ctx):
     value = str(ctx.attr.setting[BuildSettingInfo].value).lower()
-    if is_exec_configuration(ctx):
+    if _is_exec_configuration(ctx):
         value = "false"
     return [config_common.FeatureFlagInfo(value = value)]
 
@@ -31,7 +31,7 @@ _target_bool_flag = rule(
 
 def _host_bool_flag_impl(ctx):
     value = str(ctx.attr.setting[BuildSettingInfo].value).lower()
-    if not is_exec_configuration(ctx):
+    if not _is_exec_configuration(ctx):
         value = "false"
     return [config_common.FeatureFlagInfo(value = value)]
 
