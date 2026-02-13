@@ -24,6 +24,25 @@ In this order:
   * crtendT.o: `-static-pie`
 * crtn.o: _init/_fini epilog as last object in .init section
 
+# Sanitizers
+
+## Compatibility Matrix
+Legend:
+✓ = supported in practice
+✗ = not compatible
+
+|               | ASan | MSan | TSan | HWASan | UBSan | LSan |
+|---------------|------|------|------|--------|-------|------|
+| **ASan**      |  —   | ✗    | ✗    | ✗      | ✓     | ✓*   |
+| **MSan**      | ✗    |  —   | ✗    | ✗      | ✓     | ✗    |
+| **TSan**      | ✗    | ✗    |  —   | ✗      | ✓     | ✗    |
+| **HWASan**    | ✗    | ✗    | ✗    |  —     | ✓     | ✗    |
+| **UBSan**     | ✓    | ✓    | ✓    | ✓      |  —    | ✓    |
+| **LSan**      | ✓*   | ✗    | ✗    | ✗      | ✓     |  —   |
+
+*LSan is typically embedded inside ASan on most platforms (e.g. Linux).
+It is not a meaningful independent pairing with the others.*
+
 ## References
 - https://gist.github.com/cerisier/aadefc9d3d015799540308eb4c33db2e
 - https://maskray.me/blog/2021-11-07-init-ctors-init-array
