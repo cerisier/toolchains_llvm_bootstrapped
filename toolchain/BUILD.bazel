@@ -286,6 +286,7 @@ cc_args_list(
         # Optional sanitizers
         "//toolchain/args:ubsan_flags",
         "//toolchain/args:msan_flags",
+        "//toolchain/args:tsan_flags",
         "//toolchain/args:asan_flags",
         "//toolchain/args:lsan_flags",
 

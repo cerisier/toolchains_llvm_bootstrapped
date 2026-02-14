@@ -35,10 +35,12 @@ def _bootstrap_transition_impl(settings, attr):
         # we don't want to pass sanitizers up the compiler toolchain for now
         "//config:ubsan": False,
         "//config:msan": False,
+        "//config:tsan": False,
         "//config:asan": False,
         "//config:lsan": False,
         "//config:host_ubsan": False,
         "//config:host_msan": False,
+        "//config:host_tsan": False,
         "//config:host_asan": False,
         "//config:host_lsan": False,
 
@@ -59,10 +61,12 @@ bootstrap_transition = transition(
 
         "//config:ubsan",
         "//config:msan",
+        "//config:tsan",
         "//config:asan",
         "//config:lsan",
         "//config:host_ubsan",
         "//config:host_msan",
+        "//config:host_tsan",
         "//config:host_asan",
         "//config:host_lsan",
 
@@ -119,10 +123,12 @@ def _exec_bootstrap_transition_impl(settings, attr):
     return {
         "//config:ubsan": False,
         "//config:msan": False,
+        "//config:tsan": False,
         "//config:asan": False,
         "//config:lsan": False,
         "//config:host_ubsan": False,
         "//config:host_msan": False,
+        "//config:host_tsan": False,
         "//config:host_asan": False,
         "//config:host_lsan": False,
 
@@ -142,10 +148,12 @@ exec_bootstrap_transition = transition(
     outputs = [
         "//config:ubsan",
         "//config:msan",
+        "//config:tsan",
         "//config:asan",
         "//config:lsan",
         "//config:host_ubsan",
         "//config:host_msan",
+        "//config:host_tsan",
         "//config:host_asan",
         "//config:host_lsan",
 

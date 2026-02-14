@@ -5,10 +5,12 @@ def _reset_sanitizers_impl(settings, attr):
     return {
         "//config:ubsan": False,
         "//config:msan": False,
+        "//config:tsan": False,
         "//config:asan": False,
         "//config:lsan": False,
         "//config:host_ubsan": False,
         "//config:host_msan": False,
+        "//config:host_tsan": False,
         "//config:host_asan": False,
         "//config:host_lsan": False,
 
@@ -26,10 +28,12 @@ _reset_sanitizers = transition(
     outputs = [
         "//config:ubsan",
         "//config:msan",
+        "//config:tsan",
         "//config:asan",
         "//config:lsan",
         "//config:host_ubsan",
         "//config:host_msan",
+        "//config:host_tsan",
         "//config:host_asan",
         "//config:host_lsan",
 

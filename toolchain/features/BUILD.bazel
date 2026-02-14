@@ -39,6 +39,7 @@ cc_args(
     }) + select({
         "//config:asan_enabled": [],
         "//config:msan_enabled": [],
+        "//config:tsan_enabled": [],
         "//config:ubsan_enabled": [],
         "//config:lsan_enabled": [],
         "@platforms//cpu:wasm32": [],
