@@ -1432,6 +1432,186 @@ cc_runtime_stage0_static_library(
 )
 
 ###
+### compiler-rt/lib/tsan/CMakeLists.txt.
+###
+
+TSAN_RTL_SOURCES = [
+  "tsan_debugging.cpp",
+  "tsan_external.cpp",
+  "tsan_fd.cpp",
+  "tsan_flags.cpp",
+  "tsan_ignoreset.cpp",
+  "tsan_interceptors_memintrinsics.cpp",
+  "tsan_interceptors_posix.cpp",
+  "tsan_interface.cpp",
+  "tsan_interface_ann.cpp",
+  "tsan_interface_atomic.cpp",
+  "tsan_interface_java.cpp",
+  "tsan_malloc_mac.cpp",
+  "tsan_md5.cpp",
+  "tsan_mman.cpp",
+  "tsan_mutexset.cpp",
+  "tsan_report.cpp",
+  "tsan_rtl.cpp",
+  "tsan_rtl_access.cpp",
+  "tsan_rtl_mutex.cpp",
+  "tsan_rtl_proc.cpp",
+  "tsan_rtl_report.cpp",
+  "tsan_rtl_thread.cpp",
+  "tsan_stack_trace.cpp",
+  "tsan_suppressions.cpp",
+  "tsan_symbolize.cpp",
+  "tsan_sync.cpp",
+  "tsan_vector_clock.cpp",
+]
+
+filegroup(
+    name = "tsan_rtl_sources",
+    srcs = ["lib/tsan/rtl/" + f for f in TSAN_RTL_SOURCES] + select({
+        "@platforms//os:macos": [
+            "lib/tsan/rtl/tsan_interceptors_mac.cpp",
+            "lib/tsan/rtl/tsan_interceptors_mach_vm.cpp",
+            "lib/tsan/rtl/tsan_platform_mac.cpp",
+            "lib/tsan/rtl/tsan_platform_posix.cpp",
+        ],
+        "@platforms//os:linux": [
+            "lib/tsan/rtl/tsan_platform_linux.cpp",
+            "lib/tsan/rtl/tsan_platform_posix.cpp",
+        ],
+        "//conditions:default": [],
+    }) + select({
+        "@platforms//cpu:x86_64": [
+            "lib/tsan/rtl/tsan_rtl_amd64.S",
+        ],
+        "@platforms//cpu:aarch64": [
+            "lib/tsan/rtl/tsan_rtl_aarch64.S",
+        ],
+        "//conditions:default": [],
+    }),
+)
+
+TSAN_CXX_SOURCES = [
+  "tsan_new_delete.cpp",
+]
+
+filegroup(
+    name = "tsan_rtl_cxx_sources",
+    srcs = ["lib/tsan/rtl/" + f for f in TSAN_CXX_SOURCES],
+)
+
+TSAN_PREINIT_SOURCES = [
+    "tsan_preinit.cpp",
+]
+
+filegroup(
+    name = "tsan_preinit_sources",
+    srcs = ["lib/tsan/rtl/" + f for f in TSAN_PREINIT_SOURCES],
+)
+
+TSAN_RTL_HEADERS = [
+    "tsan_defs.h",
+    "tsan_dense_alloc.h",
+    "tsan_fd.h",
+    "tsan_flags.h",
+    "tsan_flags.inc",
+    "tsan_ignoreset.h",
+    "tsan_ilist.h",
+    "tsan_interceptors.h",
+    "tsan_interface.h",
+    "tsan_interface.inc",
+    "tsan_interface_ann.h",
+    "tsan_interface_java.h",
+    "tsan_mman.h",
+    "tsan_mutexset.h",
+    "tsan_platform.h",
+    "tsan_ppc_regs.h",
+    "tsan_report.h",
+    "tsan_rtl.h",
+    "tsan_shadow.h",
+    "tsan_stack_trace.h",
+    "tsan_suppressions.h",
+    "tsan_symbolize.h",
+    "tsan_sync.h",
+    "tsan_trace.h",
+    "tsan_vector_clock.h",
+]
+
+filegroup(
+    name = "tsan_rtl_headers",
+    srcs = ["lib/tsan/rtl/" + f for f in TSAN_RTL_HEADERS],
+)
+
+TSAN_RTL_CFLAGS = SANITIZER_COMMON_CFLAGS + [
+    "-fno-rtti",
+    "-fPIE",
+]
+
+cc_library(
+    name = "tsan",
+    copts = TSAN_RTL_CFLAGS,
+    srcs = [
+        ":tsan_rtl_sources",
+        ":tsan_preinit_sources",
+        ":tsan_rtl_headers",
+        ":ubsan_headers",
+        "lib/builtins/assembly.h",
+    ],
+    textual_hdrs = [
+        "lib/tsan/rtl/tsan_flags.inc",
+        "lib/tsan/rtl/tsan_interface.inc",
+    ],
+    includes = ["lib"],
+    implementation_deps = [
+        ":libcxx_headers",
+        ":sanitizer_impl_headers",
+        ":interception_impl_headers",
+    ],
+)
+
+cc_library(
+    name = "tsan_cxx",
+    copts = TSAN_RTL_CFLAGS,
+    srcs = [
+        ":tsan_rtl_cxx_sources",
+        ":tsan_rtl_headers",
+        ":ubsan_headers",
+    ],
+    textual_hdrs = [
+        "lib/tsan/rtl/tsan_flags.inc",
+        "lib/tsan/rtl/tsan_interface.inc",
+    ],
+    includes = ["lib"],
+    implementation_deps = [
+        ":libcxx_headers",
+        ":sanitizer_impl_headers",
+        ":interception_impl_headers",
+    ],
+)
+
+cc_runtime_stage0_static_library(
+    name = "tsan.static",
+    deps = [
+        ":tsan",
+        ":interception",
+        ":sanitizer_common",
+        ":sanitizer_common_libc",
+        ":sanitizer_common_coverage",
+        ":sanitizer_common_symbolizer",
+        ":sanitizer_common_symbolizer_internal",
+        ":ubsan_no_standalone",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+cc_runtime_stage0_static_library(
+    name = "tsan_cxx.static",
+    deps = [
+        ":tsan_cxx",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+###
 ### compile-rt/lib/lsan/CMakeLists.txt.
 ###
 

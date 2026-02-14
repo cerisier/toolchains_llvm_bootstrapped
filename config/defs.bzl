@@ -9,7 +9,9 @@ OPTIMIZATION_MODES = [
 SANITIZERS = [
     "ubsan",
     "msan",
+    "tsan",
     "asan",
+    "lsan",
 ]
 
 def _is_exec_configuration(ctx):
