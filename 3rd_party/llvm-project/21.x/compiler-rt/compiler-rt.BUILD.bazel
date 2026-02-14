@@ -1554,6 +1554,7 @@ cc_library(
         ":tsan_preinit_sources",
         ":tsan_rtl_headers",
         ":ubsan_headers",
+        "lib/builtins/assembly.h",
     ],
     textual_hdrs = [
         "lib/tsan/rtl/tsan_flags.inc",
