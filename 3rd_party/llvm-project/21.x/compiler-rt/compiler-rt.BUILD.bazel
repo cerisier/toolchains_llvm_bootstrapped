@@ -1432,6 +1432,96 @@ cc_runtime_stage0_static_library(
 )
 
 ###
+### compiler-rt/lib/rtsan/CMakeLists.txt.
+###
+
+RTSAN_CXX_SOURCES = [
+  "rtsan.cpp",
+  "rtsan_context.cpp",
+  "rtsan_diagnostics.cpp",
+  "rtsan_flags.cpp",
+  "rtsan_interceptors_posix.cpp",
+  "rtsan_stats.cpp",
+  "rtsan_suppressions.cpp",
+]
+
+filegroup(
+    name = "rtsan_sources",
+    srcs = ["lib/rtsan/" + f for f in RTSAN_CXX_SOURCES],
+)
+
+RTSAN_PREINIT_SOURCES = [
+    "rtsan_preinit.cpp",
+]
+
+filegroup(
+    name = "rtsan_preinit_sources",
+    srcs = ["lib/rtsan/" + f for f in RTSAN_PREINIT_SOURCES],
+)
+
+RTSAN_HEADERS = [
+    "rtsan.h",
+    "rtsan_checks.inc",
+    "rtsan_assertions.h",
+    "rtsan_context.h",
+    "rtsan_diagnostics.h",
+    "rtsan_flags.h",
+    "rtsan_flags.inc",
+    "rtsan_stats.h",
+    "rtsan_suppressions.h",
+] + [
+    # Used internally by rtsan sources.
+    "rtsan_interceptors.h",
+]
+
+filegroup(
+    name = "rtsan_headers",
+    srcs = ["lib/rtsan/" + f for f in RTSAN_HEADERS],
+)
+
+RTSAN_CFLAGS = [
+    # This matches the CMake intent where rtsan uses compiler-rt common C/C++
+    # flags and disables RTTI.
+    "-fno-rtti",
+    "-fno-sanitize=all",
+    "-DSANITIZER_COMMON_NO_REDEFINE_BUILTINS",
+]
+
+cc_library(
+    name = "rtsan",
+    copts = RTSAN_CFLAGS,
+    srcs = [
+        ":rtsan_preinit_sources",
+        ":rtsan_sources",
+        ":rtsan_headers",
+    ],
+    textual_hdrs = [
+        "lib/rtsan/rtsan_checks.inc",
+        "lib/rtsan/rtsan_flags.inc",
+    ],
+    includes = ["lib"],
+    implementation_deps = [
+        ":libcxx_headers",
+        ":sanitizer_impl_headers",
+        ":interception_impl_headers",
+    ],
+)
+
+cc_runtime_stage0_static_library(
+    name = "rtsan.static",
+    deps = [
+        ":rtsan",
+        ":interception",
+        ":sanitizer_common",
+        ":sanitizer_common_libc",
+        ":sanitizer_common_coverage",
+        ":sanitizer_common_symbolizer",
+        ":sanitizer_common_symbolizer_internal",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+###
 ### compiler-rt/lib/tsan/CMakeLists.txt.
 ###
 

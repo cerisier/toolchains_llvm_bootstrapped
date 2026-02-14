@@ -13,6 +13,12 @@ msan_cc_binary, _msan_cc_binary_internal = with_cfg(cc_binary).set(
     Label("@toolchains_llvm_bootstrapped//config:host_msan"), True
 ).build()
 
+rtsan_cc_binary, _rtsan_cc_binary_internal = with_cfg(cc_binary).set(
+    Label("@toolchains_llvm_bootstrapped//config:rtsan"), True
+).set(
+    Label("@toolchains_llvm_bootstrapped//config:host_rtsan"), True
+).build()
+
 tsan_cc_binary, _tsan_cc_binary_internal = with_cfg(cc_binary).set(
     Label("@toolchains_llvm_bootstrapped//config:tsan"), True
 ).set(

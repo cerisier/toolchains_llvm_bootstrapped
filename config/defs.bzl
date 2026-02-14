@@ -9,6 +9,7 @@ OPTIMIZATION_MODES = [
 SANITIZERS = [
     "ubsan",
     "msan",
+    "rtsan",
     "tsan",
     "asan",
     "lsan",

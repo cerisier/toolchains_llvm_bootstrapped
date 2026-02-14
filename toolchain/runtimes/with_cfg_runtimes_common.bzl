@@ -30,11 +30,13 @@ def configure_builder_for_runtimes(builder, runtime_stage, linkmode = "static", 
     if sanitizers == False:
         builder.set(Label("//config:ubsan"), False)
         builder.set(Label("//config:msan"), False)
+        builder.set(Label("//config:rtsan"), False)
         builder.set(Label("//config:tsan"), False)
         builder.set(Label("//config:asan"), False)
         builder.set(Label("//config:lsan"), False)
         builder.set(Label("//config:host_ubsan"), False)
         builder.set(Label("//config:host_msan"), False)
+        builder.set(Label("//config:host_rtsan"), False)
         builder.set(Label("//config:host_tsan"), False)
         builder.set(Label("//config:host_asan"), False)
         builder.set(Label("//config:host_lsan"), False)
