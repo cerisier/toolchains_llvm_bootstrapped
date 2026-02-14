@@ -36,9 +36,11 @@ def _bootstrap_transition_impl(settings, attr):
         "//config:ubsan": False,
         "//config:msan": False,
         "//config:asan": False,
+        "//config:lsan": False,
         "//config:host_ubsan": False,
         "//config:host_msan": False,
         "//config:host_asan": False,
+        "//config:host_lsan": False,
 
         # we are compiling final programs, so we want all runtimes.
         "//toolchain:runtime_stage": "complete",
@@ -58,9 +60,11 @@ bootstrap_transition = transition(
         "//config:ubsan",
         "//config:msan",
         "//config:asan",
+        "//config:lsan",
         "//config:host_ubsan",
         "//config:host_msan",
         "//config:host_asan",
+        "//config:host_lsan",
 
         "//toolchain:runtime_stage",
         "//toolchain:source",
@@ -116,9 +120,11 @@ def _exec_bootstrap_transition_impl(settings, attr):
         "//config:ubsan": False,
         "//config:msan": False,
         "//config:asan": False,
+        "//config:lsan": False,
         "//config:host_ubsan": False,
         "//config:host_msan": False,
         "//config:host_asan": False,
+        "//config:host_lsan": False,
 
         # we are compiling final programs, so we want all runtimes.
         "//toolchain:runtime_stage": "complete",
@@ -137,9 +143,11 @@ exec_bootstrap_transition = transition(
         "//config:ubsan",
         "//config:msan",
         "//config:asan",
+        "//config:lsan",
         "//config:host_ubsan",
         "//config:host_msan",
         "//config:host_asan",
+        "//config:host_lsan",
 
         "//toolchain:runtime_stage",
         "//toolchain:source",

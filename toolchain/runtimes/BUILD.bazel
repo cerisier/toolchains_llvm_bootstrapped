@@ -91,6 +91,7 @@ cc_args_list(
         "//toolchain/runtimes/args:ubsan_flags",
         "//toolchain/runtimes/args:msan_flags",
         "//toolchain/runtimes/args:asan_flags",
+        "//toolchain/runtimes/args:lsan_flags",
 
         # Common default link flags.
         "//toolchain/args:fuse_ld",

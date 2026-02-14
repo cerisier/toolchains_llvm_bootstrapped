@@ -10,6 +10,7 @@ SANITIZERS = [
     "ubsan",
     "msan",
     "asan",
+    "lsan",
 ]
 
 def _is_exec_configuration(ctx):
