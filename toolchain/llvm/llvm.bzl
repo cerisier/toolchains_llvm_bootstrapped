@@ -13,6 +13,7 @@ def declare_llvm_targets(*, suffix = ""):
         name = "builtin_headers",
         # Grab whichever version-specific dir is there.
         path = native.glob(["lib/clang/*"], exclude_directories = 0)[0] + "/include",
+        visibility = ["//visibility:public"],
     )
 
     # Convenient exports
