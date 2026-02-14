@@ -40,6 +40,7 @@ cc_args(
         "//config:asan_enabled": [],
         "//config:msan_enabled": [],
         "//config:ubsan_enabled": [],
+        "//config:lsan_enabled": [],
         "@platforms//cpu:wasm32": [],
         "@platforms//cpu:wasm64": [],
         "//conditions:default": ["-Wl,--icf=safe"],

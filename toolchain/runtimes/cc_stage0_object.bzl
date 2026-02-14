@@ -12,9 +12,11 @@ bootstrap_transition = transition(
         "//config:asan": False,
         "//config:msan": False,
         "//config:ubsan": False,
+        "//config:lsan": False,
         "//config:host_asan": False,
         "//config:host_msan": False,
         "//config:host_ubsan": False,
+        "//config:host_lsan": False,
     },
     inputs = [],
     outputs = [
@@ -22,9 +24,11 @@ bootstrap_transition = transition(
         "//config:asan",
         "//config:msan",
         "//config:ubsan",
+        "//config:lsan",
         "//config:host_asan",
         "//config:host_msan",
         "//config:host_ubsan",
+        "//config:host_lsan",
     ],
 )
 

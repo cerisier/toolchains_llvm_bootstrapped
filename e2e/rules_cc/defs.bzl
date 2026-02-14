@@ -19,6 +19,12 @@ asan_cc_binary, _asan_cc_binary_internal = with_cfg(cc_binary).set(
     Label("@toolchains_llvm_bootstrapped//config:host_asan"), True
 ).build()
 
+lsan_cc_binary, _lsan_cc_binary_internal = with_cfg(cc_binary).set(
+    Label("@toolchains_llvm_bootstrapped//config:lsan"), True
+).set(
+    Label("@toolchains_llvm_bootstrapped//config:host_lsan"), True
+).build()
+
 opt_binary, _opt_binary_internal = with_cfg(cc_binary).set(
     "compilation_mode", "opt"
 ).build()

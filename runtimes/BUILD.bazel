@@ -180,6 +180,9 @@ copy_to_resource_directory(
             "//runtimes/compiler-rt:clang_rt.asan.static": "libclang_rt.asan",
             "//runtimes/compiler-rt:clang_rt.asan.shared": "libclang_rt.asan",
         },
+        "//config:lsan_enabled": {
+            "//runtimes/compiler-rt:clang_rt.lsan.static": "libclang_rt.lsan",
+        },
         "//conditions:default": {},
     }),
     visibility = ["//visibility:public"],

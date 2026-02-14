@@ -84,6 +84,19 @@ cc_args_list(
     }),
 )
 
+cc_args_list(
+    name = "lsan_flags",
+    args = select({
+        # We just need to recompile with sanitizer flags, don't need linker flags.
+        # And in fact linker flags will cause a cycle. If we ever need a sanitizer
+        # for compilation, we would need an extra bootstrap stage.
+        "//config:lsan_enabled": [
+            "//toolchain/args:lsan_compiler_flags",
+        ],
+        "//conditions:default": [],
+    }),
+)
+
 # TODO(cerisier): this needs to differ per runtime (e.g libc++ still need crtbegin)
 cc_args(
     name = "hermetic_link_flags",
