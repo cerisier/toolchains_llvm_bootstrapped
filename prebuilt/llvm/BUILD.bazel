@@ -14,9 +14,5 @@ llvm_release(name = "windows_llvm_release", bin_suffix = ".exe")
         ],
         target_platform = platform,
     )
-    for platform in PLATFORMS + [
-        # Disabled in shared prebuilts because pkgutil doesn't build.
-        "//platforms:windows_arm64"
-    ]
-
+    for platform in PLATFORMS
 ]

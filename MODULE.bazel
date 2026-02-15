@@ -15,6 +15,7 @@ bazel_dep(name = "with_cfg.bzl", version = "0.12.0")
 bazel_dep(name = "tar.bzl", version = "0.6.0")
 
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
 rbe_platform_repository = use_repo_rule("//:rbe.bzl", "rbe_platform_repository")
 
 rbe_platform_repository(
@@ -131,12 +132,12 @@ archive_override(
     urls = ["https://github.com/cerisier/libstdcxx-stubs-generator/archive/{}.tar.gz".format(LIBSTDCXX_STUBS_GENERATOR_COMMIT)],
 )
 
-PKGUTIL_COMMIT = "66cd442f953f53e3709e2d6c71c68e9aed14cddf"  #main
+PKGUTIL_COMMIT = "f04b36f28972e469ad993dff6f9dc00e68531931"  #main
 
 bazel_dep(name = "xpkgutil", version = "1.0.14", dev_dependency = True)
 archive_override(
     module_name = "xpkgutil",
-    integrity = "sha256-u3GzYimX/fkC/W2aYiULDVzgN5SCkek/nfLr9BU9Nbo=",
+    integrity = "sha256-6TyP2o2//KXXb43eLAldl1fKS5gaZt/uL0IUQ8Iz8Hs=",
     strip_prefix = "pkgutil-{}".format(PKGUTIL_COMMIT),
     urls = ["https://github.com/cerisier/pkgutil/archive/{}.tar.gz".format(PKGUTIL_COMMIT)],
 )
