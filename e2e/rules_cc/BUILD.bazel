@@ -6,7 +6,15 @@ load("@rules_cc//cc:cc_static_library.bzl", "cc_static_library")
 load("@rules_cc//cc:cc_test.bzl", "cc_test")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("@toolchains_llvm_bootstrapped//:defs.bzl", "exec_test")
-load("//:defs.bzl", "opt_binary", "ubsan_cc_binary", "msan_cc_binary", "tsan_cc_binary", "asan_cc_binary", "lsan_cc_binary")
+load(
+    "//:defs.bzl",
+    "opt_binary",
+    "ubsan_cc_binary",
+    "msan_cc_binary",
+    "tsan_cc_binary",
+    "asan_cc_binary",
+    "lsan_cc_binary",
+)
 
 opt_binary(
     name = "no_optimize",
