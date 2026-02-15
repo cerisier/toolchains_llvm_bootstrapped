@@ -35,6 +35,7 @@ PLATFORMS=(
   linux_arm64_musl linux-arm64-musl
   macos_arm64      darwin-arm64
   windows_amd64    windows-amd64-gnu
+  windows_arm64    windows-arm64-gnu
 )
 
 for ((i=0; i<${#PLATFORMS[@]}; i+=2)); do
