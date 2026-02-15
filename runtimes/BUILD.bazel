@@ -1,8 +1,9 @@
+load("@bazel_lib//:bzl_library.bzl", "bzl_library")
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
 load("@bazel_skylib//rules:common_settings.bzl", "string_setting")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
-load("//toolchain/runtimes:cc_stage0_object.bzl", "cc_stage0_object")
 load("//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
+load("//toolchain/runtimes:cc_stage0_object.bzl", "cc_stage0_object")
 load(":copy_to_resource_directory.bzl", "copy_to_resource_directory")
 
 exports_files(["module_map.BUILD.bazel"])
@@ -82,10 +83,10 @@ cc_stage0_object(
     srcs = [
         ":empty",
     ],
+    out = "crti.o",
     copts = [
         "-target",
     ] + LLVM_TARGET_TRIPLE,
-    out = "crti.o",
     visibility = ["//visibility:public"],
 )
 
@@ -94,10 +95,10 @@ cc_stage0_object(
     srcs = [
         ":empty",
     ],
+    out = "crtn.o",
     copts = [
         "-target",
     ] + LLVM_TARGET_TRIPLE,
-    out = "crtn.o",
     visibility = ["//visibility:public"],
 )
 
@@ -112,25 +113,25 @@ copy_to_directory(
             "//runtimes/musl:musl_Scrt1.object",
         ],
         "//platforms/config:gnu": [
-            "//runtimes/glibc:glibc_crt1.object",
             "//runtimes/glibc:glibc_Scrt1.object",
+            "//runtimes/glibc:glibc_crt1.object",
         ],
     }) + [
         ":crti_object",
         ":crtn_object",
-        "@compiler-rt//:crtbegin_object",
         "@compiler-rt//:crtbeginS_object",
         "@compiler-rt//:crtbeginT_object",
-        "@compiler-rt//:crtend_object",
+        "@compiler-rt//:crtbegin_object",
         "@compiler-rt//:crtendS_object",
+        "@compiler-rt//:crtend_object",
     ],
     include_external_repositories = ["**"],
-    target_compatible_with = [
-        "@platforms//os:linux",
-    ],
     root_paths = [
         ".",
         "runtimes/musl",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
     ],
     visibility = ["//visibility:public"],
 )
@@ -138,16 +139,16 @@ copy_to_directory(
 copy_to_directory(
     name = "crt_objects_directory_windows",
     srcs = [
+        "//runtimes/mingw:crt2.o",
         "//runtimes/mingw:crtbegin.o",
         "//runtimes/mingw:crtend.o",
-        "//runtimes/mingw:crt2.o",
         "//runtimes/mingw:dllcrt2.o",
-    ],
-    target_compatible_with = [
-        "@platforms//os:windows",
     ],
     root_paths = [
         "runtimes/mingw",
+    ],
+    target_compatible_with = [
+        "@platforms//os:windows",
     ],
     visibility = ["//visibility:public"],
 )
@@ -213,4 +214,32 @@ copy_to_resource_directory(
         "//conditions:default": {},
     }),
     visibility = ["//visibility:public"],
+)
+
+bzl_library(
+    name = "copy_to_resource_directory",
+    srcs = ["copy_to_resource_directory.bzl"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@bazel_lib//lib:copy_file",
+        "@bazel_lib//lib:copy_to_directory",
+    ],
+)
+
+bzl_library(
+    name = "defs",
+    srcs = ["defs.bzl"],
+    visibility = ["//visibility:public"],
+    deps = ["@bazel_lib//lib:run_binary"],
+)
+
+bzl_library(
+    name = "module_map",
+    srcs = ["module_map.bzl"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//:directory",
+        "@bazel_skylib//lib:paths",
+        "@bazel_skylib//rules/directory:providers",
+    ],
 )

@@ -4,7 +4,10 @@ load("//prebuilt/llvm:llvm_release.bzl", "llvm_release")
 
 llvm_release(name = "llvm_release")
 
-llvm_release(name = "windows_llvm_release", bin_suffix = ".exe")
+llvm_release(
+    name = "windows_llvm_release",
+    bin_suffix = ".exe",
+)
 
 [
     platform_transition_filegroup(

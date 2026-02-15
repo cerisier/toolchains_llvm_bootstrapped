@@ -1,5 +1,6 @@
 {
   "integrity": "**leave this alone**",
   "strip_prefix": "{REPO}-{VERSION}",
-  "url": "https://github.com/{OWNER}/{REPO}/releases/download/{TAG}/toolchains_llvm_bootstrapped-{TAG}.tar.gz"
+  "url": "https://github.com/{OWNER}/{REPO}/releases/download/{TAG}/{REPO}-{TAG}.tar.gz",
+  "docs_url": "https://github.com/{OWNER}/{REPO}/releases/download/{TAG}/{REPO}-{TAG}.docs.tar.gz"
 }

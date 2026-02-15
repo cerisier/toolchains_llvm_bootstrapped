@@ -17,7 +17,7 @@ cc_args(
     name = "opt_compile_flags",
     # compile_actions minus assemble_actions (only preprocess_assemble)
     actions = OPT_FLAGS_COMPILE_ACTIONS,
-    args =  [
+    args = [
         "-DNDEBUG",
         "-O2",
     ],

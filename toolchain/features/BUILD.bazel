@@ -29,7 +29,7 @@ cc_args(
     ],
     args = select({
         "@platforms//os:macos": [
-             #TODO: should be on a config that match ld64 specifically
+            #TODO: should be on a config that match ld64 specifically
             "-Wl,-dead_strip",
         ],
         "//conditions:default": [
@@ -142,10 +142,10 @@ cc_feature(
 
 cc_feature(
     name = "parse_headers",
-    feature_name = "parse_headers",
     args = [
         "//toolchain/args:parse_header_args",
     ],
+    feature_name = "parse_headers",
 )
 
 ###

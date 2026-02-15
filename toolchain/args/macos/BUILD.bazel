@@ -1,4 +1,3 @@
-
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains/args:sysroot.bzl", "cc_sysroot")
 
@@ -6,13 +5,13 @@ package(default_visibility = ["//visibility:public"])
 
 cc_sysroot(
     name = "macos_sdk_sysroot",
-    sysroot = "@macosx15.4.sdk//sysroot",
-    data = [
-        "@macosx15.4.sdk//sysroot",
-    ],
     allowlist_include_directories = [
         "@macosx15.4.sdk//sysroot",
     ],
+    data = [
+        "@macosx15.4.sdk//sysroot",
+    ],
+    sysroot = "@macosx15.4.sdk//sysroot",
 )
 
 cc_args(
@@ -54,10 +53,10 @@ cc_args(
         "{libclang_rt.builtins.a}",
         "-lSystem",
     ],
-    format = {
-        "libclang_rt.builtins.a": "//runtimes/compiler-rt:clang_rt.builtins.static",
-    },
     data = [
         "//runtimes/compiler-rt:clang_rt.builtins.static",
     ],
+    format = {
+        "libclang_rt.builtins.a": "//runtimes/compiler-rt:clang_rt.builtins.static",
+    },
 )

@@ -38,11 +38,11 @@ cc_args(
 
 cc_feature(
     name = "default_compile_flags",
-    overrides = "@rules_cc//cc/toolchains/features/legacy:default_compile_flags",
     args = [
         ":legacy_default_cxx_compile_flags",
         ":legacy_default_compile_flags",
     ],
+    overrides = "@rules_cc//cc/toolchains/features/legacy:default_compile_flags",
 )
 
 cc_feature(

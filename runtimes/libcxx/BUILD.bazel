@@ -13,7 +13,6 @@ alias(
     visibility = ["//visibility:public"],
 )
 
-
 alias(
     name = "libcxxabi.static",
     actual = "@libcxxabi//:libcxxabi.static",

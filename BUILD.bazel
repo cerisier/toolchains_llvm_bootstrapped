@@ -1,4 +1,7 @@
+load("@bazel_lib//:bzl_library.bzl", "bzl_library")
 load("//toolchain:selects.bzl", "LLVM_VERSION")
+
+# gazelle:map_kind bzl_library bzl_library @bazel_lib//:bzl_library.bzl
 
 alias(
     name = "rbe_platform",
@@ -18,4 +21,42 @@ alias(
     visibility = ["//visibility:public"],
 )
 
+bzl_library(
+    name = "directory",
+    srcs = ["directory.bzl"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@bazel_skylib//rules/directory",
+        "@bazel_skylib//rules/directory:providers",
+        "@bazel_skylib//rules/directory:subdirectory",
+    ],
+)
 
+bzl_library(
+    name = "http_pkg_archive",
+    srcs = ["http_pkg_archive.bzl"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@bazel_lib//lib:repo_utils",
+        "@bazel_tools//tools/build_defs/repo:utils.bzl",
+    ],
+)
+
+bzl_library(
+    name = "sh_script",
+    srcs = ["sh_script.bzl"],
+    visibility = ["//visibility:public"],
+    deps = ["@bazel_lib//lib:run_binary"],
+)
+
+bzl_library(
+    name = "defs",
+    srcs = ["defs.bzl"],
+    visibility = ["//visibility:public"],
+)
+
+bzl_library(
+    name = "rbe",
+    srcs = ["rbe.bzl"],
+    visibility = ["//visibility:public"],
+)

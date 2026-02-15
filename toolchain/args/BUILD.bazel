@@ -1,3 +1,4 @@
+load("@bazel_lib//:bzl_library.bzl", "bzl_library")
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 load("//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
@@ -8,11 +9,11 @@ package(default_visibility = ["//visibility:public"])
 # --no-default-config
 # -fno-spell-checking
 
-    # if (target.cpu.arch.isArm()) {
-    #     try argv.append(if (target.cpu.arch.isThumb()) "-mthumb" else "-mno-thumb");
-    # }
+# if (target.cpu.arch.isArm()) {
+#     try argv.append(if (target.cpu.arch.isThumb()) "-mthumb" else "-mno-thumb");
+# }
 
-# -mcpu for arm assembly 
+# -mcpu for arm assembly
 
 cc_args(
     name = "resource_dir",
@@ -24,12 +25,12 @@ cc_args(
         "-resource-dir",
         "{resource_dir}",
     ],
-    format = {
-        "resource_dir": "//runtimes:resource_directory",
-    },
     data = [
         "//runtimes:resource_directory",
     ],
+    format = {
+        "resource_dir": "//runtimes:resource_directory",
+    },
 )
 
 cc_args(
@@ -80,14 +81,14 @@ cc_args(
         "-isystem",
         "{libcxxabi_headers_include_search_path}",
     ],
-    format = {
-        "libcxx_headers_include_search_path": "//runtimes/libcxx:libcxx_headers_include_search_directory",
-        "libcxxabi_headers_include_search_path": "//runtimes/libcxx:libcxxabi_headers_include_search_directory",
-    },
     data = [
         "//runtimes/libcxx:libcxx_headers_include_search_directory",
         "//runtimes/libcxx:libcxxabi_headers_include_search_directory",
     ],
+    format = {
+        "libcxx_headers_include_search_path": "//runtimes/libcxx:libcxx_headers_include_search_directory",
+        "libcxxabi_headers_include_search_path": "//runtimes/libcxx:libcxxabi_headers_include_search_directory",
+    },
 )
 
 cc_args(
@@ -103,12 +104,12 @@ cc_args(
     args = [
         "-B{crt_objects_directory}",
     ],
-    format = {
-        "crt_objects_directory": "//runtimes:crt_objects_directory",
-    },
     data = [
         "//runtimes:crt_objects_directory",
     ],
+    format = {
+        "crt_objects_directory": "//runtimes:crt_objects_directory",
+    },
 )
 
 cc_args(
@@ -179,10 +180,10 @@ cc_args(
         "-fsanitize=undefined",
         "-fsanitize-ignorelist={ubsan_ignore}",
     ],
+    data = ["//sanitizers:ubsan_ignore"],
     format = {
         "ubsan_ignore": "//sanitizers:ubsan_ignore",
     },
-    data = ["//sanitizers:ubsan_ignore"],
 )
 
 # Note that sanitizers must use `cc_unsanitized_library` on third-party deps
@@ -225,12 +226,12 @@ cc_args(
         "-fno-sanitize-ignorelist",
         "-fsanitize-ignorelist={cfi_ignore}",
     ],
-    format = {
-        "cfi_ignore": "//sanitizers:cfi_ignore",
-    },
     data = [
         "//sanitizers:cfi_ignore",
     ],
+    format = {
+        "cfi_ignore": "//sanitizers:cfi_ignore",
+    },
 )
 
 cc_args(
@@ -246,10 +247,10 @@ cc_args(
         "-fno-sanitize-ignorelist",
         "-fsanitize-ignorelist={cfi_ignore}",
     ],
+    data = ["//sanitizers:cfi_ignore"],
     format = {
         "cfi_ignore": "//sanitizers:cfi_ignore",
     },
-    data = ["//sanitizers:cfi_ignore"],
 )
 
 cc_args_list(
@@ -321,10 +322,10 @@ cc_args(
         "-mllvm",
         "-dfsan-abilist={dfsan_abilist}",
     ],
+    data = ["//runtimes/compiler-rt:clang_rt.dfsan_abilist"],
     format = {
         "dfsan_abilist": "//runtimes/compiler-rt:clang_rt.dfsan_abilist",
     },
-    data = ["//runtimes/compiler-rt:clang_rt.dfsan_abilist"],
 )
 
 # Note that sanitizers must use `cc_unsanitized_library` on third-party deps
@@ -661,7 +662,6 @@ cc_args(
     ],
 )
 
-
 config_setting(
     name = "empty_sysroot",
     flag_values = {
@@ -786,4 +786,9 @@ cc_args(
         "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
     ],
     args = ["-Wno-unused-command-line-argument"],
+)
+
+bzl_library(
+    name = "llvm_target_triple",
+    srcs = ["llvm_target_triple.bzl"],
 )

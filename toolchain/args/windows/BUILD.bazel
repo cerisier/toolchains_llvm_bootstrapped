@@ -7,6 +7,11 @@ cc_args(
     actions = [
         "@rules_cc//cc/toolchains/actions:compile_actions",
     ],
+    allowlist_include_directories = [
+        "@mingw//:mingw_generated_headers_crt_directory",
+        "@mingw//:mingw_w64_headers_include_directory",
+        "@mingw//:mingw_w64_headers_crt_directory",
+    ],
     args = [
         "-isystem",
         "{mingw_generated_headers_crt}",
@@ -15,21 +20,16 @@ cc_args(
         "-isystem",
         "{mingw_w64_headers_crt}",
     ],
+    data = [
+        "@mingw//:mingw_generated_headers_crt_directory",
+        "@mingw//:mingw_w64_headers_crt_directory",
+        "@mingw//:mingw_w64_headers_include_directory",
+    ],
     format = {
         "mingw_generated_headers_crt": "@mingw//:mingw_generated_headers_crt_directory",
         "mingw_w64_headers_include": "@mingw//:mingw_w64_headers_include_directory",
         "mingw_w64_headers_crt": "@mingw//:mingw_w64_headers_crt_directory",
     },
-    allowlist_include_directories = [
-        "@mingw//:mingw_generated_headers_crt_directory",
-        "@mingw//:mingw_w64_headers_include_directory",
-        "@mingw//:mingw_w64_headers_crt_directory",
-    ],
-    data = [
-        "@mingw//:mingw_generated_headers_crt_directory",
-        "@mingw//:mingw_w64_headers_include_directory",
-        "@mingw//:mingw_w64_headers_crt_directory",
-    ],
 )
 
 cc_args(
@@ -47,12 +47,12 @@ cc_args(
         # TODO(cerisier): make this either a constraint or a build setting
         "-lucrt",
     ],
-    format = {
-        "mingw_crt_library_search_path": "//runtimes/mingw:mingw_crt_library_search_directory",
-        "mingw_import_library_search_path": "//runtimes/mingw:mingw_import_libraries_directory",
-    },
     data = [
         "//runtimes/mingw:mingw_crt_library_search_directory",
         "//runtimes/mingw:mingw_import_libraries_directory",
     ],
+    format = {
+        "mingw_crt_library_search_path": "//runtimes/mingw:mingw_crt_library_search_directory",
+        "mingw_import_library_search_path": "//runtimes/mingw:mingw_import_libraries_directory",
+    },
 )

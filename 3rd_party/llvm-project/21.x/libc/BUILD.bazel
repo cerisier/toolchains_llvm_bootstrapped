@@ -2,17 +2,17 @@ load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
 cc_library(
     name = "libc_headers",
-    includes = [
-        ".",
-    ],
     hdrs = glob([
         "hdr/*.h",
         "include/**/*.h",
         "shared/*.h",
         "src/**/*.h",
     ]),
+    includes = [
+        ".",
+    ],
+    visibility = ["//visibility:public"],
     deps = [
         "@compiler-rt//:sanitizers_interface_headers",
     ],
-    visibility = ["//visibility:public"],
 )

@@ -1,3 +1,4 @@
+load("@bazel_lib//:bzl_library.bzl", "bzl_library")
 load(":declare_libcs_constraints.bzl", "declare_libcs_constraints")
 
 package(default_visibility = ["//visibility:public"])
@@ -14,3 +15,14 @@ constraint_value(
 )
 
 declare_libcs_constraints()
+
+bzl_library(
+    name = "declare_libcs_constraints",
+    srcs = ["declare_libcs_constraints.bzl"],
+    deps = [":libc_versions"],
+)
+
+bzl_library(
+    name = "libc_versions",
+    srcs = ["libc_versions.bzl"],
+)

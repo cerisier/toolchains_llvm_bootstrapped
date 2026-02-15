@@ -1,20 +1,24 @@
+load("@bazel_lib//:bzl_library.bzl", "bzl_library")
 load("@bazel_lib//lib:copy_file.bzl", "copy_file")
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
-load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
 load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_shared_library.bzl", "cc_runtime_stage0_shared_library")
-load("//runtimes:defs.bzl", "stub_library")
-load(":libc_musl_srcs_filegroup.bzl", "libc_musl_srcs_filegroup")
+load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
 load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_stage0_object.bzl", "cc_stage0_object")
+load("//runtimes:defs.bzl", "stub_library")
 load("//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
+load(":libc_musl_srcs_filegroup.bzl", "libc_musl_srcs_filegroup")
 
 libc_musl_srcs_filegroup(
     name = "musl_arch_compile_srcs",
     srcs = ["@musl_libc//:compile_srcs"],
-    arch = select({
-        "@platforms//cpu:x86_64": "x86_64",
-        "@platforms//cpu:aarch64": "aarch64",
-    }, no_match_error = "Unsupported platform"),
+    arch = select(
+        {
+            "@platforms//cpu:x86_64": "x86_64",
+            "@platforms//cpu:aarch64": "aarch64",
+        },
+        no_match_error = "Unsupported platform",
+    ),
     visibility = ["//visibility:public"],
 )
 
@@ -50,32 +54,31 @@ CFLAGS_ALL = CFLAGS_C99FSE + [
     "-D_XOPEN_SOURCE=700",
 ] + CFLAGS_AUTO
 
-
 CFLAGS_NOSSP = [
     "-fno-stack-protector",
 ]
 
 cc_library(
     name = "musl_libc",
-    copts = CFLAGS_ALL + ["-nostdlib"],
     srcs = [
         ":musl_arch_compile_srcs",
         "@musl_libc//:compile_hdrs",
     ],
-    # passing all files as textual_hdrs since arch specific .c can #include
-    # their generic .c counterpart.
-    textual_hdrs = ["@musl_libc//:compile_srcs"],
+    copts = CFLAGS_ALL + ["-nostdlib"],
     implementation_deps = [
         "@musl_libc//:musl_internal_headers",
         "@musl_libc//:musl_libc_headers_for_musl",
     ],
+    # passing all files as textual_hdrs since arch specific .c can #include
+    # their generic .c counterpart.
+    textual_hdrs = ["@musl_libc//:compile_srcs"],
     visibility = ["//visibility:public"],
 )
 
 cc_runtime_stage0_static_library(
     name = "musl_libc.static",
-    deps = [":musl_libc"],
     visibility = ["//visibility:public"],
+    deps = [":musl_libc"],
 )
 
 cc_library(
@@ -84,22 +87,21 @@ cc_library(
         "@musl_libc//:ldso/dlstart.c",
         "@musl_libc//:ldso/dynlink.c",
     ],
-    # passing all files as textual_hdrs since arch specific .c can #include
-    # their generic .c counterpart.
-    textual_hdrs = ["@musl_libc//:compile_srcs"],
+    copts = CFLAGS_ALL + [
+        "-nostdlib",
+        "-fPIC",
+    ],
     implementation_deps = [
         "@musl_libc//:musl_internal_headers",
         "@musl_libc//:musl_libc_headers_for_musl",
     ],
-    copts = CFLAGS_ALL + ["-nostdlib", "-fPIC"],
+    # passing all files as textual_hdrs since arch specific .c can #include
+    # their generic .c counterpart.
+    textual_hdrs = ["@musl_libc//:compile_srcs"],
 )
 
 cc_runtime_stage0_shared_library(
     name = "musl_libc.shared",
-    deps = [
-        ":musl_libc",
-        ":musl_ldso",
-    ],
     user_link_flags = [
         "-Wl,-e,_dlstart",
         # should it be "now"?
@@ -107,6 +109,10 @@ cc_runtime_stage0_shared_library(
         "-Wl,-soname,libc.so",
     ],
     visibility = ["//visibility:public"],
+    deps = [
+        ":musl_ldso",
+        ":musl_libc",
+    ],
 )
 
 cc_library(
@@ -135,12 +141,12 @@ cc_library(
     name = "musl_Scrt1",
     srcs = ["@musl_libc//:crt/Scrt1.c"],
     copts = CFLAGS_ALL + ["-DCRT"] + CFLAGS_NOSSP + ["-fPIC"],
-    textual_hdrs = [
-        "@musl_libc//:crt/crt1.c",
-    ],
     implementation_deps = [
         "@musl_libc//:musl_internal_headers",
         "@musl_libc//:musl_libc_headers_for_musl",
+    ],
+    textual_hdrs = [
+        "@musl_libc//:crt/crt1.c",
     ],
     visibility = ["//visibility:public"],
 )
@@ -148,30 +154,30 @@ cc_library(
 cc_stage0_object(
     name = "musl_Scrt1.object",
     srcs = [":musl_Scrt1"],
+    out = "Scrt1.o",
     copts = [
         "-target",
     ] + LLVM_TARGET_TRIPLE,
-    out = "Scrt1.o",
     visibility = ["//visibility:public"],
 )
 
 cc_stage0_object(
     name = "musl_rcrt1.object",
     srcs = [":musl_rcrt1"],
+    out = "rcrt1.o",
     copts = [
         "-target",
     ] + LLVM_TARGET_TRIPLE,
-    out = "rcrt1.o",
     visibility = ["//visibility:public"],
 )
 
 cc_stage0_object(
     name = "musl_crt1.object",
     srcs = [":musl_crt1"],
+    out = "crt1.o",
     copts = [
         "-target",
     ] + LLVM_TARGET_TRIPLE,
-    out = "crt1.o",
     visibility = ["//visibility:public"],
 )
 
@@ -209,7 +215,8 @@ MUSL_LIBS = [
         name = "musl_lib{}_stub".format(lib),
         out = "stubs/lib{}.a".format(lib),
         visibility = ["//visibility:public"],
-    ) for lib in MUSL_LIBS
+    )
+    for lib in MUSL_LIBS
 ]
 
 copy_to_directory(
@@ -217,7 +224,8 @@ copy_to_directory(
     srcs = [
         ":musl_libc.a",
     ] + [
-        ":musl_lib{}_stub".format(lib) for lib in MUSL_LIBS
+        ":musl_lib{}_stub".format(lib)
+        for lib in MUSL_LIBS
     ],
     replace_prefixes = {
         "stubs": "",
@@ -229,4 +237,11 @@ alias(
     name = "musl_headers_include_search_directory",
     actual = "@musl_libc//:musl_libc_headers_include_directory",
     visibility = ["//visibility:public"],
+)
+
+bzl_library(
+    name = "libc_musl_srcs_filegroup",
+    srcs = ["libc_musl_srcs_filegroup.bzl"],
+    visibility = ["//visibility:public"],
+    deps = ["@bazel_skylib//lib:paths"],
 )

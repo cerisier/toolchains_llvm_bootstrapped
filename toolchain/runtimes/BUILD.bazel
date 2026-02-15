@@ -1,3 +1,4 @@
+load("@bazel_lib//:bzl_library.bzl", "bzl_library")
 load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 
 cc_args_list(
@@ -80,11 +81,9 @@ cc_args_list(
         "//toolchain/args:no_absolute_paths_for_builtins",
         "//toolchain/args:deterministic_compile_flags",
         "//toolchain/runtimes/args:optimization_flags",
-
         "//toolchain:sysroot_flags",
         "//toolchain:hermetic_compile_flags",
         ":hermetic_link_flags",
-
         ":platform_specific_args",
 
         # Optional sanitizers
@@ -109,5 +108,66 @@ cc_args_list(
         ":default_startfiles",
         ":default_libs",
     ],
+    visibility = ["//visibility:public"],
+)
+
+bzl_library(
+    name = "cc_runtime_library",
+    srcs = ["cc_runtime_library.bzl"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@rules_cc//cc:core_rules",
+        "@toolchains_llvm_bootstrapped//toolchain/runtimes:with_cfg_runtimes_common",
+        "@with_cfg.bzl//:with_cfg",
+    ],
+)
+
+bzl_library(
+    name = "cc_runtime_shared_library",
+    srcs = ["cc_runtime_shared_library.bzl"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@rules_cc//cc:core_rules",
+        "@rules_cc//cc/common",
+        "@toolchains_llvm_bootstrapped//toolchain/runtimes:with_cfg_runtimes_common",
+        "@with_cfg.bzl//:with_cfg",
+    ],
+)
+
+bzl_library(
+    name = "cc_runtime_static_library",
+    srcs = ["cc_runtime_static_library.bzl"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@rules_cc//cc:core_rules",
+        "@toolchains_llvm_bootstrapped//toolchain/runtimes:with_cfg_runtimes_common",
+        "@with_cfg.bzl//:with_cfg",
+    ],
+)
+
+bzl_library(
+    name = "cc_stage0_object",
+    srcs = ["cc_stage0_object.bzl"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@rules_cc//cc:action_names_bzl",
+        "@rules_cc//cc:find_cc_toolchain_bzl",
+        "@rules_cc//cc/common",
+    ],
+)
+
+bzl_library(
+    name = "cc_unsanitized_library",
+    srcs = ["cc_unsanitized_library.bzl"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@rules_cc//cc/common",
+        "@rules_cc//cc/private/rules_impl:core_rules",
+    ],
+)
+
+bzl_library(
+    name = "with_cfg_runtimes_common",
+    srcs = ["with_cfg_runtimes_common.bzl"],
     visibility = ["//visibility:public"],
 )

@@ -1,4 +1,5 @@
-load("@bazel_skylib//rules:common_settings.bzl", "string_setting", "string_flag")
+load("@bazel_lib//:bzl_library.bzl", "bzl_library")
+load("@bazel_skylib//rules:common_settings.bzl", "string_flag", "string_setting")
 load("@rules_cc//cc/toolchains:actions.bzl", "cc_action_type_set")
 load("@rules_cc//cc/toolchains:artifacts.bzl", "cc_artifact_name_pattern")
 load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
@@ -12,24 +13,24 @@ package(default_visibility = ["//toolchain:__subpackages__"])
 # Runtimes without dependencies, runtimes with dependencies, user programs with runtime dependencies...
 string_setting(
     name = "runtime_stage",
+    build_setting_default = "complete",
     values = [
-        "stage0", # depend on compiler-only: CRTs, builtins, libc, static libraries.
-        "stage1", # depends on above: libunwind
+        "stage0",  # depend on compiler-only: CRTs, builtins, libc, static libraries.
+        "stage1",  # depends on above: libunwind
         # "stage2", # depends on above: libc++abi
         # "stage3", # depends on above: libc++
-        "complete", # depends on above: user programs.
+        "complete",  # depends on above: user programs.
     ],
-    build_setting_default = "complete",
 )
 
 # Controls whether targets are built with bootstrapped toolchain or prebuilt toolchain.
 string_flag(
     name = "source",
+    build_setting_default = "prebuilt",
     values = [
         "bootstrapped",
         "prebuilt",
     ],
-    build_setting_default = "prebuilt",
     visibility = ["//visibility:public"],
 )
 
@@ -276,7 +277,6 @@ cc_args_list(
         "//toolchain/args:no_absolute_paths_for_builtins",
         "//toolchain/args:deterministic_compile_flags",
         "//toolchain/args:module_map",
-
         ":sysroot_flags",
         ":hermetic_compile_flags",
 
@@ -316,8 +316,8 @@ cc_args_list(
 cc_artifact_name_pattern(
     name = "windows_executable_pattern",
     category = "@rules_cc//cc/toolchains/artifacts:executable",
-    prefix = "",
     extension = ".exe",
+    prefix = "",
     visibility = ["//visibility:public"],
 )
 
@@ -337,4 +337,38 @@ cc_action_type_set(
 )
 
 declare_toolchains()
+
 declare_bootstrap_toolchains()
+
+bzl_library(
+    name = "cc_toolchain",
+    srcs = ["cc_toolchain.bzl"],
+    deps = [
+        "@rules_cc//cc/toolchains:toolchain_rules",
+    ],
+)
+
+bzl_library(
+    name = "declare_toolchains",
+    srcs = ["declare_toolchains.bzl"],
+    deps = [
+        ":cc_toolchain",
+        ":selects",
+        "//platforms:common",
+    ],
+)
+
+bzl_library(
+    name = "exec_stage0_binary",
+    srcs = ["exec_stage0_binary.bzl"],
+    deps = [
+        "@rules_cc//cc:core_rules",
+        "@toolchains_llvm_bootstrapped//toolchain/runtimes:with_cfg_runtimes_common",
+        "@with_cfg.bzl//:with_cfg",
+    ],
+)
+
+bzl_library(
+    name = "selects",
+    srcs = ["selects.bzl"],
+)
