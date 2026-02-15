@@ -1,45 +1,59 @@
-# LLVM cross compilation toolchain for Bazel
+# A Bazel-friendly fully hermetic LLVM cross-compilation toolchain
 
 [![CI](https://github.com/cerisier/toolchains_llvm_bootstrapped/actions/workflows/ci.yaml/badge.svg)](https://github.com/cerisier/toolchains_llvm_bootstrapped/actions/workflows/ci.yaml)
 
-> ⚠️ **Warning:** This project is still experimental and its behaviour may change.
+> ⚠️ **Warning:** While this project is being used in production across numerous companies/projects, we are still building out some components and its behavior may change, especially around some of the configuration options (sanitizers, PIE and other link modes, etc.)
 
-## Description
+# Bazel-LLVM Ecosystem
 
-This toolchain brings a zero sysroot, fully hermetic C/C++ cross compilation toolchain to Bazel based on LLVM.
+1. **Hermetic cross-compiling `cc_toolchain`**
+   We assemble LLVM with Bazeled runtimes/libc stacks to provide a zero-sysroot, hermetic C/C++ cross toolchain for many exec/target combinations (Linux glibc/musl, Windows MinGW, macOS, wasm; more coming).
+2. **Bazeled LLVM targets**
+   We expose Bazel targets for LLVM binaries and libraries. Some come from the upstream `@llvm-project` Bazel overlay, and we also provide missing coverage with our own BUILD files, including `compiler-rt`, `libc++`, `libc++abi`, `libunwind`, and sanitizer runtimes.
+3. **WIP crossenv package targets for outside-Bazel use**
+   We expose Bazel targets that package the same toolchain pieces as portable artifacts, so the ecosystem can be leveraged outside Bazel too (work in progress).
 
-Cross-compilation works out of the box, including with sanitizers, and requires no additional configuration. <br />
-Remote execution also works out of the box since the toolchain is fully hermetic.
+# 1) Hermetic Bazel `cc_toolchain`
 
-### How does it work ?
-
-Cross compilation usually requires 2 main components:
-1. **A cross-compiler and cross-linker** capable of generating and linking binaries for the target platform.
-2. **Target-specific headers and libraries** such as the C runtime (CRT files), libc (glibc, musl, etc.), C++ standard library (libstdc++, libc++), compiler runtimes (libgcc, compiler-rt), and optional components like profilers or sanitizers.
-
-Usually, this is done by providing a sysroot for each target platform that contains all the target-specific components that match that of the deployment target.
-
-This toolchain simplifies the process by cross-compiling all the target-specific components from source, and then cross-compiling and cross-linking user programs against those.
-
-## Usage
+## Quick Start
 
 Add this to your `MODULE.bazel`:
 
 ```starlark
-bazel_dep(name = "toolchains_llvm_bootstrapped", version = "0.3.1")
+bazel_dep(name = "toolchains_llvm_bootstrapped", version = "0.5.7")
 
-register_toolchains(
-    "@toolchains_llvm_bootstrapped//toolchain:all",
-)
+register_toolchains("@toolchains_llvm_bootstrapped//toolchain:all")
 ```
 
 See https://github.com/cerisier/toolchains_llvm_bootstrapped/releases/latest
 
-This will register all toolchains declared by this module for all supported targets.
+This registers all toolchains declared by this module for all supported targets.
 
-If you wish to register only a subset of all possible toolchains, use the `@toolchains_llvm_bootstrapped//toolchain/extension:llvm.bzl` module extension like so:
+## Description
 
-```sh
+This toolchain brings a zero-sysroot, fully hermetic C/C++ cross-compilation flow to Bazel based on LLVM.
+
+Cross-compilation works out of the box, including with sanitizers, and requires no additional configuration.  
+Remote execution also works out of the box since the toolchain is fully hermetic.
+
+### How does it work?
+
+Cross-compilation usually requires two main components:
+
+1. **A cross-compiler and cross-linker** capable of generating and linking binaries for the target platform.
+2. **Target-specific headers and libraries** such as CRT files, libc (glibc, musl, etc.), C++ standard library, compiler runtimes, and optional components like sanitizers.
+
+Usually, this is done by providing a sysroot per target platform.
+
+This ecosystem simplifies the process by cross-compiling all target-specific components from source, then compiling/linking user programs against those components in Bazel.
+
+## Advanced Usage
+
+### Registering a subset of all toolchains
+
+Use the toolchain module extension:
+
+```starlark
 toolchain = use_extension("@toolchains_llvm_bootstrapped//extensions:toolchain.bzl", "toolchain")
 
 toolchain.exec(arch = "x86_64", os = "linux")
@@ -52,9 +66,16 @@ use_repo(toolchain, "llvm_toolchains")
 register_toolchains("@llvm_toolchains//:all")
 ```
 
-This will register the cross-product of the specified exec and target platforms.
+This registers the cross-product of the specified exec and target platforms.
 
-If you wish to be more selective than that, you can use `register_toolchain` calls on specific tolchain targets. The list can be obtained like so:
+If you need finer control, register individual toolchain targets. You can list them with:
+
+### Cgo compatibility
+TODO: write about this
+
+### Usage with Rust
+TODO: write about this
+
 ```sh
 bazel query 'kind(toolchain, @toolchains_llvm_bootstrapped//toolchain:all)'
 ```
@@ -64,17 +85,17 @@ bazel query 'kind(toolchain, @toolchains_llvm_bootstrapped//toolchain:all)'
 ✅ Currently supports cross-compilation between all combinations of the following platforms:
 
 | To ↓ / From → | macOS aarch64 | Linux aarch64 | Linux x86_64 | Windows x86_64 |
-|---------------|---------------|--------------|---------------|--------------|
+|---------------|---------------|---------------|--------------|----------------|
 | **aarch64-apple-darwin** | ✅ | ✅ | ✅ | ✅ |
 | **x86_64-apple-darwin**  | ✅ | ✅ | ✅ | ✅ |
-| **aarch64-linux-gnu ¹**    | ✅ | ✅ | ✅ | ✅ |
-| **x86_64-linux-gnu ¹**     | ✅ | ✅ | ✅ | ✅ |
-| **aarch64-linux-musl**    | ✅ | ✅ | ✅ | ✅ |
-| **x86_64-linux-musl**     | ✅ | ✅ | ✅ | ✅ |
-| **aarch64-windows-gnu ²**    | ✅ | ✅ | ✅ | ✅ |
-| **x86_64-windows-gnu ²**     | ✅ | ✅ | ✅ | ✅ |
-| **wasm32-unknown-unknown**  | ✅ | ✅ | ✅ | ✅ |
-| **wasm64-unknown-unknown**  | ✅ | ✅ | ✅ | ✅ |
+| **aarch64-linux-gnu ¹**  | ✅ | ✅ | ✅ | ✅ |
+| **x86_64-linux-gnu ¹**   | ✅ | ✅ | ✅ | ✅ |
+| **aarch64-linux-musl**   | ✅ | ✅ | ✅ | ✅ |
+| **x86_64-linux-musl**    | ✅ | ✅ | ✅ | ✅ |
+| **aarch64-windows-gnu ²**| ✅ | ✅ | ✅ | ✅ |
+| **x86_64-windows-gnu ²** | ✅ | ✅ | ✅ | ✅ |
+| **wasm32-unknown-unknown** | ✅ | ✅ | ✅ | ✅ |
+| **wasm64-unknown-unknown** | ✅ | ✅ | ✅ | ✅ |
 
 ¹ See "GNU C Library" section for glibc version selection.
 
@@ -87,38 +108,91 @@ Only static linking against the latest version of musl is supported for now.
 To target musl:
 `--platforms @toolchains_llvm_bootstrapped//platforms:linux_aarch64_musl`
 
-> By default, the binary will be fully statically link (no dynamic linker at all).
+> By default, binaries are fully statically linked (no dynamic linker at all).
 
-### GNU C Library ("glibc") versions
+### GNU C Library (glibc) versions
 
-Compiling and linking dynamically against an arbitrary version of the glibc is supported.
-By default, the earliest glibc version that supports your target is used (2.28 in most case).
+Compiling and linking dynamically against specific glibc versions is supported.
+By default, the earliest glibc version that supports your target is used (2.28 in most cases).
 
 To target a specific version, use:
 `--platforms @toolchains_llvm_bootstrapped//platforms:linux_x86_64_gnu.2.28`
 
-Behind the scenes, your code is compiled using the appropriate headers for the
-target version, and dynamically linked against a stub glibc that includes only
-the symbols available in that version.
+Behind the scenes, code is compiled with headers for the selected glibc and linked against compatible stubs.
 
-This guarantees that your program will run on any system with that exact glibc
-version or newer, since it never relies on symbols introduced in later versions.
+This ensures your program runs on systems with that glibc version or newer without using newer symbols.
 
 ### Windows
 
-Windows is supported only via MinGW-w64 with UCRT.
-MSVCRT-based MinGW and native MSVC targets are not supported.
+Windows is currently supported via MinGW-w64 + UCRT.
+MSVCRT-based MinGW and native MSVC targets are not yet supported.
 
 ### macOS notes
 
-Cross-compiling to macOS from any hosts is supported. <br />
+Cross-compiling to macOS from any host is supported.
 
-By default, the official macOS SDK is downlaoded from apple CDN and used hermetically.
-We use a cross-platform reimplementation of pkgutil to unpack the SDK on other platforms.
+By default, the official macOS SDK is downloaded from Apple CDN and used hermetically.
+We use a cross-platform reimplementation of `pkgutil` to unpack SDK packages, which works on all hosts.
 
 ### Other platforms
 
-In theory, this toolchain can target all LLVM-supported targets. We prioritize adding support based on demand.
+In theory, this toolchain can target all LLVM-supported targets.
+We prioritize adding support based on demand.
+
+# 2) Bazeled LLVM targets
+
+This module exposes LLVM and runtime projects as first-class Bazel repos, so you can depend on them directly.
+
+### Consume via `use_extension(...)`
+
+Add this to your `MODULE.bazel`:
+
+```starlark
+bazel_dep(name = "toolchains_llvm_bootstrapped", version = "0.3.1")
+
+llvm = use_extension("@toolchains_llvm_bootstrapped//extensions:llvm.bzl", "llvm")
+use_repo(llvm, "llvm-project")
+```
+
+Then consume targets from `@llvm-project` and the runtime repos in BUILD files:
+
+```starlark
+cc_binary(
+    name = "llvm_driver",
+    data = ["@llvm-project//llvm:llvm.stripped"],
+)
+
+cc_shared_library(
+    name = "clang",
+    deps = ["@llvm-project//clang:libclang"],
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "runtime_bundle",
+    deps = [
+        "@toolchains_llvm_bootstrapped//runtimes/compiler-rt:clang_rt.builtins.static",
+        "@toolchains_llvm_bootstrapped//runtimes/compiler-rt:clang_rt.asan.static",
+        "@toolchains_llvm_bootstrapped//runtimes/libcxx:libcxx.static",
+        "@toolchains_llvm_bootstrapped//runtimes/libcxxabi:libcxxabi.static",
+        "@toolchains_llvm_bootstrapped//runtimes/libunwind:libunwind.static",
+    ],
+)
+```
+
+# 3) Crossenv packages for use outside Bazel (WIP)
+
+This is actively in progress. The goal is to produce working crossenv packages that mirror the Bazel toolchain contents so they can be reused by other build systems outside Bazel.
+
+Current packaging targets include:
+
+- `//prebuilt/llvm:for_linux_amd64_musl`
+- `//prebuilt/llvm:for_linux_arm64_musl`
+- `//prebuilt/llvm:for_macos_arm64`
+- `//prebuilt/llvm:for_windows_amd64`
+- `//prebuilt/llvm:for_windows_arm64`
+
+These targets are what release workflows use to produce `.tar.zst` artifacts today. The final crossenv UX and packaging layout are still being refined.
 
 ## Roadmap
 
@@ -126,29 +200,27 @@ See https://github.com/cerisier/toolchains_llvm_bootstrapped/milestone/1
 
 ## Prior art
 
-https://andrewkelley.me/post/zig-cc-powerful-drop-in-replacement-gcc-clang.html I was heavily inspired by (and heavily rely on) the work of [Andrew Kelley](https://github.com/andrewrk) on the [zig](https://github.com/ziglang/zig) programming language compiler.
+https://andrewkelley.me/post/zig-cc-powerful-drop-in-replacement-gcc-clang.html We were heavily inspired by (and rely on) the work of [Andrew Kelley](https://github.com/andrewrk) on the [zig](https://github.com/ziglang/zig) programming language compiler.
 
-https://github.com/bazel-contrib/toolchains_llvm which provides a cross compilation toolchain based on user-provided `sysroot`.
+https://github.com/llvm/llvm-project which provides Bazel build definitions for many LLVM targets and the multicall/busybox machinery that is key to our small download sizes.
 
-https://github.com/uber/hermetic_cc_toolchain which prodives a Bazel cross compilation toolchain built around the `zig` binary and it's `cc` subcommand.
+https://github.com/bazel-contrib/toolchains_llvm which provides a cross-compilation toolchain based on user-provided `sysroot`.
 
-https://github.com/dzbarsky/static-clang which provides stripped subset of llvm binaries for lighter dependencies, as well as a starting point for missing llvm targets build file authoring (compiler-rt, etc.).
+https://github.com/uber/hermetic_cc_toolchain which provides a Bazel cross-compilation toolchain built around the `zig` binary and its `cc` subcommand.
 
-# Thanks
+https://github.com/dzbarsky/static-clang which provides stripped subsets of LLVM binaries for lighter dependencies, as well as a starting point for missing LLVM target BUILD file authoring (`compiler-rt`, etc.).
 
-None of this would have been possible without the support of [zml.ai](https://zml.ai/) for whom this toolchain has initially been created. They are building an **high performance inference suite** and this is by far the most impressive bazel project I've worked on.
+## Thanks
+
+None of this would have been possible without the support of [zml.ai](https://zml.ai/) for whom this toolchain was initially created. They are building a **high performance inference suite** and this is by far the most impressive Bazel project I've worked on.
 
 A particular thank you to [@steeve](https://github.com/steeve), the founder of [zml.ai](https://zml.ai) for planting the idea and providing guidance and support.
 
-Special thanks to the Bazel community for answering many of my interrogations on the Bazel slack and providing guidance when needed.
+Special mention for [@dzbarsky](https://github.com/dzbarsky), [@fmeum](https://github.com/fmeum), [@keith](https://github.com/keith), [@armandomontanez](https://github.com/armandomontanez) and the whole [bazelbuild/rules_cc](https://github.com/bazelbuild/rules_cc) team at Google for being supportive and reactive.
 
-Special mention for [@dzbarsky](https://github.com/dzbarsky), [@fmeum](https://github.com/fmeum), [@keith](https://github.com/keith), [@armandomontanez](https://github.com/armandomontanez) and the whole [bazelbuild/rules_cc](https://github.com/bazelbuild/rules_cc) team at Google for being supportive and reactive!
-
-# In memory of
+## In memory of
 
 This project is dedicated to the memory of my beloved cat "Koutchi" aka "Garçon" who was everything to me.
 To my little star dust <3
 
 ![IMG_1840 2](https://github.com/user-attachments/assets/333760d2-d2e1-4e69-9a20-6c3ead575b5e)
-
-
