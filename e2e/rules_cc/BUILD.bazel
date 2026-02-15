@@ -212,7 +212,8 @@ exec_test(
     data = [":tsan_fail"],
     env = {"BINARY": "$(rootpath :tsan_fail)"},
     target_compatible_with = select({
-        "@platforms//os:linux": [],
+        # firecracker + docker on arm64 is too restrictive.
+        "@toolchains_llvm_bootstrapped//platforms/config:linux_x86_64": [],
         "//conditions:default": ["@platforms//:incompatible"],
     }),
 )
