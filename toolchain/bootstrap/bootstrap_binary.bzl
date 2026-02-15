@@ -35,6 +35,7 @@ def _bootstrap_transition_impl(settings, attr):
         # we don't want to pass sanitizers up the compiler toolchain for now
         "//config:ubsan": False,
         "//config:msan": False,
+        "//config:dfsan": False,
         "//config:rtsan": False,
         "//config:tysan": False,
         "//config:tsan": False,
@@ -42,6 +43,7 @@ def _bootstrap_transition_impl(settings, attr):
         "//config:lsan": False,
         "//config:host_ubsan": False,
         "//config:host_msan": False,
+        "//config:host_dfsan": False,
         "//config:host_rtsan": False,
         "//config:host_tysan": False,
         "//config:host_tsan": False,
@@ -65,6 +67,7 @@ bootstrap_transition = transition(
 
         "//config:ubsan",
         "//config:msan",
+        "//config:dfsan",
         "//config:rtsan",
         "//config:tysan",
         "//config:tsan",
@@ -72,6 +75,7 @@ bootstrap_transition = transition(
         "//config:lsan",
         "//config:host_ubsan",
         "//config:host_msan",
+        "//config:host_dfsan",
         "//config:host_rtsan",
         "//config:host_tysan",
         "//config:host_tsan",
@@ -131,6 +135,7 @@ def _exec_bootstrap_transition_impl(settings, attr):
     return {
         "//config:ubsan": False,
         "//config:msan": False,
+        "//config:dfsan": False,
         "//config:rtsan": False,
         "//config:tysan": False,
         "//config:tsan": False,
@@ -138,6 +143,7 @@ def _exec_bootstrap_transition_impl(settings, attr):
         "//config:lsan": False,
         "//config:host_ubsan": False,
         "//config:host_msan": False,
+        "//config:host_dfsan": False,
         "//config:host_rtsan": False,
         "//config:host_tysan": False,
         "//config:host_tsan": False,
@@ -160,6 +166,7 @@ exec_bootstrap_transition = transition(
     outputs = [
         "//config:ubsan",
         "//config:msan",
+        "//config:dfsan",
         "//config:rtsan",
         "//config:tysan",
         "//config:tsan",
@@ -167,6 +174,7 @@ exec_bootstrap_transition = transition(
         "//config:lsan",
         "//config:host_ubsan",
         "//config:host_msan",
+        "//config:host_dfsan",
         "//config:host_rtsan",
         "//config:host_tysan",
         "//config:host_tsan",

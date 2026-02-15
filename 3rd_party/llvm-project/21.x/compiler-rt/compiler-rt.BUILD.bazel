@@ -1432,6 +1432,92 @@ cc_runtime_stage0_static_library(
 )
 
 ###
+### compiler-rt/lib/dfsan/CMakeLists.txt.
+###
+
+DFSAN_RTL_SOURCES = [
+    "dfsan.cpp",
+    "dfsan_allocator.cpp",
+    "dfsan_chained_origin_depot.cpp",
+    "dfsan_custom.cpp",
+    "dfsan_interceptors.cpp",
+    "dfsan_new_delete.cpp",
+    "dfsan_thread.cpp",
+]
+
+filegroup(
+    name = "dfsan_rtl_sources",
+    srcs = ["lib/dfsan/" + f for f in DFSAN_RTL_SOURCES],
+)
+
+DFSAN_RTL_HEADERS = [
+    "dfsan.h",
+    "dfsan_allocator.h",
+    "dfsan_chained_origin_depot.h",
+    "dfsan_flags.inc",
+    "dfsan_flags.h",
+    "dfsan_origin.h",
+    "dfsan_platform.h",
+    "dfsan_thread.h",
+]
+
+filegroup(
+    name = "dfsan_rtl_headers",
+    srcs = ["lib/dfsan/" + f for f in DFSAN_RTL_HEADERS],
+)
+
+DFSAN_RTL_CFLAGS = SANITIZER_COMMON_CFLAGS + [
+    "-fno-rtti",
+    "-fPIE",
+    # Prevent clang from generating libc calls.
+    "-ffreestanding",
+    # Too many existing bugs, needs cleanup.
+    "-Wno-format",
+]
+
+cc_library(
+    name = "dfsan",
+    copts = DFSAN_RTL_CFLAGS,
+    srcs = [
+        ":dfsan_rtl_sources",
+        ":dfsan_rtl_headers",
+    ],
+    textual_hdrs = [
+        "lib/dfsan/dfsan_flags.inc",
+    ],
+    includes = ["lib"],
+    implementation_deps = [
+        ":libcxx_headers",
+        ":sanitizer_impl_headers",
+        ":interception_impl_headers",
+    ],
+)
+
+cc_runtime_stage0_static_library(
+    name = "dfsan.static",
+    deps = [
+        ":dfsan",
+        ":interception",
+        ":sanitizer_common",
+        ":sanitizer_common_libc",
+        ":sanitizer_common_symbolizer",
+        ":sanitizer_common_symbolizer_internal",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+genrule(
+    name = "dfsan_abilist",
+    srcs = [
+        "lib/dfsan/done_abilist.txt",
+        "lib/dfsan/libc_ubuntu1404_abilist.txt",
+    ],
+    outs = ["share/dfsan_abilist.txt"],
+    cmd = "cat $(location lib/dfsan/done_abilist.txt) $(location lib/dfsan/libc_ubuntu1404_abilist.txt) > $@",
+    visibility = ["//visibility:public"],
+)
+
+###
 ### compiler-rt/lib/rtsan/CMakeLists.txt.
 ###
 

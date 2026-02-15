@@ -29,6 +29,18 @@ alias(
 )
 
 alias(
+    name = "clang_rt.dfsan.static",
+    actual = "@compiler-rt//:dfsan.static",
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "clang_rt.dfsan_abilist",
+    actual = "@compiler-rt//:dfsan_abilist",
+    visibility = ["//visibility:public"],
+)
+
+alias(
     name = "clang_rt.rtsan.static",
     actual = "@compiler-rt//:rtsan.static",
     visibility = ["//visibility:public"],

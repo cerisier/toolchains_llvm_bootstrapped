@@ -253,6 +253,53 @@ cc_args_list(
 #######
 
 cc_args(
+    name = "dfsan_compiler_flags",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:compile_actions",
+    ],
+    args = [
+        "-fno-omit-frame-pointer",
+        "-fsanitize=dataflow",
+        "-mllvm",
+        "-dfsan-abilist={dfsan_abilist}",
+    ],
+    format = {
+        "dfsan_abilist": "//runtimes/compiler-rt:clang_rt.dfsan_abilist",
+    },
+    data = ["//runtimes/compiler-rt:clang_rt.dfsan_abilist"],
+)
+
+# Note that sanitizers must use `cc_unsanitized_library` on third-party deps
+# if they end up depending on an exec-configure binary, as linking that binary can fail
+# since it was compiled with sanitizer support but linked without it.
+cc_args(
+    name = "dfsan_linker_flags",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = [
+        "-fsanitize=dataflow",
+    ],
+)
+
+cc_args_list(
+    name = "dfsan_flags",
+    args = select({
+        "//config:dfsan_enabled": [
+            ":dfsan_compiler_flags",
+            ":dfsan_linker_flags",
+        ],
+        "//config:host_dfsan_enabled": [
+            ":dfsan_compiler_flags",
+            ":dfsan_linker_flags",
+        ],
+        "//conditions:default": [],
+    }),
+)
+
+#######
+
+cc_args(
     name = "rtsan_compiler_flags",
     actions = [
         "@rules_cc//cc/toolchains/actions:compile_actions",

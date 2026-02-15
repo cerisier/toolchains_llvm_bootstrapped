@@ -39,6 +39,7 @@ cc_args(
     }) + select({
         "//config:asan_enabled": [],
         "//config:msan_enabled": [],
+        "//config:dfsan_enabled": [],
         "//config:rtsan_enabled": [],
         "//config:tysan_enabled": [],
         "//config:tsan_enabled": [],
