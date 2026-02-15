@@ -35,6 +35,12 @@ alias(
 )
 
 alias(
+    name = "clang_rt.tysan.static",
+    actual = "@compiler-rt//:tysan.static",
+    visibility = ["//visibility:public"],
+)
+
+alias(
     name = "clang_rt.tsan.static",
     actual = "@compiler-rt//:tsan.static",
     visibility = ["//visibility:public"],

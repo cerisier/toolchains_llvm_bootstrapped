@@ -1522,6 +1522,70 @@ cc_runtime_stage0_static_library(
 )
 
 ###
+### compiler-rt/lib/tysan/CMakeLists.txt.
+###
+
+TYSAN_SOURCES = [
+  "tysan.cpp",
+  "tysan_interceptors.cpp",
+]
+
+filegroup(
+    name = "tysan_sources",
+    srcs = ["lib/tysan/" + f for f in TYSAN_SOURCES],
+)
+
+TYSAN_HEADERS = [
+    "tysan.h",
+    "tysan_flags.inc",
+    "tysan_platform.h",
+]
+
+filegroup(
+    name = "tysan_headers",
+    srcs = ["lib/tysan/" + f for f in TYSAN_HEADERS],
+)
+
+TYSAN_CFLAGS = SANITIZER_COMMON_CFLAGS + [
+    "-fno-rtti",
+    # Prevent clang from generating libc calls.
+    "-ffreestanding",
+] + select({
+    "@platforms//os:macos": [],
+    "//conditions:default": ["-fPIE"],
+})
+
+cc_library(
+    name = "tysan",
+    copts = TYSAN_CFLAGS,
+    srcs = [
+        ":tysan_sources",
+        ":tysan_headers",
+    ],
+    textual_hdrs = [
+        "lib/tysan/tysan_flags.inc",
+    ],
+    includes = ["lib"],
+    implementation_deps = [
+        ":libcxx_headers",
+        ":sanitizer_impl_headers",
+        ":interception_impl_headers",
+    ],
+)
+
+cc_runtime_stage0_static_library(
+    name = "tysan.static",
+    deps = [
+        ":tysan",
+        ":interception",
+        ":sanitizer_common",
+        ":sanitizer_common_libc",
+        ":sanitizer_common_symbolizer",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+###
 ### compiler-rt/lib/tsan/CMakeLists.txt.
 ###
 

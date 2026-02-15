@@ -177,6 +177,9 @@ copy_to_resource_directory(
         "//config:rtsan_enabled": {
             "//runtimes/compiler-rt:clang_rt.rtsan.static": "libclang_rt.rtsan",
         },
+        "//config:tysan_enabled": {
+            "//runtimes/compiler-rt:clang_rt.tysan.static": "libclang_rt.tysan",
+        },
         "//config:tsan_enabled": {
             "//runtimes/compiler-rt:clang_rt.tsan.static": "libclang_rt.tsan",
             "//runtimes/compiler-rt:clang_rt.tsan_cxx.static": "libclang_rt.tsan_cxx",

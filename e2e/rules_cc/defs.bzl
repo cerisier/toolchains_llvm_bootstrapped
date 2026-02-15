@@ -19,6 +19,12 @@ rtsan_cc_binary, _rtsan_cc_binary_internal = with_cfg(cc_binary).set(
     Label("@toolchains_llvm_bootstrapped//config:host_rtsan"), True
 ).build()
 
+tysan_cc_binary, _tysan_cc_binary_internal = with_cfg(cc_binary).set(
+    Label("@toolchains_llvm_bootstrapped//config:tysan"), True
+).set(
+    Label("@toolchains_llvm_bootstrapped//config:host_tysan"), True
+).build()
+
 tsan_cc_binary, _tsan_cc_binary_internal = with_cfg(cc_binary).set(
     Label("@toolchains_llvm_bootstrapped//config:tsan"), True
 ).set(
