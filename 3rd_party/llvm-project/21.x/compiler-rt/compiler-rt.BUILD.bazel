@@ -6,6 +6,7 @@ load("@toolchains_llvm_bootstrapped//toolchain/args:llvm_target_triple.bzl", "LL
 load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_unsanitized_library.bzl", "cc_unsanitized_library")
 load("@toolchains_llvm_bootstrapped//3rd_party/llvm-project/21.x/compiler-rt:targets.bzl", "atomic_helper_cc_library")
 load("@toolchains_llvm_bootstrapped//3rd_party/llvm-project/21.x/compiler-rt:filter_builtin_sources.bzl", "filter_builtin_sources")
+load("@toolchains_llvm_bootstrapped//:sh_script.bzl", "sh_script")
 load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
@@ -1506,14 +1507,19 @@ cc_runtime_stage0_static_library(
     visibility = ["//visibility:public"],
 )
 
-genrule(
+sh_script(
     name = "dfsan_abilist",
     srcs = [
         "lib/dfsan/done_abilist.txt",
         "lib/dfsan/libc_ubuntu1404_abilist.txt",
     ],
     outs = ["share/dfsan_abilist.txt"],
-    cmd = "cat $(location lib/dfsan/done_abilist.txt) $(location lib/dfsan/libc_ubuntu1404_abilist.txt) > $@",
+    cmd = "cat $1 $2 > $3",
+    args = [
+        "$(location lib/dfsan/done_abilist.txt)",
+        "$(location lib/dfsan/libc_ubuntu1404_abilist.txt)",
+        "$(location share/dfsan_abilist.txt)",
+    ],
     visibility = ["//visibility:public"],
 )
 
