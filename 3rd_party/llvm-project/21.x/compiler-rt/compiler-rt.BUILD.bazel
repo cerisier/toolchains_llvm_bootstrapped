@@ -1627,6 +1627,56 @@ cc_runtime_stage0_static_library(
 )
 
 ###
+### compiler-rt/lib/safestack/CMakeLists.txt.
+###
+
+SAFESTACK_SOURCES = [
+    "safestack.cpp",
+]
+
+filegroup(
+    name = "safestack_sources",
+    srcs = ["lib/safestack/" + f for f in SAFESTACK_SOURCES],
+)
+
+SAFESTACK_HEADERS = [
+    "safestack_platform.h",
+    "safestack_util.h",
+]
+
+filegroup(
+    name = "safestack_headers",
+    srcs = ["lib/safestack/" + f for f in SAFESTACK_HEADERS],
+)
+
+SAFESTACK_CFLAGS = SANITIZER_COMMON_CFLAGS
+
+cc_library(
+    name = "safestack",
+    copts = SAFESTACK_CFLAGS,
+    srcs = [
+        ":safestack_sources",
+        ":safestack_headers",
+    ],
+    includes = ["lib"],
+    implementation_deps = [
+        ":sanitizer_impl_headers",
+        ":interception_impl_headers",
+        "@glibc//:gnu_libc_headers",
+        "@kernel_headers//:kernel_headers",
+    ],
+)
+
+cc_runtime_stage0_static_library(
+    name = "safestack.static",
+    deps = [
+        ":safestack",
+        ":interception",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+###
 ### compiler-rt/lib/rtsan/CMakeLists.txt.
 ###
 

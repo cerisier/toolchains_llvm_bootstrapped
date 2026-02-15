@@ -288,6 +288,7 @@ cc_args_list(
         "//toolchain/args:msan_flags",
         "//toolchain/args:dfsan_flags",
         "//toolchain/args:nsan_flags",
+        "//toolchain/args:safestack_flags",
         "//toolchain/args:rtsan_flags",
         "//toolchain/args:tysan_flags",
         "//toolchain/args:tsan_flags",

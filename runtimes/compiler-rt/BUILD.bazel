@@ -47,6 +47,12 @@ alias(
 )
 
 alias(
+    name = "clang_rt.safestack.static",
+    actual = "@compiler-rt//:safestack.static",
+    visibility = ["//visibility:public"],
+)
+
+alias(
     name = "clang_rt.rtsan.static",
     actual = "@compiler-rt//:rtsan.static",
     visibility = ["//visibility:public"],

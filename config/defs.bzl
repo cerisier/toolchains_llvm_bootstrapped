@@ -11,6 +11,7 @@ SANITIZERS = [
     "msan",
     "dfsan",
     "nsan",
+    "safestack",
     "rtsan",
     "tysan",
     "tsan",

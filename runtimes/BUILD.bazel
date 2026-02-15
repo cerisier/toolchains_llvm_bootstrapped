@@ -181,6 +181,9 @@ copy_to_resource_directory(
         "//config:nsan_enabled": {
             "//runtimes/compiler-rt:clang_rt.nsan.static": "libclang_rt.nsan",
         },
+        "//config:safestack_enabled": {
+            "//runtimes/compiler-rt:clang_rt.safestack.static": "libclang_rt.safestack",
+        },
         "//config:rtsan_enabled": {
             "//runtimes/compiler-rt:clang_rt.rtsan.static": "libclang_rt.rtsan",
         },

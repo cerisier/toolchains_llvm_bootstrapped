@@ -92,6 +92,7 @@ cc_args_list(
         "//toolchain/runtimes/args:msan_flags",
         "//toolchain/runtimes/args:dfsan_flags",
         "//toolchain/runtimes/args:nsan_flags",
+        "//toolchain/runtimes/args:safestack_flags",
         "//toolchain/runtimes/args:rtsan_flags",
         "//toolchain/runtimes/args:tysan_flags",
         "//toolchain/runtimes/args:tsan_flags",

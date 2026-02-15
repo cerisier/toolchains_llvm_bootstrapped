@@ -341,6 +341,47 @@ cc_args_list(
 #######
 
 cc_args(
+    name = "safestack_compiler_flags",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:compile_actions",
+    ],
+    args = [
+        "-fno-omit-frame-pointer",
+        "-fsanitize=safe-stack",
+    ],
+)
+
+# Note that sanitizers must use `cc_unsanitized_library` on third-party deps
+# if they end up depending on an exec-configure binary, as linking that binary can fail
+# since it was compiled with sanitizer support but linked without it.
+cc_args(
+    name = "safestack_linker_flags",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = [
+        "-fsanitize=safe-stack",
+    ],
+)
+
+cc_args_list(
+    name = "safestack_flags",
+    args = select({
+        "//config:safestack_enabled": [
+            ":safestack_compiler_flags",
+            ":safestack_linker_flags",
+        ],
+        "//config:host_safestack_enabled": [
+            ":safestack_compiler_flags",
+            ":safestack_linker_flags",
+        ],
+        "//conditions:default": [],
+    }),
+)
+
+#######
+
+cc_args(
     name = "rtsan_compiler_flags",
     actions = [
         "@rules_cc//cc/toolchains/actions:compile_actions",
