@@ -178,6 +178,9 @@ copy_to_resource_directory(
             "//runtimes/compiler-rt:clang_rt.dfsan.static": "libclang_rt.dfsan",
             "//runtimes/compiler-rt:clang_rt.dfsan_abilist": "share/dfsan_abilist",
         },
+        "//config:nsan_enabled": {
+            "//runtimes/compiler-rt:clang_rt.nsan.static": "libclang_rt.nsan",
+        },
         "//config:rtsan_enabled": {
             "//runtimes/compiler-rt:clang_rt.rtsan.static": "libclang_rt.rtsan",
         },

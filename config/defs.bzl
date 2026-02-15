@@ -10,6 +10,7 @@ SANITIZERS = [
     "ubsan",
     "msan",
     "dfsan",
+    "nsan",
     "rtsan",
     "tysan",
     "tsan",

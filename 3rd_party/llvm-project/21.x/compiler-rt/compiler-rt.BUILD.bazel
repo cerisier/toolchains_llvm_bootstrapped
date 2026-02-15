@@ -239,8 +239,10 @@ filegroup(
         "lib/builtins/floattixf.c",
         "lib/builtins/floatundixf.c",
         "lib/builtins/floatuntixf.c",
+        "lib/builtins/extendxftf2.c",
         "lib/builtins/mulxc3.c",
         "lib/builtins/powixf2.c",
+        "lib/builtins/trunctfxf2.c",
     ],
 )
 
@@ -1519,6 +1521,107 @@ sh_script(
         "$(location lib/dfsan/done_abilist.txt)",
         "$(location lib/dfsan/libc_ubuntu1404_abilist.txt)",
         "$(location share/dfsan_abilist.txt)",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+###
+### compiler-rt/lib/nsan/CMakeLists.txt.
+###
+
+NSAN_SOURCES = [
+    "nsan.cpp",
+    "nsan_allocator.cpp",
+    "nsan_flags.cpp",
+    "nsan_interceptors.cpp",
+    "nsan_malloc_linux.cpp",
+    "nsan_new_delete.cpp",
+    "nsan_stats.cpp",
+    "nsan_suppressions.cpp",
+    "nsan_thread.cpp",
+]
+
+filegroup(
+    name = "nsan_sources",
+    srcs = ["lib/nsan/" + f for f in NSAN_SOURCES],
+)
+
+NSAN_PREINIT_SOURCES = [
+    "nsan_preinit.cpp",
+]
+
+filegroup(
+    name = "nsan_preinit_sources",
+    srcs = ["lib/nsan/" + f for f in NSAN_PREINIT_SOURCES],
+)
+
+NSAN_HEADERS = [
+    "nsan.h",
+    "nsan_flags.h",
+    "nsan_flags.inc",
+    "nsan_platform.h",
+    "nsan_stats.h",
+    "nsan_suppressions.h",
+] + [
+    # Used internally by nsan sources.
+    "nsan_allocator.h",
+    "nsan_thread.h",
+]
+
+filegroup(
+    name = "nsan_headers",
+    srcs = ["lib/nsan/" + f for f in NSAN_HEADERS],
+)
+
+NSAN_CFLAGS = SANITIZER_COMMON_CFLAGS + [
+    "-fno-rtti",
+]
+
+cc_library(
+    name = "nsan",
+    copts = NSAN_CFLAGS,
+    srcs = [
+        ":nsan_sources",
+        ":nsan_headers",
+    ],
+    textual_hdrs = [
+        "lib/nsan/nsan_flags.inc",
+    ],
+    includes = ["lib"],
+    implementation_deps = [
+        ":libcxx_headers",
+        ":sanitizer_impl_headers",
+        ":interception_impl_headers",
+    ],
+)
+
+cc_library(
+    name = "nsan_preinit",
+    copts = NSAN_CFLAGS,
+    srcs = [
+        ":nsan_preinit_sources",
+        ":nsan_headers",
+    ],
+    includes = ["lib"],
+    implementation_deps = [
+        ":libcxx_headers",
+        ":sanitizer_impl_headers",
+        ":interception_impl_headers",
+    ],
+)
+
+cc_runtime_stage0_static_library(
+    name = "nsan.static",
+    deps = [
+        ":nsan_preinit",
+        ":nsan",
+        ":interception",
+        ":sanitizer_common",
+        ":sanitizer_common_libc",
+        ":sanitizer_common_coverage",
+        ":sanitizer_common_symbolizer",
+        ":sanitizer_common_symbolizer_internal",
+        ":ubsan_no_standalone",
     ],
     visibility = ["//visibility:public"],
 )

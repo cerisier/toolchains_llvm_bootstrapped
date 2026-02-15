@@ -19,6 +19,12 @@ dfsan_cc_binary, _dfsan_cc_binary_internal = with_cfg(cc_binary).set(
     Label("@toolchains_llvm_bootstrapped//config:host_dfsan"), True
 ).build()
 
+nsan_cc_binary, _nsan_cc_binary_internal = with_cfg(cc_binary).set(
+    Label("@toolchains_llvm_bootstrapped//config:nsan"), True
+).set(
+    Label("@toolchains_llvm_bootstrapped//config:host_nsan"), True
+).build()
+
 rtsan_cc_binary, _rtsan_cc_binary_internal = with_cfg(cc_binary).set(
     Label("@toolchains_llvm_bootstrapped//config:rtsan"), True
 ).set(
