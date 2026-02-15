@@ -135,10 +135,6 @@ common:ci --remote_download_outputs="minimal"
 common:ci --remote_local_fallback
 # Docs: https://registry.build/flag/bazel?filter=remote_local_fallback
 
-# On CI, extend the maximum amount of time to wait for remote execution and cache calls.
-common:ci --remote_timeout=3600
-# Docs: https://registry.build/flag/bazel?filter=remote_timeout
-
 # Do not upload locally executed action results to the remote cache.
 # This should be the default for local builds so local builds cannot poison the remote cache.
 #

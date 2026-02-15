@@ -46,7 +46,7 @@ common --remote_cache=grpcs://remote.buildbuddy.io
 common --remote_cache_compression
 common --remote_download_toplevel
 common --nobuild_runfile_links
-common --remote_timeout=3600
+common --remote_timeout=120
 common --noexperimental_throttle_remote_action_building
 common --experimental_remote_execution_keepalive
 common --grpc_keepalive_time=30s
