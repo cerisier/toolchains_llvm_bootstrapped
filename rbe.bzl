@@ -15,7 +15,6 @@ platform(
     constraint_values = [
         "@platforms//cpu:{cpu}",
         "@platforms//os:linux",
-        "@bazel_tools//tools/cpp:clang",
         "@toolchains_llvm_bootstrapped//constraints/libc:gnu.2.28",
     ],
     exec_properties = {{
