@@ -29,6 +29,7 @@ def configure_builder_for_runtimes(builder, runtime_stage, linkmode = "static", 
 
     if sanitizers == False:
         builder.set(Label("//config:ubsan"), False)
+        builder.set(Label("//config:cfi"), False)
         builder.set(Label("//config:msan"), False)
         builder.set(Label("//config:dfsan"), False)
         builder.set(Label("//config:nsan"), False)
@@ -39,6 +40,7 @@ def configure_builder_for_runtimes(builder, runtime_stage, linkmode = "static", 
         builder.set(Label("//config:asan"), False)
         builder.set(Label("//config:lsan"), False)
         builder.set(Label("//config:host_ubsan"), False)
+        builder.set(Label("//config:host_cfi"), False)
         builder.set(Label("//config:host_msan"), False)
         builder.set(Label("//config:host_dfsan"), False)
         builder.set(Label("//config:host_nsan"), False)

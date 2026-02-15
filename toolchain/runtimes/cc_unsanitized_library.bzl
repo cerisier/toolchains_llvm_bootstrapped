@@ -4,6 +4,7 @@ load("@rules_cc//cc/private/rules_impl:cc_shared_library.bzl", "GraphNodeInfo", 
 def _reset_sanitizers_impl(settings, attr):
     return {
         "//config:ubsan": False,
+        "//config:cfi": False,
         "//config:msan": False,
         "//config:dfsan": False,
         "//config:nsan": False,
@@ -14,6 +15,7 @@ def _reset_sanitizers_impl(settings, attr):
         "//config:asan": False,
         "//config:lsan": False,
         "//config:host_ubsan": False,
+        "//config:host_cfi": False,
         "//config:host_msan": False,
         "//config:host_dfsan": False,
         "//config:host_nsan": False,
@@ -37,6 +39,7 @@ _reset_sanitizers = transition(
     inputs = [],
     outputs = [
         "//config:ubsan",
+        "//config:cfi",
         "//config:msan",
         "//config:dfsan",
         "//config:nsan",
@@ -47,6 +50,7 @@ _reset_sanitizers = transition(
         "//config:asan",
         "//config:lsan",
         "//config:host_ubsan",
+        "//config:host_cfi",
         "//config:host_msan",
         "//config:host_dfsan",
         "//config:host_nsan",

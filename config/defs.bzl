@@ -8,6 +8,7 @@ OPTIMIZATION_MODES = [
 
 SANITIZERS = [
     "ubsan",
+    "cfi",
     "msan",
     "dfsan",
     "nsan",

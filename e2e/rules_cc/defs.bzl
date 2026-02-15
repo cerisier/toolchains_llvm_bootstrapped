@@ -7,6 +7,12 @@ ubsan_cc_binary, _ubsan_cc_binary_internal = with_cfg(cc_binary).set(
     Label("@toolchains_llvm_bootstrapped//config:host_ubsan"), True
 ).build()
 
+cfi_cc_binary, _cfi_cc_binary_internal = with_cfg(cc_binary).set(
+    Label("@toolchains_llvm_bootstrapped//config:cfi"), True
+).set(
+    Label("@toolchains_llvm_bootstrapped//config:host_cfi"), True
+).build()
+
 msan_cc_binary, _msan_cc_binary_internal = with_cfg(cc_binary).set(
     Label("@toolchains_llvm_bootstrapped//config:msan"), True
 ).set(

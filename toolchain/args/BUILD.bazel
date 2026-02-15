@@ -212,6 +212,64 @@ cc_args_list(
 #######
 
 cc_args(
+    name = "cfi_compiler_flags",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:compile_actions",
+    ],
+    args = [
+        "-fno-omit-frame-pointer",
+        "-fsanitize=cfi-icall",
+        "-flto",
+        "-fvisibility=hidden",
+        "-fno-sanitize-trap=cfi",
+        "-fno-sanitize-ignorelist",
+        "-fsanitize-ignorelist={cfi_ignore}",
+    ],
+    format = {
+        "cfi_ignore": "//sanitizers:cfi_ignore",
+    },
+    data = [
+        "//sanitizers:cfi_ignore",
+    ],
+)
+
+cc_args(
+    name = "cfi_linker_flags",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = [
+        "-fsanitize=cfi-icall",
+        "-flto",
+        "-fvisibility=hidden",
+        "-fno-sanitize-trap=cfi",
+        "-fno-sanitize-ignorelist",
+        "-fsanitize-ignorelist={cfi_ignore}",
+    ],
+    format = {
+        "cfi_ignore": "//sanitizers:cfi_ignore",
+    },
+    data = ["//sanitizers:cfi_ignore"],
+)
+
+cc_args_list(
+    name = "cfi_flags",
+    args = select({
+        "//config:cfi_enabled": [
+            ":cfi_compiler_flags",
+            ":cfi_linker_flags",
+        ],
+        "//config:host_cfi_enabled": [
+            ":cfi_compiler_flags",
+            ":cfi_linker_flags",
+        ],
+        "//conditions:default": [],
+    }),
+)
+
+#######
+
+cc_args(
     name = "msan_compiler_flags",
     actions = [
         "@rules_cc//cc/toolchains/actions:compile_actions",

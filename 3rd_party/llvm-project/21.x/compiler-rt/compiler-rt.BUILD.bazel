@@ -1318,6 +1318,89 @@ cc_runtime_stage0_static_library(
 )
 
 ###
+### compiler-rt/lib/cfi/CMakeLists.txt.
+###
+
+CFI_SOURCES = [
+    "cfi.cpp",
+]
+
+filegroup(
+    name = "cfi_sources",
+    srcs = ["lib/cfi/" + f for f in CFI_SOURCES],
+)
+
+filegroup(
+    name = "cfi_ignorelist",
+    srcs = ["lib/cfi/cfi_ignorelist.txt"],
+    visibility = ["//visibility:public"],
+)
+
+CFI_CFLAGS = SANITIZER_COMMON_CFLAGS + [
+    "-Wno-format",
+]
+
+CFI_DIAG_CFLAGS = [
+    "-DCFI_ENABLE_DIAG=1",
+]
+
+cc_library(
+    name = "cfi",
+    copts = CFI_CFLAGS,
+    srcs = [
+        ":cfi_sources",
+        ":ubsan_headers",
+    ],
+    includes = ["lib"],
+    implementation_deps = [
+        ":libcxx_headers",
+        ":sanitizer_impl_headers",
+        ":interception_impl_headers",
+    ],
+)
+
+cc_library(
+    name = "cfi_diag",
+    copts = CFI_CFLAGS + CFI_DIAG_CFLAGS,
+    srcs = [
+        ":cfi_sources",
+        ":ubsan_headers",
+    ],
+    includes = ["lib"],
+    implementation_deps = [
+        ":libcxx_headers",
+        ":sanitizer_impl_headers",
+        ":interception_impl_headers",
+    ],
+)
+
+cc_runtime_stage0_static_library(
+    name = "cfi.static",
+    deps = [
+        ":cfi",
+        ":interception",
+        ":sanitizer_common",
+        ":sanitizer_common_libc",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+cc_runtime_stage0_static_library(
+    name = "cfi_diag.static",
+    deps = [
+        ":cfi_diag",
+        ":interception",
+        ":sanitizer_common",
+        ":sanitizer_common_libc",
+        ":sanitizer_common_coverage",
+        ":sanitizer_common_symbolizer",
+        ":sanitizer_common_symbolizer_internal",
+        ":ubsan_no_standalone",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+###
 ### compiler-rt/lib/msan/CMakeLists.txt.
 ###
 

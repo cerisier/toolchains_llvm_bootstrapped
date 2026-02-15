@@ -170,6 +170,13 @@ copy_to_resource_directory(
             "//runtimes/compiler-rt:clang_rt.ubsan_standalone.static": "libclang_rt.ubsan_standalone",
             "//runtimes/compiler-rt:clang_rt.ubsan_standalone_cxx.static": "libclang_rt.ubsan_standalone_cxx",
         },
+        "//config:cfi_enabled": {
+            "//runtimes/compiler-rt:clang_rt.cfi.static": "libclang_rt.cfi",
+            "//runtimes/compiler-rt:clang_rt.cfi_diag.static": "libclang_rt.cfi_diag",
+            "//runtimes/compiler-rt:clang_rt.ubsan_standalone.static": "libclang_rt.ubsan_standalone",
+            "//runtimes/compiler-rt:clang_rt.ubsan_standalone_cxx.static": "libclang_rt.ubsan_standalone_cxx",
+            "//runtimes/compiler-rt:clang_rt.cfi_ignorelist": "share/cfi_ignorelist.txt",
+        },
         "//config:msan_enabled": {
             "//runtimes/compiler-rt:clang_rt.msan.static": "libclang_rt.msan",
             "//runtimes/compiler-rt:clang_rt.msan_cxx.static": "libclang_rt.msan_cxx",

@@ -5,6 +5,12 @@ filegroup(
     visibility = ["//visibility:public"],
 )
 
+filegroup(
+    name = "cfi_ignore",
+    srcs = ["cfi_ignore.txt"],
+    visibility = ["//visibility:public"],
+)
+
 alias(
     name = "sanitizers_headers_include_search_directory",
     actual = "@compiler-rt//:sanitizers_headers_include_search_directory",

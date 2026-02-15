@@ -17,6 +17,24 @@ alias(
 )
 
 alias(
+    name = "clang_rt.cfi.static",
+    actual = "@compiler-rt//:cfi.static",
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "clang_rt.cfi_diag.static",
+    actual = "@compiler-rt//:cfi_diag.static",
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "clang_rt.cfi_ignorelist",
+    actual = "@compiler-rt//:cfi_ignorelist",
+    visibility = ["//visibility:public"],
+)
+
+alias(
     name = "clang_rt.msan.static",
     actual = "@compiler-rt//:msan.static",
     visibility = ["//visibility:public"],
