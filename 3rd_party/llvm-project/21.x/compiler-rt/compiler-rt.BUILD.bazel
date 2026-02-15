@@ -1660,10 +1660,9 @@ cc_library(
     ],
     includes = ["lib"],
     implementation_deps = [
+        ":libcxx_headers",
         ":sanitizer_impl_headers",
         ":interception_impl_headers",
-        "@glibc//:gnu_libc_headers",
-        "@kernel_headers//:kernel_headers",
     ],
 )
 
