@@ -34,7 +34,6 @@ string_flag(
     visibility = ["//visibility:public"],
 )
 
-
 config_setting(
     name = "runtimes_all",
     flag_values = {
