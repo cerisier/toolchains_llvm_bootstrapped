@@ -1,6 +1,5 @@
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains/args:sysroot.bzl", "cc_sysroot")
-load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 load(
     ":macos_minimum_os_flag.bzl",
     "MACOS_MINIMUM_OS_VERSIONS",
@@ -34,31 +33,21 @@ macos_minimum_os_flag(
     for version in MACOS_MINIMUM_OS_VERSIONS
 ]
 
-[
-    cc_args(
-        name = "macos_minimum_os_flag_{}".format(version.replace(".", "_")),
-        actions = [
-            "@rules_cc//cc/toolchains/actions:compile_actions",
-            "@rules_cc//cc/toolchains/actions:link_actions",
-        ],
-        args = [
-            "-mmacosx-version-min={}".format(version),
-        ],
-    )
-    for version in MACOS_MINIMUM_OS_VERSIONS
-]
-
-cc_args_list(
+cc_args(
     name = "macos_minimum_os_flags",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:compile_actions",
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
     args = select({
         ":macos_minimum_os_{}".format(version.replace(".", "_")): [
-            ":macos_minimum_os_flag_{}".format(version.replace(".", "_")),
+            "-mmacosx-version-min={}".format(version),
         ]
         for version in MACOS_MINIMUM_OS_VERSIONS
     } | {
         "//conditions:default": [
             # Keep current default behavior when the Apple minimum OS is not specified.
-            ":macos_minimum_os_flag_14_0",
+            "-mmacosx-version-min=14.0",
         ],
     }),
 )
