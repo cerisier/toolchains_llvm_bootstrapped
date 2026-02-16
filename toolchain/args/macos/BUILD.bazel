@@ -1,5 +1,11 @@
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains/args:sysroot.bzl", "cc_sysroot")
+load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
+load(
+    ":macos_minimum_os_flag.bzl",
+    "MACOS_MINIMUM_OS_VERSIONS",
+    "macos_minimum_os_flag",
+)
 
 package(default_visibility = ["//visibility:public"])
 
@@ -14,16 +20,47 @@ cc_sysroot(
     sysroot = "@macosx15.4.sdk//sysroot",
 )
 
-cc_args(
+macos_minimum_os_flag(
+    name = "macos_minimum_os_flag",
+)
+
+[
+    config_setting(
+        name = "macos_minimum_os_{}".format(version.replace(".", "_")),
+        flag_values = {
+            ":macos_minimum_os_flag": version,
+        },
+    )
+    for version in MACOS_MINIMUM_OS_VERSIONS
+]
+
+[
+    cc_args(
+        name = "macos_minimum_os_flag_{}".format(version.replace(".", "_")),
+        actions = [
+            "@rules_cc//cc/toolchains/actions:compile_actions",
+            "@rules_cc//cc/toolchains/actions:link_actions",
+        ],
+        args = [
+            "-mmacosx-version-min={}".format(version),
+        ],
+    )
+    for version in MACOS_MINIMUM_OS_VERSIONS
+]
+
+cc_args_list(
     name = "macos_minimum_os_flags",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:compile_actions",
-        "@rules_cc//cc/toolchains/actions:link_actions",
-    ],
-    args = [
-        #TODO: This should be configurable or retrieved from the apple fragment
-        "-mmacosx-version-min=14.0",
-    ],
+    args = select({
+        ":macos_minimum_os_{}".format(version.replace(".", "_")): [
+            ":macos_minimum_os_flag_{}".format(version.replace(".", "_")),
+        ]
+        for version in MACOS_MINIMUM_OS_VERSIONS
+    } | {
+        "//conditions:default": [
+            # Keep current default behavior when the Apple minimum OS is not specified.
+            ":macos_minimum_os_flag_14_0",
+        ],
+    }),
 )
 
 # TODO(cerisier): Extract those into proper semantic args list.
