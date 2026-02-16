@@ -19,6 +19,8 @@ cc_sysroot(
     sysroot = "@macosx15.4.sdk//sysroot",
 )
 
+#TODO(cerisier): Fix with new cc_args BuildSettingInfo formatter once it is ready.
+#                See https://github.com/cerisier/toolchains_llvm_bootstrapped/issues/302
 macos_minimum_os_flag(
     name = "macos_minimum_os_flag",
 )
