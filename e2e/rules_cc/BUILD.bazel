@@ -363,6 +363,17 @@ cc_binary(
     tags = ["manual"],
 )
 
+sh_test(
+    name = "supports_pic_dylib_test",
+    srcs = ["supports_pic_dylib_test.sh"],
+    data = [":supports_pic_"],
+    env = {"BINARY": "$(rootpath :supports_pic_)"},
+    target_compatible_with = select({
+        "@platforms//os:osx": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+)
+
 platform_transition_binary(
     name = "supports_pic",
     binary = ":supports_pic_",
