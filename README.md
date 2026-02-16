@@ -13,7 +13,7 @@
 3. **WIP crossenv package targets for outside-Bazel use**
    We expose Bazel targets that package the same toolchain pieces as portable artifacts, so the ecosystem can be leveraged outside Bazel too (work in progress).
 
-# 1) Hermetic Bazel `cc_toolchain`
+# Hermetic Bazel `cc_toolchain`
 
 ## Quick Start
 
@@ -70,32 +70,35 @@ This registers the cross-product of the specified exec and target platforms.
 
 If you need finer control, register individual toolchain targets. You can list them with:
 
+```sh
+bazel query 'kind(toolchain, @toolchains_llvm_bootstrapped//toolchain:all)'
+```
+
 ### Cgo compatibility
 TODO: write about this
 
 ### Usage with Rust
-TODO: write about this
-
-```sh
-bazel query 'kind(toolchain, @toolchains_llvm_bootstrapped//toolchain:all)'
-```
+Rust builds commonly require a few flags:
+- Rust passes `-lgcc_s` when linking, so you will want to set `--@toolchains_llvm_bootstrapped//config:experimental_stub_libgcc_s=True` flag to provide it.
+- Rust `cc-rs` crate does not properly account for `$AR` and `$ARFLAGS` env vars, so it does not work when `llvm-libtool-darwin` is used as the archiver. You will want to set `--@rules_cc//cc/toolchains/args/archiver_flags:use_libtool_on_macos=False` to avoid failure in build scripts using `cc-rs`.
+- Rust forces `-no-pie` when linking musl targets, while we prefer `-static-pie`, which are incompatible. You can configure your platform with the `@toolchains_llvm_bootstrapped//constraints/pie:off` constraint_value to harmonize the link flags. Alternately, you can use the toolchains and platforms defined by [rules_rs](https://github.com/dzbarsky/rules_rs) to do this automatically. Currently you need the `zbarsky/toolchains` branch since the setup is experimental, but we are rapidly stabilizing it!
 
 ## Supported platforms
 
 ✅ Currently supports cross-compilation between all combinations of the following platforms:
 
-| To ↓ / From → | macOS aarch64 | Linux aarch64 | Linux x86_64 | Windows x86_64 |
-|---------------|---------------|---------------|--------------|----------------|
-| **aarch64-apple-darwin** | ✅ | ✅ | ✅ | ✅ |
-| **x86_64-apple-darwin**  | ✅ | ✅ | ✅ | ✅ |
-| **aarch64-linux-gnu ¹**  | ✅ | ✅ | ✅ | ✅ |
-| **x86_64-linux-gnu ¹**   | ✅ | ✅ | ✅ | ✅ |
-| **aarch64-linux-musl**   | ✅ | ✅ | ✅ | ✅ |
-| **x86_64-linux-musl**    | ✅ | ✅ | ✅ | ✅ |
-| **aarch64-windows-gnu ²**| ✅ | ✅ | ✅ | ✅ |
-| **x86_64-windows-gnu ²** | ✅ | ✅ | ✅ | ✅ |
-| **wasm32-unknown-unknown** | ✅ | ✅ | ✅ | ✅ |
-| **wasm64-unknown-unknown** | ✅ | ✅ | ✅ | ✅ |
+| To ↓ / From → | macOS aarch64 | Linux aarch64 | Linux x86_64 | Windows x86_64 | Windows aarch64 |
+|---------------|---------------|---------------|--------------|----------------|-----------------|
+| **aarch64-apple-darwin** | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **x86_64-apple-darwin**  | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **aarch64-linux-gnu ¹**  | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **x86_64-linux-gnu ¹**   | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **aarch64-linux-musl**   | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **x86_64-linux-musl**    | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **aarch64-windows-gnu ²**| ✅ | ✅ | ✅ | ✅ | ✅ |
+| **x86_64-windows-gnu ²** | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **wasm32-unknown-unknown** | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **wasm64-unknown-unknown** | ✅ | ✅ | ✅ | ✅ | ✅ |
 
 ¹ See "GNU C Library" section for glibc version selection.
 
@@ -139,7 +142,7 @@ We use a cross-platform reimplementation of `pkgutil` to unpack SDK packages, wh
 In theory, this toolchain can target all LLVM-supported targets.
 We prioritize adding support based on demand.
 
-# 2) Bazeled LLVM targets
+# Additional LLVM targets
 
 This module exposes LLVM and runtime projects as first-class Bazel repos, so you can depend on them directly.
 
@@ -180,7 +183,7 @@ cc_library(
 )
 ```
 
-# 3) Crossenv packages for use outside Bazel (WIP)
+# Crossenv packages for use outside Bazel (WIP)
 
 This is actively in progress. The goal is to produce working crossenv packages that mirror the Bazel toolchain contents so they can be reused by other build systems outside Bazel.
 
