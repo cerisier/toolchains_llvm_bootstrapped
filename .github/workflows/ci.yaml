@@ -131,3 +131,25 @@ jobs:
             --jobs=100 \
             $EXTRA_ARGS \
             //...
+
+  docs:
+    runs-on: macos-14
+    name: Verify public docs generation
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Ensure Gazelle updated
+        env:
+          BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        run: |
+          bazel \
+            run \
+            --config=remote \
+            --remote_header=x-buildbuddy-api-key=$BUILDBUDDY_API_KEY \
+            //gazelle:gazelle -- -mode=diff
+
+      - name: Build release docs
+        run: |
+          docs="$(mktemp -d)"
+          targets="$(mktemp)"
+          bash ./.github/workflows/build_public_starlark_docs.sh "$targets" "$docs"

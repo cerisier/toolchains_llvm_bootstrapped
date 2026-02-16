@@ -14,11 +14,11 @@ ARCHIVE="toolchains_llvm_bootstrapped-$TAG.tar.gz"
 # NB: configuration for 'git archive' is in /.gitattributes
 git archive --format=tar --prefix=${PREFIX}/ ${TAG} | gzip > $ARCHIVE
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Add generated API docs to the release, see https://github.com/bazelbuild/bazel-central-registry/issues/5593
 docs="$(mktemp -d)"; targets="$(mktemp)"
-bazel --output_base="$docs" query --output=label --output_file="$targets" 'kind("starlark_doc_extract rule", //config/... + //constraints/... + //extensions/... + //platforms/... + //toolchain/...)'
-# TODO(zbarsky): Remove nocheck_visibility if bazel properly exports bzl_libraries...
-bazel --output_base="$docs" build --target_pattern_file="$targets" --nocheck_visibility
+bash "$SCRIPT_DIR/build_public_starlark_docs.sh" "$targets" "$docs"
 tar --create --auto-compress \
     --directory "$(bazel --output_base="$docs" info bazel-bin)" \
     --file "$GITHUB_WORKSPACE/${ARCHIVE%.tar.gz}.docs.tar.gz" .
