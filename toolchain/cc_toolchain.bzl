@@ -91,6 +91,9 @@ def cc_toolchain(name, tool_map, module_map = None):
         ],
         supports_header_parsing = True,
         artifact_name_patterns = select({
+            "@platforms//os:macos": [
+                "@toolchains_llvm_bootstrapped//toolchain:macos_dynamic_library_pattern",
+            ],
             "@platforms//os:windows": [
                 "@toolchains_llvm_bootstrapped//toolchain:windows_executable_pattern",
             ],
