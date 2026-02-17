@@ -5,11 +5,6 @@ load("//:http_pkg_archive.bzl", "http_pkg_archive")
 _DEFAULT_FRAMEWORKS = [
     "CoreFoundation",
     "Foundation",
-    "CoreGraphics",
-    "CoreServices",
-    "DiskArbitration",
-    "IOKit",
-    "CFNetwork",
     "Kernel",
     "OSLog",
     "Security",
