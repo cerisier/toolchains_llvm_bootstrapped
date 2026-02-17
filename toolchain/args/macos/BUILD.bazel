@@ -96,5 +96,5 @@ cc_args(
 bzl_library(
     name = "sysroot",
     srcs = ["sysroot.bzl"],
-    deps = ["@rules_cc//cc/toolchains:args"],
+    deps = ["@rules_cc//cc/toolchains:toolchain_rules"],
 )
