@@ -92,6 +92,7 @@ def declare_llvm_targets(*, suffix = ""):
     COMMON_TOOLS = {
         "@rules_cc//cc/toolchains/actions:assembly_actions": ":clang",
         "@rules_cc//cc/toolchains/actions:c_compile": ":clang",
+        "@rules_cc//cc/toolchains/actions:objc_compile": ":clang",
         "@toolchains_llvm_bootstrapped//toolchain:cpp_compile_actions_without_header_parsing": ":clang++",
         "@rules_cc//cc/toolchains/actions:cpp_header_parsing": ":header_parser",
         "@rules_cc//cc/toolchains/actions:link_actions": ":lld",

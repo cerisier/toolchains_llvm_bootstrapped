@@ -18,6 +18,7 @@ def declare_tool_map(exec_os, exec_cpu):
     COMMON_TOOLS = {
         "@rules_cc//cc/toolchains/actions:assembly_actions": prefix + "/clang",
         "@rules_cc//cc/toolchains/actions:c_compile": prefix + "/clang",
+        "@rules_cc//cc/toolchains/actions:objc_compile": prefix + "/clang",
         "@toolchains_llvm_bootstrapped//toolchain:cpp_compile_actions_without_header_parsing": prefix + "/clang++",
         "@rules_cc//cc/toolchains/actions:cpp_header_parsing": prefix + "/header-parser",
         "@rules_cc//cc/toolchains/actions:dwp": prefix + "/llvm-dwp",

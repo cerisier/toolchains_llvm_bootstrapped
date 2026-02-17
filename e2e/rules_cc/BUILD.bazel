@@ -2,6 +2,7 @@ load("@bazel_lib//lib:transitions.bzl", "platform_transition_binary")
 load("@platforms//host:constraints.bzl", "HOST_CONSTRAINTS")
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:objc_library.bzl", "objc_library")
 load("@rules_cc//cc:cc_static_library.bzl", "cc_static_library")
 load("@rules_cc//cc:cc_test.bzl", "cc_test")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
@@ -20,6 +21,27 @@ load(
     "tsan_cc_binary",
     "tysan_cc_binary",
     "ubsan_cc_binary",
+)
+
+cc_library(
+    name = "objc_c_lib",
+    hdrs = ["objc_c_lib.h"],
+    tags = ["manual"],
+)
+
+objc_library(
+    name = "objc_lib",
+    srcs = ["objc_lib.m"],
+    hdrs = ["objc_lib.h"],
+    tags = ["manual"],
+    deps = [":objc_c_lib"],
+    alwayslink = True,
+)
+
+cc_test(
+    name = "objc_cc_test",
+    srcs = ["objc_cc_test.cc"],
+    deps = [":objc_lib"],
 )
 
 opt_binary(
