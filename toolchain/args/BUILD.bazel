@@ -711,7 +711,7 @@ cc_args(
 cc_args(
     name = "unwindlib_none",
     actions = [
-        "@rules_cc//cc/toolchains/actions:link_actions",
+        "@rules_cc//cc/toolchains/actions:link_executable_actions",
     ],
     args = [
         # will prevent clang to choose which libunwind to link against
