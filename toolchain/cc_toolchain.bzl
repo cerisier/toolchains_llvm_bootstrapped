@@ -23,7 +23,7 @@ def cc_toolchain(name, tool_map, module_map = None):
             "@toolchains_llvm_bootstrapped//toolchain/features:all_non_legacy_builtin_features",
             "@toolchains_llvm_bootstrapped//toolchain/features/legacy:all_legacy_builtin_features",
             # Always last (contains user_compile_flags and user_link_flags who should apply last).
-            "@rules_cc//cc/toolchains/args:experimental_replace_legacy_action_config_features",
+            "@toolchains_llvm_bootstrapped//toolchain/features/legacy:experimental_replace_legacy_action_config_features",
         ],
     )
 
@@ -37,7 +37,7 @@ def cc_toolchain(name, tool_map, module_map = None):
             "@toolchains_llvm_bootstrapped//toolchain/features:archive_param_file",
             "@toolchains_llvm_bootstrapped//toolchain/features:prefer_pic_for_opt_binaries",
             # Always last (contains user_compile_flags and user_link_flags who should apply last).
-            "@rules_cc//cc/toolchains/args:experimental_replace_legacy_action_config_features",
+            "@toolchains_llvm_bootstrapped//toolchain/features/legacy:experimental_replace_legacy_action_config_features",
         ],
     )
 
@@ -65,7 +65,7 @@ def cc_toolchain(name, tool_map, module_map = None):
             "@toolchains_llvm_bootstrapped//toolchain/features:parse_headers",
             "@toolchains_llvm_bootstrapped//toolchain/features/legacy:all_legacy_builtin_features",
             # Always last (contains user_compile_flags and user_link_flags who should apply last).
-            "@rules_cc//cc/toolchains/args:experimental_replace_legacy_action_config_features",
+            "@toolchains_llvm_bootstrapped//toolchain/features/legacy:experimental_replace_legacy_action_config_features",
         ],
     )
 
@@ -75,7 +75,7 @@ def cc_toolchain(name, tool_map, module_map = None):
             "@toolchains_llvm_bootstrapped//toolchain/features:prefer_pic_for_opt_binaries",
             "@toolchains_llvm_bootstrapped//toolchain/features:archive_param_file",
             # Always last (contains user_compile_flags and user_link_flags who should apply last).
-            "@rules_cc//cc/toolchains/args:experimental_replace_legacy_action_config_features",
+            "@toolchains_llvm_bootstrapped//toolchain/features/legacy:experimental_replace_legacy_action_config_features",
         ],
     )
 

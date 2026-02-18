@@ -65,3 +65,79 @@ cc_feature_set(
     }),
     visibility = ["//visibility:public"],
 )
+
+# Inlined from rules_cc to avoid problematic features that can't be overridden.
+# https://github.com/bazelbuild/rules_cc/blob/541eda5d72e9b5f18e6a24e8d14975afcd865717/cc/toolchains/args/BUILD#L6-L42
+cc_feature_set(
+    name = "experimental_replace_legacy_action_config_features",
+    all_of = [
+        ":backfill_legacy_args",
+        "@rules_cc//cc/toolchains/args/archiver_flags:feature",
+        "@rules_cc//cc/toolchains/args/pic_flags:feature",
+        "@rules_cc//cc/toolchains/args/libraries_to_link:feature",
+        "@rules_cc//cc/toolchains/args/linker_param_file:feature",
+        "@rules_cc//cc/toolchains/args/preprocessor_defines:feature",
+        "@rules_cc//cc/toolchains/args/random_seed:feature",
+        "@rules_cc//cc/toolchains/args/runtime_library_search_directories:feature",
+        "@rules_cc//cc/toolchains/args/shared_flag:feature",
+        "@rules_cc//cc/toolchains/args/strip_debug_symbols:feature",
+        "@rules_cc//cc/toolchains/args/strip_flags:feature",
+        "@rules_cc//cc/toolchains/args/objc_arc_flags:feature",
+        # Inlined below as it isn't visible and also has an issue upstream.
+        ":soname_flags",
+        # Intentionally omitted since we link runtime libraries ourselves and
+        # including this flag just raises a warning.
+        # "@rules_cc//cc/toolchains/args/static_libgcc:feature",
+        "@rules_cc//cc/toolchains/args/include_flags:feature",
+        "@rules_cc//cc/toolchains/args/compiler_input_flags:feature",
+        "@rules_cc//cc/toolchains/args/compiler_output_flags:feature",
+        "@rules_cc//cc/toolchains/args/fission_flags:feature",
+        "@rules_cc//cc/toolchains/args/link_flags:feature",
+        "@rules_cc//cc/toolchains/args/linkstamp_flags:feature",
+        "@rules_cc//cc/toolchains/args/library_search_directories:feature",
+        "@rules_cc//cc/toolchains/args/dependency_file:feature",
+        "@rules_cc//cc/toolchains/args/compile_flags:feature",  # NOTE: This should come below default flags so user flags can override them
+    ],
+    visibility = ["//visibility:public"],
+)
+
+# Taken from (with fixes)
+# https://github.com/bazelbuild/rules_cc/blob/541eda5d72e9b5f18e6a24e8d14975afcd865717/cc/toolchains/args/soname_flags/BUILD#L4-L31
+cc_feature(
+    name = "soname_flags",
+    args = select({
+        "@platforms//os:macos": [":macos_set_install_name"],
+        "@platforms//os:linux": [":set_soname"],
+        "//conditions:default": [],
+    }),
+    feature_name = "_soname_flags",  # Doesn't override legacy feature, but shouldn't be disabled
+)
+
+cc_args(
+    name = "macos_set_install_name",
+    actions = ["@rules_cc//cc/toolchains/actions:link_actions"],
+    args = ["-Wl,-install_name,@rpath/{runtime_solib_name}"],
+    format = {"runtime_solib_name": "@rules_cc//cc/toolchains/variables:runtime_solib_name"},
+    requires_not_none = "@rules_cc//cc/toolchains/variables:runtime_solib_name",
+)
+
+cc_args(
+    name = "set_soname",
+    actions = ["@rules_cc//cc/toolchains/actions:link_actions"],
+    args = ["-Wl,-soname,{runtime_solib_name}"],
+    format = {"runtime_solib_name": "@rules_cc//cc/toolchains/variables:runtime_solib_name"},
+    requires_not_none = "@rules_cc//cc/toolchains/variables:runtime_solib_name",
+)
+
+# Taken from
+# https://github.com/bazelbuild/rules_cc/blob/541eda5d72e9b5f18e6a24e8d14975afcd865717/cc/toolchains/args/BUILD#L44-L53
+cc_feature(
+    name = "backfill_legacy_args",
+    feature_name = "experimental_replace_legacy_action_config_features",
+    # TODO: Convert remaining items in this list into their actual args.
+    implies = [
+        "@rules_cc//cc/toolchains/features/legacy:build_interface_libraries",
+        "@rules_cc//cc/toolchains/features/legacy:dynamic_library_linker_tool",
+    ],
+    visibility = ["//visibility:private"],
+)
