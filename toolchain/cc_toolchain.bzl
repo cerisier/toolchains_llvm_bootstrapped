@@ -90,6 +90,7 @@ def cc_toolchain(name, tool_map, module_map = None):
             "@toolchains_llvm_bootstrapped//toolchain/args:ignore_unused_command_line_argument",
         ],
         supports_header_parsing = True,
+        supports_param_files = True,
         artifact_name_patterns = select({
             "@platforms//os:macos": [
                 "@toolchains_llvm_bootstrapped//toolchain:macos_dynamic_library_pattern",
