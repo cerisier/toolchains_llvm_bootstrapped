@@ -1,4 +1,5 @@
 MACOS_MINIMUM_OS_VERSIONS = [
+    "10.13",
     "13.0",
     "13.1",
     "13.2",
