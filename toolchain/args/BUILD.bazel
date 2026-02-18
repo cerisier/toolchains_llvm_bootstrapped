@@ -713,10 +713,13 @@ cc_args(
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
-    args = [
-        # will prevent clang to choose which libunwind to link against
-        "--unwindlib=none",
-    ],
+    args = select({
+        # The clang driver forces -ISystem and doesn't claim the arg, which
+        # would result in a warning when targeting macOS.
+        "@platforms//os:macos": [],
+        # Will prevent clang from choosing which libunwind to link against.
+        "//conditions:default": ["--unwindlib=none"],
+    }),
 )
 
 # Those are stubs since we link against static_runtime_libs / dynamic_runtime_libs.
