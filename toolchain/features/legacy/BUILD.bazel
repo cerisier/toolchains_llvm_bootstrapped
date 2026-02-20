@@ -59,6 +59,7 @@ cc_feature_set(
         ":default_compile_flags",
     ] + select({
         "@platforms//os:windows": [],
+        "@platforms//os:uefi": [],
         "//conditions:default": [
             ":supports_start_end_lib",
         ],

@@ -29,6 +29,7 @@ cc_args_list(
         ],
         "@platforms//os:linux": [],
         "@platforms//os:windows": [],
+        "@platforms//os:uefi": [],
         "@platforms//os:none": [],
     }),
     visibility = ["//toolchain:__subpackages__"],
