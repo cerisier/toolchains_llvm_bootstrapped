@@ -1,0 +1,26 @@
+load("@bazel_lib//lib:transitions.bzl", "platform_transition_binary")
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+
+cc_binary(
+    name = "link_check",
+    srcs = ["link_check.c"],
+)
+
+platform_transition_binary(
+    name = "link_check_linux_x86_64_picolibc",
+    binary = ":link_check",
+    target_platform = "@toolchains_llvm_bootstrapped//platforms:linux_x86_64_picolibc",
+)
+
+platform_transition_binary(
+    name = "link_check_linux_aarch64_picolibc",
+    binary = ":link_check",
+    target_platform = "@toolchains_llvm_bootstrapped//platforms:linux_aarch64_picolibc",
+)
+
+cc_test(
+    name = "link_check_test",
+    srcs = ["link_check.c"],
+    linkstatic = True,
+)

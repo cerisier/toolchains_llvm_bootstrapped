@@ -230,6 +230,10 @@ cc_args_list(
             "//toolchain/args/linux:kernel_headers_include_search_paths",
             "//toolchain/args/linux:musl_libc_headers_include_search_paths",
         ],
+        "//platforms/config:picolibc": [
+            "//toolchain/args/linux:kernel_headers_include_search_paths",
+            "//toolchain/args/linux:picolibc_libc_headers_include_search_paths",
+        ],
         "//platforms/config:gnu": [
             "//toolchain/args/linux:kernel_headers_include_search_paths",
             "//toolchain/args/linux:glibc_headers_include_search_paths",
@@ -240,6 +244,10 @@ cc_args_list(
             #TODO: Handle musl dynamic linking
             # musl implies static linking for now
             "//toolchain/args:static_link_executable",
+        ],
+        "//platforms/config:picolibc": [
+            # picolibc only provides static archives in this toolchain.
+            "//toolchain/args:static_link_executable_no_pie",
         ],
         "//conditions:default": [],
     }) + [

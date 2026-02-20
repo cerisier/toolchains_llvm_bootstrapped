@@ -1,10 +1,8 @@
-
-
-load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@bazel_skylib//lib:selects.bzl", "selects")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_library.bzl", "cc_runtime_stage0_library")
-load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
 load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_shared_library.bzl", "cc_runtime_stage1_shared_library")
+load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
 
 selects.config_setting_group(
     name = "windows_static",
@@ -31,7 +29,7 @@ cc_library(
         "-Wno-dll-attribute-on-redeclaration",
     ] + select({
         "@platforms//os:windows": [
-            "-Wno-macro-redefined", # TODO(zbarsky): Is this masking a real issue?
+            "-Wno-macro-redefined",  # TODO(zbarsky): Is this masking a real issue?
             "-Wno-missing-declarations",
             "-Wno-pragma-pack",
             "-Wno-typedef-redefinition",
@@ -62,6 +60,11 @@ cc_library(
         # "_DCOMPILER_RT_ARMHF_TARGET", # ARM
         "_LIBUNWIND_USE_FRAME_HEADER_CACHE",
     ] + select({
+        "@toolchains_llvm_bootstrapped//platforms/config:picolibc": [
+            "_LIBUNWIND_IS_BAREMETAL",
+            "_LIBUNWIND_HAS_NO_THREADS",
+            "_LIBUNWIND_USE_DLADDR=0",
+        ],
         ":windows_static": [
             "_LIBUNWIND_HIDE_SYMBOLS",
         ],
@@ -83,12 +86,10 @@ cc_library(
         "src/libunwind.cpp",
         "src/Unwind-EHABI.cpp",
         "src/Unwind-seh.cpp",
-
         "src/UnwindLevel1.c",
         "src/UnwindLevel1-gcc-ext.c",
         "src/Unwind-sjlj.c",
         "src/Unwind-wasm.c",
-
         "src/UnwindRegistersRestore.S",
         "src/UnwindRegistersSave.S",
 
@@ -105,6 +106,9 @@ cc_library(
     }) + select({
         "@toolchains_llvm_bootstrapped//platforms/config:musl": [
             "@musl_libc//:musl_libc_headers",
+        ],
+        "@toolchains_llvm_bootstrapped//platforms/config:picolibc": [
+            "@picolibc//:libc_headers",
         ],
         "@toolchains_llvm_bootstrapped//platforms/config:gnu": [
             "@glibc//:gnu_libc_headers",

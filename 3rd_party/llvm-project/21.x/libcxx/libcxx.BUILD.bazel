@@ -3,8 +3,8 @@ load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
-load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
 load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_shared_library.bzl", "cc_runtime_stage1_shared_library")
+load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
 
 # Should replicate libcxx/include/CMakeLists.txt
 filegroup(
@@ -1122,6 +1122,33 @@ _CONFIG_SITE_THREAD_API_PTHREAD_LINES = [
     "#define _LIBCPP_HAS_THREAD_API_WIN32   0",
 ]
 
+_CONFIG_SITE_THREAD_API_NONE_LINES = [
+    "#define _LIBCPP_HAS_THREAD_API_PTHREAD 0",
+    "#define _LIBCPP_HAS_THREAD_API_WIN32   0",
+]
+
+_CONFIG_SITE_HAS_THREADS_ON_LINES = [
+    "#define _LIBCPP_HAS_THREADS             1",
+]
+
+_CONFIG_SITE_HAS_THREADS_OFF_LINES = [
+    "#define _LIBCPP_HAS_THREADS             0",
+]
+
+_CONFIG_SITE_PICOLIBC_FEATURE_LINES = [
+    "#define _LIBCPP_HAS_MONOTONIC_CLOCK     0",
+    "#define _LIBCPP_HAS_FILESYSTEM          0",
+    "#define _LIBCPP_HAS_RANDOM_DEVICE       0",
+    "#define _LIBCPP_HAS_WIDE_CHARACTERS     0",
+]
+
+_CONFIG_SITE_DEFAULT_FEATURE_LINES = [
+    "#define _LIBCPP_HAS_MONOTONIC_CLOCK     1",
+    "#define _LIBCPP_HAS_FILESYSTEM          1",
+    "#define _LIBCPP_HAS_RANDOM_DEVICE       1",
+    "#define _LIBCPP_HAS_WIDE_CHARACTERS     1",
+]
+
 _CONFIG_SITE_LIBCPP_VISIBILITY_LINES = [
     "#define _LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS",
 ]
@@ -1131,18 +1158,13 @@ _CONFIG_SITE_GENERIC_LINES = [
     "#define _LIBCPP_ABI_NAMESPACE           __1",
     "#define _LIBCPP_ABI_FORCE_ITANIUM       0",
     "#define _LIBCPP_ABI_FORCE_MICROSOFT     0",
-    "#define _LIBCPP_HAS_THREADS             1 // TODO: Handle no threads",
-    "#define _LIBCPP_HAS_MONOTONIC_CLOCK     1",
     "#define _LIBCPP_HAS_TERMINAL            1",
     "#define _LIBCPP_HAS_THREAD_API_EXTERNAL 0",
     "#define _LIBCPP_HAS_THREAD_API_C11      0 // FIXME: Is this guarding dead code?",
     "// #define _LIBCPP_NO_VCRUNTIME",
     "// #define _LIBCPP_TYPEINFO_COMPARISON_IMPLEMENTATION @_LIBCPP_TYPEINFO_COMPARISON_IMPLEMENTATION@",
-    "#define _LIBCPP_HAS_FILESYSTEM          1",
-    "#define _LIBCPP_HAS_RANDOM_DEVICE       1",
     "#define _LIBCPP_HAS_LOCALIZATION        1",
     "#define _LIBCPP_HAS_UNICODE             1",
-    "#define _LIBCPP_HAS_WIDE_CHARACTERS     1",
     "#define _LIBCPP_HAS_STD_MODULES         0",
     "#define _LIBCPP_HAS_TIME_ZONE_DATABASE  1",
     "#define _LIBCPP_HAS_VENDOR_AVAILABILITY_ANNOTATIONS 0",
@@ -1166,6 +1188,22 @@ selects.config_setting_group(
     ],
 )
 
+selects.config_setting_group(
+    name = "picolibc_complete",
+    match_all = [
+        "@toolchains_llvm_bootstrapped//platforms/config:picolibc",
+        "@toolchains_llvm_bootstrapped//toolchain:runtimes_all",
+    ],
+)
+
+selects.config_setting_group(
+    name = "musl_complete",
+    match_all = [
+        "@toolchains_llvm_bootstrapped//constraints/libc:musl",
+        "@toolchains_llvm_bootstrapped//toolchain:runtimes_all",
+    ],
+)
+
 write_file(
     name = "__config_site",
     out = "include/__config_site",
@@ -1179,6 +1217,15 @@ write_file(
                   "//conditions:default": _CONFIG_SITE_NO_MUSL_LINES,
               }) +
               select({
+                  "@toolchains_llvm_bootstrapped//platforms/config:picolibc": _CONFIG_SITE_PICOLIBC_FEATURE_LINES,
+                  "//conditions:default": _CONFIG_SITE_DEFAULT_FEATURE_LINES,
+              }) +
+              select({
+                  "@toolchains_llvm_bootstrapped//platforms/config:picolibc": _CONFIG_SITE_HAS_THREADS_OFF_LINES,
+                  "//conditions:default": _CONFIG_SITE_HAS_THREADS_ON_LINES,
+              }) +
+              select({
+                  "@toolchains_llvm_bootstrapped//platforms/config:picolibc": _CONFIG_SITE_THREAD_API_NONE_LINES,
                   "@platforms//os:windows": _CONFIG_SITE_THREAD_API_WIN32_LINES,
                   "//conditions:default": _CONFIG_SITE_THREAD_API_PTHREAD_LINES,
               }),
@@ -1209,9 +1256,12 @@ cc_library(
     name = "headers",
     includes = [
         "src",
-        "include",
         "generated_headers",
-    ],
+    ] + select({
+        ":musl_complete": [],
+        ":picolibc_complete": [],
+        "//conditions:default": ["include"],
+    }),
     hdrs = glob([
         "include/**",
     ]) + [
@@ -1239,11 +1289,15 @@ cc_library(
         "_LIBCPP_REMOVE_TRANSITIVE_INCLUDES",
         "LIBCXX_BUILDING_LIBCXXABI",
         "_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER",
-    ],
+    ] + select({
+        "@toolchains_llvm_bootstrapped//platforms/config:picolibc": [
+            "__CORRECT_ISO_CPP_STRING_H_PROTO",
+        ],
+        "//conditions:default": [],
+    }),
     copts = [
         "-faligned-allocation",
         "-std=c++23",
-
         "-fvisibility=hidden",
         "-fvisibility-inlines-hidden",
 
@@ -1264,12 +1318,18 @@ cc_library(
             "-Wno-pragma-pack",
             "-Wno-unused-value",
         ],
+        "@toolchains_llvm_bootstrapped//platforms/config:picolibc": [
+            "-Wno-c++11-narrowing",
+        ],
         "//conditions:default": [],
     }),
     includes = [
-        "include",
         "src",
-    ],
+    ] + select({
+        ":musl_complete": [],
+        ":picolibc_complete": [],
+        "//conditions:default": ["include"],
+    }),
     hdrs = glob([
         "include/**",
     ]),
@@ -1340,21 +1400,27 @@ cc_library(
         "src/variant.cpp",
         "src/vector.cpp",
         "src/verbose_abort.cpp",
-    ] + [
-        # LIBCXX_ENABLE_THREADS
-        "src/atomic.cpp",
-        "src/barrier.cpp",
-        "src/condition_variable_destructor.cpp",
-        "src/condition_variable.cpp",
-        "src/future.cpp",
-        "src/mutex_destructor.cpp",
-        "src/mutex.cpp",
-        "src/shared_mutex.cpp",
-        "src/thread.cpp",
-    ] + [
-        # LIBCXX_ENABLE_RANDOM_DEVICE
-        "src/random.cpp",
     ] + select({
+        "@toolchains_llvm_bootstrapped//platforms/config:picolibc": [],
+        "//conditions:default": [
+            # LIBCXX_ENABLE_THREADS
+            "src/atomic.cpp",
+            "src/barrier.cpp",
+            "src/condition_variable_destructor.cpp",
+            "src/condition_variable.cpp",
+            "src/future.cpp",
+            "src/mutex_destructor.cpp",
+            "src/mutex.cpp",
+            "src/shared_mutex.cpp",
+            "src/thread.cpp",
+        ],
+    }) + select({
+        "@toolchains_llvm_bootstrapped//platforms/config:picolibc": [],
+        "//conditions:default": [
+            # LIBCXX_ENABLE_RANDOM_DEVICE
+            "src/random.cpp",
+        ],
+    }) + select({
         "@platforms//os:windows": [
             "src/support/win32/compiler_rt_shims.cpp",
             "src/support/win32/locale_win32.cpp",
@@ -1373,19 +1439,22 @@ cc_library(
         "src/ostream.cpp",
         "src/regex.cpp",
         "src/strstream.cpp",
-    ] + [
-        # LIBCXX_ENABLE_FILESYSTEM
-        "src/filesystem/directory_entry.cpp",
-        "src/filesystem/directory_iterator.cpp",
-        "src/filesystem/file_descriptor.h",
-        "src/filesystem/operations.cpp",
-        "src/filesystem/posix_compat.h",
-        "src/filesystem/time_utils.h",
-        # NOT LIBCXX_USE_COMPILER_RT
-        # omit int128_builtins.cpp because it provides __muloti4 which is already provided
-        # by llvm compiler_rt.
-        # "src/filesystem/int128_builtins.cpp",
-    ] + [
+    ] + select({
+        "@toolchains_llvm_bootstrapped//platforms/config:picolibc": [],
+        "//conditions:default": [
+            # LIBCXX_ENABLE_FILESYSTEM
+            "src/filesystem/directory_entry.cpp",
+            "src/filesystem/directory_iterator.cpp",
+            "src/filesystem/file_descriptor.h",
+            "src/filesystem/operations.cpp",
+            "src/filesystem/posix_compat.h",
+            "src/filesystem/time_utils.h",
+            # NOT LIBCXX_USE_COMPILER_RT
+            # omit int128_builtins.cpp because it provides __muloti4 which is already provided
+            # by llvm compiler_rt.
+            # "src/filesystem/int128_builtins.cpp",
+        ],
+    }) + [
         # LIBCXX_ENABLE_NEW_DELETE_DEFINITIONS
     ],
     implementation_deps = [
@@ -1408,6 +1477,9 @@ cc_library(
     ] + select({
         "@toolchains_llvm_bootstrapped//platforms/config:musl": [
             "@musl_libc//:musl_libc_headers",
+        ],
+        "@toolchains_llvm_bootstrapped//platforms/config:picolibc": [
+            "@picolibc//:libc_headers",
         ],
         "@toolchains_llvm_bootstrapped//platforms/config:gnu": [
             "@glibc//:gnu_libc_headers",

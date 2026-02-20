@@ -1,0 +1,204 @@
+load("@bazel_lib//lib:copy_file.bzl", "copy_file")
+load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load(
+    "@toolchains_llvm_bootstrapped//3rd_party/libc/picolibc:picolibc_sources.bzl",
+    "PICOLIBC_AARCH64_SRCS",
+    "PICOLIBC_COMMON_SRCS",
+    "PICOLIBC_X86_64_SRCS",
+)
+
+PICOLIBC_ARCH_DIR = {
+    "x86_64": "x86",
+    "aarch64": "aarch64",
+}
+
+filegroup(
+    name = "compile_srcs_x86_64",
+    srcs = PICOLIBC_COMMON_SRCS + PICOLIBC_X86_64_SRCS,
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "compile_srcs_aarch64",
+    srcs = PICOLIBC_COMMON_SRCS + PICOLIBC_AARCH64_SRCS,
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "compile_srcs",
+    actual = select({
+        "@platforms//cpu:x86_64": ":compile_srcs_x86_64",
+        "@platforms//cpu:aarch64": ":compile_srcs_aarch64",
+    }),
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "compile_hdrs",
+    srcs = glob([
+        "libc/**/*.h",
+        "libm/**/*.h",
+    ]),
+    visibility = ["//visibility:public"],
+)
+
+# Some picolibc sources include implementation files directly via #include.
+filegroup(
+    name = "textual_srcs",
+    srcs = glob([
+        "libc/**/*",
+        "libm/**/*",
+    ]),
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "all_headers",
+    srcs = glob(["**/*.h"]),
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "picolibc_h",
+    src = "@toolchains_llvm_bootstrapped//3rd_party/libc/picolibc:picolibc.h",
+    out = "generated/picolibc.h",
+)
+
+filegroup(
+    name = "headers_generic",
+    srcs = glob([
+        "libc/include/**/*.h",
+    ]),
+    visibility = ["//visibility:public"],
+)
+
+[
+    filegroup(
+        name = "headers_arch_specific_{arch}".format(arch = arch),
+        srcs = glob([
+            "libc/machine/{arch_dir}/machine/*.h".format(arch_dir = arch_dir),
+        ]),
+        visibility = ["//visibility:public"],
+    )
+    for (arch, arch_dir) in PICOLIBC_ARCH_DIR.items()
+]
+
+[
+    filegroup(
+        name = "headers_{arch}".format(arch = arch),
+        srcs = [
+            ":headers_generic",
+            ":headers_arch_specific_{arch}".format(arch = arch),
+            ":picolibc_h",
+        ],
+        visibility = ["//visibility:public"],
+    )
+    for arch in PICOLIBC_ARCH_DIR.keys()
+]
+
+[
+    copy_to_directory(
+        name = "headers_{arch}_include_directory".format(arch = arch),
+        srcs = [
+            ":headers_{arch}".format(arch = arch),
+        ],
+        root_paths = [
+            "libc/include",
+            "libc/machine/{arch_dir}".format(arch_dir = arch_dir),
+            "generated",
+        ],
+        allow_overwrites = True,
+        out = "generated/{arch}/includes".format(arch = arch),
+        visibility = ["//visibility:public"],
+    )
+    for (arch, arch_dir) in PICOLIBC_ARCH_DIR.items()
+]
+
+[
+    cc_library(
+        name = "picolibc_internal_headers_{arch}".format(arch = arch),
+        includes = [
+            "generated",
+            "libc/machine/{arch_dir}".format(arch_dir = PICOLIBC_ARCH_DIR[arch]),
+            "libc/include",
+            "libc/stdio",
+            "libc/locale",
+            "libm/common",
+        ],
+        hdrs = [
+            ":all_headers",
+            ":picolibc_h",
+        ],
+        textual_hdrs = [
+            ":textual_srcs",
+        ],
+        visibility = ["//visibility:public"],
+    )
+    for arch in PICOLIBC_ARCH_DIR.keys()
+]
+
+[
+    cc_library(
+        name = "libc_headers_{arch}".format(arch = arch),
+        includes = [
+            "generated",
+            "libc/machine/{arch_dir}".format(arch_dir = PICOLIBC_ARCH_DIR[arch]),
+            "libc/include",
+        ],
+        features = ["system_include_paths"],
+        hdrs = [":headers_{arch}".format(arch = arch)],
+        visibility = ["//visibility:public"],
+    )
+    for arch in PICOLIBC_ARCH_DIR.keys()
+]
+
+[
+    cc_library(
+        name = "libc_headers_{arch}_for_picolibc".format(arch = arch),
+        includes = [
+            "generated",
+            "libc/machine/{arch_dir}".format(arch_dir = PICOLIBC_ARCH_DIR[arch]),
+            "libc/include",
+        ],
+        hdrs = [":headers_{arch}".format(arch = arch)],
+        visibility = ["//visibility:public"],
+    )
+    for arch in PICOLIBC_ARCH_DIR.keys()
+]
+
+alias(
+    name = "picolibc_internal_headers",
+    actual = select({
+        "@platforms//cpu:x86_64": ":picolibc_internal_headers_x86_64",
+        "@platforms//cpu:aarch64": ":picolibc_internal_headers_aarch64",
+    }),
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "libc_headers",
+    actual = select({
+        "@platforms//cpu:x86_64": ":libc_headers_x86_64",
+        "@platforms//cpu:aarch64": ":libc_headers_aarch64",
+    }),
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "libc_headers_for_picolibc",
+    actual = select({
+        "@platforms//cpu:x86_64": ":libc_headers_x86_64_for_picolibc",
+        "@platforms//cpu:aarch64": ":libc_headers_aarch64_for_picolibc",
+    }),
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "picolibc_headers_include_directory",
+    actual = select({
+        "@platforms//cpu:x86_64": ":headers_x86_64_include_directory",
+        "@platforms//cpu:aarch64": ":headers_aarch64_include_directory",
+    }),
+    visibility = ["//visibility:public"],
+)

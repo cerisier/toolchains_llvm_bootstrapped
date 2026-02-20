@@ -199,6 +199,10 @@ filegroup(
         "//conditions:default": [],
     }) + select({
         "@platforms//os:none": [],
+        "@toolchains_llvm_bootstrapped//platforms/config:picolibc": [
+            # emutls depends on pthread APIs, which picolibc does not provide in this config.
+            "lib/builtins/eprintf.c",
+        ],
         "//conditions:default": [
             # Not Fuchsia and not a bare-metal build.
             "lib/builtins/emutls.c",
@@ -467,6 +471,9 @@ cc_library(
         "@toolchains_llvm_bootstrapped//platforms/config:musl": [
             "@musl_libc//:musl_libc_headers",
         ],
+        "@toolchains_llvm_bootstrapped//platforms/config:picolibc": [
+            "@picolibc//:libc_headers",
+        ],
         "@toolchains_llvm_bootstrapped//platforms/config:gnu": [
             "@glibc//:gnu_libc_headers",
         ],
@@ -633,6 +640,9 @@ cc_library(
     ] + select({
         "@toolchains_llvm_bootstrapped//platforms/config:musl": [
             "@musl_libc//:musl_libc_headers",
+        ],
+        "@toolchains_llvm_bootstrapped//platforms/config:picolibc": [
+            "@picolibc//:libc_headers",
         ],
         "@toolchains_llvm_bootstrapped//platforms/config:gnu": [
             "@glibc//:gnu_libc_headers",
@@ -2494,6 +2504,9 @@ cc_runtime_stage0_shared_library(
         "@toolchains_llvm_bootstrapped//platforms/config:musl": [
             "@toolchains_llvm_bootstrapped//runtimes/musl:musl_library_search_directory",
         ],
+        "@toolchains_llvm_bootstrapped//platforms/config:picolibc": [
+            "@toolchains_llvm_bootstrapped//runtimes/picolibc:picolibc_library_search_directory",
+        ],
         "//conditions:default": [],
     }),
     user_link_flags = select({
@@ -2503,6 +2516,10 @@ cc_runtime_stage0_shared_library(
         ],
         "@toolchains_llvm_bootstrapped//platforms/config:musl": [
             "-L$(location @toolchains_llvm_bootstrapped//runtimes/musl:musl_library_search_directory)",
+            "-lc",
+        ],
+        "@toolchains_llvm_bootstrapped//platforms/config:picolibc": [
+            "-L$(location @toolchains_llvm_bootstrapped//runtimes/picolibc:picolibc_library_search_directory)",
             "-lc",
         ],
         "//conditions:default": [],

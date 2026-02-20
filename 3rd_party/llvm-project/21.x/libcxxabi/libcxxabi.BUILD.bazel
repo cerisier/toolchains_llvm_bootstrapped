@@ -2,8 +2,8 @@ load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
 load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_library.bzl", "cc_runtime_stage0_library")
-load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
 load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_shared_library.bzl", "cc_runtime_stage0_shared_library")
+load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
 
 filegroup(
     name = "libcxxabi_headers_files",
@@ -66,11 +66,16 @@ cc_library(
             "_LIBCXXABI_DISABLE_VISIBILITY_ANNOTATIONS",
         ],
         "//conditions:default": [],
+    }) + select({
+        "@toolchains_llvm_bootstrapped//platforms/config:picolibc": [
+            "_LIBCXXABI_HAS_NO_THREADS",
+        ],
+        "//conditions:default": [],
     }),
     copts = [
         "-std=c++23",
         "-fstrict-aliasing",
-        "-funwind-tables",   # if exceptions
+        "-funwind-tables",  # if exceptions
         # "-fno-exceptions", # if no exceptions
     ] + select({
         "@platforms//os:windows": [
@@ -119,10 +124,13 @@ cc_library(
         "src/cxa_exception.cpp",
         "src/cxa_personality.cpp",
         # src/cxa_noexception.cpp
-    ] + [
-        # LIBCXXABI_ENABLE_THREADS
-        "src/cxa_thread_atexit.cpp",
-    ],
+    ] + select({
+        "@toolchains_llvm_bootstrapped//platforms/config:picolibc": [],
+        "//conditions:default": [
+            # LIBCXXABI_ENABLE_THREADS
+            "src/cxa_thread_atexit.cpp",
+        ],
+    }),
     implementation_deps = [
         # Order matter. Search path should have C++ headers before any lib C headers.
         "@libcxx//:headers",
@@ -142,6 +150,9 @@ cc_library(
     ] + select({
         "@toolchains_llvm_bootstrapped//platforms/config:musl": [
             "@musl_libc//:musl_libc_headers",
+        ],
+        "@toolchains_llvm_bootstrapped//platforms/config:picolibc": [
+            "@picolibc//:libc_headers",
         ],
         "@toolchains_llvm_bootstrapped//platforms/config:gnu": [
             "@glibc//:gnu_libc_headers",

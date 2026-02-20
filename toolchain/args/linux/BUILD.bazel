@@ -123,6 +123,23 @@ cc_args(
     },
 )
 
+cc_args(
+    name = "picolibc_libc_headers_include_search_paths",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:source_compile_actions",
+    ],
+    args = [
+        "-isystem",
+        "{libc_headers_include_search_path}",
+    ],
+    data = [
+        "//runtimes/picolibc:picolibc_headers_include_search_directory",
+    ],
+    format = {
+        "libc_headers_include_search_path": "//runtimes/picolibc:picolibc_headers_include_search_directory",
+    },
+)
+
 #TODO: Factorize this and gnu
 cc_args(
     name = "default_libs_musl",
@@ -151,10 +168,32 @@ cc_args(
     },
 )
 
+cc_args(
+    name = "default_libs_picolibc",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = [
+        "-L{libc_library_search_path}",
+        "-Wl,--push-state",
+        "-Wl,--as-needed",
+        "-lpthread",
+        "-ldl",
+        "-Wl,--pop-state",
+    ],
+    data = [
+        "//runtimes/picolibc:picolibc_library_search_directory",
+    ],
+    format = {
+        "libc_library_search_path": "//runtimes/picolibc:picolibc_library_search_directory",
+    },
+)
+
 alias(
     name = "default_libs",
     actual = select({
         "//platforms/config:musl": ":default_libs_musl",
+        "//platforms/config:picolibc": ":default_libs_picolibc",
         "//platforms/config:gnu": ":default_libs_gnu",
     }),
 )

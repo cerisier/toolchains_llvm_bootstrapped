@@ -1,0 +1,5 @@
+exports_files([
+    "picolibc.BUILD.bazel",
+    "picolibc.h",
+    "picolibc_sources.bzl",
+])
