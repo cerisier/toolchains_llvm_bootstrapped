@@ -1,12 +1,12 @@
 load("@bazel_lib//lib:copy_file.bzl", "copy_file")
+load("@bazel_skylib//rules:native_binary.bzl", "native_binary")
 load("@bazel_skylib//rules/directory:directory.bzl", "directory")
 load("@bazel_skylib//rules/directory:subdirectory.bzl", "subdirectory")
-load("@bazel_skylib//rules:native_binary.bzl", "native_binary")
 load("@rules_cc//cc/toolchains:tool.bzl", "cc_tool")
 load("@rules_cc//cc/toolchains:tool_map.bzl", "cc_tool_map")
-load("//runtimes:module_map.bzl", "module_map", "include_path")
-load("//toolchain:selects.bzl", "platform_extra_binary")
 load("//:directory.bzl", "headers_directory")
+load("//runtimes:module_map.bzl", "include_path", "module_map")
+load("//toolchain:selects.bzl", "platform_extra_binary")
 
 def declare_llvm_targets(*, suffix = ""):
     headers_directory(
@@ -22,7 +22,7 @@ def declare_llvm_targets(*, suffix = ""):
     copied_headers = []
     for file in native.glob(["lib/clang/**"]):
         copy_file(
-            name  = "copy_" + file,
+            name = "copy_" + file,
             src = file,
             out = "prebuilts/" + file,
         )
@@ -193,7 +193,10 @@ def declare_llvm_targets(*, suffix = ""):
             "@toolchains_llvm_bootstrapped//sanitizers:sanitizers_headers_include_search_directory",
         ] + select({
             "@toolchains_llvm_bootstrapped//platforms/config:musl": [
-                "@toolchains_llvm_bootstrapped//runtimes/musl:musl_headers_include_search_directory"
+                "@toolchains_llvm_bootstrapped//runtimes/musl:musl_headers_include_search_directory",
+            ],
+            "@toolchains_llvm_bootstrapped//platforms/config:picolibc": [
+                "@toolchains_llvm_bootstrapped//runtimes/picolibc:picolibc_headers_include_search_directory",
             ],
             "@toolchains_llvm_bootstrapped//platforms/config:gnu": [
                 "@toolchains_llvm_bootstrapped//runtimes/glibc:glibc_headers_include_search_directory",

@@ -1,6 +1,6 @@
-load("//platforms:common.bzl", "SUPPORTED_TARGETS", "LIBC_SUPPORTED_TARGETS")
 load("@bazel_skylib//lib:selects.bzl", "selects")
-load("//constraints/libc:libc_versions.bzl", "LIBCS", "GLIBCS")
+load("//constraints/libc:libc_versions.bzl", "GLIBCS", "LIBCS")
+load("//platforms:common.bzl", "LIBC_SUPPORTED_TARGETS", "SUPPORTED_TARGETS")
 
 def declare_config_settings():
     for (target_os, target_cpu) in SUPPORTED_TARGETS:
@@ -53,7 +53,8 @@ def declare_config_settings_libc_aware():
     selects.config_setting_group(
         name = "gnu",
         match_any = [
-            "//constraints/libc:{}".format(libc) for libc in GLIBCS
+            "//constraints/libc:{}".format(libc)
+            for libc in GLIBCS
         ] + [
             "{}_{}_unconstrained".format(target_os, target_cpu)
             for (target_os, target_cpu) in LIBC_SUPPORTED_TARGETS
@@ -65,6 +66,14 @@ def declare_config_settings_libc_aware():
         name = "musl",
         constraint_values = [
             "//constraints/libc:musl",
+        ],
+        visibility = ["//visibility:public"],
+    )
+
+    native.config_setting(
+        name = "picolibc",
+        constraint_values = [
+            "//constraints/libc:picolibc",
         ],
         visibility = ["//visibility:public"],
     )

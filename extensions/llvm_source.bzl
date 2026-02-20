@@ -1,7 +1,7 @@
+load("@bazel_skylib//lib:structs.bzl", "structs")
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:local.bzl", "new_local_repository")
-load("@bazel_skylib//lib:structs.bzl", "structs")
 
 # Keep this in sync with MODULE.bazel.
 LLVM_VERSION = "21.1.8"
@@ -81,7 +81,7 @@ def _create_llvm_raw_repo(mctx):
         http_archive(
             name = "llvm-raw",
             build_file_content = "# EMPTY",
-            **structs.to_dict(_LLVM_RAW_ARCHIVE),
+            **structs.to_dict(_LLVM_RAW_ARCHIVE)
         )
 
     return had_override

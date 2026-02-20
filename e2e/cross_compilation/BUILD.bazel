@@ -9,7 +9,10 @@ load("@toolchains_llvm_bootstrapped//constraints/libc:libc_versions.bzl", "LIBCS
 string_flag(
     name = "test_glibc_versions",
     build_setting_default = "all",
-    values = ["all", "none"],
+    values = [
+        "all",
+        "none",
+    ],
 )
 
 config_setting(
@@ -28,8 +31,8 @@ cc_library(
 
 cc_binary(
     name = "main",
-    deps = [":add"],
     srcs = ["test.cc"],
+    deps = [":add"],
 )
 
 cc_test(
@@ -50,9 +53,14 @@ PLATFORMS = [
     "@toolchains_llvm_bootstrapped//platforms:windows_amd64",
     "@toolchains_llvm_bootstrapped//platforms:windows_arm64",
 ] + [
-    "@toolchains_llvm_bootstrapped//platforms:linux_x86_64_{}".format(libc) for libc in LIBCS
+    # This e2e uses iostreams and currently targets glibc/musl Linux libc variants.
+    "@toolchains_llvm_bootstrapped//platforms:linux_x86_64_{}".format(libc)
+    for libc in LIBCS
+    if libc != "picolibc"
 ] + [
-    "@toolchains_llvm_bootstrapped//platforms:linux_aarch64_{}".format(libc) for libc in LIBCS
+    "@toolchains_llvm_bootstrapped//platforms:linux_aarch64_{}".format(libc)
+    for libc in LIBCS
+    if libc != "picolibc"
 ]
 
 [

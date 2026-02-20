@@ -4,6 +4,8 @@ LLVM_TARGET_TRIPLE = select({
     "@toolchains_llvm_bootstrapped//platforms/config:linux_aarch64_gnu": ["aarch64-linux-gnu"],
     "@toolchains_llvm_bootstrapped//platforms/config:linux_x86_64_musl": ["x86_64-linux-musl"],
     "@toolchains_llvm_bootstrapped//platforms/config:linux_aarch64_musl": ["aarch64-linux-musl"],
+    "@toolchains_llvm_bootstrapped//platforms/config:linux_x86_64_picolibc": ["x86_64-linux-gnu"],
+    "@toolchains_llvm_bootstrapped//platforms/config:linux_aarch64_picolibc": ["aarch64-linux-gnu"],
     "@toolchains_llvm_bootstrapped//platforms/config:macos_x86_64": ["x86_64-apple-darwin"],
     "@toolchains_llvm_bootstrapped//platforms/config:macos_aarch64": ["aarch64-apple-darwin"],
     "@toolchains_llvm_bootstrapped//platforms/config:windows_x86_64": ["x86_64-w64-windows-gnu"],
