@@ -423,6 +423,20 @@ cc_test(
 )
 
 cc_test(
+    name = "windows_unicode_test",
+    srcs = ["windows_unicode_test.cc"],
+    exec_compatible_with = [
+        "@platforms//os:windows",
+    ],
+    target_compatible_with = [
+        "@platforms//os:windows",
+    ],
+    linkopts = ["-municode"],
+    # TODO(zbarsky): Tests can't execute remotely from Windows hosts
+    tags = ["no-remote"],
+)
+
+cc_test(
     name = "pthread_test",
     srcs = ["pthread.cc"],
     copts = ["-pthread"],

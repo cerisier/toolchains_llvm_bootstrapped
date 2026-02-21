@@ -407,6 +407,21 @@ crt_object(
 )
 
 crt_object(
+    name = "mingw_crt2u",
+    srcs = ["@mingw//:mingw-w64-crt/crt/ucrtexe.c"],
+    out = "crt2u.o",
+    copts = MINGW_CRT_OBJECT_COPTS,
+    implementation_deps = [
+        "@mingw//:mingw_crt_headers",
+        "@mingw//:mingw_headers",
+    ],
+    textual_hdrs = [
+        "@mingw//:mingw-w64-crt/crt/crtexe.c",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+crt_object(
     name = "mingw_dllcrt2",
     srcs = ["@mingw//:mingw-w64-crt/crt/crtdll.c"],
     out = "dllcrt2.o",
