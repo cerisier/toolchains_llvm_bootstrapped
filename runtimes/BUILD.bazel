@@ -112,6 +112,10 @@ copy_to_directory(
             "//runtimes/musl:musl_rcrt1.object",
             "//runtimes/musl:musl_Scrt1.object",
         ],
+        "//platforms/config:picolibc": [
+            # -static
+            "//runtimes/picolibc:picolibc_crt1.object",
+        ],
         "//platforms/config:gnu": [
             "//runtimes/glibc:glibc_Scrt1.object",
             "//runtimes/glibc:glibc_crt1.object",
@@ -129,6 +133,7 @@ copy_to_directory(
     root_paths = [
         ".",
         "runtimes/musl",
+        "runtimes/picolibc",
     ],
     target_compatible_with = [
         "@platforms//os:linux",
