@@ -54,6 +54,7 @@ filegroup(
             "@libcxxabi//:libcxxabi.static",
             "@libunwind//:libunwind.static",
         ],
+        "@platforms//os:uefi": [],
         "//conditions:default": [],
     }),
     visibility = ["//visibility:public"],
@@ -67,6 +68,7 @@ filegroup(
             "@libcxxabi//:libcxxabi.shared",
             "@libunwind//:libunwind.shared",
         ],
+        "@platforms//os:uefi": [],
         # TODO(zbarsky): windows?
         "//conditions:default": [],
     }),
@@ -159,6 +161,7 @@ alias(
     actual = select({
         "@platforms//os:linux": ":crt_objects_directory_linux",
         "@platforms//os:windows": ":crt_objects_directory_windows",
+        "@platforms//os:uefi": ":none",
     }),
     visibility = ["//visibility:public"],
 )
