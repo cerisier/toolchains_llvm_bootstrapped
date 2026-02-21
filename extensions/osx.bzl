@@ -26,6 +26,7 @@ def _osx_extension_impl(mctx):
     # Users can extend the sysroot via `osx.framework` module extension tags.
 
     includes = [
+        "SDKSettings.json",
         "usr/include/*",
         "usr/lib/libc.tbd",
         "usr/lib/libc++*",
@@ -88,6 +89,8 @@ def _osx_extension_impl(mctx):
             "sysroot/BUILD.bazel": "//3rd_party/macosx.sdk:MacOSX15.4.sdk.BUILD.bazel",
         },
         dst = "sysroot",
+        sdk_settings_json = "sysroot/SDKSettings.json",
+        valid_deployment_targets_bzl = "sysroot/valid_deployment_targets.bzl",
         sha256 = "ba3453d62b3d2babf67f3a4a44e8073d6555c85f114856f4390a1f53bd76e24a",
         includes = includes,
         excludes = excludes,
@@ -115,4 +118,3 @@ osx = module_extension(
         "framework": _framework_tag,
     },
 )
-
