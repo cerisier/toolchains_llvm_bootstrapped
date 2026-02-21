@@ -1,42 +1,6 @@
-# cat <path_to_sdk>/SDKSettings.json | jq .SupportedTargets.macosx.ValidDeploymentTargets
-MACOS_MINIMUM_OS_VERSIONS = [
-    "10.13",
-    "10.14",
-    "10.15",
-    "11.0",
-    "11.1",
-    "11.2",
-    "11.3",
-    "11.4",
-    "11.5",
-    "12.0",
-    "12.2",
-    "12.3",
-    "12.4",
-    "13.0",
-    "13.1",
-    "13.2",
-    "13.3",
-    "13.4",
-    "13.5",
-    "14.0",
-    "14.1",
-    "14.2",
-    "14.3",
-    "14.4",
-    "14.5",
-    "14.6",
-    "15.0",
-    "15.1",
-    "15.2",
-    "15.3",
-    "15.4",
-    #TODO(cerisier): Update the macOS SDK.
-    # "15.5",
-    # "15.6",
-    # "26.0",
-    # "26.1",
-]
+load("@macosx15.4.sdk//sysroot:valid_deployment_targets.bzl", "MACOS_VALID_DEPLOYMENT_TARGETS")
+
+MACOS_MINIMUM_OS_VERSIONS = MACOS_VALID_DEPLOYMENT_TARGETS
 
 def _macos_minimum_os_flag_impl(ctx):
     value = ctx.fragments.apple.macos_minimum_os_flag
