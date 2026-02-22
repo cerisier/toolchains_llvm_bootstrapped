@@ -20,7 +20,7 @@
 Add this to your `MODULE.bazel`:
 
 ```starlark
-bazel_dep(name = "llvm", version = "0.5.7")
+bazel_dep(name = "llvm", version = "0.6.0")
 
 register_toolchains("@llvm//toolchain:all")
 ```
