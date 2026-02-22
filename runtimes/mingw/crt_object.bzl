@@ -1,5 +1,5 @@
 load("@bazel_lib//lib:copy_file.bzl", "copy_file")
-load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_library.bzl", "cc_runtime_stage0_library")
+load("@llvm//toolchain/runtimes:cc_runtime_library.bzl", "cc_runtime_stage0_library")
 
 def crt_object(name, out, visibility, **kwargs):
     cc_runtime_stage0_library(

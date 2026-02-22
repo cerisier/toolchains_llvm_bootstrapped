@@ -1,6 +1,6 @@
 load("@bazel_lib//:bzl_library.bzl", "bzl_library")
-load("@toolchains_llvm_bootstrapped//toolchain:selects.bzl", "platform_llvm_binary")
-load("@toolchains_llvm_bootstrapped//tools:defs.bzl", "TOOLCHAIN_BINARIES")
+load("@llvm//toolchain:selects.bzl", "platform_llvm_binary")
+load("@llvm//tools:defs.bzl", "TOOLCHAIN_BINARIES")
 
 package(default_visibility = ["//visibility:public"])
 

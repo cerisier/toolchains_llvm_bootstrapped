@@ -33,7 +33,7 @@ def declare_toolchains(*, execs = SUPPORTED_EXECS, targets = SUPPORTED_TARGETS):
                     "@platforms//os:{}".format(target_os),
                 ],
                 target_settings = [
-                    "@toolchains_llvm_bootstrapped//toolchain:prebuilt_toolchain",
+                    "@llvm//toolchain:prebuilt_toolchain",
                 ],
                 toolchain = cc_toolchain_name,
                 toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",

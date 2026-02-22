@@ -1,9 +1,9 @@
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
 load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
-load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_library.bzl", "cc_runtime_stage0_library")
-load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
-load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_shared_library.bzl", "cc_runtime_stage0_shared_library")
+load("@llvm//toolchain/runtimes:cc_runtime_library.bzl", "cc_runtime_stage0_library")
+load("@llvm//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
+load("@llvm//toolchain/runtimes:cc_runtime_shared_library.bzl", "cc_runtime_stage0_shared_library")
 
 filegroup(
     name = "libcxxabi_headers_files",
@@ -50,7 +50,7 @@ selects.config_setting_group(
     name = "windows_static",
     match_all = [
         "@platforms//os:windows",
-        "@toolchains_llvm_bootstrapped//runtimes:linkmode_static",
+        "@llvm//runtimes:linkmode_static",
     ],
 )
 
@@ -138,12 +138,12 @@ cc_library(
         # libcxx depends on a set of internal llvm-libc headers. (libc/shared)
         # See project hand-in-hand.
         # https://discourse.llvm.org/t/rfc-project-hand-in-hand-llvm-libc-libc-code-sharing/77701
-        "@toolchains_llvm_bootstrapped//3rd_party/llvm-project/21.x/libc:libc_headers",
+        "@llvm//3rd_party/llvm-project/21.x/libc:libc_headers",
     ] + select({
-        "@toolchains_llvm_bootstrapped//platforms/config:musl": [
+        "@llvm//platforms/config:musl": [
             "@musl_libc//:musl_libc_headers",
         ],
-        "@toolchains_llvm_bootstrapped//platforms/config:gnu": [
+        "@llvm//platforms/config:gnu": [
             "@glibc//:gnu_libc_headers",
         ],
         "@platforms//os:windows": [

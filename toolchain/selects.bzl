@@ -2,22 +2,22 @@ LLVM_VERSION = "21.1.8"
 
 def platform_llvm_binary(binary):
     return select({
-        "@toolchains_llvm_bootstrapped//platforms/config:macos_aarch64_prebuilt": "@llvm-toolchain-minimal-%s-darwin-arm64//:bin/%s" % (LLVM_VERSION, binary),
-        "@toolchains_llvm_bootstrapped//platforms/config:linux_x86_64_prebuilt": "@llvm-toolchain-minimal-%s-linux-amd64//:bin/%s" % (LLVM_VERSION, binary),
-        "@toolchains_llvm_bootstrapped//platforms/config:linux_aarch64_prebuilt": "@llvm-toolchain-minimal-%s-linux-arm64//:bin/%s" % (LLVM_VERSION, binary),
-        "@toolchains_llvm_bootstrapped//platforms/config:windows_aarch64_prebuilt": "@llvm-toolchain-minimal-%s-windows-arm64//:bin/%s.exe" % (LLVM_VERSION, binary),
-        "@toolchains_llvm_bootstrapped//platforms/config:windows_x86_64_prebuilt": "@llvm-toolchain-minimal-%s-windows-amd64//:bin/%s.exe" % (LLVM_VERSION, binary),
-        "@toolchains_llvm_bootstrapped//toolchain:bootstrapped_toolchain": "@toolchains_llvm_bootstrapped//toolchain/bootstrap:" + binary,
+        "@llvm//platforms/config:macos_aarch64_prebuilt": "@llvm-toolchain-minimal-%s-darwin-arm64//:bin/%s" % (LLVM_VERSION, binary),
+        "@llvm//platforms/config:linux_x86_64_prebuilt": "@llvm-toolchain-minimal-%s-linux-amd64//:bin/%s" % (LLVM_VERSION, binary),
+        "@llvm//platforms/config:linux_aarch64_prebuilt": "@llvm-toolchain-minimal-%s-linux-arm64//:bin/%s" % (LLVM_VERSION, binary),
+        "@llvm//platforms/config:windows_aarch64_prebuilt": "@llvm-toolchain-minimal-%s-windows-arm64//:bin/%s.exe" % (LLVM_VERSION, binary),
+        "@llvm//platforms/config:windows_x86_64_prebuilt": "@llvm-toolchain-minimal-%s-windows-amd64//:bin/%s.exe" % (LLVM_VERSION, binary),
+        "@llvm//toolchain:bootstrapped_toolchain": "@llvm//toolchain/bootstrap:" + binary,
     })
 
 def platform_extra_binary(binary):
     return select({
-        "@toolchains_llvm_bootstrapped//platforms/config:macos_aarch64": "@toolchain-extra-prebuilts-darwin-arm64//:%s" % binary,
-        "@toolchains_llvm_bootstrapped//platforms/config:linux_x86_64": "@toolchain-extra-prebuilts-linux-amd64//:%s" % binary,
-        "@toolchains_llvm_bootstrapped//platforms/config:linux_aarch64": "@toolchain-extra-prebuilts-linux-arm64//:%s" % binary,
+        "@llvm//platforms/config:macos_aarch64": "@toolchain-extra-prebuilts-darwin-arm64//:%s" % binary,
+        "@llvm//platforms/config:linux_x86_64": "@toolchain-extra-prebuilts-linux-amd64//:%s" % binary,
+        "@llvm//platforms/config:linux_aarch64": "@toolchain-extra-prebuilts-linux-arm64//:%s" % binary,
         # TODO(zbarsky): should we suffix these with `.exe` in the dist?
-        "@toolchains_llvm_bootstrapped//platforms/config:windows_aarch64": "@toolchain-extra-prebuilts-windows-arm64//:%s" % binary,
-        "@toolchains_llvm_bootstrapped//platforms/config:windows_x86_64": "@toolchain-extra-prebuilts-windows-amd64//:%s" % binary,
+        "@llvm//platforms/config:windows_aarch64": "@toolchain-extra-prebuilts-windows-arm64//:%s" % binary,
+        "@llvm//platforms/config:windows_x86_64": "@toolchain-extra-prebuilts-windows-amd64//:%s" % binary,
     })
 
 def _tool_repo(exec_os, exec_cpu):

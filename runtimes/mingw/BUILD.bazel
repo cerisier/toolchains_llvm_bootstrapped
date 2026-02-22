@@ -3,9 +3,9 @@ load("@bazel_lib//lib:copy_file.bzl", "copy_file")
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
 load("@bazel_lib//lib:run_binary.bzl", "run_binary")
 load("@bazel_skylib//rules:common_settings.bzl", "bool_setting")
+load("@llvm//toolchain/runtimes:cc_runtime_library.bzl", "cc_runtime_stage0_library")
+load("@llvm//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
-load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_library.bzl", "cc_runtime_stage0_library")
-load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
 load("//runtimes:defs.bzl", "stub_library")
 load(":crt_object.bzl", "crt_object")
 
@@ -210,7 +210,7 @@ run_binary(
         "$(location :libsynchronization.a)",
         "$(location @mingw//:import_lib_api-ms-win-core-synch-l1-2-0)",
     ],
-    tool = "@toolchains_llvm_bootstrapped//tools:llvm-ar",
+    tool = "@llvm//tools:llvm-ar",
 )
 
 cc_runtime_stage0_library(
@@ -241,7 +241,7 @@ run_binary(
         "$(location @mingw//:import_lib_ws2_32)",
         "$(location :ws2_32)",
     ],
-    tool = "@toolchains_llvm_bootstrapped//tools:llvm-ar",
+    tool = "@llvm//tools:llvm-ar",
 )
 
 cc_runtime_stage0_library(
@@ -449,7 +449,7 @@ bzl_library(
     visibility = ["//visibility:public"],
     deps = [
         "@bazel_lib//lib:copy_file",
-        "@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_library",
+        "@llvm//toolchain/runtimes:cc_runtime_library",
     ],
 )
 

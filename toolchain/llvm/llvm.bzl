@@ -93,7 +93,7 @@ def declare_llvm_targets(*, suffix = ""):
         "@rules_cc//cc/toolchains/actions:assembly_actions": ":clang",
         "@rules_cc//cc/toolchains/actions:c_compile": ":clang",
         "@rules_cc//cc/toolchains/actions:objc_compile": ":clang",
-        "@toolchains_llvm_bootstrapped//toolchain:cpp_compile_actions_without_header_parsing": ":clang++",
+        "@llvm//toolchain:cpp_compile_actions_without_header_parsing": ":clang++",
         "@rules_cc//cc/toolchains/actions:cpp_header_parsing": ":header_parser",
         "@rules_cc//cc/toolchains/actions:link_actions": ":lld",
         "@rules_cc//cc/toolchains/actions:objcopy_embed_data": ":llvm-objcopy",
@@ -187,16 +187,16 @@ def declare_llvm_targets(*, suffix = ""):
         name = "linux_target_headers",
         srcs = [
             ":builtin_headers",
-            "@toolchains_llvm_bootstrapped//runtimes/libcxx:libcxx_headers_include_search_directory",
-            "@toolchains_llvm_bootstrapped//runtimes/libcxx:libcxxabi_headers_include_search_directory",
+            "@llvm//runtimes/libcxx:libcxx_headers_include_search_directory",
+            "@llvm//runtimes/libcxx:libcxxabi_headers_include_search_directory",
             "@kernel_headers//:kernel_headers_directory",
-            "@toolchains_llvm_bootstrapped//sanitizers:sanitizers_headers_include_search_directory",
+            "@llvm//sanitizers:sanitizers_headers_include_search_directory",
         ] + select({
-            "@toolchains_llvm_bootstrapped//platforms/config:musl": [
-                "@toolchains_llvm_bootstrapped//runtimes/musl:musl_headers_include_search_directory"
+            "@llvm//platforms/config:musl": [
+                "@llvm//runtimes/musl:musl_headers_include_search_directory"
             ],
-            "@toolchains_llvm_bootstrapped//platforms/config:gnu": [
-                "@toolchains_llvm_bootstrapped//runtimes/glibc:glibc_headers_include_search_directory",
+            "@llvm//platforms/config:gnu": [
+                "@llvm//runtimes/glibc:glibc_headers_include_search_directory",
             ],
         }),
     )
@@ -206,8 +206,8 @@ def declare_llvm_targets(*, suffix = ""):
         name = "windows_target_headers",
         srcs = [
             ":builtin_headers",
-            "@toolchains_llvm_bootstrapped//runtimes/libcxx:libcxx_headers_include_search_directory",
-            "@toolchains_llvm_bootstrapped//runtimes/libcxx:libcxxabi_headers_include_search_directory",
+            "@llvm//runtimes/libcxx:libcxx_headers_include_search_directory",
+            "@llvm//runtimes/libcxx:libcxxabi_headers_include_search_directory",
             "@mingw//:mingw_generated_headers_crt_directory",
             "@mingw//:mingw_w64_headers_include_directory",
             "@mingw//:mingw_w64_headers_crt_directory",

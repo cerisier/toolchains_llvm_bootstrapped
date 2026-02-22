@@ -116,8 +116,8 @@ bzl_library(
     srcs = ["cc_runtime_library.bzl"],
     visibility = ["//visibility:public"],
     deps = [
+        "@llvm//toolchain/runtimes:with_cfg_runtimes_common",
         "@rules_cc//cc:core_rules",
-        "@toolchains_llvm_bootstrapped//toolchain/runtimes:with_cfg_runtimes_common",
         "@with_cfg.bzl//:with_cfg",
     ],
 )
@@ -127,9 +127,9 @@ bzl_library(
     srcs = ["cc_runtime_shared_library.bzl"],
     visibility = ["//visibility:public"],
     deps = [
+        "@llvm//toolchain/runtimes:with_cfg_runtimes_common",
         "@rules_cc//cc:core_rules",
         "@rules_cc//cc/common",
-        "@toolchains_llvm_bootstrapped//toolchain/runtimes:with_cfg_runtimes_common",
         "@with_cfg.bzl//:with_cfg",
     ],
 )
@@ -139,8 +139,8 @@ bzl_library(
     srcs = ["cc_runtime_static_library.bzl"],
     visibility = ["//visibility:public"],
     deps = [
+        "@llvm//toolchain/runtimes:with_cfg_runtimes_common",
         "@rules_cc//cc:core_rules",
-        "@toolchains_llvm_bootstrapped//toolchain/runtimes:with_cfg_runtimes_common",
         "@with_cfg.bzl//:with_cfg",
     ],
 )

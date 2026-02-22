@@ -3,8 +3,8 @@ load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
-load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
-load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_shared_library.bzl", "cc_runtime_stage1_shared_library")
+load("@llvm//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
+load("@llvm//toolchain/runtimes:cc_runtime_shared_library.bzl", "cc_runtime_stage1_shared_library")
 
 # Should replicate libcxx/include/CMakeLists.txt
 filegroup(
@@ -1162,7 +1162,7 @@ selects.config_setting_group(
     name = "windows_static",
     match_all = [
         "@platforms//os:windows",
-        "@toolchains_llvm_bootstrapped//runtimes:linkmode_static",
+        "@llvm//runtimes:linkmode_static",
     ],
 )
 
@@ -1175,7 +1175,7 @@ write_file(
                   "//conditions:default": [],
               }) +
               select({
-                  "@toolchains_llvm_bootstrapped//constraints/libc:musl": _CONFIG_SITE_MUSL_LINES,
+                  "@llvm//constraints/libc:musl": _CONFIG_SITE_MUSL_LINES,
                   "//conditions:default": _CONFIG_SITE_NO_MUSL_LINES,
               }) +
               select({
@@ -1404,12 +1404,12 @@ cc_library(
         # libcxx depends on a set of internal llvm-libc headers. (libc/shared)
         # See project hand-in-hand.
         # https://discourse.llvm.org/t/rfc-project-hand-in-hand-llvm-libc-libc-code-sharing/77701
-        "@toolchains_llvm_bootstrapped//3rd_party/llvm-project/21.x/libc:libc_headers",
+        "@llvm//3rd_party/llvm-project/21.x/libc:libc_headers",
     ] + select({
-        "@toolchains_llvm_bootstrapped//platforms/config:musl": [
+        "@llvm//platforms/config:musl": [
             "@musl_libc//:musl_libc_headers",
         ],
-        "@toolchains_llvm_bootstrapped//platforms/config:gnu": [
+        "@llvm//platforms/config:gnu": [
             "@glibc//:gnu_libc_headers",
         ],
         "@platforms//os:windows": [

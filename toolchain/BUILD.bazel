@@ -370,8 +370,8 @@ bzl_library(
     name = "exec_stage0_binary",
     srcs = ["exec_stage0_binary.bzl"],
     deps = [
+        "@llvm//toolchain/runtimes:with_cfg_runtimes_common",
         "@rules_cc//cc:core_rules",
-        "@toolchains_llvm_bootstrapped//toolchain/runtimes:with_cfg_runtimes_common",
         "@with_cfg.bzl//:with_cfg",
     ],
 )

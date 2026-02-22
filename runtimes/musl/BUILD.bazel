@@ -1,10 +1,10 @@
 load("@bazel_lib//:bzl_library.bzl", "bzl_library")
 load("@bazel_lib//lib:copy_file.bzl", "copy_file")
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
+load("@llvm//toolchain/runtimes:cc_runtime_shared_library.bzl", "cc_runtime_stage0_shared_library")
+load("@llvm//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
+load("@llvm//toolchain/runtimes:cc_stage0_object.bzl", "cc_stage0_object")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
-load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_shared_library.bzl", "cc_runtime_stage0_shared_library")
-load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
-load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_stage0_object.bzl", "cc_stage0_object")
 load("//runtimes:defs.bzl", "stub_library")
 load("//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
 load(":libc_musl_srcs_filegroup.bzl", "libc_musl_srcs_filegroup")
@@ -37,7 +37,7 @@ CFLAGS_AUTO = [
     "-fno-align-functions",
     # "-pipe",
 ] + select({
-    "@toolchains_llvm_bootstrapped//config:runtimes_optimization_mode_optimized": [
+    "@llvm//config:runtimes_optimization_mode_optimized": [
         "-fomit-frame-pointer",
     ],
     "//conditions:default": [],

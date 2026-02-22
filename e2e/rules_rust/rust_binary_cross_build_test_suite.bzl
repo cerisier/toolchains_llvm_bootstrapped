@@ -1,7 +1,7 @@
 load("@bazel_lib//lib:transitions.bzl", "platform_transition_binary")
 load("@rules_rust//rust:defs.bzl", "rust_binary")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
-load("@toolchains_llvm_bootstrapped//:defs.bzl", "exec_test")
+load("@llvm//:defs.bzl", "exec_test")
 
 def rust_binary_test_suite(name, check, platform = None, **kwargs):
     binary_name = name + "_binary"

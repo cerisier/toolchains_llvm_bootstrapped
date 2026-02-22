@@ -15,7 +15,7 @@ platform(
     constraint_values = [
         "@platforms//cpu:{cpu}",
         "@platforms//os:linux",
-        "@toolchains_llvm_bootstrapped//constraints/libc:gnu.2.28",
+        "@llvm//constraints/libc:gnu.2.28",
     ],
     exec_properties = {{
         "container-image": "docker://ubuntu:22.04",

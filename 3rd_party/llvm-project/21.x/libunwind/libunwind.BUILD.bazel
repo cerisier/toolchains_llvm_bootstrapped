@@ -2,15 +2,15 @@
 
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@bazel_skylib//lib:selects.bzl", "selects")
-load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_library.bzl", "cc_runtime_stage0_library")
-load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
-load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_shared_library.bzl", "cc_runtime_stage1_shared_library")
+load("@llvm//toolchain/runtimes:cc_runtime_library.bzl", "cc_runtime_stage0_library")
+load("@llvm//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
+load("@llvm//toolchain/runtimes:cc_runtime_shared_library.bzl", "cc_runtime_stage1_shared_library")
 
 selects.config_setting_group(
     name = "windows_static",
     match_all = [
         "@platforms//os:windows",
-        "@toolchains_llvm_bootstrapped//runtimes:linkmode_static",
+        "@llvm//runtimes:linkmode_static",
     ],
 )
 
@@ -103,10 +103,10 @@ cc_library(
             "@kernel_headers//:kernel_headers",
         ],
     }) + select({
-        "@toolchains_llvm_bootstrapped//platforms/config:musl": [
+        "@llvm//platforms/config:musl": [
             "@musl_libc//:musl_libc_headers",
         ],
-        "@toolchains_llvm_bootstrapped//platforms/config:gnu": [
+        "@llvm//platforms/config:gnu": [
             "@glibc//:gnu_libc_headers",
         ],
         "@platforms//os:windows": [

@@ -4,7 +4,7 @@ diff --git a/BUILD.bazel b/BUILD.bazel
 @@ -1,5 +1,6 @@
  load("@bazel_lib//lib:expand_template.bzl", "expand_template")
  load("@rules_cc//cc:defs.bzl", "cc_library", "cc_binary", "cc_shared_library")
-+load("@toolchains_llvm_bootstrapped//:sh_script.bzl", "sh_script")
++load("@llvm//:sh_script.bzl", "sh_script")
  
  expand_template(
      name = "gen_magic_h",
@@ -53,4 +53,4 @@ diff --git a/MODULE.bazel b/MODULE.bazel
  bazel_dep(name = "bazel_lib", version = "3.0.0")
  bazel_dep(name = "platforms", version = "0.0.11")
  bazel_dep(name = "rules_cc", version = "0.2.14")
-+bazel_dep(name = "toolchains_llvm_bootstrapped", version = "0.0.0")
++bazel_dep(name = "llvm", version = "0.0.0")

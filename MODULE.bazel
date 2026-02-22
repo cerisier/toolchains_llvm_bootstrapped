@@ -1,5 +1,5 @@
 module(
-    name = "toolchains_llvm_bootstrapped",
+    name = "llvm",
     version = "0.0.0",
     bazel_compatibility = [">=7.4.0"],
     compatibility_level = 0,

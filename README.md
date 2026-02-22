@@ -20,9 +20,9 @@
 Add this to your `MODULE.bazel`:
 
 ```starlark
-bazel_dep(name = "toolchains_llvm_bootstrapped", version = "0.5.7")
+bazel_dep(name = "llvm", version = "0.5.7")
 
-register_toolchains("@toolchains_llvm_bootstrapped//toolchain:all")
+register_toolchains("@llvm//toolchain:all")
 ```
 
 See https://github.com/cerisier/toolchains_llvm_bootstrapped/releases/latest
@@ -54,7 +54,7 @@ This ecosystem simplifies the process by cross-compiling all target-specific com
 Use the toolchain module extension:
 
 ```starlark
-toolchain = use_extension("@toolchains_llvm_bootstrapped//extensions:toolchain.bzl", "toolchain")
+toolchain = use_extension("@llvm//extensions:toolchain.bzl", "toolchain")
 
 toolchain.exec(arch = "x86_64", os = "linux")
 toolchain.exec(arch = "aarch64", os = "linux")
@@ -71,7 +71,7 @@ This registers the cross-product of the specified exec and target platforms.
 If you need finer control, register individual toolchain targets. You can list them with:
 
 ```sh
-bazel query 'kind(toolchain, @toolchains_llvm_bootstrapped//toolchain:all)'
+bazel query 'kind(toolchain, @llvm//toolchain:all)'
 ```
 
 ### Cgo compatibility
@@ -79,9 +79,9 @@ TODO: write about this
 
 ### Usage with Rust
 Rust builds commonly require a few flags:
-- Rust passes `-lgcc_s` when linking, so you will want to set `--@toolchains_llvm_bootstrapped//config:experimental_stub_libgcc_s=True` flag to provide it.
+- Rust passes `-lgcc_s` when linking, so you will want to set `--@llvm//config:experimental_stub_libgcc_s=True` flag to provide it.
 - Rust `cc-rs` crate does not properly account for `$AR` and `$ARFLAGS` env vars, so it does not work when `llvm-libtool-darwin` is used as the archiver. You will want to set `--@rules_cc//cc/toolchains/args/archiver_flags:use_libtool_on_macos=False` to avoid failure in build scripts using `cc-rs`.
-- Rust forces `-no-pie` when linking musl targets, while we prefer `-static-pie`, which are incompatible. You can configure your platform with the `@toolchains_llvm_bootstrapped//constraints/pie:off` constraint_value to harmonize the link flags. Alternately, you can use the toolchains and platforms defined by [rules_rs](https://github.com/dzbarsky/rules_rs) to do this automatically. Currently you need the `zbarsky/toolchains` branch since the setup is experimental, but we are rapidly stabilizing it!
+- Rust forces `-no-pie` when linking musl targets, while we prefer `-static-pie`, which are incompatible. You can configure your platform with the `@llvm//constraints/pie:off` constraint_value to harmonize the link flags. Alternately, you can use the toolchains and platforms defined by [rules_rs](https://github.com/dzbarsky/rules_rs) to do this automatically. Currently you need the `zbarsky/toolchains` branch since the setup is experimental, but we are rapidly stabilizing it!
 
 ## Supported platforms
 
@@ -109,7 +109,7 @@ Rust builds commonly require a few flags:
 Only static linking against the latest version of musl is supported for now.
 
 To target musl:
-`--platforms @toolchains_llvm_bootstrapped//platforms:linux_aarch64_musl`
+`--platforms @llvm//platforms:linux_aarch64_musl`
 
 > By default, binaries are fully statically linked (no dynamic linker at all).
 
@@ -119,7 +119,7 @@ Compiling and linking dynamically against specific glibc versions is supported.
 By default, the earliest glibc version that supports your target is used (2.28 in most cases).
 
 To target a specific version, use:
-`--platforms @toolchains_llvm_bootstrapped//platforms:linux_x86_64_gnu.2.28`
+`--platforms @llvm//platforms:linux_x86_64_gnu.2.28`
 
 Behind the scenes, code is compiled with headers for the selected glibc and linked against compatible stubs.
 
@@ -151,9 +151,9 @@ This module exposes LLVM and runtime projects as first-class Bazel repos, so you
 Add this to your `MODULE.bazel`:
 
 ```starlark
-bazel_dep(name = "toolchains_llvm_bootstrapped", version = "0.3.1")
+bazel_dep(name = "llvm", version = "0.3.1")
 
-llvm = use_extension("@toolchains_llvm_bootstrapped//extensions:llvm.bzl", "llvm")
+llvm = use_extension("@llvm//extensions:llvm.bzl", "llvm")
 use_repo(llvm, "llvm-project")
 ```
 
@@ -174,11 +174,11 @@ cc_shared_library(
 cc_library(
     name = "runtime_bundle",
     deps = [
-        "@toolchains_llvm_bootstrapped//runtimes/compiler-rt:clang_rt.builtins.static",
-        "@toolchains_llvm_bootstrapped//runtimes/compiler-rt:clang_rt.asan.static",
-        "@toolchains_llvm_bootstrapped//runtimes/libcxx:libcxx.static",
-        "@toolchains_llvm_bootstrapped//runtimes/libcxxabi:libcxxabi.static",
-        "@toolchains_llvm_bootstrapped//runtimes/libunwind:libunwind.static",
+        "@llvm//runtimes/compiler-rt:clang_rt.builtins.static",
+        "@llvm//runtimes/compiler-rt:clang_rt.asan.static",
+        "@llvm//runtimes/libcxx:libcxx.static",
+        "@llvm//runtimes/libcxxabi:libcxxabi.static",
+        "@llvm//runtimes/libunwind:libunwind.static",
     ],
 )
 ```

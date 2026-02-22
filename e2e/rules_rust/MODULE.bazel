@@ -41,14 +41,14 @@ single_version_override(
     patch_strip = 1,
 )
 
-bazel_dep(name = "toolchains_llvm_bootstrapped", version = "0.0.0", dev_dependency = True)
+bazel_dep(name = "llvm", version = "0.0.0", dev_dependency = True)
 local_path_override(
-    module_name = "toolchains_llvm_bootstrapped",
+    module_name = "llvm",
     path = "../..",
 )
 
 register_toolchains(
-    "@toolchains_llvm_bootstrapped//toolchain:all",
+    "@llvm//toolchain:all",
     dev_dependency = True,
 )
 

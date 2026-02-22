@@ -28,8 +28,8 @@ cat << EOF
 ## Add to your \`MODULE.bazel\` file:
 
 \`\`\`starlark
-bazel_dep(name = "toolchains_llvm_bootstrapped", version = "$VERSION")
+bazel_dep(name = "llvm", version = "$VERSION")
 
-register_toolchains("@toolchains_llvm_bootstrapped//toolchain:all")
+register_toolchains("@llvm//toolchain:all")
 \`\`\`
 EOF

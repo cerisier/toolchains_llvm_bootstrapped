@@ -2,7 +2,7 @@ load("@gazelle//:def.bzl", "gazelle")
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_go//go:def.bzl", "go_test")
 load("@rules_platform//platform_data:defs.bzl", "platform_data")
-load("@toolchains_llvm_bootstrapped//:defs.bzl", "exec_test")
+load("@llvm//:defs.bzl", "exec_test")
 
 gazelle(name = "gazelle")
 
@@ -20,7 +20,7 @@ cc_binary(
 
 platform_data(
     name = "wasm_blob",
-    platform = "@toolchains_llvm_bootstrapped//platforms:none_wasm32",
+    platform = "@llvm//platforms:none_wasm32",
     target = ":wasm",
 )
 
@@ -40,7 +40,7 @@ cc_binary(
 
 platform_data(
     name = "wasm64_blob",
-    platform = "@toolchains_llvm_bootstrapped//platforms:none_wasm64",
+    platform = "@llvm//platforms:none_wasm64",
     target = ":wasm64",
 )
 

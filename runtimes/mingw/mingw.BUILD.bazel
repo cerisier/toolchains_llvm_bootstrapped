@@ -3,10 +3,10 @@ load("@bazel_skylib//rules/directory:subdirectory.bzl", "subdirectory")
 load("@bazel_skylib//rules:expand_template.bzl", "expand_template")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@bazel_lib//lib:run_binary.bzl", "run_binary")
-load("@toolchains_llvm_bootstrapped//runtimes/mingw:import_libs.bzl", "mingw_import_libraries")
-load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_library.bzl", "cc_runtime_stage0_library")
+load("@llvm//runtimes/mingw:import_libs.bzl", "mingw_import_libraries")
+load("@llvm//toolchain/runtimes:cc_runtime_library.bzl", "cc_runtime_stage0_library")
 load(
-    "@toolchains_llvm_bootstrapped//runtimes/mingw:crt_sources.bzl",
+    "@llvm//runtimes/mingw:crt_sources.bzl",
     "MINGW32_HDRS",
     "MINGW32_SRCS",
     "MINGW32_TEXTUAL_HDRS",
@@ -22,7 +22,7 @@ load(
     "UCRT_BASE_X86_64_ADDITIONAL_SRCS",
     "WS2_32_SRCS",
 )
-load("@toolchains_llvm_bootstrapped//:directory.bzl", "headers_directory")
+load("@llvm//:directory.bzl", "headers_directory")
 
 package(default_visibility = ["//visibility:public"])
 

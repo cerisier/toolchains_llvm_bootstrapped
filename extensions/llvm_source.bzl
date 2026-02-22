@@ -122,7 +122,7 @@ def _llvm_source_impl(mctx):
         for name in _LLVM_RELEASE_ASSETS_SHA256.keys():
             _llvm_subproject_repository(
                 name = name,
-                build_file = "@toolchains_llvm_bootstrapped//3rd_party/llvm-project/21.x/{name}:{name}.BUILD.bazel".format(name = name),
+                build_file = "@llvm//3rd_party/llvm-project/21.x/{name}:{name}.BUILD.bazel".format(name = name),
                 dir = name,
             )
 

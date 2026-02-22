@@ -7,6 +7,6 @@ def make_select_glibc_repository_target(bazel_repository, bazel_target):
         for libc_version in GLIBCS + ["unconstrained"]:
             apparent_libc_version_suffix = libc_version if libc_version != "unconstrained" else DEFAULT_LIBC
             apparent_target = "{}_{}-{}-{}//:{}".format(bazel_repository, target_arch, target_os, apparent_libc_version_suffix, bazel_target)
-            selection["@toolchains_llvm_bootstrapped//platforms/config:{}_{}_{}".format(target_os, target_arch, libc_version)] = apparent_target
+            selection["@llvm//platforms/config:{}_{}_{}".format(target_os, target_arch, libc_version)] = apparent_target
 
     return select(selection)

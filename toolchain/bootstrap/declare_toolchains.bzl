@@ -19,7 +19,7 @@ def declare_tool_map(exec_os, exec_cpu):
         "@rules_cc//cc/toolchains/actions:assembly_actions": prefix + "/clang",
         "@rules_cc//cc/toolchains/actions:c_compile": prefix + "/clang",
         "@rules_cc//cc/toolchains/actions:objc_compile": prefix + "/clang",
-        "@toolchains_llvm_bootstrapped//toolchain:cpp_compile_actions_without_header_parsing": prefix + "/clang++",
+        "@llvm//toolchain:cpp_compile_actions_without_header_parsing": prefix + "/clang++",
         "@rules_cc//cc/toolchains/actions:cpp_header_parsing": prefix + "/header-parser",
         "@rules_cc//cc/toolchains/actions:dwp": prefix + "/llvm-dwp",
         "@rules_cc//cc/toolchains/actions:link_actions": prefix + "/lld",
@@ -90,7 +90,7 @@ def declare_tool_map(exec_os, exec_cpu):
     bootstrap_binary(
         name = prefix + "/bin/header-parser",
         platform = prefix + "_platform",
-        actual = "@toolchains_llvm_bootstrapped//tools/internal:header-parser",
+        actual = "@llvm//tools/internal:header-parser",
     )
 
     cc_tool(
@@ -105,7 +105,7 @@ def declare_tool_map(exec_os, exec_cpu):
     bootstrap_binary(
         name = prefix + "/bin/static-library-validator",
         platform = prefix + "_platform",
-        actual = "@toolchains_llvm_bootstrapped//tools/internal:static-library-validator",
+        actual = "@llvm//tools/internal:static-library-validator",
     )
 
     bootstrap_binary(
@@ -265,7 +265,7 @@ def declare_toolchains(*, execs = None, targets = SUPPORTED_TARGETS):
                     "@platforms//os:{}".format(target_os),
                 ],
                 target_settings = [
-                    "@toolchains_llvm_bootstrapped//toolchain:bootstrapped_toolchain",
+                    "@llvm//toolchain:bootstrapped_toolchain",
                 ],
                 toolchain = cc_toolchain_name,
                 toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",

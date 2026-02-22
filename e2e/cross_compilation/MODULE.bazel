@@ -3,12 +3,12 @@ bazel_dep(name = "bazel_lib", version = "3.0.0")
 bazel_dep(name = "bazel_skylib", version = "1.8.2")
 bazel_dep(name = "platforms", version = "1.0.0")
 
-bazel_dep(name = "toolchains_llvm_bootstrapped", version = "")
+bazel_dep(name = "llvm", version = "")
 local_path_override(
-    module_name = "toolchains_llvm_bootstrapped",
+    module_name = "llvm",
     path = "../../",
 )
 
 register_toolchains(
-    "@toolchains_llvm_bootstrapped//toolchain:all",
+    "@llvm//toolchain:all",
 )

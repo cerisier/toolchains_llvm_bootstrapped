@@ -3,18 +3,18 @@ load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory_bin_action")
 
 # echo 'int main() {}' | bazel run //tools:clang -- -x c - -fuse-ld=lld -v --rtlib=compiler-rt -### --target=<triple> 
 TRIPLE_SELECT_DICT = {
-    "@toolchains_llvm_bootstrapped//platforms/config:linux_x86_64": "x86_64-unknown-linux-gnu",
-    "@toolchains_llvm_bootstrapped//platforms/config:linux_aarch64": "aarch64-unknown-linux-gnu",
-    "@toolchains_llvm_bootstrapped//platforms/config:linux_x86_64_gnu": "x86_64-unknown-linux-gnu",
-    "@toolchains_llvm_bootstrapped//platforms/config:linux_aarch64_gnu": "aarch64-unknown-linux-gnu",
-    "@toolchains_llvm_bootstrapped//platforms/config:linux_x86_64_musl": "x86_64-unknown-linux-musl",
-    "@toolchains_llvm_bootstrapped//platforms/config:linux_aarch64_musl": "aarch64-unknown-linux-musl",
-    "@toolchains_llvm_bootstrapped//platforms/config:macos_x86_64": "darwin",
-    "@toolchains_llvm_bootstrapped//platforms/config:macos_aarch64": "darwin",
-    "@toolchains_llvm_bootstrapped//platforms/config:windows_x86_64": "x86_64-w64-windows-gnu",
-    "@toolchains_llvm_bootstrapped//platforms/config:windows_aarch64": "aarch64-w64-windows-gnu",
-    "@toolchains_llvm_bootstrapped//platforms/config:none_wasm32": "wasm32-unknown-unknown",
-    "@toolchains_llvm_bootstrapped//platforms/config:none_wasm64": "wasm64-unknown-unknown",
+    "@llvm//platforms/config:linux_x86_64": "x86_64-unknown-linux-gnu",
+    "@llvm//platforms/config:linux_aarch64": "aarch64-unknown-linux-gnu",
+    "@llvm//platforms/config:linux_x86_64_gnu": "x86_64-unknown-linux-gnu",
+    "@llvm//platforms/config:linux_aarch64_gnu": "aarch64-unknown-linux-gnu",
+    "@llvm//platforms/config:linux_x86_64_musl": "x86_64-unknown-linux-musl",
+    "@llvm//platforms/config:linux_aarch64_musl": "aarch64-unknown-linux-musl",
+    "@llvm//platforms/config:macos_x86_64": "darwin",
+    "@llvm//platforms/config:macos_aarch64": "darwin",
+    "@llvm//platforms/config:windows_x86_64": "x86_64-w64-windows-gnu",
+    "@llvm//platforms/config:windows_aarch64": "aarch64-w64-windows-gnu",
+    "@llvm//platforms/config:none_wasm32": "wasm32-unknown-unknown",
+    "@llvm//platforms/config:none_wasm64": "wasm64-unknown-unknown",
 }
 
 def _copy_to_resource_directory_rule_impl(ctx):

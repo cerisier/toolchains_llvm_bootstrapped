@@ -1,10 +1,10 @@
 load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
-load("@toolchains_llvm_bootstrapped//3rd_party/libc/glibc:helpers.bzl", "glibc_includes")
-load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_library.bzl", "cc_runtime_stage0_library")
-load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
-load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_stage0_object.bzl", "cc_stage0_object")
-load("@toolchains_llvm_bootstrapped//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
+load("@llvm//3rd_party/libc/glibc:helpers.bzl", "glibc_includes")
+load("@llvm//toolchain/runtimes:cc_runtime_library.bzl", "cc_runtime_stage0_library")
+load("@llvm//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
+load("@llvm//toolchain/runtimes:cc_stage0_object.bzl", "cc_stage0_object")
+load("@llvm//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
 
 alias(
     name = "gnu_libc_headers",
@@ -68,7 +68,7 @@ cc_runtime_stage0_library(
 cc_runtime_stage0_library(
     name = "glibc_abi_note",
     srcs = [
-        "@toolchains_llvm_bootstrapped//3rd_party/libc/glibc/csu:abi-note-2.31.S",
+        "@llvm//3rd_party/libc/glibc/csu:abi-note-2.31.S",
     ],
     copts = [
         # Normally, we would pass -nostdinc, but since we pass -nostdlibinc
@@ -240,10 +240,10 @@ cc_runtime_stage0_library(
     }),
     srcs = [
         # From stdlib/Makefile
-        "@toolchains_llvm_bootstrapped//3rd_party/libc/glibc/stdlib:atexit.c",
-        "@toolchains_llvm_bootstrapped//3rd_party/libc/glibc/stdlib:at_quick_exit.c",
+        "@llvm//3rd_party/libc/glibc/stdlib:atexit.c",
+        "@llvm//3rd_party/libc/glibc/stdlib:at_quick_exit.c",
         # From nptl/Makefile
-        "@toolchains_llvm_bootstrapped//3rd_party/libc/glibc/nptl:pthread_atfork.c",
+        "@llvm//3rd_party/libc/glibc/nptl:pthread_atfork.c",
         # From debug/Makefile
         "debug/stack_chk_fail_local.c",
     ] + selects.with_or({
@@ -252,12 +252,12 @@ cc_runtime_stage0_library(
             #
             # unconstrained defaults to 2.28
             # TODO(cerisier): Make a is_at_least_gnu_version macro helper.
-            "@toolchains_llvm_bootstrapped//constraints/libc:unconstrained",
-            "@toolchains_llvm_bootstrapped//constraints/libc:gnu.2.28",
-            "@toolchains_llvm_bootstrapped//constraints/libc:gnu.2.29",
-            "@toolchains_llvm_bootstrapped//constraints/libc:gnu.2.30",
-            "@toolchains_llvm_bootstrapped//constraints/libc:gnu.2.31",
-            "@toolchains_llvm_bootstrapped//constraints/libc:gnu.2.32",
+            "@llvm//constraints/libc:unconstrained",
+            "@llvm//constraints/libc:gnu.2.28",
+            "@llvm//constraints/libc:gnu.2.29",
+            "@llvm//constraints/libc:gnu.2.30",
+            "@llvm//constraints/libc:gnu.2.31",
+            "@llvm//constraints/libc:gnu.2.32",
         ): [
             # libc_nonshared.a redirected stat functions to xstat until glibc 2.33,
             # when they were finally versioned like other symbols.
@@ -276,13 +276,13 @@ cc_runtime_stage0_library(
 
             # if libc <= 2.32 but also <= 2.33
             # From csu/Makefile
-            "@toolchains_llvm_bootstrapped//3rd_party/libc/glibc/csu:elf-init-2.31.c",
+            "@llvm//3rd_party/libc/glibc/csu:elf-init-2.31.c",
         ],
-        "@toolchains_llvm_bootstrapped//constraints/libc:gnu.2.33": [
+        "@llvm//constraints/libc:gnu.2.33": [
             # if libc <= 2.32 but also <= 2.33
             # __libc_start_main used to require statically linked init/fini callbacks
             # until glibc 2.34 when they were assimilated into the shared library.
-            "@toolchains_llvm_bootstrapped//3rd_party/libc/glibc/csu:elf-init-2.31.c",
+            "@llvm//3rd_party/libc/glibc/csu:elf-init-2.31.c",
         ],
         "//conditions:default": [],
     }),

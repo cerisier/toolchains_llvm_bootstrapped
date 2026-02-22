@@ -1,8 +1,8 @@
 load("//platforms:common.bzl", "SUPPORTED_EXECS", "SUPPORTED_TARGETS")
 
 _BUILD_TEMPLATE = """\
-load("@toolchains_llvm_bootstrapped//toolchain:declare_toolchains.bzl", "declare_toolchains")
-load("@toolchains_llvm_bootstrapped//toolchain/bootstrap:declare_toolchains.bzl", declare_bootstrap_toolchains = "declare_toolchains")
+load("@llvm//toolchain:declare_toolchains.bzl", "declare_toolchains")
+load("@llvm//toolchain/bootstrap:declare_toolchains.bzl", declare_bootstrap_toolchains = "declare_toolchains")
 
 _EXECS = [
     {execs}

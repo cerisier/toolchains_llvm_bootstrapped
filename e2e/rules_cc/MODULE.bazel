@@ -3,14 +3,14 @@ bazel_dep(name = "platforms", version = "1.0.0")
 bazel_dep(name = "rules_cc", version = "0.2.16")
 bazel_dep(name = "rules_shell", version = "0.6.1")
 bazel_dep(name = "with_cfg.bzl", version = "0.12.0")
-bazel_dep(name = "toolchains_llvm_bootstrapped", version = "")
+bazel_dep(name = "llvm", version = "")
 local_path_override(
-    module_name = "toolchains_llvm_bootstrapped",
+    module_name = "llvm",
     path = "../../",
 )
 
 # Register toolchains through the scoped repo to ensure this codepath works.
-llvm_toolchains = use_extension("@toolchains_llvm_bootstrapped//extensions:toolchain.bzl", "toolchain")
+llvm_toolchains = use_extension("@llvm//extensions:toolchain.bzl", "toolchain")
 use_repo(llvm_toolchains, "llvm_toolchains")
 
 register_toolchains("@llvm_toolchains//:all")

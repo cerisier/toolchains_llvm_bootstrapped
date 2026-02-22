@@ -17,7 +17,7 @@ common --experimental_platform_in_output_dir
 
 common --incompatible_config_setting_private_default_visibility
 
-common:bootstrap   --@toolchains_llvm_bootstrapped//toolchain:source=bootstrapped
+common:bootstrap   --@llvm//toolchain:source=bootstrapped
 
 # Bootstrap Go compilers from source with our patch.
 common:wasm --@rules_go//go/toolchain:source=bootstrapped
@@ -38,7 +38,7 @@ common:prebuilt --@llvm-project//llvm:driver-tools=clang-scan-deps,clang,dsymuti
 
 common:rust    --@rules_cc//cc/toolchains/args/archiver_flags:use_libtool_on_macos=False
 common:rust    --@rules_rust//rust/settings:experimental_use_sh_toolchain_for_bootstrap_process_wrapper
-common:rust    --@toolchains_llvm_bootstrapped//config:experimental_stub_libgcc_s=True
+common:rust    --@llvm//config:experimental_stub_libgcc_s=True
 
 common --bes_results_url=https://app.buildbuddy.io/invocation/
 common --bes_backend=grpcs://remote.buildbuddy.io
@@ -52,7 +52,7 @@ common --experimental_remote_execution_keepalive
 common --grpc_keepalive_time=30s
 common:remote --remote_executor=grpcs://remote.buildbuddy.io
 common:remote --jobs=800
-common:remote --extra_execution_platforms=@toolchains_llvm_bootstrapped//:rbe_platform
+common:remote --extra_execution_platforms=@llvm//:rbe_platform
 
 # Load any settings specific to the current user.
 # .bazelrc.user should appear in .gitignore so that settings are not shared with team members

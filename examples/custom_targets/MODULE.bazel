@@ -3,15 +3,15 @@ module(
     version = "0.0.0",
 )
 
-bazel_dep(name = "toolchains_llvm_bootstrapped", version = "")
+bazel_dep(name = "llvm", version = "")
 local_path_override(
-    module_name = "toolchains_llvm_bootstrapped",
+    module_name = "llvm",
     path = "../../",
 )
 
 bazel_dep(name = "rules_cc", version = "0.2.16")
 
-toolchain = use_extension("@toolchains_llvm_bootstrapped//extensions:toolchain.bzl", "llvm")
+toolchain = use_extension("@llvm//extensions:toolchain.bzl", "llvm")
 toolchain.exec(
     arch = "x86_64",
     os = "linux",

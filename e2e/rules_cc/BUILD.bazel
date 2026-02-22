@@ -6,7 +6,7 @@ load("@rules_cc//cc:objc_library.bzl", "objc_library")
 load("@rules_cc//cc:cc_static_library.bzl", "cc_static_library")
 load("@rules_cc//cc:cc_test.bzl", "cc_test")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
-load("@toolchains_llvm_bootstrapped//:defs.bzl", "exec_test")
+load("@llvm//:defs.bzl", "exec_test")
 load(
     "//:defs.bzl",
     "asan_cc_binary",
@@ -75,7 +75,7 @@ cc_binary(
     target_compatible_with = select({
         # We do not support musl libc.so
         "@platforms//os:windows": ["@platforms//:incompatible"],
-        "@toolchains_llvm_bootstrapped//constraints/libc:musl": ["@platforms//:incompatible"],
+        "@llvm//constraints/libc:musl": ["@platforms//:incompatible"],
         "//conditions:default": [],
     }),
 )
@@ -102,7 +102,7 @@ cc_binary(
     features = ["fully_static_link"],
     target_compatible_with = select({
         # only musl supports fully static linking.
-        "@toolchains_llvm_bootstrapped//constraints/libc:musl": [],
+        "@llvm//constraints/libc:musl": [],
         "//conditions:default": ["@platforms//:incompatible"],
     }),
 )
@@ -114,7 +114,7 @@ cc_test(
     target_compatible_with = select({
         "@platforms//os:windows": ["@platforms//:incompatible"],
         # We do not support musl libc.so
-        "@toolchains_llvm_bootstrapped//constraints/libc:musl": ["@platforms//:incompatible"],
+        "@llvm//constraints/libc:musl": ["@platforms//:incompatible"],
         "//conditions:default": [],
     }),
     exec_compatible_with = HOST_CONSTRAINTS,
@@ -234,7 +234,7 @@ nsan_cc_binary(
     srcs = ["nsan_fail.cc"],
     target_compatible_with = select({
         # nsan is x86 only
-        "@toolchains_llvm_bootstrapped//platforms/config:linux_x86_64": [],
+        "@llvm//platforms/config:linux_x86_64": [],
         "//conditions:default": ["@platforms//:incompatible"],
     }),
 )
@@ -250,7 +250,7 @@ exec_test(
     },
     target_compatible_with = select({
         # nsan is x86 only
-        "@toolchains_llvm_bootstrapped//platforms/config:linux_x86_64": [],
+        "@llvm//platforms/config:linux_x86_64": [],
         "//conditions:default": ["@platforms//:incompatible"],
     }),
 )
@@ -335,7 +335,7 @@ exec_test(
     env = {"BINARY": "$(rootpath :tsan_fail)"},
     target_compatible_with = select({
         # firecracker + docker on arm64 is too restrictive.
-        "@toolchains_llvm_bootstrapped//platforms/config:linux_x86_64": [],
+        "@llvm//platforms/config:linux_x86_64": [],
         "//conditions:default": ["@platforms//:incompatible"],
     }),
 )
@@ -403,7 +403,7 @@ sh_test(
 platform_transition_binary(
     name = "supports_pic",
     binary = ":supports_pic_",
-    target_platform = "@toolchains_llvm_bootstrapped//platforms:linux_x86_64",
+    target_platform = "@llvm//platforms:linux_x86_64",
 )
 
 cc_test(

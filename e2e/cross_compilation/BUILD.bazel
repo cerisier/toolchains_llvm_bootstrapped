@@ -4,7 +4,7 @@ load("@platforms//host:constraints.bzl", "HOST_CONSTRAINTS")
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@rules_cc//cc:cc_test.bzl", "cc_test")
-load("@toolchains_llvm_bootstrapped//constraints/libc:libc_versions.bzl", "LIBCS")
+load("@llvm//constraints/libc:libc_versions.bzl", "LIBCS")
 
 string_flag(
     name = "test_glibc_versions",
@@ -43,16 +43,16 @@ cc_test(
 
 #TODO(cerisier): should the toolchain provide its own list ?
 PLATFORMS = [
-    "@toolchains_llvm_bootstrapped//platforms:linux_x86_64",
-    "@toolchains_llvm_bootstrapped//platforms:linux_aarch64",
-    "@toolchains_llvm_bootstrapped//platforms:macos_x86_64",
-    "@toolchains_llvm_bootstrapped//platforms:macos_aarch64",
-    "@toolchains_llvm_bootstrapped//platforms:windows_amd64",
-    "@toolchains_llvm_bootstrapped//platforms:windows_arm64",
+    "@llvm//platforms:linux_x86_64",
+    "@llvm//platforms:linux_aarch64",
+    "@llvm//platforms:macos_x86_64",
+    "@llvm//platforms:macos_aarch64",
+    "@llvm//platforms:windows_amd64",
+    "@llvm//platforms:windows_arm64",
 ] + [
-    "@toolchains_llvm_bootstrapped//platforms:linux_x86_64_{}".format(libc) for libc in LIBCS
+    "@llvm//platforms:linux_x86_64_{}".format(libc) for libc in LIBCS
 ] + [
-    "@toolchains_llvm_bootstrapped//platforms:linux_aarch64_{}".format(libc) for libc in LIBCS
+    "@llvm//platforms:linux_aarch64_{}".format(libc) for libc in LIBCS
 ]
 
 [

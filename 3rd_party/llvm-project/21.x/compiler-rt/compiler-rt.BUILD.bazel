@@ -1,12 +1,12 @@
-load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_shared_library.bzl", "cc_runtime_stage0_shared_library")
-load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
-load("@toolchains_llvm_bootstrapped//:directory.bzl", "headers_directory")
-load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_stage0_object.bzl", "cc_stage0_object")
-load("@toolchains_llvm_bootstrapped//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
-load("@toolchains_llvm_bootstrapped//toolchain/runtimes:cc_unsanitized_library.bzl", "cc_unsanitized_library")
-load("@toolchains_llvm_bootstrapped//3rd_party/llvm-project/21.x/compiler-rt:targets.bzl", "atomic_helper_cc_library")
-load("@toolchains_llvm_bootstrapped//3rd_party/llvm-project/21.x/compiler-rt:filter_builtin_sources.bzl", "filter_builtin_sources")
-load("@toolchains_llvm_bootstrapped//:sh_script.bzl", "sh_script")
+load("@llvm//toolchain/runtimes:cc_runtime_shared_library.bzl", "cc_runtime_stage0_shared_library")
+load("@llvm//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
+load("@llvm//:directory.bzl", "headers_directory")
+load("@llvm//toolchain/runtimes:cc_stage0_object.bzl", "cc_stage0_object")
+load("@llvm//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
+load("@llvm//toolchain/runtimes:cc_unsanitized_library.bzl", "cc_unsanitized_library")
+load("@llvm//3rd_party/llvm-project/21.x/compiler-rt:targets.bzl", "atomic_helper_cc_library")
+load("@llvm//3rd_party/llvm-project/21.x/compiler-rt:filter_builtin_sources.bzl", "filter_builtin_sources")
+load("@llvm//:sh_script.bzl", "sh_script")
 load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
@@ -372,7 +372,7 @@ cc_library(
         "-fvisibility=hidden",
         # "-Wbuiltin-declaration-mismatch",
     ] + select({
-        "@toolchains_llvm_bootstrapped//config:runtimes_optimization_mode_optimized": [
+        "@llvm//config:runtimes_optimization_mode_optimized": [
             "-fomit-frame-pointer",
         ],
         "//conditions:default": [],
@@ -430,19 +430,19 @@ cc_library(
         ],
         "//conditions:default": [],
     }) + select({
-        "@toolchains_llvm_bootstrapped//platforms/config:windows_aarch64": [
+        "@llvm//platforms/config:windows_aarch64": [
             "lib/builtins/cpu_model/aarch64/lse_atomics/windows.inc",
         ],
         "//conditions:default": [],
     }) + select({
-        "@toolchains_llvm_bootstrapped//platforms/config:linux_aarch64": [
+        "@llvm//platforms/config:linux_aarch64": [
             "lib/builtins/cpu_model/aarch64/fmv/mrs.inc",
             "lib/builtins/cpu_model/aarch64/fmv/getauxval.inc",
         ],
-        "@toolchains_llvm_bootstrapped//platforms/config:macos_aarch64": [
+        "@llvm//platforms/config:macos_aarch64": [
             "lib/builtins/cpu_model/aarch64/fmv/apple.inc",
         ],
-        "@toolchains_llvm_bootstrapped//platforms/config:windows_aarch64": [
+        "@llvm//platforms/config:windows_aarch64": [
             "lib/builtins/cpu_model/aarch64/fmv/windows.inc",
         ],
         "//conditions:default": [],
@@ -464,10 +464,10 @@ cc_library(
         "@platforms//os:windows": [],
         "@platforms//os:none": [],
     }) + select({
-        "@toolchains_llvm_bootstrapped//platforms/config:musl": [
+        "@llvm//platforms/config:musl": [
             "@musl_libc//:musl_libc_headers",
         ],
-        "@toolchains_llvm_bootstrapped//platforms/config:gnu": [
+        "@llvm//platforms/config:gnu": [
             "@glibc//:gnu_libc_headers",
         ],
         "@platforms//os:macos": [
@@ -631,10 +631,10 @@ cc_library(
         "@kernel_headers//:kernel_headers",
         # Order matter. Search path should have C++ headers before any lib C headers.
     ] + select({
-        "@toolchains_llvm_bootstrapped//platforms/config:musl": [
+        "@llvm//platforms/config:musl": [
             "@musl_libc//:musl_libc_headers",
         ],
-        "@toolchains_llvm_bootstrapped//platforms/config:gnu": [
+        "@llvm//platforms/config:gnu": [
             "@glibc//:gnu_libc_headers",
         ],
     }),
@@ -2488,21 +2488,21 @@ cc_runtime_stage0_shared_library(
         ":asan_dynamic",
     ],
     additional_linker_inputs = select({
-        "@toolchains_llvm_bootstrapped//platforms/config:gnu": [
-            "@toolchains_llvm_bootstrapped//runtimes/glibc:glibc_library_search_directory",
+        "@llvm//platforms/config:gnu": [
+            "@llvm//runtimes/glibc:glibc_library_search_directory",
         ],
-        "@toolchains_llvm_bootstrapped//platforms/config:musl": [
-            "@toolchains_llvm_bootstrapped//runtimes/musl:musl_library_search_directory",
+        "@llvm//platforms/config:musl": [
+            "@llvm//runtimes/musl:musl_library_search_directory",
         ],
         "//conditions:default": [],
     }),
     user_link_flags = select({
-        "@toolchains_llvm_bootstrapped//platforms/config:gnu": [
-            "-L$(location @toolchains_llvm_bootstrapped//runtimes/glibc:glibc_library_search_directory)",
+        "@llvm//platforms/config:gnu": [
+            "-L$(location @llvm//runtimes/glibc:glibc_library_search_directory)",
             "-lc",
         ],
-        "@toolchains_llvm_bootstrapped//platforms/config:musl": [
-            "-L$(location @toolchains_llvm_bootstrapped//runtimes/musl:musl_library_search_directory)",
+        "@llvm//platforms/config:musl": [
+            "-L$(location @llvm//runtimes/musl:musl_library_search_directory)",
             "-lc",
         ],
         "//conditions:default": [],

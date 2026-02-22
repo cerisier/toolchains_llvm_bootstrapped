@@ -15,11 +15,11 @@ rust_binary_cross_build_test_suite(
         "@crates//:mimalloc",
     ],
     platforms = {
-        "@toolchains_llvm_bootstrapped//platforms:linux_x86_64": "x86-64",
-        "@toolchains_llvm_bootstrapped//platforms:linux_aarch64": "aarch64",
-        "@toolchains_llvm_bootstrapped//platforms:windows_x86_64": "x86-64",
-        "@toolchains_llvm_bootstrapped//platforms:windows_aarch64": "aarch64",
-        # "@toolchains_llvm_bootstrapped//platforms:macos_x86_64": "x86-64",
-        # "@toolchains_llvm_bootstrapped//platforms:macos_aarch64": "aarch64",
+        "@llvm//platforms:linux_x86_64": "x86-64",
+        "@llvm//platforms:linux_aarch64": "aarch64",
+        "@llvm//platforms:windows_x86_64": "x86-64",
+        "@llvm//platforms:windows_aarch64": "aarch64",
+        # "@llvm//platforms:macos_x86_64": "x86-64",
+        # "@llvm//platforms:macos_aarch64": "aarch64",
     },
 )
