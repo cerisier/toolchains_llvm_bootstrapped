@@ -83,17 +83,17 @@ def _osx_extension_impl(mctx):
         excludes.append("usr/include/tk*")
 
     http_pkg_archive(
-        name = "macosx15.4.sdk",
+        name = "macos_sdk",
         files = {
-            "sysroot/BUILD.bazel": "//3rd_party/macosx.sdk:MacOSX15.4.sdk.BUILD.bazel",
+            "sysroot/BUILD.bazel": "//3rd_party/macos_sdk:CLTools_macOSNMOS_SDK.BUILD.bazel",
         },
         dst = "sysroot",
-        sha256 = "ba3453d62b3d2babf67f3a4a44e8073d6555c85f114856f4390a1f53bd76e24a",
+        sha256 = "466ae4667fde372ef4402fc583298bfd5fba18c96a19f628da570855538c7c67",
         includes = includes,
         excludes = excludes,
-        strip_prefix = "Payload/Library/Developer/CommandLineTools/SDKs/MacOSX15.5.sdk",
-        # urls = ["https://swcdn.apple.com/content/downloads/10/32/082-12052-A_AHPGDY76PT/1a419zaf3vh8o9t3c0usblyr8eystpnsh5/CLTools_macOSNMOS_SDK.pkg"],
-        urls = ["https://swcdn.apple.com/content/downloads/52/01/082-41241-A_0747ZN8FHV/dectd075r63pppkkzsb75qk61s0lfee22j/CLTools_macOSNMOS_SDK.pkg"],
+        strip_prefix = "Payload/Library/Developer/CommandLineTools/SDKs/MacOSX26.2.sdk",
+        # 26.2.0
+        urls = ["https://swcdn.apple.com/content/downloads/60/22/089-71960-A_W8BL1RUJJ6/5zkyplomhk1cm7z6xja2ktgapnhhti6wwd/CLTools_macOSNMOS_SDK.pkg"],
     )
 
     metadata_kwargs = {}

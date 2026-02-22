@@ -15,12 +15,12 @@ package(default_visibility = ["//visibility:public"])
 cc_sysroot(
     name = "macos_sdk_sysroot",
     allowlist_include_directories = [
-        "@macosx15.4.sdk//sysroot",
+        "@macos_sdk//sysroot",
     ],
     data = [
-        "@macosx15.4.sdk//sysroot",
+        "@macos_sdk//sysroot",
     ],
-    sysroot = "@macosx15.4.sdk//sysroot",
+    sysroot = "@macos_sdk//sysroot",
 )
 
 #TODO(cerisier): Fix with new cc_args BuildSettingInfo formatter once it is ready.

@@ -31,11 +31,11 @@ MACOS_MINIMUM_OS_VERSIONS = [
     "15.2",
     "15.3",
     "15.4",
-    #TODO(cerisier): Update the macOS SDK.
-    # "15.5",
-    # "15.6",
-    # "26.0",
-    # "26.1",
+    "15.5",
+    "15.6",
+    "26.0",
+    "26.1",
+    "26.2",
 ]
 
 def _macos_minimum_os_flag_impl(ctx):
