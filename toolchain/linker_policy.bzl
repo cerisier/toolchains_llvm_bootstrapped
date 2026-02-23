@@ -316,7 +316,7 @@ _CC_SLICES = {
     ),
 }
 
-def cc_spec(slice_name):
+def cc_link_spec(slice_name):
     slice_def = _CC_SLICES.get(slice_name)
     if slice_def == None:
         fail("Unknown cc spec slice: %s" % slice_name)

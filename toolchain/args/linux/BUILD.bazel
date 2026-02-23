@@ -1,6 +1,6 @@
 load("@rules_cc//cc/toolchains:actions.bzl", "cc_action_type_set")
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
-load("//toolchain:linker_policy.bzl", "cc_spec")
+load("//toolchain:linker_policy.bzl", "cc_link_spec")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -9,7 +9,7 @@ cc_args(
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
-    args = cc_spec("linux_default_link_flags").args,
+    args = cc_link_spec("linux_default_link_flags").args,
 )
 
 cc_args(
@@ -78,9 +78,9 @@ cc_args(
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
-    args = cc_spec("linux_default_libs_gnu").args,
-    data = cc_spec("linux_default_libs_gnu").data,
-    format = cc_spec("linux_default_libs_gnu").format,
+    args = cc_link_spec("linux_default_libs_gnu").args,
+    data = cc_link_spec("linux_default_libs_gnu").data,
+    format = cc_link_spec("linux_default_libs_gnu").format,
 )
 
 ###

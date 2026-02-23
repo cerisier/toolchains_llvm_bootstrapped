@@ -2,7 +2,7 @@ load("@bazel_lib//:bzl_library.bzl", "bzl_library")
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load(
     "//toolchain:linker_policy.bzl",
-    "cc_spec",
+    "cc_link_spec",
     "macos_minimum_os_version_default",
     "macos_sysroot_label",
 )
@@ -71,8 +71,8 @@ cc_args(
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
     args = [
-    ] + cc_spec("macos_default_link_flags").args,
-    env = cc_spec("macos_default_link_flags").env,
+    ] + cc_link_spec("macos_default_link_flags").args,
+    env = cc_link_spec("macos_default_link_flags").env,
 )
 
 cc_args(
@@ -81,9 +81,9 @@ cc_args(
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
     # -l: is not supported by lld64
-    args = cc_spec("macos_default_libs").args,
-    data = cc_spec("macos_default_libs").data,
-    format = cc_spec("macos_default_libs").format,
+    args = cc_link_spec("macos_default_libs").args,
+    data = cc_link_spec("macos_default_libs").data,
+    format = cc_link_spec("macos_default_libs").format,
 )
 
 bzl_library(

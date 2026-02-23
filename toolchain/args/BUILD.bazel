@@ -1,7 +1,7 @@
 load("@bazel_lib//:bzl_library.bzl", "bzl_library")
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
-load("//toolchain:linker_policy.bzl", "cc_spec")
+load("//toolchain:linker_policy.bzl", "cc_link_spec")
 load("//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
 
 package(default_visibility = ["//visibility:public"])
@@ -22,9 +22,9 @@ cc_args(
         "@rules_cc//cc/toolchains/actions:link_actions",
         # We may need it for other actions too?
     ],
-    args = cc_spec("resource_dir").args,
-    data = cc_spec("resource_dir").data,
-    format = cc_spec("resource_dir").format,
+    args = cc_link_spec("resource_dir").args,
+    data = cc_link_spec("resource_dir").data,
+    format = cc_link_spec("resource_dir").format,
 )
 
 cc_args(
@@ -95,9 +95,9 @@ cc_args(
     ],
     # clang::driver::Toolchain::GetFilePath("crtn.o") looks for those using
     # prefix directories (-B).
-    args = cc_spec("crt_search_directory").args,
-    data = cc_spec("crt_search_directory").data,
-    format = cc_spec("crt_search_directory").format,
+    args = cc_link_spec("crt_search_directory").args,
+    data = cc_link_spec("crt_search_directory").data,
+    format = cc_link_spec("crt_search_directory").format,
 )
 
 cc_args(
@@ -119,7 +119,7 @@ cc_args(
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
-    args = cc_spec("fuse_ld").args,
+    args = cc_link_spec("fuse_ld").args,
 )
 
 cc_args(
@@ -662,7 +662,7 @@ cc_args(
     ],
     args = select({
         ":empty_sysroot": [
-            cc_spec("empty_sysroot_flags").args[0],
+            cc_link_spec("empty_sysroot_flags").args[0],
         ],
         "//conditions:default": [],
     }),
@@ -673,7 +673,7 @@ cc_args(
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
-    args = cc_spec("rtlib_compiler_rt").args,
+    args = cc_link_spec("rtlib_compiler_rt").args,
 )
 
 cc_args(
@@ -683,7 +683,7 @@ cc_args(
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
-    args = cc_spec("stdlib").args,
+    args = cc_link_spec("stdlib").args,
 )
 
 cc_args(
@@ -696,7 +696,7 @@ cc_args(
         # would result in a warning when targeting macOS.
         "@platforms//os:macos": [],
         # Will prevent clang from choosing which libunwind to link against.
-        "//conditions:default": cc_spec("unwindlib_none").args,
+        "//conditions:default": cc_link_spec("unwindlib_none").args,
     }),
 )
 
