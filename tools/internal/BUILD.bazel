@@ -1,4 +1,14 @@
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load(
+    ":linker_contracts.bzl",
+    "LINUX_AARCH64_CONSTRAINTS",
+    "LINUX_X86_64_CONSTRAINTS",
+    "MACOS_AARCH64_CONSTRAINTS",
+    "linker_contract_manifest_from_cc_toolchain",
+    "linker_contract_tree",
+    "linker_wrapper_config_genrule",
+)
 
 cc_binary(
     name = "header-parser",
@@ -9,5 +19,200 @@ cc_binary(
 cc_binary(
     name = "static-library-validator",
     srcs = ["static_library_validator.cc"],
+    visibility = ["//visibility:public"],
+)
+
+linker_contract_manifest_from_cc_toolchain(
+    name = "linker_contract_macos_aarch64_manifest",
+    out = "linker_contract_macos_aarch64.txt",
+    tree_inputs = {
+        "//runtimes/compiler-rt:clang_rt.builtins.static": "libclang_rt.builtins.a",
+        "//runtimes/libunwind:libunwind_library_search_directory": "libunwind_library_search_directory",
+        "@macos_sdk//sysroot": "sysroot",
+    },
+    target_compatible_with = MACOS_AARCH64_CONSTRAINTS,
+)
+
+linker_contract_tree(
+    name = "linker_contract_macos_aarch64_tree",
+    out_tree_name = "linker_contract_macos_aarch64_tree",
+    tree_inputs = {
+        "//runtimes/compiler-rt:clang_rt.builtins.static": "libclang_rt.builtins.a",
+        "//runtimes/libunwind:libunwind_library_search_directory": "libunwind_library_search_directory",
+        "@macos_sdk//sysroot": "sysroot",
+    },
+    target_compatible_with = MACOS_AARCH64_CONSTRAINTS,
+)
+
+linker_contract_manifest_from_cc_toolchain(
+    name = "linker_contract_linux_x86_64_manifest",
+    out = "linker_contract_linux_x86_64.txt",
+    tree_inputs = {
+        "//runtimes:crt_objects_directory": "crt_objects_directory",
+        "//runtimes:resource_directory": "resource_directory",
+        "//runtimes/glibc:glibc_library_search_directory": "glibc_library_search_directory",
+    },
+    target_compatible_with = LINUX_X86_64_CONSTRAINTS,
+)
+
+linker_contract_tree(
+    name = "linker_contract_linux_x86_64_tree",
+    out_tree_name = "linker_contract_linux_x86_64_tree",
+    tree_inputs = {
+        "//runtimes:crt_objects_directory": "crt_objects_directory",
+        "//runtimes:resource_directory": "resource_directory",
+        "//runtimes/glibc:glibc_library_search_directory": "glibc_library_search_directory",
+    },
+    target_compatible_with = LINUX_X86_64_CONSTRAINTS,
+)
+
+linker_contract_manifest_from_cc_toolchain(
+    name = "linker_contract_linux_aarch64_manifest",
+    out = "linker_contract_linux_aarch64.txt",
+    tree_inputs = {
+        "//runtimes:crt_objects_directory": "crt_objects_directory",
+        "//runtimes:resource_directory": "resource_directory",
+        "//runtimes/glibc:glibc_library_search_directory": "glibc_library_search_directory",
+    },
+    target_compatible_with = LINUX_AARCH64_CONSTRAINTS,
+)
+
+linker_contract_tree(
+    name = "linker_contract_linux_aarch64_tree",
+    out_tree_name = "linker_contract_linux_aarch64_tree",
+    tree_inputs = {
+        "//runtimes:crt_objects_directory": "crt_objects_directory",
+        "//runtimes:resource_directory": "resource_directory",
+        "//runtimes/glibc:glibc_library_search_directory": "glibc_library_search_directory",
+    },
+    target_compatible_with = LINUX_AARCH64_CONSTRAINTS,
+)
+
+filegroup(
+    name = "linker-contract-macos-aarch64",
+    srcs = [":linker_contract_macos_aarch64_manifest"],
+    target_compatible_with = MACOS_AARCH64_CONSTRAINTS,
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "linker-contract-linux-x86_64",
+    srcs = [":linker_contract_linux_x86_64_manifest"],
+    target_compatible_with = LINUX_X86_64_CONSTRAINTS,
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "linker-contract-linux-aarch64",
+    srcs = [":linker_contract_linux_aarch64_manifest"],
+    target_compatible_with = LINUX_AARCH64_CONSTRAINTS,
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "linker-contract-tree-macos-aarch64",
+    srcs = [":linker_contract_macos_aarch64_tree"],
+    target_compatible_with = MACOS_AARCH64_CONSTRAINTS,
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "linker-contract-tree-linux-x86_64",
+    srcs = [":linker_contract_linux_x86_64_tree"],
+    target_compatible_with = LINUX_X86_64_CONSTRAINTS,
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "linker-contract-tree-linux-aarch64",
+    srcs = [":linker_contract_linux_aarch64_tree"],
+    target_compatible_with = LINUX_AARCH64_CONSTRAINTS,
+    visibility = ["//visibility:public"],
+)
+
+linker_wrapper_config_genrule(
+    name = "linker_wrapper_config_macos_aarch64",
+    out = "linker_wrapper_config_macos_aarch64.cc",
+    contract_manifest_label = ":linker_contract_macos_aarch64_manifest",
+    contract_tree_label = ":linker_contract_macos_aarch64_tree",
+    target_compatible_with = MACOS_AARCH64_CONSTRAINTS,
+)
+
+linker_wrapper_config_genrule(
+    name = "linker_wrapper_config_linux_x86_64",
+    out = "linker_wrapper_config_linux_x86_64.cc",
+    contract_manifest_label = ":linker_contract_linux_x86_64_manifest",
+    contract_tree_label = ":linker_contract_linux_x86_64_tree",
+    target_compatible_with = LINUX_X86_64_CONSTRAINTS,
+)
+
+linker_wrapper_config_genrule(
+    name = "linker_wrapper_config_linux_aarch64",
+    out = "linker_wrapper_config_linux_aarch64.cc",
+    contract_manifest_label = ":linker_contract_linux_aarch64_manifest",
+    contract_tree_label = ":linker_contract_linux_aarch64_tree",
+    target_compatible_with = LINUX_AARCH64_CONSTRAINTS,
+)
+
+cc_library(
+    name = "linker_wrapper_config_header",
+    hdrs = ["linker_wrapper_config.h"],
+    visibility = ["//visibility:private"],
+)
+
+cc_binary(
+    name = "linker-wrapper-macos-aarch64",
+    srcs = [
+        "linker_wrapper.cc",
+        ":linker_wrapper_config_macos_aarch64",
+    ],
+    data = [
+        "//tools:clang++",
+        ":linker_contract_macos_aarch64_manifest",
+        ":linker_contract_macos_aarch64_tree",
+    ],
+    deps = [
+        ":linker_wrapper_config_header",
+        "@bazel_tools//tools/cpp/runfiles",
+    ],
+    target_compatible_with = MACOS_AARCH64_CONSTRAINTS,
+    visibility = ["//visibility:public"],
+)
+
+cc_binary(
+    name = "linker-wrapper-linux-x86_64",
+    srcs = [
+        "linker_wrapper.cc",
+        ":linker_wrapper_config_linux_x86_64",
+    ],
+    data = [
+        "//tools:clang++",
+        ":linker_contract_linux_x86_64_manifest",
+        ":linker_contract_linux_x86_64_tree",
+    ],
+    deps = [
+        ":linker_wrapper_config_header",
+        "@bazel_tools//tools/cpp/runfiles",
+    ],
+    target_compatible_with = LINUX_X86_64_CONSTRAINTS,
+    visibility = ["//visibility:public"],
+)
+
+cc_binary(
+    name = "linker-wrapper-linux-aarch64",
+    srcs = [
+        "linker_wrapper.cc",
+        ":linker_wrapper_config_linux_aarch64",
+    ],
+    data = [
+        "//tools:clang++",
+        ":linker_contract_linux_aarch64_manifest",
+        ":linker_contract_linux_aarch64_tree",
+    ],
+    deps = [
+        ":linker_wrapper_config_header",
+        "@bazel_tools//tools/cpp/runfiles",
+    ],
+    target_compatible_with = LINUX_AARCH64_CONSTRAINTS,
     visibility = ["//visibility:public"],
 )
