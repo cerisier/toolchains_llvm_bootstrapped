@@ -2,6 +2,7 @@ load("//platforms:common.bzl", "SUPPORTED_EXECS", "SUPPORTED_TARGETS")
 
 _BUILD_TEMPLATE = """\
 load("@llvm//toolchain:declare_toolchains.bzl", "declare_toolchains")
+load("@llvm//toolchain/cuda:declare_toolchains.bzl", declare_cuda_toolchains = "declare_toolchains")
 load("@llvm//toolchain/bootstrap:declare_toolchains.bzl", declare_bootstrap_toolchains = "declare_toolchains")
 
 _EXECS = [
@@ -13,6 +14,7 @@ _TARGETS = [
 ]
 
 declare_toolchains(execs = _EXECS, targets = _TARGETS)
+declare_cuda_toolchains(execs = _EXECS, targets = _TARGETS)
 declare_bootstrap_toolchains(execs = _EXECS, targets = _TARGETS)
 """
 

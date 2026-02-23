@@ -18,3 +18,12 @@ bzl_library(
     srcs = ["common.bzl"],
     visibility = ["//visibility:public"],
 )
+
+platform(
+    name = "none_nvptx64",
+    constraint_values = [
+        "@platforms//os:none",
+        "//constraints/accelerator/arch:nvptx64",
+        "//constraints/accelerator/runtime:none",
+    ],
+)

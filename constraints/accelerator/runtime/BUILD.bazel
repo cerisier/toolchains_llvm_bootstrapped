@@ -1,0 +1,15 @@
+package(default_visibility = ["//visibility:public"])
+
+constraint_setting(
+    name = "runtime",
+)
+
+constraint_value(
+    name = "none",
+    constraint_setting = ":runtime",
+)
+
+constraint_value(
+    name = "cuda",
+    constraint_setting = ":runtime",
+)

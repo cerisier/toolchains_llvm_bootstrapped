@@ -2,6 +2,7 @@ load("@rules_cc//cc/toolchains:tool.bzl", "cc_tool")
 load("@rules_cc//cc/toolchains:tool_map.bzl", "cc_tool_map")
 load("//platforms:common.bzl", "SUPPORTED_TARGETS")
 load("//toolchain:cc_toolchain.bzl", "cc_toolchain")
+load("//toolchain/cuda:cc_toolchain.bzl", cuda_cc_toolchain = "cc_toolchain")
 load(":bootstrap_binary.bzl", "bootstrap_binary", "bootstrap_directory")
 
 def declare_tool_map(exec_os, exec_cpu):
@@ -271,3 +272,29 @@ def declare_toolchains(*, execs = None, targets = SUPPORTED_TARGETS):
                 toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
                 visibility = ["//visibility:public"],
             )
+
+        cuda_cc_toolchain_name = "bootstrap_cuda_{}_{}_cc_toolchain".format(exec_os, exec_cpu)
+        cuda_cc_toolchain(
+            name = cuda_cc_toolchain_name,
+            tool_map = select({
+                "@rules_cc//cc/toolchains/args/archiver_flags:use_libtool_on_macos_setting": ":{}_{}/tools_with_libtool".format(exec_os, exec_cpu),
+                "//conditions:default": ":{}_{}/default_tools".format(exec_os, exec_cpu),
+            }),
+        )
+
+        native.toolchain(
+            name = "bootstrap_cuda_{}_{}_to_none_nvptx64".format(exec_os, exec_cpu),
+            exec_compatible_with = [
+                "@platforms//cpu:{}".format(exec_cpu),
+                "@platforms//os:{}".format(exec_os),
+            ],
+            target_compatible_with = [
+                "@llvm//constraints/accelerator/arch:nvptx64",
+            ],
+            target_settings = [
+                "@llvm//toolchain:bootstrapped_toolchain",
+            ],
+            toolchain = cuda_cc_toolchain_name,
+            toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
+            visibility = ["//visibility:public"],
+        )

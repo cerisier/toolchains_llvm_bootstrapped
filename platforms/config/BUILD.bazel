@@ -13,3 +13,13 @@ bzl_library(
         "@bazel_skylib//lib:selects",
     ],
 )
+
+# none nvptx64
+config_setting(
+    name = "none_nvptx64",
+    constraint_values = [
+        "@platforms//os:none",
+        "//constraints/accelerator/arch:nvptx64",
+        "//constraints/accelerator/runtime:none",
+    ],
+)

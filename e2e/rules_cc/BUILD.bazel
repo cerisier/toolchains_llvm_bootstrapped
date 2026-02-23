@@ -24,6 +24,11 @@ load(
 )
 
 cc_library(
+    name = "raw_saxpy_device",
+    srcs = ["raw_saxpy_device.c"],
+)
+
+cc_library(
     name = "objc_c_lib",
     hdrs = ["objc_c_lib.h"],
     tags = ["manual"],
