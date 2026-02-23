@@ -359,24 +359,6 @@ alias(
     visibility = ["//visibility:public"],
 )
 
-alias(
-    name = "linker_contract_macos_aarch64",
-    actual = "//tools/internal:linker-contract-macos-aarch64",
-    visibility = ["//visibility:public"],
-)
-
-alias(
-    name = "linker_contract_linux_x86_64",
-    actual = "//tools/internal:linker-contract-linux-x86_64",
-    visibility = ["//visibility:public"],
-)
-
-alias(
-    name = "linker_contract_linux_aarch64",
-    actual = "//tools/internal:linker-contract-linux-aarch64",
-    visibility = ["//visibility:public"],
-)
-
 cc_action_type_set(
     name = "cpp_compile_actions_without_header_parsing",
     # See https://github.com/bazelbuild/rules_cc/blob/6dd2ef1fefbca004da449578c00d8ffb91a459ca/cc/toolchains/actions/BUILD#L224
