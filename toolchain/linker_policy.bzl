@@ -2,6 +2,9 @@ PLATFORM_MACOS_AARCH64 = "macos_aarch64"
 PLATFORM_LINUX_X86_64_GNU = "linux_x86_64_gnu"
 PLATFORM_LINUX_AARCH64_GNU = "linux_aarch64_gnu"
 
+MACOS_AARCH64_SYSROOT_LABEL = "@macos_sdk//sysroot"
+MACOS_AARCH64_MINIMUM_OS_VERSION = "14.0"
+
 _VALID_KINDS = {
     "use": True,
     "arg": True,
@@ -69,14 +72,16 @@ PLATFORM_POLICIES = {
     PLATFORM_MACOS_AARCH64: struct(
         constraints = ["@platforms//os:macos", "@platforms//cpu:aarch64"],
         target_triple = "aarch64-apple-darwin",
+        sysroot_label = MACOS_AARCH64_SYSROOT_LABEL,
+        minimum_os_version = MACOS_AARCH64_MINIMUM_OS_VERSION,
         ops = [
             struct(kind = "use", name = "macos_default_link_env"),
             struct(kind = "use", name = "target_triple"),
             struct(kind = "use", name = "fuse_ld_lld"),
             struct(kind = "use", name = "resource_dir"),
             struct(kind = "use", name = "rtlib_compiler_rt"),
-            struct(kind = "runfile_prefix_arg", prefix = "--sysroot=", label = "@macos_sdk//sysroot", key = "macos_sysroot"),
-            struct(kind = "arg", value = "-mmacosx-version-min=14.0"),
+            struct(kind = "runfile_prefix_arg", prefix = "--sysroot=", label = MACOS_AARCH64_SYSROOT_LABEL, key = "macos_sysroot"),
+            struct(kind = "arg", value = "-mmacosx-version-min=%s" % MACOS_AARCH64_MINIMUM_OS_VERSION),
             struct(kind = "use", name = "macos_default_link_flags"),
         ],
     ),
@@ -131,12 +136,6 @@ def target_triple_for_platform(platform):
     if triple == None:
         fail("Unsupported platform for target triple: %s" % platform)
     return triple
-
-def macos_sysroot_label():
-    return "@macos_sdk//sysroot"
-
-def macos_minimum_os_version_default():
-    return "14.0"
 
 def _has_field(op, field):
     return hasattr(op, field)

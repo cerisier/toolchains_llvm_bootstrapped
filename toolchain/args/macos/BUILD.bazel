@@ -2,9 +2,9 @@ load("@bazel_lib//:bzl_library.bzl", "bzl_library")
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load(
     "//toolchain:linker_policy.bzl",
+    "MACOS_AARCH64_MINIMUM_OS_VERSION",
+    "MACOS_AARCH64_SYSROOT_LABEL",
     "cc_link_spec",
-    "macos_minimum_os_version_default",
-    "macos_sysroot_label",
 )
 load(
     ":macos_minimum_os_flag.bzl",
@@ -21,12 +21,12 @@ package(default_visibility = ["//visibility:public"])
 cc_sysroot(
     name = "macos_sdk_sysroot",
     allowlist_include_directories = [
-        macos_sysroot_label(),
+        MACOS_AARCH64_SYSROOT_LABEL,
     ],
     data = [
-        macos_sysroot_label(),
+        MACOS_AARCH64_SYSROOT_LABEL,
     ],
-    sysroot = macos_sysroot_label(),
+    sysroot = MACOS_AARCH64_SYSROOT_LABEL,
 )
 
 #TODO(cerisier): Fix with new cc_args BuildSettingInfo formatter once it is ready.
@@ -59,7 +59,7 @@ cc_args(
     } | {
         "//conditions:default": [
             # Keep current default behavior when the Apple minimum OS is not specified.
-            "-mmacosx-version-min=%s" % macos_minimum_os_version_default(),
+            "-mmacosx-version-min=%s" % MACOS_AARCH64_MINIMUM_OS_VERSION,
         ],
     }),
 )
