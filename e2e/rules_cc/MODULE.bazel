@@ -17,3 +17,8 @@ register_toolchains("@llvm_toolchains//:all")
 
 # Bump transitive zlib version to avoid genrules.
 bazel_dep(name = "zlib", version = "1.3.1.bcr.8")
+bazel_dep(name = "cuda_sdk", version = "")
+local_path_override(
+    module_name = "cuda_sdk",
+    path = "/home/corentin/cuda-bazel",
+)

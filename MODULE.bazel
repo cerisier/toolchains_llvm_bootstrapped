@@ -13,6 +13,11 @@ bazel_dep(name = "rules_cc", version = "0.2.16")
 bazel_dep(name = "rules_shell", version = "0.6.1")
 bazel_dep(name = "with_cfg.bzl", version = "0.12.0")
 bazel_dep(name = "tar.bzl", version = "0.6.0")
+bazel_dep(name = "cuda_sdk", version = "")
+local_path_override(
+    module_name = "cuda_sdk",
+    path = "/home/corentin/cuda-bazel",
+)
 
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
