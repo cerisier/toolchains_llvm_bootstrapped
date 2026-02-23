@@ -6,7 +6,6 @@ load(
     "LINUX_X86_64_CONSTRAINTS",
     "MACOS_AARCH64_CONSTRAINTS",
     "linker_contract_bundle",
-    "linker_wrapper_config_genrule",
 )
 
 cc_binary(
@@ -71,28 +70,27 @@ alias(
     visibility = ["//visibility:public"],
 )
 
-linker_wrapper_config_genrule(
-    name = "linker_wrapper_config_macos_aarch64",
-    out = "linker_wrapper_config_macos_aarch64.cc",
-    contract_manifest_label = ":linker_contract_executable_macos_aarch64_manifest",
-    contract_tree_label = ":linker_contract_executable_macos_aarch64_tree",
-    target_compatible_with = MACOS_AARCH64_CONSTRAINTS,
-)
-
-linker_wrapper_config_genrule(
-    name = "linker_wrapper_config_linux_x86_64",
-    out = "linker_wrapper_config_linux_x86_64.cc",
-    contract_manifest_label = ":linker_contract_executable_linux_x86_64_manifest",
-    contract_tree_label = ":linker_contract_executable_linux_x86_64_tree",
-    target_compatible_with = LINUX_X86_64_CONSTRAINTS,
-)
-
-linker_wrapper_config_genrule(
-    name = "linker_wrapper_config_linux_aarch64",
-    out = "linker_wrapper_config_linux_aarch64.cc",
-    contract_manifest_label = ":linker_contract_executable_linux_aarch64_manifest",
-    contract_tree_label = ":linker_contract_executable_linux_aarch64_tree",
-    target_compatible_with = LINUX_AARCH64_CONSTRAINTS,
+genrule(
+    name = "linker_wrapper_config",
+    outs = ["linker_wrapper_config.cc"],
+    cmd = "\n".join([
+        "cat > $@ <<'CONFIG'",
+        "#include \"tools/internal/linker_wrapper_config.h\"",
+        "",
+        "namespace llvm_toolchain {",
+        "",
+        "const char* kLinkerWrapperClangRlocation = \"$(rlocationpath //tools:clang++)\";",
+        "const char* kLinkerWrapperContractManifestRlocation = \"$(rlocationpath :linker-contract-executable)\";",
+        "const char* kLinkerWrapperContractTreeRlocation = \"$(rlocationpath :linker-contract-executable-tree)\";",
+        "",
+        "}  // namespace llvm_toolchain",
+        "CONFIG",
+    ]),
+    tools = [
+        "//tools:clang++",
+        ":linker-contract-executable",
+        ":linker-contract-executable-tree",
+    ],
 )
 
 cc_library(
@@ -105,7 +103,7 @@ cc_binary(
     name = "linker-wrapper-macos-aarch64",
     srcs = [
         "linker_wrapper.cc",
-        ":linker_wrapper_config_macos_aarch64",
+        ":linker_wrapper_config",
     ],
     data = [
         "//tools:clang++",
@@ -124,7 +122,7 @@ cc_binary(
     name = "linker-wrapper-linux-x86_64",
     srcs = [
         "linker_wrapper.cc",
-        ":linker_wrapper_config_linux_x86_64",
+        ":linker_wrapper_config",
     ],
     data = [
         "//tools:clang++",
@@ -143,7 +141,7 @@ cc_binary(
     name = "linker-wrapper-linux-aarch64",
     srcs = [
         "linker_wrapper.cc",
-        ":linker_wrapper_config_linux_aarch64",
+        ":linker_wrapper_config",
     ],
     data = [
         "//tools:clang++",

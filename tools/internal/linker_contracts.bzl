@@ -227,33 +227,3 @@ def linker_contract_bundle(
         tree_inputs = tree_inputs,
         target_compatible_with = target_compatible_with,
     )
-
-def linker_wrapper_config_genrule(
-        name,
-        out,
-        contract_manifest_label,
-        contract_tree_label,
-        target_compatible_with):
-    native.genrule(
-        name = name,
-        outs = [out],
-        cmd = "\n".join([
-            "cat > $@ <<'CONFIG'",
-            "#include \"tools/internal/linker_wrapper_config.h\"",
-            "",
-            "namespace llvm_toolchain {",
-            "",
-            "const char* kLinkerWrapperClangRlocation = \"$(rlocationpath //tools:clang++)\";",
-            "const char* kLinkerWrapperContractManifestRlocation = \"$(rlocationpath %s)\";" % contract_manifest_label,
-            "const char* kLinkerWrapperContractTreeRlocation = \"$(rlocationpath %s)\";" % contract_tree_label,
-            "",
-            "}  // namespace llvm_toolchain",
-            "CONFIG",
-        ]),
-        tools = [
-            "//tools:clang++",
-            contract_manifest_label,
-            contract_tree_label,
-        ],
-        target_compatible_with = target_compatible_with,
-    )
