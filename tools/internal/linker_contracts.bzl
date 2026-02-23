@@ -30,17 +30,17 @@ def _normalize_subpath(path):
             fail("tree input destination must not contain '.' or '..': %s" % path)
     return "/".join(parts)
 
-def _rewrite_arg(arg, prefix_rewrites, suffix_rewrites):
+def _rewrite_arg(arg, prefix_rewrites):
     value = arg
 
     for prefix in ["--sysroot=", "-L", "-B"]:
         if value.startswith(prefix) and len(value) > len(prefix):
-            rewritten = _rewrite_path(value[len(prefix):], prefix_rewrites, suffix_rewrites)
+            rewritten = _rewrite_path(value[len(prefix):], prefix_rewrites)
             return prefix + rewritten
 
-    return _rewrite_path(value, prefix_rewrites, suffix_rewrites)
+    return _rewrite_path(value, prefix_rewrites)
 
-def _rewrite_path(path, prefix_rewrites, suffix_rewrites):
+def _rewrite_path(path, prefix_rewrites):
     best = None
     for source in prefix_rewrites.keys():
         if path == source or path.startswith(source + "/"):
@@ -51,27 +51,11 @@ def _rewrite_path(path, prefix_rewrites, suffix_rewrites):
         suffix = path[len(best):]
         return prefix_rewrites[best] + suffix
 
-    best_suffix = None
-    for suffix in suffix_rewrites.keys():
-        if path == suffix or path.endswith("/" + suffix):
-            if best_suffix == None or len(suffix) > len(best_suffix):
-                best_suffix = suffix
-    if best_suffix == None:
-        return path
-
-    path_suffix_index = path.rfind(best_suffix)
-    path_prefix = path[:path_suffix_index]
-    if path_prefix.endswith("/"):
-        path_prefix = path_prefix[:-1]
-    replacement = suffix_rewrites[best_suffix]
-    if path_prefix:
-        return replacement
-    return replacement
+    return path
 
 def _collect_tree_inputs(ctx):
     entries = []
     prefix_rewrites = {}
-    suffix_rewrites = {}
     inputs = []
 
     for target, destination in ctx.attr.tree_inputs.items():
@@ -89,15 +73,7 @@ def _collect_tree_inputs(ctx):
             prefix_rewrites[file.path] = rewrite_to
             prefix_rewrites[file.short_path] = rewrite_to
 
-            path_parts = [part for part in file.short_path.split("/") if part]
-            max_parts = min(3, len(path_parts))
-            for count in range(1, max_parts + 1):
-                suffix = "/".join(path_parts[len(path_parts) - count:])
-                suffix_rewrites[suffix] = rewrite_to
-
-            suffix_rewrites[file.basename] = rewrite_to
-
-    return entries, prefix_rewrites, suffix_rewrites, inputs
+    return entries, prefix_rewrites, inputs
 
 def _serialize_contract(arguments, environment):
     lines = ["# directive<TAB>payload"]
@@ -139,10 +115,10 @@ def _manifest_impl(ctx):
         variables = variables,
     )
 
-    tree_entries, prefix_rewrites, suffix_rewrites, tree_inputs = _collect_tree_inputs(ctx)
-    rewritten_args = [_rewrite_arg(arg, prefix_rewrites, suffix_rewrites) for arg in link_args]
+    tree_entries, prefix_rewrites, tree_inputs = _collect_tree_inputs(ctx)
+    rewritten_args = [_rewrite_arg(arg, prefix_rewrites) for arg in link_args]
     rewritten_env = {
-        name: _rewrite_arg(value, prefix_rewrites, suffix_rewrites)
+        name: _rewrite_arg(value, prefix_rewrites)
         for name, value in link_env.items()
     }
 
@@ -180,7 +156,7 @@ linker_contract_manifest_from_cc_toolchain = rule(
 )
 
 def _tree_impl(ctx):
-    tree_entries, _, _, tree_inputs = _collect_tree_inputs(ctx)
+    tree_entries, _, tree_inputs = _collect_tree_inputs(ctx)
     out_tree = ctx.actions.declare_directory(ctx.attr.out_tree_name)
 
     copy_args = ctx.actions.args()
@@ -228,6 +204,29 @@ linker_contract_tree = rule(
         ),
     },
 )
+
+def linker_contract_bundle(
+        name,
+        target_compatible_with,
+        tree_inputs,
+        action_name = ACTION_NAMES.cpp_link_executable,
+        is_linking_dynamic_library = False,
+        user_link_flags = []):
+    linker_contract_manifest_from_cc_toolchain(
+        name = name + "_manifest",
+        out = name + ".txt",
+        tree_inputs = tree_inputs,
+        action_name = action_name,
+        is_linking_dynamic_library = is_linking_dynamic_library,
+        user_link_flags = user_link_flags,
+        target_compatible_with = target_compatible_with,
+    )
+    linker_contract_tree(
+        name = name + "_tree",
+        out_tree_name = name + "_tree",
+        tree_inputs = tree_inputs,
+        target_compatible_with = target_compatible_with,
+    )
 
 def linker_wrapper_config_genrule(
         name,

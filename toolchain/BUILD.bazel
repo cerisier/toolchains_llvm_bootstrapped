@@ -340,7 +340,7 @@ alias(
 )
 
 alias(
-    name = "linker_contract",
+    name = "linker_contract_executable",
     actual = select({
         "//platforms/config:macos_aarch64": "//tools/internal:linker-contract-macos-aarch64",
         "//platforms/config:linux_x86_64_gnu": "//tools/internal:linker-contract-linux-x86_64",
@@ -350,7 +350,7 @@ alias(
 )
 
 alias(
-    name = "linker_contract_tree",
+    name = "linker_contract_executable_tree",
     actual = select({
         "//platforms/config:macos_aarch64": "//tools/internal:linker-contract-tree-macos-aarch64",
         "//platforms/config:linux_x86_64_gnu": "//tools/internal:linker-contract-tree-linux-x86_64",
