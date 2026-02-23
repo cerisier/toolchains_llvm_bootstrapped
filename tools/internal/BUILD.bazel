@@ -100,58 +100,19 @@ cc_library(
 )
 
 cc_binary(
-    name = "linker-wrapper-macos-aarch64",
+    name = "linker-wrapper",
     srcs = [
         "linker_wrapper.cc",
         ":linker_wrapper_config",
     ],
     data = [
         "//tools:clang++",
-        ":linker_contract_executable_macos_aarch64_manifest",
-        ":linker_contract_executable_macos_aarch64_tree",
+        ":linker-contract-executable",
+        ":linker-contract-executable-tree",
     ],
     deps = [
         ":linker_wrapper_config_header",
         "@bazel_tools//tools/cpp/runfiles",
     ],
-    target_compatible_with = MACOS_AARCH64_CONSTRAINTS,
-    visibility = ["//visibility:public"],
-)
-
-cc_binary(
-    name = "linker-wrapper-linux-x86_64",
-    srcs = [
-        "linker_wrapper.cc",
-        ":linker_wrapper_config",
-    ],
-    data = [
-        "//tools:clang++",
-        ":linker_contract_executable_linux_x86_64_manifest",
-        ":linker_contract_executable_linux_x86_64_tree",
-    ],
-    deps = [
-        ":linker_wrapper_config_header",
-        "@bazel_tools//tools/cpp/runfiles",
-    ],
-    target_compatible_with = LINUX_X86_64_CONSTRAINTS,
-    visibility = ["//visibility:public"],
-)
-
-cc_binary(
-    name = "linker-wrapper-linux-aarch64",
-    srcs = [
-        "linker_wrapper.cc",
-        ":linker_wrapper_config",
-    ],
-    data = [
-        "//tools:clang++",
-        ":linker_contract_executable_linux_aarch64_manifest",
-        ":linker_contract_executable_linux_aarch64_tree",
-    ],
-    deps = [
-        ":linker_wrapper_config_header",
-        "@bazel_tools//tools/cpp/runfiles",
-    ],
-    target_compatible_with = LINUX_AARCH64_CONSTRAINTS,
     visibility = ["//visibility:public"],
 )
