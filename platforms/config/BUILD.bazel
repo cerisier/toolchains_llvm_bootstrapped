@@ -18,7 +18,9 @@ bzl_library(
 config_setting(
     name = "none_nvptx64",
     constraint_values = [
-        "@platforms//os:none",
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+        "//constraints/libc:unconstrained",
         "//constraints/accelerator/arch:nvptx64",
         "//constraints/accelerator/runtime:none",
     ],

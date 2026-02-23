@@ -75,10 +75,14 @@ cc_args(
         "@rules_cc//cc/toolchains/actions:compile_actions",
     ],
     args = [
-        "-x", "c++",
-        "--target=nvptx64-unknown-unknown",
+        "-x", "cuda",
+        "-v",
+        "--target=nvptx64-nvidia-cuda",
         "-std=c++20",
         "-emit-llvm",
+        "-nocudalib",
+        "-nocudainc",
+        "-include", "__clang_cuda_runtime_wrapper.h",
     ],
 )
 
@@ -93,11 +97,15 @@ cc_args_list(
         "//toolchain:sysroot_flags",
         "//toolchain:hermetic_compile_flags",
 
-        "//toolchain/args:libcxx_library_search_paths",
+        "//toolchain/args:libcxx_headers_include_search_paths",
+    ] + [
+            # "//toolchain/args/linux:kernel_headers_include_search_paths",
+            # "//toolchain/args/linux:musl_libc_headers_include_search_paths",
+            "//toolchain/args/linux:glibc_headers_include_search_paths",
 
         "//toolchain/cuda:cuda_gpu_arch_flag",
         "//toolchain/cuda:cuda_device_only_flag",
-        "//toolchain/cuda:cuda_host_only_flag",
+        # "//toolchain/cuda:cuda_host_only_flag",
         "//toolchain/cuda:default_compile_flags",
 
         # no link

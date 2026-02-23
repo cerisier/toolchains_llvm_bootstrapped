@@ -8,7 +8,7 @@ cc_args(
         "@rules_cc//cc/toolchains/actions:cpp_compile_actions",
     ],
     args = [
-        "-std=c++17",
+        "-std=c++20",
     ],
 )
 

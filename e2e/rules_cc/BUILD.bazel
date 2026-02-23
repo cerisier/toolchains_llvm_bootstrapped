@@ -22,10 +22,20 @@ load(
     "tysan_cc_binary",
     "ubsan_cc_binary",
 )
+load("@llvm//:cuda.bzl", "cuda_binary")
 
 cc_library(
-    name = "raw_saxpy_device",
-    srcs = ["raw_saxpy_device.c"],
+    name = "kernel",
+    srcs = ["kernel.cu"],
+    deps = [
+        "@cuda_sdk//:cuda_headers",
+    ],
+)
+
+cuda_binary(
+    name = "raw_saxpy",
+    deps = [":kernel"],
+    archs = ["sm_70", "sm_80", "sm_90"],
 )
 
 cc_library(
