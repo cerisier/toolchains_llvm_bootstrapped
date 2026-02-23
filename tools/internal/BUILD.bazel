@@ -51,45 +51,23 @@ linker_contract_bundle(
     target_compatible_with = LINUX_AARCH64_CONSTRAINTS,
 )
 
-filegroup(
-    name = "linker-contract-macos-aarch64",
-    srcs = [":linker_contract_executable_macos_aarch64_manifest"],
-    target_compatible_with = MACOS_AARCH64_CONSTRAINTS,
+alias(
+    name = "linker-contract-executable",
+    actual = select({
+        "//platforms/config:macos_aarch64": ":linker_contract_executable_macos_aarch64_manifest",
+        "//platforms/config:linux_x86_64_gnu": ":linker_contract_executable_linux_x86_64_manifest",
+        "//platforms/config:linux_aarch64_gnu": ":linker_contract_executable_linux_aarch64_manifest",
+    }),
     visibility = ["//visibility:public"],
 )
 
-filegroup(
-    name = "linker-contract-linux-x86_64",
-    srcs = [":linker_contract_executable_linux_x86_64_manifest"],
-    target_compatible_with = LINUX_X86_64_CONSTRAINTS,
-    visibility = ["//visibility:public"],
-)
-
-filegroup(
-    name = "linker-contract-linux-aarch64",
-    srcs = [":linker_contract_executable_linux_aarch64_manifest"],
-    target_compatible_with = LINUX_AARCH64_CONSTRAINTS,
-    visibility = ["//visibility:public"],
-)
-
-filegroup(
-    name = "linker-contract-tree-macos-aarch64",
-    srcs = [":linker_contract_executable_macos_aarch64_tree"],
-    target_compatible_with = MACOS_AARCH64_CONSTRAINTS,
-    visibility = ["//visibility:public"],
-)
-
-filegroup(
-    name = "linker-contract-tree-linux-x86_64",
-    srcs = [":linker_contract_executable_linux_x86_64_tree"],
-    target_compatible_with = LINUX_X86_64_CONSTRAINTS,
-    visibility = ["//visibility:public"],
-)
-
-filegroup(
-    name = "linker-contract-tree-linux-aarch64",
-    srcs = [":linker_contract_executable_linux_aarch64_tree"],
-    target_compatible_with = LINUX_AARCH64_CONSTRAINTS,
+alias(
+    name = "linker-contract-executable-tree",
+    actual = select({
+        "//platforms/config:macos_aarch64": ":linker_contract_executable_macos_aarch64_tree",
+        "//platforms/config:linux_x86_64_gnu": ":linker_contract_executable_linux_x86_64_tree",
+        "//platforms/config:linux_aarch64_gnu": ":linker_contract_executable_linux_aarch64_tree",
+    }),
     visibility = ["//visibility:public"],
 )
 
