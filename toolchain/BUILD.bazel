@@ -335,7 +335,6 @@ alias(
         "//platforms/config:macos_aarch64": "//tools/internal:linker-wrapper-macos-aarch64",
         "//platforms/config:linux_x86_64": "//tools/internal:linker-wrapper-linux-x86_64",
         "//platforms/config:linux_aarch64": "//tools/internal:linker-wrapper-linux-aarch64",
-        "//conditions:default": "//tools/internal:linker-wrapper-macos-aarch64",
     }),
     visibility = ["//visibility:public"],
 )
@@ -346,7 +345,6 @@ alias(
         "//platforms/config:macos_aarch64": "//tools/internal:linker-contract-macos-aarch64",
         "//platforms/config:linux_x86_64": "//tools/internal:linker-contract-linux-x86_64",
         "//platforms/config:linux_aarch64": "//tools/internal:linker-contract-linux-aarch64",
-        "//conditions:default": "//tools/internal:linker-contract-macos-aarch64",
     }),
     visibility = ["//visibility:public"],
 )
@@ -419,4 +417,9 @@ bzl_library(
 bzl_library(
     name = "selects",
     srcs = ["selects.bzl"],
+)
+
+bzl_library(
+    name = "linker_policy",
+    srcs = ["linker_policy.bzl"],
 )
