@@ -1,4 +1,5 @@
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
 cc_binary(
     name = "header-parser",
@@ -9,5 +10,255 @@ cc_binary(
 cc_binary(
     name = "static-library-validator",
     srcs = ["static_library_validator.cc"],
+    visibility = ["//visibility:public"],
+)
+
+genrule(
+    name = "linker_contract_macos_aarch64",
+    outs = ["linker_contract_macos_aarch64.txt"],
+    cmd = """
+cat > $@ <<'CONTRACT'
+# directive<TAB>payload
+setenv\tZERO_AR_DATE\t1
+arg\t-target
+arg\taarch64-apple-darwin
+arg\t-fuse-ld=lld
+arg\t-resource-dir
+runfile\t$(rlocationpath //runtimes:resource_directory)
+arg\t-rtlib=compiler-rt
+runfile_prefix\t--sysroot=\t$(rlocationpath @macosx15.4.sdk//sysroot)
+arg\t-mmacosx-version-min=14.0
+arg\t-headerpad_max_install_names
+arg\t-Wl,-no_warn_duplicate_libraries
+arg\t-Wl,-oso_prefix,.
+CONTRACT
+""",
+    target_compatible_with = ["@platforms//os:macos", "@platforms//cpu:aarch64"],
+    tools = [
+        "//runtimes:resource_directory",
+        "@macosx15.4.sdk//sysroot",
+    ],
+)
+
+genrule(
+    name = "linker_contract_linux_x86_64",
+    outs = ["linker_contract_linux_x86_64.txt"],
+    cmd = """
+cat > $@ <<'CONTRACT'
+# directive<TAB>payload
+arg\t-target
+arg\tx86_64-linux-gnu
+arg\t-fuse-ld=lld
+arg\t-resource-dir
+runfile\t$(rlocationpath //runtimes:resource_directory)
+arg\t-rtlib=compiler-rt
+arg\t--sysroot=/dev/null
+arg\t-nostdlib++
+arg\t--unwindlib=none
+arg\t-Wl,-no-as-needed
+arg\t-Wl,-z,relro,-z,now
+runfile_prefix\t-B\t$(rlocationpath //runtimes:crt_objects_directory)
+runfile_prefix\t-L\t$(rlocationpath //runtimes/glibc:glibc_library_search_directory)
+arg\t-Wl,--push-state
+arg\t-Wl,--as-needed
+arg\t-lpthread
+arg\t-ldl
+arg\t-Wl,--pop-state
+CONTRACT
+""",
+    target_compatible_with = ["@platforms//os:linux", "@platforms//cpu:x86_64"],
+    tools = [
+        "//runtimes:crt_objects_directory",
+        "//runtimes/glibc:glibc_library_search_directory",
+        "//runtimes:resource_directory",
+    ],
+)
+
+genrule(
+    name = "linker_contract_linux_aarch64",
+    outs = ["linker_contract_linux_aarch64.txt"],
+    cmd = """
+cat > $@ <<'CONTRACT'
+# directive<TAB>payload
+arg\t-target
+arg\taarch64-linux-gnu
+arg\t-fuse-ld=lld
+arg\t-resource-dir
+runfile\t$(rlocationpath //runtimes:resource_directory)
+arg\t-rtlib=compiler-rt
+arg\t--sysroot=/dev/null
+arg\t-nostdlib++
+arg\t--unwindlib=none
+arg\t-Wl,-no-as-needed
+arg\t-Wl,-z,relro,-z,now
+runfile_prefix\t-B\t$(rlocationpath //runtimes:crt_objects_directory)
+runfile_prefix\t-L\t$(rlocationpath //runtimes/glibc:glibc_library_search_directory)
+arg\t-Wl,--push-state
+arg\t-Wl,--as-needed
+arg\t-lpthread
+arg\t-ldl
+arg\t-Wl,--pop-state
+CONTRACT
+""",
+    target_compatible_with = ["@platforms//os:linux", "@platforms//cpu:aarch64"],
+    tools = [
+        "//runtimes:crt_objects_directory",
+        "//runtimes/glibc:glibc_library_search_directory",
+        "//runtimes:resource_directory",
+    ],
+)
+
+genrule(
+    name = "linker_wrapper_config_macos_aarch64",
+    outs = ["linker_wrapper_config_macos_aarch64.cc"],
+    cmd = """
+cat > $@ <<'CONFIG'
+#include "tools/internal/linker_wrapper_config.h"
+
+namespace llvm_toolchain {
+
+const char* kLinkerWrapperClangRlocation = "$(rlocationpath //tools:clang++)";
+const char* kLinkerWrapperContractRlocation = "$(rlocationpath :linker_contract_macos_aarch64)";
+
+}  // namespace llvm_toolchain
+CONFIG
+""",
+    target_compatible_with = ["@platforms//os:macos", "@platforms//cpu:aarch64"],
+    tools = [
+        "//tools:clang++",
+        ":linker_contract_macos_aarch64",
+    ],
+)
+
+genrule(
+    name = "linker_wrapper_config_linux_x86_64",
+    outs = ["linker_wrapper_config_linux_x86_64.cc"],
+    cmd = """
+cat > $@ <<'CONFIG'
+#include "tools/internal/linker_wrapper_config.h"
+
+namespace llvm_toolchain {
+
+const char* kLinkerWrapperClangRlocation = "$(rlocationpath //tools:clang++)";
+const char* kLinkerWrapperContractRlocation = "$(rlocationpath :linker_contract_linux_x86_64)";
+
+}  // namespace llvm_toolchain
+CONFIG
+""",
+    target_compatible_with = ["@platforms//os:linux", "@platforms//cpu:x86_64"],
+    tools = [
+        "//tools:clang++",
+        ":linker_contract_linux_x86_64",
+    ],
+)
+
+genrule(
+    name = "linker_wrapper_config_linux_aarch64",
+    outs = ["linker_wrapper_config_linux_aarch64.cc"],
+    cmd = """
+cat > $@ <<'CONFIG'
+#include "tools/internal/linker_wrapper_config.h"
+
+namespace llvm_toolchain {
+
+const char* kLinkerWrapperClangRlocation = "$(rlocationpath //tools:clang++)";
+const char* kLinkerWrapperContractRlocation = "$(rlocationpath :linker_contract_linux_aarch64)";
+
+}  // namespace llvm_toolchain
+CONFIG
+""",
+    target_compatible_with = ["@platforms//os:linux", "@platforms//cpu:aarch64"],
+    tools = [
+        "//tools:clang++",
+        ":linker_contract_linux_aarch64",
+    ],
+)
+
+filegroup(
+    name = "linker-contract-macos-aarch64",
+    srcs = [":linker_contract_macos_aarch64"],
+    target_compatible_with = ["@platforms//os:macos", "@platforms//cpu:aarch64"],
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "linker-contract-linux-x86_64",
+    srcs = [":linker_contract_linux_x86_64"],
+    target_compatible_with = ["@platforms//os:linux", "@platforms//cpu:x86_64"],
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "linker-contract-linux-aarch64",
+    srcs = [":linker_contract_linux_aarch64"],
+    target_compatible_with = ["@platforms//os:linux", "@platforms//cpu:aarch64"],
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "linker_wrapper_config_header",
+    hdrs = ["linker_wrapper_config.h"],
+    visibility = ["//visibility:private"],
+)
+
+cc_binary(
+    name = "linker-wrapper-macos-aarch64",
+    srcs = [
+        "linker_wrapper.cc",
+        ":linker_wrapper_config_macos_aarch64",
+    ],
+    data = [
+        "//runtimes:resource_directory",
+        "//tools:clang++",
+        "@macosx15.4.sdk//sysroot",
+        ":linker_contract_macos_aarch64",
+    ],
+    deps = [
+        ":linker_wrapper_config_header",
+        "@bazel_tools//tools/cpp/runfiles",
+    ],
+    target_compatible_with = ["@platforms//os:macos", "@platforms//cpu:aarch64"],
+    visibility = ["//visibility:public"],
+)
+
+cc_binary(
+    name = "linker-wrapper-linux-x86_64",
+    srcs = [
+        "linker_wrapper.cc",
+        ":linker_wrapper_config_linux_x86_64",
+    ],
+    data = [
+        "//runtimes:crt_objects_directory",
+        "//runtimes/glibc:glibc_library_search_directory",
+        "//runtimes:resource_directory",
+        "//tools:clang++",
+        ":linker_contract_linux_x86_64",
+    ],
+    deps = [
+        ":linker_wrapper_config_header",
+        "@bazel_tools//tools/cpp/runfiles",
+    ],
+    target_compatible_with = ["@platforms//os:linux", "@platforms//cpu:x86_64"],
+    visibility = ["//visibility:public"],
+)
+
+cc_binary(
+    name = "linker-wrapper-linux-aarch64",
+    srcs = [
+        "linker_wrapper.cc",
+        ":linker_wrapper_config_linux_aarch64",
+    ],
+    data = [
+        "//runtimes:crt_objects_directory",
+        "//runtimes/glibc:glibc_library_search_directory",
+        "//runtimes:resource_directory",
+        "//tools:clang++",
+        ":linker_contract_linux_aarch64",
+    ],
+    deps = [
+        ":linker_wrapper_config_header",
+        "@bazel_tools//tools/cpp/runfiles",
+    ],
+    target_compatible_with = ["@platforms//os:linux", "@platforms//cpu:aarch64"],
     visibility = ["//visibility:public"],
 )
