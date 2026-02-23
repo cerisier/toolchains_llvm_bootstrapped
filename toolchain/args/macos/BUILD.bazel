@@ -19,18 +19,15 @@ load(":sysroot.bzl", "cc_sysroot")
 
 package(default_visibility = ["//visibility:public"])
 
-_MACOS_SYSROOT_LABEL = macos_sysroot_label()
-_MACOS_MINIMUM_OS_VERSION_DEFAULT = macos_minimum_os_version_default()
-
 cc_sysroot(
     name = "macos_sdk_sysroot",
     allowlist_include_directories = [
-        _MACOS_SYSROOT_LABEL,
+        macos_sysroot_label(),
     ],
     data = [
-        _MACOS_SYSROOT_LABEL,
+        macos_sysroot_label(),
     ],
-    sysroot = _MACOS_SYSROOT_LABEL,
+    sysroot = macos_sysroot_label(),
 )
 
 #TODO(cerisier): Fix with new cc_args BuildSettingInfo formatter once it is ready.
@@ -63,7 +60,7 @@ cc_args(
     } | {
         "//conditions:default": [
             # Keep current default behavior when the Apple minimum OS is not specified.
-            "-mmacosx-version-min=%s" % _MACOS_MINIMUM_OS_VERSION_DEFAULT,
+            "-mmacosx-version-min=%s" % macos_minimum_os_version_default(),
         ],
     }),
 )
