@@ -263,46 +263,64 @@ def linker_contract_directives(platform):
         fail("Unsupported platform for linker contract directives: %s" % platform)
     return _ops_to_contract_directives(link_policy_ops(platform), policy)
 
-def _cc_spec_for_platform_uses(platform, uses):
-    policy = PLATFORM_POLICIES[platform]
-    use_ops = [struct(kind = "use", name = name) for name in uses]
+_CC_SLICES = {
+    "resource_dir": struct(
+        platform = PLATFORM_LINUX_X86_64_GNU,
+        uses = ["resource_dir"],
+    ),
+    "crt_search_directory": struct(
+        platform = PLATFORM_LINUX_X86_64_GNU,
+        uses = ["crt_search_dir"],
+    ),
+    "fuse_ld": struct(
+        platform = PLATFORM_LINUX_X86_64_GNU,
+        uses = ["fuse_ld_lld"],
+    ),
+    "empty_sysroot_flags": struct(
+        platform = PLATFORM_LINUX_X86_64_GNU,
+        uses = ["empty_sysroot"],
+    ),
+    "rtlib_compiler_rt": struct(
+        platform = PLATFORM_LINUX_X86_64_GNU,
+        uses = ["rtlib_compiler_rt"],
+    ),
+    "stdlib": struct(
+        platform = PLATFORM_LINUX_X86_64_GNU,
+        uses = ["stdlib_none"],
+    ),
+    "unwindlib_none": struct(
+        platform = PLATFORM_LINUX_X86_64_GNU,
+        uses = ["unwindlib_none"],
+    ),
+    "linux_default_link_flags": struct(
+        platform = PLATFORM_LINUX_X86_64_GNU,
+        uses = ["linux_default_link_flags"],
+    ),
+    "linux_default_libs_gnu": struct(
+        platform = PLATFORM_LINUX_X86_64_GNU,
+        uses = [
+            "glibc_library_search_dir",
+            "linux_default_libs",
+        ],
+    ),
+    "macos_default_link_flags": struct(
+        platform = PLATFORM_MACOS_AARCH64,
+        uses = [
+            "macos_default_link_env",
+            "macos_default_link_flags",
+        ],
+    ),
+    "macos_default_libs": struct(
+        platform = PLATFORM_MACOS_AARCH64,
+        uses = ["macos_default_libs"],
+    ),
+}
+
+def cc_spec(slice_name):
+    slice_def = _CC_SLICES.get(slice_name)
+    if slice_def == None:
+        fail("Unknown cc spec slice: %s" % slice_name)
+
+    policy = PLATFORM_POLICIES[slice_def.platform]
+    use_ops = [struct(kind = "use", name = name) for name in slice_def.uses]
     return _ops_to_cc_spec(_expand_ops(use_ops), policy)
-
-def cc_spec_resource_dir():
-    return _cc_spec_for_platform_uses(PLATFORM_LINUX_X86_64_GNU, ["resource_dir"])
-
-def cc_spec_crt_search_directory():
-    return _cc_spec_for_platform_uses(PLATFORM_LINUX_X86_64_GNU, ["crt_search_dir"])
-
-def cc_spec_fuse_ld():
-    return _cc_spec_for_platform_uses(PLATFORM_LINUX_X86_64_GNU, ["fuse_ld_lld"])
-
-def cc_spec_empty_sysroot_flags():
-    return _cc_spec_for_platform_uses(PLATFORM_LINUX_X86_64_GNU, ["empty_sysroot"])
-
-def cc_spec_rtlib_compiler_rt():
-    return _cc_spec_for_platform_uses(PLATFORM_LINUX_X86_64_GNU, ["rtlib_compiler_rt"])
-
-def cc_spec_stdlib():
-    return _cc_spec_for_platform_uses(PLATFORM_LINUX_X86_64_GNU, ["stdlib_none"])
-
-def cc_spec_unwindlib_none():
-    return _cc_spec_for_platform_uses(PLATFORM_LINUX_X86_64_GNU, ["unwindlib_none"])
-
-def cc_spec_linux_default_link_flags():
-    return _cc_spec_for_platform_uses(PLATFORM_LINUX_X86_64_GNU, ["linux_default_link_flags"])
-
-def cc_spec_linux_default_libs_gnu():
-    return _cc_spec_for_platform_uses(PLATFORM_LINUX_X86_64_GNU, [
-        "glibc_library_search_dir",
-        "linux_default_libs",
-    ])
-
-def cc_spec_macos_default_link_flags():
-    return _cc_spec_for_platform_uses(PLATFORM_MACOS_AARCH64, [
-        "macos_default_link_env",
-        "macos_default_link_flags",
-    ])
-
-def cc_spec_macos_default_libs():
-    return _cc_spec_for_platform_uses(PLATFORM_MACOS_AARCH64, ["macos_default_libs"])
