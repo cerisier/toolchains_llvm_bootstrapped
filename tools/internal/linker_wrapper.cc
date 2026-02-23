@@ -5,6 +5,7 @@
 #include <unistd.h>
 
 #include <fstream>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -19,9 +20,7 @@ std::string ResolveRunfilePath(const Runfiles& runfiles,
                                const char* runfile_key,
                                const char* description) {
   if (runfile_key == nullptr || runfile_key[0] == '\0') {
-    fprintf(stderr,
-            "linker_wrapper: empty runfile key for %s\n",
-            description);
+    fprintf(stderr, "linker_wrapper: empty runfile key for %s\n", description);
     exit(2);
   }
 
@@ -30,24 +29,37 @@ std::string ResolveRunfilePath(const Runfiles& runfiles,
     return resolved_path;
   }
 
-  fprintf(stderr,
-          "linker_wrapper: failed to resolve runfile for %s: key='%s'\n",
+  fprintf(stderr, "linker_wrapper: failed to resolve runfile for %s: key='%s'\n",
           description, runfile_key);
   exit(2);
 }
 
-std::vector<std::string> SplitByTab(const std::string& line) {
+std::vector<std::string> ParseContractFields(const std::string& line) {
   std::vector<std::string> fields;
+  fields.reserve(3);
+
   size_t start = 0;
-  while (true) {
-    const size_t separator = line.find('\t', start);
-    if (separator == std::string::npos) {
+  while (start <= line.size()) {
+    const size_t tab = line.find('\t', start);
+    if (tab == std::string::npos) {
       fields.push_back(line.substr(start));
-      return fields;
+      break;
     }
-    fields.push_back(line.substr(start, separator - start));
-    start = separator + 1;
+    fields.push_back(line.substr(start, tab - start));
+    start = tab + 1;
   }
+  return fields;
+}
+
+void RequireArity(const std::vector<std::string>& fields, size_t expected,
+                  const char* directive) {
+  if (fields.size() == expected) {
+    return;
+  }
+  fprintf(stderr,
+          "linker_wrapper: invalid contract %s directive (expected %zu fields, got %zu)\n",
+          directive, expected, fields.size());
+  exit(2);
 }
 
 void ApplyContractLine(const Runfiles& runfiles,
@@ -58,33 +70,20 @@ void ApplyContractLine(const Runfiles& runfiles,
   }
 
   if (fields[0] == "arg") {
-    if (fields.size() != 2) {
-      fprintf(stderr,
-              "linker_wrapper: invalid contract arg directive (expected 2 fields)\n");
-      exit(2);
-    }
+    RequireArity(fields, 2, "arg");
     arguments->push_back(fields[1]);
     return;
   }
 
   if (fields[0] == "runfile") {
-    if (fields.size() != 2) {
-      fprintf(stderr,
-              "linker_wrapper: invalid contract runfile directive (expected 2 fields)\n");
-      exit(2);
-    }
+    RequireArity(fields, 2, "runfile");
     arguments->push_back(
         ResolveRunfilePath(runfiles, fields[1].c_str(), "contract runfile"));
     return;
   }
 
   if (fields[0] == "runfile_prefix") {
-    if (fields.size() != 3) {
-      fprintf(stderr,
-              "linker_wrapper: invalid contract runfile_prefix directive "
-              "(expected 3 fields)\n");
-      exit(2);
-    }
+    RequireArity(fields, 3, "runfile_prefix");
     arguments->push_back(fields[1] +
                          ResolveRunfilePath(runfiles, fields[2].c_str(),
                                             "contract runfile_prefix"));
@@ -92,18 +91,16 @@ void ApplyContractLine(const Runfiles& runfiles,
   }
 
   if (fields[0] == "setenv") {
-    if (fields.size() != 3) {
-      fprintf(stderr,
-              "linker_wrapper: invalid contract setenv directive "
-              "(expected 3 fields)\n");
+    RequireArity(fields, 3, "setenv");
+    if (setenv(fields[1].c_str(), fields[2].c_str(), 1) != 0) {
+      fprintf(stderr, "linker_wrapper: setenv failed for '%s': %s\n",
+              fields[1].c_str(), strerror(errno));
       exit(2);
     }
-    setenv(fields[1].c_str(), fields[2].c_str(), 1);
     return;
   }
 
-  fprintf(stderr,
-          "linker_wrapper: unknown contract directive '%s'\n",
+  fprintf(stderr, "linker_wrapper: unknown contract directive '%s'\n",
           fields[0].c_str());
   exit(2);
 }
@@ -113,8 +110,7 @@ void AppendLinkerContractArguments(const Runfiles& runfiles,
                                    std::vector<std::string>* arguments) {
   std::ifstream contract_stream(contract_path);
   if (!contract_stream.is_open()) {
-    fprintf(stderr,
-            "linker_wrapper: failed to open linker contract at '%s'\n",
+    fprintf(stderr, "linker_wrapper: failed to open linker contract at '%s'\n",
             contract_path.c_str());
     exit(2);
   }
@@ -124,7 +120,7 @@ void AppendLinkerContractArguments(const Runfiles& runfiles,
     if (line.empty() || line[0] == '#') {
       continue;
     }
-    ApplyContractLine(runfiles, SplitByTab(line), arguments);
+    ApplyContractLine(runfiles, ParseContractFields(line), arguments);
   }
 }
 
@@ -132,9 +128,8 @@ void AppendLinkerContractArguments(const Runfiles& runfiles,
 
 int main(int argc, char** argv) {
   if (argc < 2) {
-    fprintf(stderr,
-            "Usage: %s <clang++-style-link-args...>\n"
-            "Example: %s input.o -o output_binary\n",
+    fprintf(stderr, "Usage: %s <clang++-style-link-args...>\n"
+                    "Example: %s input.o -o output_binary\n",
             argv[0], argv[0]);
     return 2;
   }

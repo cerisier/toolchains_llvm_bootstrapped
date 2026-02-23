@@ -18,13 +18,13 @@ LINUX_AARCH64_LINKER_CONTRACT_DIRECTIVES = linker_contract_directives(PLATFORM_L
 def _render_contract_line(directive):
     kind = directive[0]
     if kind == "arg":
-        return "arg\\t%s" % directive[1]
+        return "arg\t%s" % directive[1]
     if kind == "runfile":
-        return "runfile\\t$(rlocationpath %s)" % directive[1]
+        return "runfile\t$(rlocationpath %s)" % directive[1]
     if kind == "runfile_prefix":
-        return "runfile_prefix\\t%s\\t$(rlocationpath %s)" % (directive[1], directive[2])
+        return "runfile_prefix\t%s\t$(rlocationpath %s)" % (directive[1], directive[2])
     if kind == "setenv":
-        return "setenv\\t%s\\t%s" % (directive[1], directive[2])
+        return "setenv\t%s\t%s" % (directive[1], directive[2])
     fail("Unknown linker contract directive kind: %s" % kind)
 
 def _contract_tools(directives):
