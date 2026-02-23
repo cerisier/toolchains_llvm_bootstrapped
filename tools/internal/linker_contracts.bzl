@@ -4,21 +4,6 @@ load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
 
 _TREE_ROOT_TOKEN = "__LLVM_LINKER_TREE__"
 
-MACOS_AARCH64_CONSTRAINTS = [
-    "@platforms//os:macos",
-    "@platforms//cpu:aarch64",
-]
-
-LINUX_X86_64_CONSTRAINTS = [
-    "@platforms//os:linux",
-    "@platforms//cpu:x86_64",
-]
-
-LINUX_AARCH64_CONSTRAINTS = [
-    "@platforms//os:linux",
-    "@platforms//cpu:aarch64",
-]
-
 def _normalize_subpath(path):
     if path.startswith("/"):
         fail("tree input destination must be a relative path, got: %s" % path)

@@ -2,9 +2,6 @@ load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load(
     ":linker_contracts.bzl",
-    "LINUX_AARCH64_CONSTRAINTS",
-    "LINUX_X86_64_CONSTRAINTS",
-    "MACOS_AARCH64_CONSTRAINTS",
     "linker_contract_bundle",
 )
 
@@ -27,7 +24,10 @@ linker_contract_bundle(
         "//runtimes/libunwind:libunwind_library_search_directory": "libunwind_library_search_directory",
         "@macos_sdk//sysroot": "sysroot",
     },
-    target_compatible_with = MACOS_AARCH64_CONSTRAINTS,
+    target_compatible_with = [
+        "@platforms//os:macos",
+        "@platforms//cpu:aarch64",
+    ],
 )
 
 linker_contract_bundle(
@@ -37,7 +37,10 @@ linker_contract_bundle(
         "//runtimes:resource_directory": "resource_directory",
         "//runtimes/glibc:glibc_library_search_directory": "glibc_library_search_directory",
     },
-    target_compatible_with = LINUX_X86_64_CONSTRAINTS,
+    target_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
 )
 
 linker_contract_bundle(
@@ -47,7 +50,10 @@ linker_contract_bundle(
         "//runtimes:resource_directory": "resource_directory",
         "//runtimes/glibc:glibc_library_search_directory": "glibc_library_search_directory",
     },
-    target_compatible_with = LINUX_AARCH64_CONSTRAINTS,
+    target_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:aarch64",
+    ],
 )
 
 alias(
