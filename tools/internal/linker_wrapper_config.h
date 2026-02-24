@@ -1,8 +1,8 @@
 #pragma once
 
-namespace llvm_toolchain {
+namespace llvm {
 
 extern const char* kLinkerWrapperClangRlocation;
 extern const char* kLinkerWrapperContractRlocation;
 
-}  // namespace llvm_toolchain
+}  // namespace llvm

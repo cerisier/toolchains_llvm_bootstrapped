@@ -200,10 +200,10 @@ int main(int argc, char** argv) {
   }
 
   const std::string clang_path =
-      ResolveRunfilePath(*runfiles, llvm_toolchain::kLinkerWrapperClangRlocation,
+      ResolveRunfilePath(*runfiles, llvm::kLinkerWrapperClangRlocation,
                          "platform clang++");
   const std::string contract_path = ResolveRunfilePath(
-      *runfiles, llvm_toolchain::kLinkerWrapperContractRlocation,
+      *runfiles, llvm::kLinkerWrapperContractRlocation,
       "linker contract");
   const std::string workspace_execroot =
       ResolveWorkspaceExecrootPath(contract_path);
