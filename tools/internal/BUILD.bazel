@@ -1,6 +1,5 @@
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
-load("@llvm//toolchain:selects.bzl", "platform_link_action_tool")
 load(
     ":linker_contracts.bzl",
     "linker_contract_from_cc_toolchain",
@@ -24,8 +23,12 @@ linker_contract_from_cc_toolchain(
 )
 
 alias(
-    name = "link_action_tool",
-    actual = platform_link_action_tool(),
+    name = "linker_backend_tool",
+    actual = select({
+        "//platforms/config:macos_aarch64": "//tools:ld64.lld",
+        "//platforms/config:linux_x86_64": "//tools:ld.lld",
+        "//platforms/config:linux_aarch64": "//tools:ld.lld",
+    }),
     visibility = ["//visibility:private"],
 )
 
@@ -33,12 +36,14 @@ genrule(
     name = "linker_wrapper_config",
     outs = ["linker_wrapper_config.cc"],
     cmd = "\n".join([
-        "cat > $@ <<'CONFIG'",
+        "LINKER_BACKEND_BASENAME=$$(basename $(location :linker_backend_tool))",
+        "cat > $@ <<CONFIG",
         "#include \"tools/internal/linker_wrapper_config.h\"",
         "",
         "namespace llvm {",
         "",
         "const char* kLinkerWrapperLinkerToolRlocation = \"$(rlocationpath //tools:clang++)\";",
+        "const char* kLinkerWrapperLinkerBackendBasename = \"$${LINKER_BACKEND_BASENAME}\";",
         "const char* kLinkerWrapperContractRlocation = \"$(rlocationpath :linker_contract)\";",
         "const char* kLinkerWrapperLibcxxSearchDirectoryRlocation = \"$(rlocationpath //runtimes/libcxx:libcxx_library_search_directory)\";",
         "const char* kLinkerWrapperLibunwindSearchDirectoryRlocation = \"$(rlocationpath //runtimes/libunwind:libunwind_library_search_directory)\";",
@@ -50,7 +55,7 @@ genrule(
         "//runtimes/libcxx:libcxx_library_search_directory",
         "//runtimes/libunwind:libunwind_library_search_directory",
         "//tools:clang++",
-        ":link_action_tool",
+        ":linker_backend_tool",
         ":linker_contract",
     ],
 )
@@ -71,7 +76,7 @@ cc_binary(
         "//runtimes:resource_directory",
         "//runtimes/libcxx:libcxx_library_search_directory",
         "//runtimes/libunwind:libunwind_library_search_directory",
-        ":link_action_tool",
+        "//tools:clang++",
         "@macos_sdk//sysroot:sysroot_files",
         "@compiler-rt//:clang_rt.builtins.static",
         ":linker_contract",
@@ -99,7 +104,7 @@ cc_binary(
         "//runtimes/libunwind:libunwind_library_search_directory",
         "//runtimes/glibc:glibc_library_search_directory",
         "//runtimes:resource_directory",
-        ":link_action_tool",
+        "//tools:clang++",
         "@compiler-rt//:clang_rt.builtins.static",
         ":linker_contract",
     ],
@@ -126,7 +131,7 @@ cc_binary(
         "//runtimes/libunwind:libunwind_library_search_directory",
         "//runtimes/glibc:glibc_library_search_directory",
         "//runtimes:resource_directory",
-        ":link_action_tool",
+        "//tools:clang++",
         "@compiler-rt//:clang_rt.builtins.static",
         ":linker_contract",
     ],

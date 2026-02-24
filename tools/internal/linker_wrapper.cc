@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -256,6 +257,31 @@ void AppendLinkerContractArguments(const std::string& contract_path,
   }
 }
 
+std::string CreateLinkerBackendAlias(const std::string& linker_tool_path,
+                                     const char* linker_backend_basename) {
+  if (linker_backend_basename == nullptr || linker_backend_basename[0] == '\0') {
+    fprintf(stderr, "linker_wrapper: empty linker backend basename\n");
+    exit(2);
+  }
+
+  char temporary_directory_template[] = "/tmp/linker_wrapper_XXXXXX";
+  char* temporary_directory = mkdtemp(temporary_directory_template);
+  if (temporary_directory == nullptr) {
+    fprintf(stderr, "linker_wrapper: mkdtemp failed: %s\n", strerror(errno));
+    exit(2);
+  }
+
+  const std::string alias_path =
+      std::string(temporary_directory) + "/" + linker_backend_basename;
+  if (symlink(linker_tool_path.c_str(), alias_path.c_str()) != 0) {
+    fprintf(stderr, "linker_wrapper: symlink failed for '%s' -> '%s': %s\n",
+            alias_path.c_str(), linker_tool_path.c_str(), strerror(errno));
+    exit(2);
+  }
+
+  return alias_path;
+}
+
 }  // namespace
 
 int main(int argc, char** argv) {
@@ -278,6 +304,8 @@ int main(int argc, char** argv) {
   const std::string linker_tool_path =
       ResolveRunfilePath(*runfiles, llvm::kLinkerWrapperLinkerToolRlocation,
                          "platform linker tool");
+  const std::string linker_backend_path = CreateLinkerBackendAlias(
+      linker_tool_path, llvm::kLinkerWrapperLinkerBackendBasename);
   const std::string contract_path = ResolveRunfilePath(
       *runfiles, llvm::kLinkerWrapperContractRlocation,
       "linker contract");
@@ -289,6 +317,7 @@ int main(int argc, char** argv) {
   std::vector<std::string> argument_storage;
   argument_storage.reserve(static_cast<size_t>(argc) + 24);
   argument_storage.push_back(linker_tool_path);
+  argument_storage.push_back(std::string("--ld-path=") + linker_backend_path);
 
   AppendLinkerContractArguments(contract_path, workspace_execroot, output_base,
                                 runfiles_root, *runfiles, &argument_storage);
