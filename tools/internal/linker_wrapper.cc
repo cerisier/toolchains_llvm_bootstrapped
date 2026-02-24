@@ -163,20 +163,17 @@ std::string NormalizePathLikeArgument(const std::string& argument,
   if (argument.rfind("--sysroot=", 0) == 0) {
     const std::string path = argument.substr(strlen("--sysroot="));
     return std::string("--sysroot=") +
-           NormalizeRelativePath(path, workspace_execroot, output_base,
-                                 runfiles_root);
+           NormalizeRelativePath(path, workspace_execroot, output_base, runfiles_root);
   }
   if (argument.rfind("-L", 0) == 0 && argument.size() > 2) {
     const std::string path = argument.substr(2);
     return std::string("-L") +
-           NormalizeRelativePath(path, workspace_execroot, output_base,
-                                 runfiles_root);
+           NormalizeRelativePath(path, workspace_execroot, output_base, runfiles_root);
   }
   if (argument.rfind("-B", 0) == 0 && argument.size() > 2) {
     const std::string path = argument.substr(2);
     return std::string("-B") +
-           NormalizeRelativePath(path, workspace_execroot, output_base,
-                                 runfiles_root);
+           NormalizeRelativePath(path, workspace_execroot, output_base, runfiles_root);
   }
   return NormalizeRelativePath(argument, workspace_execroot, output_base,
                                runfiles_root);
