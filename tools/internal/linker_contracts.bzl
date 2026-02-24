@@ -75,7 +75,7 @@ linker_contract_from_cc_toolchain = rule(
     toolchains = use_cc_toolchain(),
 )
 
-def linker_wrapper_config_genrule(name, out, contract_label, target_compatible_with):
+def linker_wrapper_config_genrule(name, out, contract_label):
     native.genrule(
         name = name,
         outs = [out],
@@ -95,5 +95,4 @@ def linker_wrapper_config_genrule(name, out, contract_label, target_compatible_w
             "//tools:clang++",
             contract_label,
         ],
-        target_compatible_with = target_compatible_with,
     )
