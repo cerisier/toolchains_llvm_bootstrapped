@@ -26,15 +26,40 @@ load("@llvm//:cuda.bzl", "cuda_binary")
 
 cc_library(
     name = "kernel",
-    srcs = ["kernel.cu"],
+    srcs = [
+        "kernel.cu",
+        "kernel2.cu",
+    ],
     deps = [
         "@cuda_sdk//:cuda_headers",
     ],
 )
 
+cc_library(
+    name = "kernel2",
+    srcs = [
+        "kernel3.cu",
+    ],
+    deps = [
+        "@cuda_sdk//:cuda_headers",
+    ],
+)
+
+cc_library(
+    name = "kernel3",
+    deps = [
+        ":kernel",
+        ":kernel2",
+    ],
+)
+
 cuda_binary(
     name = "raw_saxpy",
-    deps = [":kernel"],
+    deps = [
+        ":kernel",
+        ":kernel2",
+        ":kernel3",
+    ],
     archs = ["sm_70", "sm_80", "sm_90"],
 )
 
