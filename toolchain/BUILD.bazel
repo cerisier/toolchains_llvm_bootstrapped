@@ -148,8 +148,8 @@ cc_args_list(
 cc_args_list(
     name = "libunwind_library_search_paths",
     args = select({
-        # We want to provide the stubs for macOS.
         "@platforms//os:macos": [
+            # We want to provide the stubs for macOS.
             "//toolchain/args:libunwind_library_search_paths",
         ],
         "@platforms//os:linux": [
