@@ -1,10 +1,8 @@
-load("@bazel_lib//:bzl_library.bzl", "bzl_library")
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load(
     ":linker_contracts.bzl",
     "linker_contract_from_cc_toolchain",
-    "linker_wrapper_config_genrule",
 )
 
 cc_binary(
@@ -24,10 +22,25 @@ linker_contract_from_cc_toolchain(
     out = "linker_contract.txt",
 )
 
-linker_wrapper_config_genrule(
+genrule(
     name = "linker_wrapper_config",
-    out = "linker_wrapper_config.cc",
-    contract_label = ":linker_contract",
+    outs = ["linker_wrapper_config.cc"],
+    cmd = "\n".join([
+        "cat > $@ <<'CONFIG'",
+        "#include \"tools/internal/linker_wrapper_config.h\"",
+        "",
+        "namespace llvm_toolchain {",
+        "",
+        "const char* kLinkerWrapperClangRlocation = \"$(rlocationpath //tools:clang++)\";",
+        "const char* kLinkerWrapperContractRlocation = \"$(rlocationpath :linker_contract)\";",
+        "",
+        "}  // namespace llvm_toolchain",
+        "CONFIG",
+    ]),
+    tools = [
+        "//tools:clang++",
+        ":linker_contract",
+    ],
 )
 
 cc_library(
@@ -105,14 +118,4 @@ cc_binary(
         "@platforms//cpu:aarch64",
     ],
     visibility = ["//visibility:public"],
-)
-
-bzl_library(
-    name = "linker_contracts",
-    srcs = ["linker_contracts.bzl"],
-    deps = [
-        "@rules_cc//cc:action_names_bzl",
-        "@rules_cc//cc:find_cc_toolchain_bzl",
-        "@rules_cc//cc/common:cc_common.bzl",
-    ],
 )

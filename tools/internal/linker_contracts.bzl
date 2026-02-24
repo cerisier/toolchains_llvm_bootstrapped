@@ -59,25 +59,3 @@ linker_contract_from_cc_toolchain = rule(
     fragments = ["cpp"],
     toolchains = use_cc_toolchain(),
 )
-
-def linker_wrapper_config_genrule(name, out, contract_label):
-    native.genrule(
-        name = name,
-        outs = [out],
-        cmd = "\n".join([
-            "cat > $@ <<'CONFIG'",
-            "#include \"tools/internal/linker_wrapper_config.h\"",
-            "",
-            "namespace llvm_toolchain {",
-            "",
-            "const char* kLinkerWrapperClangRlocation = \"$(rlocationpath //tools:clang++)\";",
-            "const char* kLinkerWrapperContractRlocation = \"$(rlocationpath %s)\";" % contract_label,
-            "",
-            "}  // namespace llvm_toolchain",
-            "CONFIG",
-        ]),
-        tools = [
-            "//tools:clang++",
-            contract_label,
-        ],
-    )
