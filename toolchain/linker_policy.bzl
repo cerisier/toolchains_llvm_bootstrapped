@@ -14,7 +14,7 @@ def _spec(args, data = [], format = {}, env = {}):
         env = env,
     )
 
-_CC_LINK_SPECS = {
+_LINKER_ARG_GROUPS = {
     "resource_dir": _spec(
         args = [
             "-resource-dir",
@@ -144,7 +144,7 @@ _PLATFORM_POLICY = {
         additional_format = {
             "macos_sysroot": MACOS_AARCH64_SYSROOT_LABEL,
         },
-        cc_link_specs = [
+        linker_arg_groups = [
             "fuse_ld",
             "resource_dir",
             "rtlib_compiler_rt",
@@ -158,7 +158,7 @@ _PLATFORM_POLICY = {
         additional_args = [],
         additional_data = [],
         additional_format = {},
-        cc_link_specs = [
+        linker_arg_groups = [
             "fuse_ld",
             "resource_dir",
             "rtlib_compiler_rt",
@@ -176,7 +176,7 @@ _PLATFORM_POLICY = {
         additional_args = [],
         additional_data = [],
         additional_format = {},
-        cc_link_specs = [
+        linker_arg_groups = [
             "fuse_ld",
             "resource_dir",
             "rtlib_compiler_rt",
@@ -201,8 +201,8 @@ def target_triple_for_platform(platform):
         fail("Unsupported platform for target triple: %s" % platform)
     return policy.target_triple
 
-def cc_link_spec(spec_name):
-    spec = _CC_LINK_SPECS.get(spec_name)
+def linker_arg_group(spec_name):
+    spec = _LINKER_ARG_GROUPS.get(spec_name)
     if spec == None:
         fail("Unknown cc link spec: %s" % spec_name)
     return spec
@@ -280,7 +280,7 @@ def linker_contract_directives(platform):
     if policy == None:
         fail("Unsupported platform for linker contract directives: %s" % platform)
 
-    policy_specs = [_CC_LINK_SPECS[name] for name in policy.cc_link_specs]
+    policy_specs = [_LINKER_ARG_GROUPS[name] for name in policy.linker_arg_groups]
     merged_spec = _merge_specs(policy_specs)
     full_spec = _merge_specs([
         _spec(

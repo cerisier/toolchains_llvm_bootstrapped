@@ -1,5 +1,5 @@
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
-load("//toolchain:linker_policy.bzl", "cc_link_spec")
+load("//toolchain:linker_policy.bzl", "linker_arg_group")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -43,7 +43,7 @@ cc_args(
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
-    args = cc_link_spec("windows_default_libs").args,
-    data = cc_link_spec("windows_default_libs").data,
-    format = cc_link_spec("windows_default_libs").format,
+    args = linker_arg_group("windows_default_libs").args,
+    data = linker_arg_group("windows_default_libs").data,
+    format = linker_arg_group("windows_default_libs").format,
 )
