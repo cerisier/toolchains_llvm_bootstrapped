@@ -54,7 +54,7 @@ def linker_contract_genrule(name, out, directives, target_compatible_with):
         target_compatible_with = target_compatible_with,
     )
 
-def linker_wrapper_config_genrule(name, out, contract_label, target_compatible_with):
+def linker_wrapper_config_genrule(name, out, contract_label):
     native.genrule(
         name = name,
         outs = [out],
@@ -74,5 +74,4 @@ def linker_wrapper_config_genrule(name, out, contract_label, target_compatible_w
             "//tools:clang++",
             contract_label,
         ],
-        target_compatible_with = target_compatible_with,
     )

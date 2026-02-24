@@ -46,44 +46,18 @@ linker_contract_genrule(
 )
 
 linker_wrapper_config_genrule(
-    name = "linker_wrapper_config_macos_aarch64",
-    out = "linker_wrapper_config_macos_aarch64.cc",
-    contract_label = ":linker_contract_macos_aarch64",
-    target_compatible_with = MACOS_AARCH64_CONSTRAINTS,
-)
-
-linker_wrapper_config_genrule(
-    name = "linker_wrapper_config_linux_x86_64",
-    out = "linker_wrapper_config_linux_x86_64.cc",
-    contract_label = ":linker_contract_linux_x86_64",
-    target_compatible_with = LINUX_X86_64_CONSTRAINTS,
-)
-
-linker_wrapper_config_genrule(
-    name = "linker_wrapper_config_linux_aarch64",
-    out = "linker_wrapper_config_linux_aarch64.cc",
-    contract_label = ":linker_contract_linux_aarch64",
-    target_compatible_with = LINUX_AARCH64_CONSTRAINTS,
+    name = "linker_wrapper_config",
+    out = "linker_wrapper_config.cc",
+    contract_label = ":linker-contract",
 )
 
 filegroup(
-    name = "linker-contract-macos-aarch64",
-    srcs = [":linker_contract_macos_aarch64"],
-    target_compatible_with = MACOS_AARCH64_CONSTRAINTS,
-    visibility = ["//visibility:public"],
-)
-
-filegroup(
-    name = "linker-contract-linux-x86_64",
-    srcs = [":linker_contract_linux_x86_64"],
-    target_compatible_with = LINUX_X86_64_CONSTRAINTS,
-    visibility = ["//visibility:public"],
-)
-
-filegroup(
-    name = "linker-contract-linux-aarch64",
-    srcs = [":linker_contract_linux_aarch64"],
-    target_compatible_with = LINUX_AARCH64_CONSTRAINTS,
+    name = "linker-contract",
+    srcs = select({
+        "//platforms/config:macos_aarch64": [":linker_contract_macos_aarch64"],
+        "//platforms/config:linux_x86_64": [":linker_contract_linux_x86_64"],
+        "//platforms/config:linux_aarch64": [":linker_contract_linux_aarch64"],
+    }),
     visibility = ["//visibility:public"],
 )
 
@@ -94,64 +68,36 @@ cc_library(
 )
 
 cc_binary(
-    name = "linker-wrapper-macos-aarch64",
+    name = "linker-wrapper",
     srcs = [
         "linker_wrapper.cc",
-        ":linker_wrapper_config_macos_aarch64",
+        ":linker_wrapper_config",
     ],
     data = [
-        "//runtimes/compiler-rt:clang_rt.builtins.static",
-        "//runtimes:resource_directory",
         "//tools:clang++",
-        "@macos_sdk//sysroot",
-        ":linker_contract_macos_aarch64",
-    ],
+    ] + select({
+        "//platforms/config:macos_aarch64": [
+            "//runtimes/compiler-rt:clang_rt.builtins.static",
+            "//runtimes:resource_directory",
+            "@macos_sdk//sysroot",
+            ":linker_contract_macos_aarch64",
+        ],
+        "//platforms/config:linux_x86_64": [
+            "//runtimes:crt_objects_directory",
+            "//runtimes/glibc:glibc_library_search_directory",
+            "//runtimes:resource_directory",
+            ":linker_contract_linux_x86_64",
+        ],
+        "//platforms/config:linux_aarch64": [
+            "//runtimes:crt_objects_directory",
+            "//runtimes/glibc:glibc_library_search_directory",
+            "//runtimes:resource_directory",
+            ":linker_contract_linux_aarch64",
+        ],
+    }),
     deps = [
         ":linker_wrapper_config_header",
         "@bazel_tools//tools/cpp/runfiles",
     ],
-    target_compatible_with = MACOS_AARCH64_CONSTRAINTS,
-    visibility = ["//visibility:public"],
-)
-
-cc_binary(
-    name = "linker-wrapper-linux-x86_64",
-    srcs = [
-        "linker_wrapper.cc",
-        ":linker_wrapper_config_linux_x86_64",
-    ],
-    data = [
-        "//runtimes:crt_objects_directory",
-        "//runtimes/glibc:glibc_library_search_directory",
-        "//runtimes:resource_directory",
-        "//tools:clang++",
-        ":linker_contract_linux_x86_64",
-    ],
-    deps = [
-        ":linker_wrapper_config_header",
-        "@bazel_tools//tools/cpp/runfiles",
-    ],
-    target_compatible_with = LINUX_X86_64_CONSTRAINTS,
-    visibility = ["//visibility:public"],
-)
-
-cc_binary(
-    name = "linker-wrapper-linux-aarch64",
-    srcs = [
-        "linker_wrapper.cc",
-        ":linker_wrapper_config_linux_aarch64",
-    ],
-    data = [
-        "//runtimes:crt_objects_directory",
-        "//runtimes/glibc:glibc_library_search_directory",
-        "//runtimes:resource_directory",
-        "//tools:clang++",
-        ":linker_contract_linux_aarch64",
-    ],
-    deps = [
-        ":linker_wrapper_config_header",
-        "@bazel_tools//tools/cpp/runfiles",
-    ],
-    target_compatible_with = LINUX_AARCH64_CONSTRAINTS,
     visibility = ["//visibility:public"],
 )
