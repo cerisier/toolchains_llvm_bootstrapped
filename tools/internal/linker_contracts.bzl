@@ -2,6 +2,22 @@ load("@rules_cc//cc:action_names.bzl", "ACTION_NAMES")
 load("@rules_cc//cc:find_cc_toolchain.bzl", "find_cc_toolchain", "use_cc_toolchain")
 load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
 
+def _stub_search_directory_name(path):
+    if path.endswith("/libcxx_library_search_directory"):
+        return "libcxx"
+    if path.endswith("/libunwind_library_search_directory"):
+        return "libunwind"
+    return None
+
+def _append_contract_lines(lines, argument):
+    if argument.startswith("-L") and len(argument) > 2:
+        stub_search_directory = _stub_search_directory_name(argument[2:])
+        if stub_search_directory != None:
+            lines.append("search_dir\t%s" % stub_search_directory)
+            return
+
+    lines.append("arg\t%s" % argument)
+
 def _linker_contract_from_cc_toolchain_impl(ctx):
     cc_toolchain = find_cc_toolchain(ctx)
     feature_configuration = cc_common.configure_features(
@@ -27,10 +43,28 @@ def _linker_contract_from_cc_toolchain_impl(ctx):
     lines = [
         "# directive<TAB>payload",
     ]
+    pending_search_flag = False
     for argument in link_args:
         if not argument:
             continue
-        lines.append("arg\t%s" % argument)
+        if pending_search_flag:
+            pending_search_flag = False
+            stub_search_directory = _stub_search_directory_name(argument)
+            if stub_search_directory != None:
+                lines.append("search_dir\t%s" % stub_search_directory)
+                continue
+            lines.append("arg\t-L")
+            lines.append("arg\t%s" % argument)
+            continue
+
+        if argument == "-L":
+            pending_search_flag = True
+            continue
+
+        _append_contract_lines(lines, argument)
+
+    if pending_search_flag:
+        lines.append("arg\t-L")
 
     ctx.actions.write(
         output = ctx.outputs.out,

@@ -194,6 +194,7 @@ void ApplyContractLine(const std::vector<std::string>& fields,
                        const std::string& workspace_execroot,
                        const std::string& output_base,
                        const std::string& runfiles_root,
+                       const Runfiles& runfiles,
                        std::vector<std::string>* arguments) {
   if (fields.empty()) {
     return;
@@ -206,6 +207,27 @@ void ApplyContractLine(const std::vector<std::string>& fields,
     return;
   }
 
+  if (fields[0] == "search_dir") {
+    RequireArity(fields, 2, "search_dir");
+    const char* runfile_key = nullptr;
+    const char* description = nullptr;
+    if (fields[1] == "libcxx") {
+      runfile_key = llvm::kLinkerWrapperLibcxxSearchDirectoryRlocation;
+      description = "libcxx search directory";
+    } else if (fields[1] == "libunwind") {
+      runfile_key = llvm::kLinkerWrapperLibunwindSearchDirectoryRlocation;
+      description = "libunwind search directory";
+    } else {
+      fprintf(stderr, "linker_wrapper: unknown search_dir value '%s'\n",
+              fields[1].c_str());
+      exit(2);
+    }
+
+    arguments->push_back(std::string("-L") +
+                         ResolveRunfilePath(runfiles, runfile_key, description));
+    return;
+  }
+
   fprintf(stderr, "linker_wrapper: unknown contract directive '%s'\n",
           fields[0].c_str());
   exit(2);
@@ -215,6 +237,7 @@ void AppendLinkerContractArguments(const std::string& contract_path,
                                    const std::string& workspace_execroot,
                                    const std::string& output_base,
                                    const std::string& runfiles_root,
+                                   const Runfiles& runfiles,
                                    std::vector<std::string>* arguments) {
   std::ifstream contract_stream(contract_path);
   if (!contract_stream.is_open()) {
@@ -229,7 +252,7 @@ void AppendLinkerContractArguments(const std::string& contract_path,
       continue;
     }
     ApplyContractLine(ParseContractFields(line), workspace_execroot, output_base,
-                      runfiles_root, arguments);
+                      runfiles_root, runfiles, arguments);
   }
 }
 
@@ -268,7 +291,7 @@ int main(int argc, char** argv) {
   argument_storage.push_back(clang_path);
 
   AppendLinkerContractArguments(contract_path, workspace_execroot, output_base,
-                                runfiles_root, &argument_storage);
+                                runfiles_root, *runfiles, &argument_storage);
 
   for (int index = 1; index < argc; ++index) {
     argument_storage.push_back(argv[index]);

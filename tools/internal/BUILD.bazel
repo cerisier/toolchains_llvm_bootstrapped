@@ -33,11 +33,15 @@ genrule(
         "",
         "const char* kLinkerWrapperClangRlocation = \"$(rlocationpath //tools:clang++)\";",
         "const char* kLinkerWrapperContractRlocation = \"$(rlocationpath :linker_contract)\";",
+        "const char* kLinkerWrapperLibcxxSearchDirectoryRlocation = \"$(rlocationpath //runtimes/libcxx:libcxx_library_search_directory)\";",
+        "const char* kLinkerWrapperLibunwindSearchDirectoryRlocation = \"$(rlocationpath //runtimes/libunwind:libunwind_library_search_directory)\";",
         "",
         "}  // namespace llvm",
         "CONFIG",
     ]),
     tools = [
+        "//runtimes/libcxx:libcxx_library_search_directory",
+        "//runtimes/libunwind:libunwind_library_search_directory",
         "//tools:clang++",
         ":linker_contract",
     ],
@@ -57,6 +61,8 @@ cc_binary(
     ],
     data = [
         "//runtimes:resource_directory",
+        "//runtimes/libcxx:libcxx_library_search_directory",
+        "//runtimes/libunwind:libunwind_library_search_directory",
         "//tools:clang++",
         "@macos_sdk//sysroot:sysroot_files",
         "@compiler-rt//:clang_rt.builtins.static",
@@ -81,6 +87,8 @@ cc_binary(
     ],
     data = [
         "//runtimes:crt_objects_directory",
+        "//runtimes/libcxx:libcxx_library_search_directory",
+        "//runtimes/libunwind:libunwind_library_search_directory",
         "//runtimes/glibc:glibc_library_search_directory",
         "//runtimes:resource_directory",
         "//tools:clang++",
@@ -106,6 +114,8 @@ cc_binary(
     ],
     data = [
         "//runtimes:crt_objects_directory",
+        "//runtimes/libcxx:libcxx_library_search_directory",
+        "//runtimes/libunwind:libunwind_library_search_directory",
         "//runtimes/glibc:glibc_library_search_directory",
         "//runtimes:resource_directory",
         "//tools:clang++",
