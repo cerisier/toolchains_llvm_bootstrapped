@@ -25,6 +25,7 @@ _LLVM_RAW_ARCHIVE = struct(
         "//3rd_party/llvm-project/21.x/patches:no_rules_python.patch",
         "//3rd_party/llvm-project/21.x/patches:llvm-overlay-starlark.patch",
         "//3rd_party/llvm-project/21.x/patches:llvm-bzl-library.patch",
+        "//3rd_party/llvm-project/21.x/patches:llvm-windows-stack-size.patch",
     ],
 )
 
