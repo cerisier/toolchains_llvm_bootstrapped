@@ -79,29 +79,78 @@ std::string ResolveOutputBasePath(const std::string& absolute_path) {
   return "";
 }
 
+std::string ResolveRunfilesRootPath(const std::string& absolute_path) {
+  const std::string marker = ".runfiles/";
+  const size_t marker_pos = absolute_path.find(marker);
+  if (marker_pos == std::string::npos) {
+    return "";
+  }
+  return absolute_path.substr(0, marker_pos + marker.size() - 1);
+}
+
 bool PathExists(const std::string& path) {
   return access(path.c_str(), F_OK) == 0;
 }
 
 std::string NormalizeRelativePath(const std::string& value,
                                   const std::string& workspace_execroot,
-                                  const std::string& output_base) {
+                                  const std::string& output_base,
+                                  const std::string& runfiles_root) {
   if (value.empty() || value[0] == '/') {
     return value;
   }
 
-  if (value.rfind("bazel-out/", 0) == 0 && !workspace_execroot.empty()) {
-    const std::string candidate = workspace_execroot + "/" + value;
-    if (PathExists(candidate)) {
-      return candidate;
+  const bool is_bazel_relative = value.rfind("bazel-out/", 0) == 0 ||
+                                 value.rfind("external/", 0) == 0;
+  if (is_bazel_relative) {
+    if (!workspace_execroot.empty()) {
+      const std::string candidate = workspace_execroot + "/" + value;
+      if (PathExists(candidate)) {
+        return candidate;
+      }
     }
-  }
 
-  if (value.rfind("external/", 0) == 0 && !output_base.empty()) {
-    const std::string candidate = output_base + "/" + value;
-    if (PathExists(candidate)) {
-      return candidate;
+    if (value.rfind("external/", 0) == 0 && !output_base.empty()) {
+      const std::string candidate = output_base + "/" + value;
+      if (PathExists(candidate)) {
+        return candidate;
+      }
     }
+
+    if (!runfiles_root.empty()) {
+      const std::string candidate_in_main = runfiles_root + "/_main/" + value;
+      if (PathExists(candidate_in_main)) {
+        return candidate_in_main;
+      }
+
+      const std::string candidate_in_root = runfiles_root + "/" + value;
+      if (PathExists(candidate_in_root)) {
+        return candidate_in_root;
+      }
+
+      if (value.rfind("external/", 0) == 0) {
+        const std::string candidate_external_repo =
+            runfiles_root + "/" + value.substr(strlen("external/"));
+        if (PathExists(candidate_external_repo)) {
+          return candidate_external_repo;
+        }
+      }
+
+      const size_t external_segment = value.find("/external/");
+      if (external_segment != std::string::npos) {
+        const std::string candidate_external_from_bazel_out =
+            runfiles_root + "/" + value.substr(external_segment + strlen("/external/"));
+        if (PathExists(candidate_external_from_bazel_out)) {
+          return candidate_external_from_bazel_out;
+        }
+      }
+    }
+
+    fprintf(stderr,
+            "linker_wrapper: failed to resolve bazel-relative path '%s' (execroot='%s', output_base='%s', runfiles_root='%s')\n",
+            value.c_str(), workspace_execroot.c_str(), output_base.c_str(),
+            runfiles_root.c_str());
+    exit(2);
   }
 
   return value;
@@ -109,23 +158,28 @@ std::string NormalizeRelativePath(const std::string& value,
 
 std::string NormalizePathLikeArgument(const std::string& argument,
                                       const std::string& workspace_execroot,
-                                      const std::string& output_base) {
+                                      const std::string& output_base,
+                                      const std::string& runfiles_root) {
   if (argument.rfind("--sysroot=", 0) == 0) {
     const std::string path = argument.substr(strlen("--sysroot="));
     return std::string("--sysroot=") +
-           NormalizeRelativePath(path, workspace_execroot, output_base);
+           NormalizeRelativePath(path, workspace_execroot, output_base,
+                                 runfiles_root);
   }
   if (argument.rfind("-L", 0) == 0 && argument.size() > 2) {
     const std::string path = argument.substr(2);
     return std::string("-L") +
-           NormalizeRelativePath(path, workspace_execroot, output_base);
+           NormalizeRelativePath(path, workspace_execroot, output_base,
+                                 runfiles_root);
   }
   if (argument.rfind("-B", 0) == 0 && argument.size() > 2) {
     const std::string path = argument.substr(2);
     return std::string("-B") +
-           NormalizeRelativePath(path, workspace_execroot, output_base);
+           NormalizeRelativePath(path, workspace_execroot, output_base,
+                                 runfiles_root);
   }
-  return NormalizeRelativePath(argument, workspace_execroot, output_base);
+  return NormalizeRelativePath(argument, workspace_execroot, output_base,
+                               runfiles_root);
 }
 
 void RequireArity(const std::vector<std::string>& fields, size_t expected,
@@ -142,6 +196,7 @@ void RequireArity(const std::vector<std::string>& fields, size_t expected,
 void ApplyContractLine(const std::vector<std::string>& fields,
                        const std::string& workspace_execroot,
                        const std::string& output_base,
+                       const std::string& runfiles_root,
                        std::vector<std::string>* arguments) {
   if (fields.empty()) {
     return;
@@ -149,8 +204,8 @@ void ApplyContractLine(const std::vector<std::string>& fields,
 
   if (fields[0] == "arg") {
     RequireArity(fields, 2, "arg");
-    arguments->push_back(
-        NormalizePathLikeArgument(fields[1], workspace_execroot, output_base));
+    arguments->push_back(NormalizePathLikeArgument(
+        fields[1], workspace_execroot, output_base, runfiles_root));
     return;
   }
 
@@ -162,6 +217,7 @@ void ApplyContractLine(const std::vector<std::string>& fields,
 void AppendLinkerContractArguments(const std::string& contract_path,
                                    const std::string& workspace_execroot,
                                    const std::string& output_base,
+                                   const std::string& runfiles_root,
                                    std::vector<std::string>* arguments) {
   std::ifstream contract_stream(contract_path);
   if (!contract_stream.is_open()) {
@@ -176,7 +232,7 @@ void AppendLinkerContractArguments(const std::string& contract_path,
       continue;
     }
     ApplyContractLine(ParseContractFields(line), workspace_execroot, output_base,
-                      arguments);
+                      runfiles_root, arguments);
   }
 }
 
@@ -208,13 +264,14 @@ int main(int argc, char** argv) {
   const std::string workspace_execroot =
       ResolveWorkspaceExecrootPath(contract_path);
   const std::string output_base = ResolveOutputBasePath(contract_path);
+  const std::string runfiles_root = ResolveRunfilesRootPath(contract_path);
 
   std::vector<std::string> argument_storage;
   argument_storage.reserve(static_cast<size_t>(argc) + 24);
   argument_storage.push_back(clang_path);
 
   AppendLinkerContractArguments(contract_path, workspace_execroot, output_base,
-                                &argument_storage);
+                                runfiles_root, &argument_storage);
 
   for (int index = 1; index < argc; ++index) {
     argument_storage.push_back(argv[index]);

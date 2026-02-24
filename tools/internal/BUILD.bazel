@@ -57,8 +57,10 @@ cc_binary(
     ],
     data = [
         "//runtimes:resource_directory",
+        "//runtimes/libunwind:libunwind_library_search_directory",
         "//tools:clang++",
         "@macos_sdk//sysroot",
+        "@compiler-rt//:clang_rt.builtins.static",
         ":linker_contract",
     ],
     deps = [
@@ -81,8 +83,10 @@ cc_binary(
     data = [
         "//runtimes:crt_objects_directory",
         "//runtimes/glibc:glibc_library_search_directory",
+        "//runtimes/libunwind:libunwind_library_search_directory",
         "//runtimes:resource_directory",
         "//tools:clang++",
+        "@compiler-rt//:clang_rt.builtins.static",
         ":linker_contract",
     ],
     deps = [
@@ -105,8 +109,10 @@ cc_binary(
     data = [
         "//runtimes:crt_objects_directory",
         "//runtimes/glibc:glibc_library_search_directory",
+        "//runtimes/libunwind:libunwind_library_search_directory",
         "//runtimes:resource_directory",
         "//tools:clang++",
+        "@compiler-rt//:clang_rt.builtins.static",
         ":linker_contract",
     ],
     deps = [
