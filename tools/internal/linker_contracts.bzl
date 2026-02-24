@@ -2,21 +2,6 @@ load("@rules_cc//cc:action_names.bzl", "ACTION_NAMES")
 load("@rules_cc//cc:find_cc_toolchain.bzl", "find_cc_toolchain", "use_cc_toolchain")
 load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
 
-MACOS_AARCH64_CONSTRAINTS = [
-    "@platforms//os:macos",
-    "@platforms//cpu:aarch64",
-]
-
-LINUX_X86_64_CONSTRAINTS = [
-    "@platforms//os:linux",
-    "@platforms//cpu:x86_64",
-]
-
-LINUX_AARCH64_CONSTRAINTS = [
-    "@platforms//os:linux",
-    "@platforms//cpu:aarch64",
-]
-
 def _linker_contract_from_cc_toolchain_impl(ctx):
     cc_toolchain = find_cc_toolchain(ctx)
     feature_configuration = cc_common.configure_features(
