@@ -38,7 +38,7 @@ cc_args(
     args = select(
         {
             ":nvidia_compute_capability_{}".format(compute_capability): [
-                "--cuda-gpu-arch={}".format(compute_capability),
+                "--offload-arch={}".format(compute_capability),
             ]
             for compute_capability in NVIDIA_COMPUTE_CAPABILITIES
         } | {
@@ -54,8 +54,15 @@ cc_args(
         "@rules_cc//cc/toolchains/actions:compile_actions",
     ],
     args = [
-        "--cuda-device-only",
+        "--cuda-path={cuda_path}",
+        "--offload-device-only",
     ],
+    data = [
+        "@cuda_sdk//:cuda_path",
+    ],
+    format = {
+        "cuda_path": "@cuda_sdk//:cuda_path",
+    },
 )
 
 
@@ -76,19 +83,18 @@ cc_args(
     ],
     args = [
         "-x", "cuda",
-        "-v",
-        "--target=nvptx64-nvidia-cuda",
         "-std=c++20",
-        "-emit-llvm",
-        "-nocudalib",
-        "-nocudainc",
-        "-include", "__clang_cuda_runtime_wrapper.h",
     ],
 )
 
 cc_args_list(
     name = "toolchain_args",
     args = [
+        "//toolchain/cuda:cuda_gpu_arch_flag",
+        "//toolchain/cuda:cuda_device_only_flag",
+        # "//toolchain/cuda:cuda_host_only_flag",
+        "//toolchain/cuda:default_compile_flags",
+
         # Common default compile flags.
         # "//toolchain/args:llvm_target_for_platform",
         "//toolchain/args:no_absolute_paths_for_builtins",
@@ -99,14 +105,9 @@ cc_args_list(
 
         "//toolchain/args:libcxx_headers_include_search_paths",
     ] + [
-            # "//toolchain/args/linux:kernel_headers_include_search_paths",
+            "//toolchain/args/linux:kernel_headers_include_search_paths",
             # "//toolchain/args/linux:musl_libc_headers_include_search_paths",
             "//toolchain/args/linux:glibc_headers_include_search_paths",
-
-        "//toolchain/cuda:cuda_gpu_arch_flag",
-        "//toolchain/cuda:cuda_device_only_flag",
-        # "//toolchain/cuda:cuda_host_only_flag",
-        "//toolchain/cuda:default_compile_flags",
 
         # no link
         ":fail_on_link_actions",
