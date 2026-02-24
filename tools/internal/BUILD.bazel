@@ -1,5 +1,6 @@
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@llvm//toolchain:selects.bzl", "platform_link_action_tool")
 load(
     ":linker_contracts.bzl",
     "linker_contract_from_cc_toolchain",
@@ -22,6 +23,12 @@ linker_contract_from_cc_toolchain(
     out = "linker_contract.txt",
 )
 
+alias(
+    name = "link_action_tool",
+    actual = platform_link_action_tool(),
+    visibility = ["//visibility:private"],
+)
+
 genrule(
     name = "linker_wrapper_config",
     outs = ["linker_wrapper_config.cc"],
@@ -31,7 +38,7 @@ genrule(
         "",
         "namespace llvm {",
         "",
-        "const char* kLinkerWrapperClangRlocation = \"$(rlocationpath //tools:clang++)\";",
+        "const char* kLinkerWrapperLinkerToolRlocation = \"$(rlocationpath //tools:clang++)\";",
         "const char* kLinkerWrapperContractRlocation = \"$(rlocationpath :linker_contract)\";",
         "const char* kLinkerWrapperLibcxxSearchDirectoryRlocation = \"$(rlocationpath //runtimes/libcxx:libcxx_library_search_directory)\";",
         "const char* kLinkerWrapperLibunwindSearchDirectoryRlocation = \"$(rlocationpath //runtimes/libunwind:libunwind_library_search_directory)\";",
@@ -43,6 +50,7 @@ genrule(
         "//runtimes/libcxx:libcxx_library_search_directory",
         "//runtimes/libunwind:libunwind_library_search_directory",
         "//tools:clang++",
+        ":link_action_tool",
         ":linker_contract",
     ],
 )
@@ -63,7 +71,7 @@ cc_binary(
         "//runtimes:resource_directory",
         "//runtimes/libcxx:libcxx_library_search_directory",
         "//runtimes/libunwind:libunwind_library_search_directory",
-        "//tools:clang++",
+        ":link_action_tool",
         "@macos_sdk//sysroot:sysroot_files",
         "@compiler-rt//:clang_rt.builtins.static",
         ":linker_contract",
@@ -91,7 +99,7 @@ cc_binary(
         "//runtimes/libunwind:libunwind_library_search_directory",
         "//runtimes/glibc:glibc_library_search_directory",
         "//runtimes:resource_directory",
-        "//tools:clang++",
+        ":link_action_tool",
         "@compiler-rt//:clang_rt.builtins.static",
         ":linker_contract",
     ],
@@ -118,7 +126,7 @@ cc_binary(
         "//runtimes/libunwind:libunwind_library_search_directory",
         "//runtimes/glibc:glibc_library_search_directory",
         "//runtimes:resource_directory",
-        "//tools:clang++",
+        ":link_action_tool",
         "@compiler-rt//:clang_rt.builtins.static",
         ":linker_contract",
     ],

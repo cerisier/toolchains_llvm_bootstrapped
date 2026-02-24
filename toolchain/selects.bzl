@@ -10,6 +10,20 @@ def platform_llvm_binary(binary):
         "@llvm//toolchain:bootstrapped_toolchain": "@llvm//toolchain/bootstrap:" + binary,
     })
 
+def platform_link_action_tool():
+    return select({
+        "@llvm//platforms/config:macos_aarch64_prebuilt": "@llvm-toolchain-minimal-%s-darwin-arm64//:lld" % LLVM_VERSION,
+        "@llvm//platforms/config:linux_x86_64_prebuilt": "@llvm-toolchain-minimal-%s-linux-amd64//:lld" % LLVM_VERSION,
+        "@llvm//platforms/config:linux_aarch64_prebuilt": "@llvm-toolchain-minimal-%s-linux-arm64//:lld" % LLVM_VERSION,
+        "@llvm//platforms/config:windows_aarch64_prebuilt": "@llvm-toolchain-minimal-%s-windows-arm64//:lld" % LLVM_VERSION,
+        "@llvm//platforms/config:windows_x86_64_prebuilt": "@llvm-toolchain-minimal-%s-windows-amd64//:lld" % LLVM_VERSION,
+        "@llvm//platforms/config:macos_aarch64": "@llvm//toolchain/bootstrap:macos_aarch64/lld",
+        "@llvm//platforms/config:linux_x86_64": "@llvm//toolchain/bootstrap:linux_x86_64/lld",
+        "@llvm//platforms/config:linux_aarch64": "@llvm//toolchain/bootstrap:linux_aarch64/lld",
+        "@llvm//platforms/config:windows_aarch64": "@llvm//toolchain/bootstrap:windows_aarch64/lld",
+        "@llvm//platforms/config:windows_x86_64": "@llvm//toolchain/bootstrap:windows_x86_64/lld",
+    })
+
 def platform_extra_binary(binary):
     return select({
         "@llvm//platforms/config:macos_aarch64": "@toolchain-extra-prebuilts-darwin-arm64//:%s" % binary,

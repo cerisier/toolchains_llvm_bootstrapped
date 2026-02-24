@@ -275,9 +275,9 @@ int main(int argc, char** argv) {
     return 2;
   }
 
-  const std::string clang_path =
-      ResolveRunfilePath(*runfiles, llvm::kLinkerWrapperClangRlocation,
-                         "platform clang++");
+  const std::string linker_tool_path =
+      ResolveRunfilePath(*runfiles, llvm::kLinkerWrapperLinkerToolRlocation,
+                         "platform linker tool");
   const std::string contract_path = ResolveRunfilePath(
       *runfiles, llvm::kLinkerWrapperContractRlocation,
       "linker contract");
@@ -288,7 +288,7 @@ int main(int argc, char** argv) {
 
   std::vector<std::string> argument_storage;
   argument_storage.reserve(static_cast<size_t>(argc) + 24);
-  argument_storage.push_back(clang_path);
+  argument_storage.push_back(linker_tool_path);
 
   AppendLinkerContractArguments(contract_path, workspace_execroot, output_base,
                                 runfiles_root, *runfiles, &argument_storage);
@@ -304,8 +304,8 @@ int main(int argc, char** argv) {
   }
   exec_arguments.push_back(nullptr);
 
-  execv(clang_path.c_str(), exec_arguments.data());
+  execv(linker_tool_path.c_str(), exec_arguments.data());
   fprintf(stderr, "linker_wrapper: execv failed for '%s': %s\n",
-          clang_path.c_str(), strerror(errno));
+          linker_tool_path.c_str(), strerror(errno));
   return 2;
 }

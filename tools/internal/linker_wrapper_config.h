@@ -2,7 +2,7 @@
 
 namespace llvm {
 
-extern const char* kLinkerWrapperClangRlocation;
+extern const char* kLinkerWrapperLinkerToolRlocation;
 extern const char* kLinkerWrapperContractRlocation;
 extern const char* kLinkerWrapperLibcxxSearchDirectoryRlocation;
 extern const char* kLinkerWrapperLibunwindSearchDirectoryRlocation;
