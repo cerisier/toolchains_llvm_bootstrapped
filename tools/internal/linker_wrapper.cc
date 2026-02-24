@@ -1,4 +1,3 @@
-#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -140,8 +139,7 @@ void RequireArity(const std::vector<std::string>& fields, size_t expected,
   exit(2);
 }
 
-void ApplyContractLine(const Runfiles& runfiles,
-                       const std::vector<std::string>& fields,
+void ApplyContractLine(const std::vector<std::string>& fields,
                        const std::string& workspace_execroot,
                        const std::string& output_base,
                        std::vector<std::string>* arguments) {
@@ -156,38 +154,12 @@ void ApplyContractLine(const Runfiles& runfiles,
     return;
   }
 
-  if (fields[0] == "runfile") {
-    RequireArity(fields, 2, "runfile");
-    arguments->push_back(
-        ResolveRunfilePath(runfiles, fields[1].c_str(), "contract runfile"));
-    return;
-  }
-
-  if (fields[0] == "runfile_prefix") {
-    RequireArity(fields, 3, "runfile_prefix");
-    arguments->push_back(fields[1] +
-                         ResolveRunfilePath(runfiles, fields[2].c_str(),
-                                            "contract runfile_prefix"));
-    return;
-  }
-
-  if (fields[0] == "setenv") {
-    RequireArity(fields, 3, "setenv");
-    if (setenv(fields[1].c_str(), fields[2].c_str(), 1) != 0) {
-      fprintf(stderr, "linker_wrapper: setenv failed for '%s': %s\n",
-              fields[1].c_str(), strerror(errno));
-      exit(2);
-    }
-    return;
-  }
-
   fprintf(stderr, "linker_wrapper: unknown contract directive '%s'\n",
           fields[0].c_str());
   exit(2);
 }
 
-void AppendLinkerContractArguments(const Runfiles& runfiles,
-                                   const std::string& contract_path,
+void AppendLinkerContractArguments(const std::string& contract_path,
                                    const std::string& workspace_execroot,
                                    const std::string& output_base,
                                    std::vector<std::string>* arguments) {
@@ -203,8 +175,8 @@ void AppendLinkerContractArguments(const Runfiles& runfiles,
     if (line.empty() || line[0] == '#') {
       continue;
     }
-    ApplyContractLine(runfiles, ParseContractFields(line), workspace_execroot,
-                      output_base, arguments);
+    ApplyContractLine(ParseContractFields(line), workspace_execroot, output_base,
+                      arguments);
   }
 }
 
@@ -241,8 +213,8 @@ int main(int argc, char** argv) {
   argument_storage.reserve(static_cast<size_t>(argc) + 24);
   argument_storage.push_back(clang_path);
 
-  AppendLinkerContractArguments(*runfiles, contract_path, workspace_execroot,
-                                output_base, &argument_storage);
+  AppendLinkerContractArguments(contract_path, workspace_execroot, output_base,
+                                &argument_storage);
 
   for (int index = 1; index < argc; ++index) {
     argument_storage.push_back(argv[index]);
