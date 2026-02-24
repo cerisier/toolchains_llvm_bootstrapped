@@ -1,135 +1,190 @@
 PLATFORM_MACOS_AARCH64 = "macos_aarch64"
 PLATFORM_LINUX_X86_64_GNU = "linux_x86_64_gnu"
 PLATFORM_LINUX_AARCH64_GNU = "linux_aarch64_gnu"
+PLATFORM_WINDOWS_X86_64 = "windows_x86_64"
 
 MACOS_AARCH64_SYSROOT_LABEL = "@macos_sdk//sysroot"
 MACOS_AARCH64_MINIMUM_OS_VERSION = "14.0"
 
-# Ordered linker policy entries.
-# Entry forms:
-#   ("target_triple",)
-#   ("arg", <value>)
-#   ("runfile_arg", <flag>, <label>, <key>)
-#   ("runfile_prefix_arg", <prefix>, <label>, <key>)
-#   ("runfile_value", <label>, <key>)
-#   ("setenv", <name>, <value>)
+def _spec(args, data = [], format = {}, env = {}):
+    return struct(
+        args = args,
+        data = data,
+        format = format,
+        env = env,
+    )
 
-_ENTRY_ARITY_BY_KIND = {
-    "target_triple": 1,
-    "arg": 2,
-    "runfile_arg": 4,
-    "runfile_prefix_arg": 4,
-    "runfile_value": 3,
-    "setenv": 3,
+_CC_LINK_SPECS = {
+    "resource_dir": _spec(
+        args = [
+            "-resource-dir",
+            "{resource_dir}",
+        ],
+        data = [
+            "//runtimes:resource_directory",
+        ],
+        format = {
+            "resource_dir": "//runtimes:resource_directory",
+        },
+    ),
+    "crt_search_directory": _spec(
+        args = [
+            "-B{crt_objects_directory}",
+        ],
+        data = [
+            "//runtimes:crt_objects_directory",
+        ],
+        format = {
+            "crt_objects_directory": "//runtimes:crt_objects_directory",
+        },
+    ),
+    "fuse_ld": _spec(
+        args = ["-fuse-ld=lld"],
+    ),
+    "empty_sysroot_flags": _spec(
+        args = ["--sysroot=/dev/null"],
+    ),
+    "rtlib_compiler_rt": _spec(
+        args = ["-rtlib=compiler-rt"],
+    ),
+    "stdlib": _spec(
+        args = ["-nostdlib++"],
+    ),
+    "unwindlib_none": _spec(
+        args = ["--unwindlib=none"],
+    ),
+    "linux_default_link_flags": _spec(
+        args = [
+            "-Wl,-no-as-needed",
+            "-Wl,-z,relro,-z,now",
+        ],
+    ),
+    "linux_default_libs_gnu": _spec(
+        args = [
+            "-L{libc_library_search_path}",
+            "-Wl,--push-state",
+            "-Wl,--as-needed",
+            "-lpthread",
+            "-ldl",
+            "-Wl,--pop-state",
+        ],
+        data = [
+            "//runtimes/glibc:glibc_library_search_directory",
+        ],
+        format = {
+            "libc_library_search_path": "//runtimes/glibc:glibc_library_search_directory",
+        },
+    ),
+    "linux_default_libs_musl": _spec(
+        args = [
+            "-L{libc_library_search_path}",
+            "-Wl,--push-state",
+            "-Wl,--as-needed",
+            "-lpthread",
+            "-ldl",
+            "-Wl,--pop-state",
+        ],
+        data = [
+            "//runtimes/musl:musl_library_search_directory",
+        ],
+        format = {
+            "libc_library_search_path": "//runtimes/musl:musl_library_search_directory",
+        },
+    ),
+    "macos_default_link_flags": _spec(
+        args = [
+            "-headerpad_max_install_names",
+            "-Wl,-no_warn_duplicate_libraries",
+            "-Wl,-oso_prefix,.",
+        ],
+        env = {
+            "ZERO_AR_DATE": "1",
+        },
+    ),
+    "macos_default_libs": _spec(
+        args = [
+            "{libclang_rt.builtins.a}",
+            "-lSystem",
+        ],
+        data = [
+            "//runtimes/compiler-rt:clang_rt.builtins.static",
+        ],
+        format = {
+            "libclang_rt.builtins.a": "//runtimes/compiler-rt:clang_rt.builtins.static",
+        },
+    ),
+    "windows_default_libs": _spec(
+        args = [
+            "-L{mingw_import_library_search_path}",
+            "-L{mingw_crt_library_search_path}",
+            "-lucrt",
+        ],
+        data = [
+            "//runtimes/mingw:mingw_crt_library_search_directory",
+            "//runtimes/mingw:mingw_import_libraries_directory",
+        ],
+        format = {
+            "mingw_crt_library_search_path": "//runtimes/mingw:mingw_crt_library_search_directory",
+            "mingw_import_library_search_path": "//runtimes/mingw:mingw_import_libraries_directory",
+        },
+    ),
 }
 
-_LINK_PARTS = {
-    "target_triple": [
-        ("target_triple",),
-    ],
-    "fuse_ld_lld": [
-        ("arg", "-fuse-ld=lld"),
-    ],
-    "resource_dir": [
-        ("runfile_arg", "-resource-dir", "//runtimes:resource_directory", "resource_dir"),
-    ],
-    "rtlib_compiler_rt": [
-        ("arg", "-rtlib=compiler-rt"),
-    ],
-    "empty_sysroot": [
-        ("arg", "--sysroot=/dev/null"),
-    ],
-    "stdlib_none": [
-        ("arg", "-nostdlib++"),
-    ],
-    "unwindlib_none": [
-        ("arg", "--unwindlib=none"),
-    ],
-    "crt_search_dir": [
-        ("runfile_prefix_arg", "-B", "//runtimes:crt_objects_directory", "crt_objects_directory"),
-    ],
-    "glibc_library_search_dir": [
-        ("runfile_prefix_arg", "-L", "//runtimes/glibc:glibc_library_search_directory", "libc_library_search_path"),
-    ],
-    "linux_default_link_flags": [
-        ("arg", "-Wl,-no-as-needed"),
-        ("arg", "-Wl,-z,relro,-z,now"),
-    ],
-    "linux_default_libs_gnu": [
-        ("arg", "-Wl,--push-state"),
-        ("arg", "-Wl,--as-needed"),
-        ("arg", "-lpthread"),
-        ("arg", "-ldl"),
-        ("arg", "-Wl,--pop-state"),
-    ],
-    "macos_default_link_env": [
-        ("setenv", "ZERO_AR_DATE", "1"),
-    ],
-    "macos_sysroot": [
-        ("runfile_prefix_arg", "--sysroot=", MACOS_AARCH64_SYSROOT_LABEL, "macos_sysroot"),
-    ],
-    "macos_minimum_os_version": [
-        ("arg", "-mmacosx-version-min=%s" % MACOS_AARCH64_MINIMUM_OS_VERSION),
-    ],
-    "macos_default_link_flags": [
-        ("arg", "-headerpad_max_install_names"),
-        ("arg", "-Wl,-no_warn_duplicate_libraries"),
-        ("arg", "-Wl,-oso_prefix,."),
-    ],
-    "macos_default_libs": [
-        ("runfile_value", "//runtimes/compiler-rt:clang_rt.builtins.static", "libclang_rt.builtins.a"),
-        ("arg", "-lSystem"),
-    ],
-}
-
-PLATFORM_POLICIES = {
+_PLATFORM_POLICY = {
     PLATFORM_MACOS_AARCH64: struct(
         constraints = ["@platforms//os:macos", "@platforms//cpu:aarch64"],
         target_triple = "aarch64-apple-darwin",
-        sysroot_label = MACOS_AARCH64_SYSROOT_LABEL,
-        minimum_os_version = MACOS_AARCH64_MINIMUM_OS_VERSION,
-        parts = [
-            "macos_default_link_env",
-            "target_triple",
-            "fuse_ld_lld",
+        additional_args = [
+            "--sysroot={macos_sysroot}",
+            "-mmacosx-version-min=%s" % MACOS_AARCH64_MINIMUM_OS_VERSION,
+        ],
+        additional_data = [
+            MACOS_AARCH64_SYSROOT_LABEL,
+        ],
+        additional_format = {
+            "macos_sysroot": MACOS_AARCH64_SYSROOT_LABEL,
+        },
+        cc_link_specs = [
+            "fuse_ld",
             "resource_dir",
             "rtlib_compiler_rt",
-            "macos_sysroot",
-            "macos_minimum_os_version",
             "macos_default_link_flags",
+            "macos_default_libs",
         ],
     ),
     PLATFORM_LINUX_X86_64_GNU: struct(
         constraints = ["@platforms//os:linux", "@platforms//cpu:x86_64"],
         target_triple = "x86_64-linux-gnu",
-        parts = [
-            "target_triple",
-            "fuse_ld_lld",
+        additional_args = [],
+        additional_data = [],
+        additional_format = {},
+        cc_link_specs = [
+            "fuse_ld",
             "resource_dir",
             "rtlib_compiler_rt",
-            "empty_sysroot",
-            "stdlib_none",
+            "empty_sysroot_flags",
+            "stdlib",
             "unwindlib_none",
             "linux_default_link_flags",
-            "crt_search_dir",
-            "glibc_library_search_dir",
+            "crt_search_directory",
             "linux_default_libs_gnu",
         ],
     ),
     PLATFORM_LINUX_AARCH64_GNU: struct(
         constraints = ["@platforms//os:linux", "@platforms//cpu:aarch64"],
         target_triple = "aarch64-linux-gnu",
-        parts = [
-            "target_triple",
-            "fuse_ld_lld",
+        additional_args = [],
+        additional_data = [],
+        additional_format = {},
+        cc_link_specs = [
+            "fuse_ld",
             "resource_dir",
             "rtlib_compiler_rt",
-            "empty_sysroot",
-            "stdlib_none",
+            "empty_sysroot_flags",
+            "stdlib",
             "unwindlib_none",
             "linux_default_link_flags",
-            "crt_search_dir",
-            "glibc_library_search_dir",
+            "crt_search_directory",
             "linux_default_libs_gnu",
         ],
     ),
@@ -137,190 +192,106 @@ PLATFORM_POLICIES = {
 
 LINKER_CONSTRAINTS = {
     platform: policy.constraints
-    for platform, policy in PLATFORM_POLICIES.items()
-}
-
-TARGET_TRIPLE_BY_PLATFORM = {
-    platform: policy.target_triple
-    for platform, policy in PLATFORM_POLICIES.items()
+    for platform, policy in _PLATFORM_POLICY.items()
 }
 
 def target_triple_for_platform(platform):
-    triple = TARGET_TRIPLE_BY_PLATFORM.get(platform)
-    if triple == None:
+    policy = _PLATFORM_POLICY.get(platform)
+    if policy == None:
         fail("Unsupported platform for target triple: %s" % platform)
-    return triple
+    return policy.target_triple
 
-def _validate_entry(entry, context):
-    if len(entry) < 1:
-        fail("%s: link policy entry must be non-empty" % context)
+def cc_link_spec(spec_name):
+    spec = _CC_LINK_SPECS.get(spec_name)
+    if spec == None:
+        fail("Unknown cc link spec: %s" % spec_name)
+    return spec
 
-    kind = entry[0]
-    expected_arity = _ENTRY_ARITY_BY_KIND.get(kind)
-    if expected_arity == None:
-        fail("%s: unknown link policy entry kind: %s" % (context, kind))
-    if len(entry) != expected_arity:
-        fail("%s: '%s' entry expects arity %d, got %d" % (context, kind, expected_arity, len(entry)))
+def _merge_specs(specs):
+    merged_args = []
+    merged_data = []
+    merged_format = {}
+    merged_env = {}
+    seen_data = {}
 
-def _expand_part_names(part_names, context):
-    entries = []
-    for part_name in part_names:
-        part_entries = _LINK_PARTS.get(part_name)
-        if part_entries == None:
-            fail("%s: unknown link policy part: %s" % (context, part_name))
-        for entry in part_entries:
-            _validate_entry(entry, "%s/%s" % (context, part_name))
-            entries.append(entry)
-    return entries
+    for spec in specs:
+        merged_args.extend(spec.args)
+        for label in spec.data:
+            if not seen_data.get(label):
+                seen_data[label] = True
+                merged_data.append(label)
+        for key, label in spec.format.items():
+            previous = merged_format.get(key)
+            if previous != None and previous != label:
+                fail("Conflicting format mapping for key '%s': '%s' vs '%s'" % (key, previous, label))
+            merged_format[key] = label
+        for key, value in spec.env.items():
+            previous = merged_env.get(key)
+            if previous != None and previous != value:
+                fail("Conflicting env mapping for key '%s': '%s' vs '%s'" % (key, previous, value))
+            merged_env[key] = value
 
-def _append_data(data, seen_data, label):
-    if not seen_data.get(label):
-        seen_data[label] = True
-        data.append(label)
+    return _spec(
+        args = merged_args,
+        data = merged_data,
+        format = merged_format,
+        env = merged_env,
+    )
 
-def _add_format(format_map, key, label):
-    existing = format_map.get(key)
-    if existing != None and existing != label:
-        fail("Conflicting format mapping for key '%s': '%s' vs '%s'" % (key, existing, label))
-    format_map[key] = label
+def _placeholder(arg):
+    start = arg.find("{")
+    if start == -1:
+        return None
+    end = arg.find("}", start + 1)
+    if end == -1:
+        fail("Unterminated placeholder in argument: %s" % arg)
+    if arg.find("{", end + 1) != -1:
+        fail("Only one placeholder is supported per argument: %s" % arg)
+    key = arg[start + 1:end]
+    return (arg[:start], key, arg[end + 1:])
 
-def _entries_to_contract_directives(entries, policy):
+def _spec_to_contract_directives(spec):
     directives = []
-    for entry in entries:
-        kind = entry[0]
 
-        if kind == "target_triple":
-            directives.append(("arg", "-target"))
-            directives.append(("arg", policy.target_triple))
-        elif kind == "arg":
-            directives.append(("arg", entry[1]))
-        elif kind == "runfile_arg":
-            directives.append(("arg", entry[1]))
-            directives.append(("runfile", entry[2]))
-        elif kind == "runfile_prefix_arg":
-            directives.append(("runfile_prefix", entry[1], entry[2]))
-        elif kind == "runfile_value":
-            directives.append(("runfile", entry[1]))
-        elif kind == "setenv":
-            directives.append(("setenv", entry[1], entry[2]))
+    for arg in spec.args:
+        placeholder = _placeholder(arg)
+        if placeholder == None:
+            directives.append(("arg", arg))
+            continue
+
+        (prefix, key, suffix) = placeholder
+        label = spec.format.get(key)
+        if label == None:
+            fail("Missing format key for placeholder '%s' in argument '%s'" % (key, arg))
+        if suffix:
+            fail("Placeholder suffixes are not supported in argument '%s'" % arg)
+        if prefix:
+            directives.append(("runfile_prefix", prefix, label))
+        else:
+            directives.append(("runfile", label))
+
+    for name, value in spec.env.items():
+        directives.append(("setenv", name, value))
 
     return directives
 
-def _entries_to_cc_spec(entries, policy):
-    args = []
-    data = []
-    format_map = {}
-    env = {}
-    seen_data = {}
-
-    for entry in entries:
-        kind = entry[0]
-
-        if kind == "target_triple":
-            args.extend(["-target", policy.target_triple])
-        elif kind == "arg":
-            args.append(entry[1])
-        elif kind == "runfile_arg":
-            args.append(entry[1])
-            args.append("{%s}" % entry[3])
-            _append_data(data, seen_data, entry[2])
-            _add_format(format_map, entry[3], entry[2])
-        elif kind == "runfile_prefix_arg":
-            args.append("%s{%s}" % (entry[1], entry[3]))
-            _append_data(data, seen_data, entry[2])
-            _add_format(format_map, entry[3], entry[2])
-        elif kind == "runfile_value":
-            args.append("{%s}" % entry[2])
-            _append_data(data, seen_data, entry[1])
-            _add_format(format_map, entry[2], entry[1])
-        elif kind == "setenv":
-            env[entry[1]] = entry[2]
-
-    return struct(
-        args = args,
-        data = data,
-        format = format_map,
-        env = env,
-    )
-
-_CC_LINK_SPEC_PARTS_BY_NAME = {
-    "resource_dir": struct(
-        platform = PLATFORM_LINUX_X86_64_GNU,
-        parts = ["resource_dir"],
-    ),
-    "crt_search_directory": struct(
-        platform = PLATFORM_LINUX_X86_64_GNU,
-        parts = ["crt_search_dir"],
-    ),
-    "fuse_ld": struct(
-        platform = PLATFORM_LINUX_X86_64_GNU,
-        parts = ["fuse_ld_lld"],
-    ),
-    "empty_sysroot_flags": struct(
-        platform = PLATFORM_LINUX_X86_64_GNU,
-        parts = ["empty_sysroot"],
-    ),
-    "rtlib_compiler_rt": struct(
-        platform = PLATFORM_LINUX_X86_64_GNU,
-        parts = ["rtlib_compiler_rt"],
-    ),
-    "stdlib": struct(
-        platform = PLATFORM_LINUX_X86_64_GNU,
-        parts = ["stdlib_none"],
-    ),
-    "unwindlib_none": struct(
-        platform = PLATFORM_LINUX_X86_64_GNU,
-        parts = ["unwindlib_none"],
-    ),
-    "linux_default_link_flags": struct(
-        platform = PLATFORM_LINUX_X86_64_GNU,
-        parts = ["linux_default_link_flags"],
-    ),
-    "linux_default_libs_gnu": struct(
-        platform = PLATFORM_LINUX_X86_64_GNU,
-        parts = [
-            "glibc_library_search_dir",
-            "linux_default_libs_gnu",
-        ],
-    ),
-    "macos_default_link_flags": struct(
-        platform = PLATFORM_MACOS_AARCH64,
-        parts = [
-            "macos_default_link_env",
-            "macos_default_link_flags",
-        ],
-    ),
-    "macos_default_libs": struct(
-        platform = PLATFORM_MACOS_AARCH64,
-        parts = ["macos_default_libs"],
-    ),
-}
-
-_PLATFORM_ENTRIES_BY_PLATFORM = {
-    platform: _expand_part_names(policy.parts, "platform %s" % platform)
-    for platform, policy in PLATFORM_POLICIES.items()
-}
-
-def _build_cc_link_spec_entries():
-    entries_by_name = {}
-    for spec_name, spec in _CC_LINK_SPEC_PARTS_BY_NAME.items():
-        if PLATFORM_POLICIES.get(spec.platform) == None:
-            fail("cc_link_spec %s references unknown platform %s" % (spec_name, spec.platform))
-        entries_by_name[spec_name] = _expand_part_names(spec.parts, "cc_link_spec %s" % spec_name)
-    return entries_by_name
-
-_CC_LINK_SPEC_ENTRIES_BY_NAME = _build_cc_link_spec_entries()
-
 def linker_contract_directives(platform):
-    policy = PLATFORM_POLICIES.get(platform)
+    policy = _PLATFORM_POLICY.get(platform)
     if policy == None:
         fail("Unsupported platform for linker contract directives: %s" % platform)
-    return _entries_to_contract_directives(_PLATFORM_ENTRIES_BY_PLATFORM[platform], policy)
 
-def cc_link_spec(spec_name):
-    spec = _CC_LINK_SPEC_PARTS_BY_NAME.get(spec_name)
-    if spec == None:
-        fail("Unknown cc link spec: %s" % spec_name)
+    policy_specs = [_CC_LINK_SPECS[name] for name in policy.cc_link_specs]
+    merged_spec = _merge_specs(policy_specs)
+    full_spec = _merge_specs([
+        _spec(
+            args = [
+                "-target",
+                policy.target_triple,
+            ] + policy.additional_args,
+            data = policy.additional_data,
+            format = policy.additional_format,
+        ),
+        merged_spec,
+    ])
 
-    policy = PLATFORM_POLICIES[spec.platform]
-    return _entries_to_cc_spec(_CC_LINK_SPEC_ENTRIES_BY_NAME[spec_name], policy)
+    return _spec_to_contract_directives(full_spec)

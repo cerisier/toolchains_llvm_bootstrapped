@@ -100,6 +100,7 @@ cc_binary(
         ":linker_wrapper_config_macos_aarch64",
     ],
     data = [
+        "//runtimes/compiler-rt:clang_rt.builtins.static",
         "//runtimes:resource_directory",
         "//tools:clang++",
         "@macos_sdk//sysroot",
