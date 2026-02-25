@@ -482,11 +482,21 @@ cc_static_library(
     deps = [":comm_symbol_defs"],
 )
 
+alias(
+    name = "bazelisk",
+    actual = "@com_github_bazelbuild_bazelisk//:bazelisk",
+)
+
 sh_test(
     name = "duplicate_static_library_validator_test",
     srcs = ["duplicate_static_library_failure_test.sh"],
+    args = ["$(rlocationpath :bazelisk)"],
     data = [
+        "@bazel_tools//tools/bash/runfiles",
+        ":bazelisk",
         "BUILD.bazel",
+        "go.mod",
+        "go.sum",
         "duplicate_symbol_a.cc",
         "duplicate_symbol_b.cc",
     ],

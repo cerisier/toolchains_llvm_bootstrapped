@@ -1,7 +1,9 @@
 bazel_dep(name = "bazel_lib", version = "3.0.0")
 bazel_dep(name = "platforms", version = "1.0.0")
 bazel_dep(name = "rules_cc", version = "0.2.16")
+bazel_dep(name = "rules_go", version = "0.60.0")
 bazel_dep(name = "rules_shell", version = "0.6.1")
+bazel_dep(name = "gazelle", version = "0.46.0")
 bazel_dep(name = "with_cfg.bzl", version = "0.12.0")
 bazel_dep(name = "llvm", version = "")
 local_path_override(
@@ -14,6 +16,24 @@ llvm_toolchains = use_extension("@llvm//extensions:toolchain.bzl", "toolchain")
 use_repo(llvm_toolchains, "llvm_toolchains")
 
 register_toolchains("@llvm_toolchains//:all")
+
+go_sdk = use_extension("@rules_go//go:extensions.bzl", "go_sdk")
+go_sdk.from_file(
+    name = "go_prebuilt_sdk_local",
+    go_mod = "//:go.mod",
+)
+use_repo(go_sdk, "go_prebuilt_sdk_local")
+
+go_deps = use_extension("@gazelle//:extensions.bzl", "go_deps")
+go_deps.from_file(go_mod = "//:go.mod")
+go_deps.gazelle_override(
+    build_file_generation = "clean",
+    path = "github.com/bazelbuild/bazelisk",
+)
+use_repo(
+    go_deps,
+    "com_github_bazelbuild_bazelisk",
+)
 
 # Bump transitive zlib version to avoid genrules.
 bazel_dep(name = "zlib", version = "1.3.1.bcr.8")
