@@ -1,0 +1,60 @@
+load("@rules_cc//cc:defs.bzl", "cc_binary")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("@llvm//:cuda.bzl", "cuda_library")
+
+cc_binary(
+    name = "hello_world",
+    srcs = [
+        "hello_world.cc",
+    ],
+)
+
+cuda_library(
+    name = "vector_cuda",
+    srcs = ["vector_cuda.cu"],
+    hdrs = ["vector_cuda.cu.h"],
+    archs = [
+        "sm_50",
+        "sm_60",
+        "sm_70",
+        "sm_80",
+        "sm_90",
+        "sm_120",
+    ],
+    deps = [
+        "@cuda_sdk//:cuda_headers",
+    ],
+)
+
+cc_binary(
+    name = "vector_cuda_binary",
+    srcs = [
+        "vector_cuda_binary.cc",
+    ],
+    deps = [
+        ":vector_cuda",
+        "@cuda_sdk//:cudart",
+        "@cuda_sdk//:cuda_headers",
+    ],
+    tags = [
+        "no-remote",
+        "local",
+    ],
+)
+
+cc_test(
+    name = "vector_cuda_test",
+    srcs = [
+        "vector_cuda_test.cc",
+    ],
+    deps = [
+        ":vector_cuda",
+        "@cuda_sdk//:cudart",
+        "@cuda_sdk//:cuda_headers",
+        "@googletest//:gtest_main",
+    ],
+    tags = [
+        "no-remote",
+        "local",
+    ],
+)
