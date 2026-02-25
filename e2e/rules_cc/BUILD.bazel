@@ -22,45 +22,26 @@ load(
     "tysan_cc_binary",
     "ubsan_cc_binary",
 )
-load("@llvm//:cuda.bzl", "cuda_binary")
+load("@llvm//:cuda.bzl", "cuda_library")
 
-cc_library(
-    name = "kernel",
+cuda_library(
+    name = "kernels",
     srcs = [
         "kernel.cu",
         "kernel2.cu",
     ],
+    archs = ["sm_70", "sm_80", "sm_120"],
     deps = [
         "@cuda_sdk//:cuda_headers",
     ],
 )
 
-cc_library(
-    name = "kernel2",
-    srcs = [
-        "kernel3.cu",
-    ],
+cc_binary(
+    name = "host",
     deps = [
-        "@cuda_sdk//:cuda_headers",
+        ":kernels",
+        "@cuda_sdk//:cudart",
     ],
-)
-
-cc_library(
-    name = "kernel3",
-    deps = [
-        ":kernel",
-        ":kernel2",
-    ],
-)
-
-cuda_binary(
-    name = "raw_saxpy",
-    deps = [
-        ":kernel",
-        ":kernel2",
-        ":kernel3",
-    ],
-    archs = ["sm_70", "sm_80", "sm_90"],
 )
 
 cc_library(

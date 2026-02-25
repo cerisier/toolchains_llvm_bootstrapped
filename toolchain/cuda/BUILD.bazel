@@ -65,17 +65,6 @@ cc_args(
     },
 )
 
-
-cc_args(
-    name = "cuda_host_only_flag",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:compile_actions",
-    ],
-    args = [
-        "--cuda-host-only",
-    ],
-)
-
 cc_args(
     name = "default_compile_flags",
     actions = [

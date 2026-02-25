@@ -1,5 +1,5 @@
 load("@bazel_lib//:bzl_library.bzl", "bzl_library")
-load("@bazel_skylib//rules:common_settings.bzl", "string_setting")
+load("@bazel_skylib//rules:common_settings.bzl", "bool_setting", "string_setting")
 load(":defs.bzl", "NVIDIA_COMPUTE_CAPABILITIES", "config_settings")
 
 package(default_visibility = ["//visibility:public"])
@@ -19,4 +19,16 @@ string_setting(
     name = "nvidia_compute_capability",
     build_setting_default = "unset",
     values = ["unset"] + NVIDIA_COMPUTE_CAPABILITIES,
+)
+
+bool_setting(
+    name = "cuda_mode",
+    build_setting_default = False,
+)
+
+config_setting(
+    name = "cuda_mode_enabled",
+    flag_values = {
+        ":cuda_mode": "True",
+    },
 )

@@ -1,4 +1,5 @@
 load("@rules_cc//cc:defs.bzl", "CcInfo")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
 def _cuda_arch_transition_impl(settings, attr):
     if not attr.archs:
@@ -7,6 +8,7 @@ def _cuda_arch_transition_impl(settings, attr):
     return {
         arch: {
             "//config:nvidia_compute_capability": arch,
+            "//command_line_option:platforms": "//platforms:none_nvptx64",
         }
         for arch in attr.archs
     }
@@ -14,11 +16,14 @@ def _cuda_arch_transition_impl(settings, attr):
 _cuda_arch_transition = transition(
     implementation = _cuda_arch_transition_impl,
     inputs = [],
-    outputs = ["//config:nvidia_compute_capability"],
+    outputs = [
+        "//config:nvidia_compute_capability",
+        "//command_line_option:platforms",
+    ],
 )
 
 # NO RDC ONLY
-def _cuda_binary_impl(ctx):
+def _cuda_fatbinary_impl(ctx):
     fatbin = ctx.actions.declare_file(ctx.label.name + ".fatbin")
     args = ctx.actions.args()
     args.add("--64")
@@ -66,8 +71,8 @@ def _cuda_binary_impl(ctx):
 
     return [DefaultInfo(files = depset([fatbin]))]
 
-cuda_binary = rule(
-    implementation = _cuda_binary_impl,
+cuda_fatbinary = rule(
+    implementation = _cuda_fatbinary_impl,
     attrs = {
         "deps": attr.label_list(
             cfg = _cuda_arch_transition,
@@ -81,3 +86,49 @@ cuda_binary = rule(
         ),
     },
 )
+def _dev(label): return label + "__cuda_dev"
+def _fatbin(label): return label + "__fatbin"
+
+def cuda_library(
+        name,
+        srcs = [],
+        hdrs = [],
+        deps = [],
+        archs = [],
+        copts = [],
+        **kwargs,
+):
+    # Device-only compilation for this node.
+    cc_library(
+        name = _dev(name),
+        srcs = srcs,
+        hdrs = hdrs,
+        deps = deps,
+    )
+
+    # Fatbin for this node (consumes device graph transitively).
+    # Deps are transitioned to @llvm//platforms:.
+    cuda_fatbinary(
+        name = _fatbin(name),
+        deps = [_dev(name)],
+        archs = archs,
+    )
+
+    # Host-only compilation for this node, includes fatbin.
+    cc_library(
+        name = name,
+        srcs = srcs,
+        hdrs = hdrs,
+        deps = deps,
+        copts = copts + [
+            "--cuda-path=$(location @cuda_sdk//:cuda_path)",
+            "--offload-host-only",
+            "-Xclang", "-fcuda-include-gpubinary",
+            "-Xclang", "$(execpath :%s)" % _fatbin(name),
+        ],
+        additional_compiler_inputs = [
+            "@cuda_sdk//:cuda_path",
+            _fatbin(name),
+        ],
+        **kwargs
+    )
