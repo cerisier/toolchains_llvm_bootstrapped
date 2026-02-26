@@ -95,6 +95,7 @@ def cuda_library(
         srcs = [],
         hdrs = [],
         deps = [],
+        host_deps = [],
         archs = [],
         copts = [],
         **kwargs,
@@ -104,7 +105,14 @@ def cuda_library(
         name = _dev(name),
         srcs = srcs,
         hdrs = hdrs,
-        deps = deps,
+        copts = copts + [
+            "-Wno-error=invalid-specialization",
+        ],
+        deps = deps + [
+            # TODO(cerisier): provide an implicit_dependency target that doesn't
+            # conflict with cuda_headers in case it is also provided.
+            "@cuda_sdk//:cuda_headers",
+        ],
     )
 
     # Fatbin for this node (consumes device graph transitively).
@@ -120,15 +128,19 @@ def cuda_library(
         name = name,
         srcs = srcs,
         hdrs = hdrs,
-        deps = deps,
+        deps = deps + host_deps + [
+            "@cuda_sdk//:cuda_headers",
+        ],
         copts = copts + [
-            "--cuda-path=$(location @cuda_sdk//:cuda_path)",
+            "--cuda-path=$(location {})".format(Label("@cuda_sdk//:cuda_path")),
             "--offload-host-only",
             "-Xclang", "-fcuda-include-gpubinary",
             "-Xclang", "$(execpath :%s)" % _fatbin(name),
+        ] + [
+            "-Wno-error=invalid-specialization",
         ],
         additional_compiler_inputs = [
-            "@cuda_sdk//:cuda_path",
+            Label("@cuda_sdk//:cuda_path"),
             _fatbin(name),
         ],
         **kwargs
