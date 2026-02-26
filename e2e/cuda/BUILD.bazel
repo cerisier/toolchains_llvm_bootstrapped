@@ -10,6 +10,32 @@ cc_binary(
 )
 
 cuda_library(
+    name = "saxpy_cuda",
+    srcs = ["saxpy_cuda.cu"],
+    archs = [
+        "sm_50",
+        "sm_60",
+        "sm_70",
+        "sm_80",
+        "sm_90",
+        "sm_120",
+    ],
+    deps = [
+        "@cuda_sdk//:cuda_headers",
+    ],
+)
+
+cc_binary(
+    name = "saxpy_cuda_binary",
+    deps = [
+        ":saxpy_cuda",
+        "@cuda_sdk//:cudart",
+        "@cuda_sdk//:cuda_headers",
+    ],
+)
+
+# device code + host wrapper function
+cuda_library(
     name = "vector_cuda",
     srcs = ["vector_cuda.cu"],
     hdrs = ["vector_cuda.cu.h"],
@@ -26,6 +52,7 @@ cuda_library(
     ],
 )
 
+# host only, calls host wrapper function
 cc_binary(
     name = "vector_cuda_binary",
     srcs = [
