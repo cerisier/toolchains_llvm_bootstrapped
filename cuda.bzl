@@ -28,7 +28,7 @@ def _cuda_fatbinary_impl(ctx):
     args = ctx.actions.args()
     args.add("--64")
     args.add("--create=%s" % fatbin.path)
-    args.add("--compress-all")
+    args.add("--compress-mode=size")
 
     fatbin_inputs = []
     sm_pic_objects = {}
@@ -54,6 +54,7 @@ def _cuda_fatbinary_impl(ctx):
         args.add_all(
             pic_objects,
             format_each = "--image3=kind=elf,sm=%s,file=%%s" % sm,
+            # format_each = "--image=profile=sm_%s,file=%%s" % sm,
         )
 
     fatbin_inputs = depset(transitive = fatbin_inputs)
@@ -89,59 +90,79 @@ cuda_fatbinary = rule(
 )
 def _dev(label): return label + "__cuda_dev"
 def _fatbin(label): return label + "__fatbin"
+def _dev_src(label, idx): return "%s__cuda_dev_%d" % (label, idx)
+def _fatbin_src(label, idx): return "%s__fatbin_%d" % (label, idx)
+def _host_src(label, idx): return "%s__cuda_host_%d" % (label, idx)
 
 def cuda_library(
         name,
         srcs = [],
         hdrs = [],
         deps = [],
+        defines = [],
+        features= [],
         host_deps = [],
         archs = [],
         copts = [],
         **kwargs,
 ):
-    # Device-only compilation for this node.
-    cc_library(
-        name = _dev(name),
-        srcs = srcs,
-        hdrs = hdrs,
-        copts = copts + [
-            "-Wno-error=invalid-specialization",
-        ],
-        deps = deps + [
-            # TODO(cerisier): provide an implicit_dependency target that doesn't
-            # conflict with cuda_headers in case it is also provided.
-            "@cuda_sdk//:cuda_headers",
-        ],
-    )
+    host_unit_deps = []
+    for idx in range(len(srcs)):
+        src = srcs[idx]
+        dev_src_target = _dev_src(name, idx)
+        fatbin_src_target = _fatbin_src(name, idx)
+        host_src_target = _host_src(name, idx)
 
-    # Fatbin for this node (consumes device graph transitively).
-    # Deps are transitioned to @llvm//platforms:.
-    cuda_fatbinary(
-        name = _fatbin(name),
-        deps = [_dev(name)],
-        archs = archs,
-    )
+        cc_library(
+            name = dev_src_target,
+            srcs = [src],
+            hdrs = hdrs,
+            copts = copts + [
+                "-Wno-error=invalid-specialization",
+            ],
+            defines = defines,
+            deps = deps + [
+                "@cuda_sdk//:cuda_headers",
+            ],
+            visibility = ["//visibility:private"],
+        )
 
-    # Host-only compilation for this node, includes fatbin.
+        # Fatbin per source unit (across all requested architectures).
+        cuda_fatbinary(
+            name = fatbin_src_target,
+            deps = [dev_src_target],
+            archs = archs,
+        )
+
+        cc_library(
+            name = host_src_target,
+            srcs = [src],
+            hdrs = hdrs,
+            defines = defines,
+            deps = deps + host_deps + [
+                "@cuda_sdk//:cuda_headers",
+            ],
+            copts = copts + [
+                "--cuda-path=$(location {})".format(Label("@cuda_sdk//:cuda_path")),
+                "--offload-host-only",
+                "-Xclang", "-fcuda-include-gpubinary",
+                "-Xclang", "$(execpath :%s)" % fatbin_src_target,
+            ] + [
+                "-Wno-error=invalid-specialization",
+            ],
+            additional_compiler_inputs = [
+                Label("@cuda_sdk//:cuda_path"),
+                fatbin_src_target,
+            ],
+            visibility = ["//visibility:private"],
+        )
+
+        host_unit_deps.append(host_src_target)
+
+    # Public library aggregates all per-source host objects.
     cc_library(
         name = name,
-        srcs = srcs,
         hdrs = hdrs,
-        deps = deps + host_deps + [
-            "@cuda_sdk//:cuda_headers",
-        ],
-        copts = copts + [
-            "--cuda-path=$(location {})".format(Label("@cuda_sdk//:cuda_path")),
-            "--offload-host-only",
-            "-Xclang", "-fcuda-include-gpubinary",
-            "-Xclang", "$(execpath :%s)" % _fatbin(name),
-        ] + [
-            "-Wno-error=invalid-specialization",
-        ],
-        additional_compiler_inputs = [
-            Label("@cuda_sdk//:cuda_path"),
-            _fatbin(name),
-        ],
+        deps = host_unit_deps + host_deps,
         **kwargs
     )
