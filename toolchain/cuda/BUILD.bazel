@@ -56,6 +56,10 @@ cc_args(
     args = [
         "--cuda-path={cuda_path}",
         "--offload-device-only",
+        # TODO(cerisier): Should this be configurable?
+        "-fvisibility=hidden",
+        "-fvisibility-inlines-hidden",
+        "-fno-ident",
     ],
     data = [
         "@cuda_sdk//:cuda_path",
