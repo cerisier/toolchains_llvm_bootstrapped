@@ -83,6 +83,8 @@ llvm.configure(
         "AArch64",
         "X86",
         "WebAssembly",
+        "NVPTX",
+        "AMDGPU",
     ],
 )
 use_repo(llvm, "llvm-project")
