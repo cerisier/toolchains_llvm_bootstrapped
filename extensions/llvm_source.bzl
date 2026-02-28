@@ -60,7 +60,7 @@ _LLVM_VERSIONS = {
         ),
     ),
     "22.1.0": struct(
-        build_defs_version = "21.x",
+        build_defs_version = "22.x",
         source_archive = struct(
             sha256 = "25d2e2adc4356d758405dd885fcfd6447bce82a90eb78b6b87ce0934bd077173",
             strip_prefix = "llvm-project-22.1.0.src",

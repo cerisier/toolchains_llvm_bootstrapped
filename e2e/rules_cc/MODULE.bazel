@@ -9,6 +9,10 @@ local_path_override(
     path = "../../",
 )
 
+llvm_source = use_extension("@llvm//extensions:llvm_source.bzl", "llvm_source")
+llvm_source.version(llvm_version = "22.1.0")
+use_repo(llvm_source, "compiler-rt", "libcxx", "libcxxabi", "libunwind", "llvm-raw", "llvm_zlib", "llvm_zstd")
+
 # Register toolchains through the scoped repo to ensure this codepath works.
 llvm_toolchains = use_extension("@llvm//extensions:toolchain.bzl", "toolchain")
 use_repo(llvm_toolchains, "llvm_toolchains")
