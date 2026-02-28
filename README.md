@@ -157,6 +157,20 @@ llvm = use_extension("@llvm//extensions:llvm.bzl", "llvm")
 use_repo(llvm, "llvm-project")
 ```
 
+### Selecting the LLVM release version
+
+By default this module tracks LLVM `21.1.8`.
+
+To select another supported LLVM release (for example `22.1.0`), configure the `llvm_source` extension before `use_repo(...)`:
+
+```starlark
+llvm_source = use_extension("@llvm//extensions:llvm_source.bzl", "llvm_source")
+llvm_source.version(llvm_version = "22.1.0")
+use_repo(llvm_source, "compiler-rt", "libcxx", "libcxxabi", "libunwind", "llvm-raw", "llvm_zlib", "llvm_zstd")
+```
+
+The extension routes the LLVM source archive and runtime repositories through per-version metadata, so you can keep one module setup while switching LLVM major versions.
+
 Then consume targets from `@llvm-project` and the runtime repos in BUILD files:
 
 ```starlark
