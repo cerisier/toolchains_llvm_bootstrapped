@@ -7,13 +7,14 @@ load("@bazel_skylib//lib:structs.bzl", "structs")
 DEFAULT_LLVM_VERSION = "21.1.8"
 
 _DEFAULT_SOURCE_PATCHES = [
-    "//3rd_party/llvm-project/21.x/patches:llvm-extra.patch",
-    "//3rd_party/llvm-project/21.x/patches:clang-prepend-arg-reexec.patch",
-    "//3rd_party/llvm-project/21.x/patches:llvm-sanitizers-ignorelists.patch",
-    "//3rd_party/llvm-project/21.x/patches:no_frontend_builtin_headers.patch",
-    "//3rd_party/llvm-project/21.x/patches:llvm-bzl-library.patch",
-    "//3rd_party/llvm-project/21.x/patches:llvm-driver-tool-order.patch",
-    "//3rd_party/llvm-project/21.x/patches:llvm-dsymutil-corefoundation.patch",
+    "//3rd_party/llvm-project/x.x/patches:llvm-extra.patch",
+    "//3rd_party/llvm-project/x.x/patches:clang-prepend-arg-reexec.patch",
+    "//3rd_party/llvm-project/x.x/patches:llvm-sanitizers-ignorelists.patch",
+    "//3rd_party/llvm-project/x.x/patches:no_frontend_builtin_headers.patch",
+    "//3rd_party/llvm-project/x.x/patches:llvm-bzl-library.patch",
+    "//3rd_party/llvm-project/x.x/patches:llvm-driver-tool-order.patch",
+    "//3rd_party/llvm-project/x.x/patches:llvm-dsymutil-corefoundation.patch",
+    "//3rd_party/llvm-project/x.x/patches:compiler-rt-symbolizer_skip_cxa_atexit.patch",
 ]
 
 _LLVM_21_SOURCE_PATCHES = _DEFAULT_SOURCE_PATCHES + [
@@ -24,8 +25,7 @@ _LLVM_21_SOURCE_PATCHES = _DEFAULT_SOURCE_PATCHES + [
     "//3rd_party/llvm-project/21.x/patches:no_rules_python.patch",
     "//3rd_party/llvm-project/21.x/patches:llvm-overlay-starlark.patch",
     "//3rd_party/llvm-project/21.x/patches:llvm-windows-stack-size.patch",
-    "//3rd_party/llvm-project/21.x/patches:compiler-rt-symbolizer_skip_cxa_atexit.patch",
-    "//3rd_party/llvm-project/21.x/patches:libcxx-lgamma_r.patch",
+    "//3rd_party/llvm-project/x.x/patches:libcxx-lgamma_r.patch",
 ]
 
 _LLVM_22_SOURCE_PATCHES = _DEFAULT_SOURCE_PATCHES + [
@@ -50,7 +50,6 @@ _LLVM_SUPPORT_ARCHIVES = {
 
 _LLVM_VERSIONS = {
     "21.1.8": struct(
-        build_defs_version = "21.x",
         source_archive = struct(
             sha256 = "4633a23617fa31a3ea51242586ea7fb1da7140e426bd62fc164261fe036aa142",
             strip_prefix = "llvm-project-21.1.8.src",
@@ -60,7 +59,6 @@ _LLVM_VERSIONS = {
         ),
     ),
     "22.1.0": struct(
-        build_defs_version = "22.x",
         source_archive = struct(
             sha256 = "25d2e2adc4356d758405dd885fcfd6447bce82a90eb78b6b87ce0934bd077173",
             strip_prefix = "llvm-project-22.1.0.src",
@@ -135,20 +133,20 @@ _llvm_subproject_repository = repository_rule(
     },
 )
 
-def _runtime_build_file(version_config, name, label_repo_prefix):
+def _runtime_build_file(name, label_repo_prefix):
     return "{repo}//3rd_party/llvm-project/{version}/{name}:{name}.BUILD.bazel".format(
         repo = label_repo_prefix,
         name = name,
-        version = version_config.build_defs_version,
+        version = "x.x",
     )
 
-def _create_runtime_repositories(version_config, had_override):
+def _create_runtime_repositories(had_override):
     build_label_repo_prefix = "@llvm" if had_override else ""
 
     for name in ["compiler-rt", "libcxx", "libcxxabi", "libunwind"]:
         _llvm_subproject_repository(
             name = name,
-            build_file = _runtime_build_file(version_config, name, build_label_repo_prefix),
+            build_file = _runtime_build_file(name, build_label_repo_prefix),
             dir = name,
         )
 
@@ -182,7 +180,7 @@ def _llvm_source_impl(mctx):
 
     had_override = _create_llvm_raw_repo(mctx, version_config)
     _create_support_archives()
-    _create_runtime_repositories(version_config, had_override)
+    _create_runtime_repositories(had_override)
 
     return mctx.extension_metadata(
         reproducible = True,
