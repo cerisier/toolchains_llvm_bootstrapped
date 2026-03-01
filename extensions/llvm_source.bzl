@@ -4,30 +4,34 @@ load("@bazel_tools//tools/build_defs/repo:local.bzl", "new_local_repository")
 load("@bazel_skylib//lib:structs.bzl", "structs")
 
 # Keep this in sync with MODULE.bazel.
-LLVM_VERSION = "21.1.8"
+DEFAULT_LLVM_VERSION = "21.1.8"
 
-_LLVM_RAW_ARCHIVE = struct(
-    sha256 = "4633a23617fa31a3ea51242586ea7fb1da7140e426bd62fc164261fe036aa142",
-    strip_prefix = "llvm-project-{LLVM_VERSION}.src".format(LLVM_VERSION = LLVM_VERSION),
-    urls = ["https://github.com/llvm/llvm-project/releases/download/llvmorg-{LLVM_VERSION}/llvm-project-{LLVM_VERSION}.src.tar.xz".format(LLVM_VERSION = LLVM_VERSION)],
-    patch_args = ["-p1"],
-    patches = [
-        "//3rd_party/llvm-project/21.x/patches:llvm-extra.patch",
-        "//3rd_party/llvm-project/21.x/patches:llvm-bazel9.patch",
-        "//3rd_party/llvm-project/21.x/patches:llvm-dsymutil-corefoundation.patch",
-        "//3rd_party/llvm-project/21.x/patches:llvm-driver-tool-order.patch",
-        "//3rd_party/llvm-project/21.x/patches:clang-prepend-arg-reexec.patch",
-        "//3rd_party/llvm-project/21.x/patches:llvm-sanitizers-ignorelists.patch",
-        "//3rd_party/llvm-project/21.x/patches:windows_link_and_genrule.patch",
-        "//3rd_party/llvm-project/21.x/patches:bundle_resources_no_python.patch",
-        "//3rd_party/llvm-project/21.x/patches:no_frontend_builtin_headers.patch",
-        "//3rd_party/llvm-project/21.x/patches:no_zlib_genrule.patch",
-        "//3rd_party/llvm-project/21.x/patches:no_rules_python.patch",
-        "//3rd_party/llvm-project/21.x/patches:llvm-overlay-starlark.patch",
-        "//3rd_party/llvm-project/21.x/patches:llvm-bzl-library.patch",
-        "//3rd_party/llvm-project/21.x/patches:llvm-windows-stack-size.patch",
-    ],
-)
+_DEFAULT_SOURCE_PATCHES = [
+    "//3rd_party/llvm-project/x.x/patches:llvm-extra.patch",
+    "//3rd_party/llvm-project/x.x/patches:clang-prepend-arg-reexec.patch",
+    "//3rd_party/llvm-project/x.x/patches:llvm-sanitizers-ignorelists.patch",
+    "//3rd_party/llvm-project/x.x/patches:no_frontend_builtin_headers.patch",
+    "//3rd_party/llvm-project/x.x/patches:llvm-bzl-library.patch",
+    "//3rd_party/llvm-project/x.x/patches:llvm-driver-tool-order.patch",
+    "//3rd_party/llvm-project/x.x/patches:llvm-dsymutil-corefoundation.patch",
+    "//3rd_party/llvm-project/x.x/patches:compiler-rt-symbolizer_skip_cxa_atexit.patch",
+]
+
+_LLVM_21_SOURCE_PATCHES = _DEFAULT_SOURCE_PATCHES + [
+    "//3rd_party/llvm-project/21.x/patches:llvm-bazel9.patch",
+    "//3rd_party/llvm-project/21.x/patches:windows_link_and_genrule.patch",
+    "//3rd_party/llvm-project/21.x/patches:bundle_resources_no_python.patch",
+    "//3rd_party/llvm-project/21.x/patches:no_zlib_genrule.patch",
+    "//3rd_party/llvm-project/21.x/patches:no_rules_python.patch",
+    "//3rd_party/llvm-project/21.x/patches:llvm-overlay-starlark.patch",
+    "//3rd_party/llvm-project/21.x/patches:llvm-windows-stack-size.patch",
+    "//3rd_party/llvm-project/x.x/patches:libcxx-lgamma_r.patch",
+]
+
+_LLVM_22_SOURCE_PATCHES = _DEFAULT_SOURCE_PATCHES + [
+    "//3rd_party/llvm-project/22.x/patches:no_rules_python.patch",
+]
+
 
 _LLVM_SUPPORT_ARCHIVES = {
     "llvm_zlib": struct(
@@ -44,14 +48,28 @@ _LLVM_SUPPORT_ARCHIVES = {
     ),
 }
 
-_LLVM_RELEASE_ASSETS_SHA256 = {
-    "compiler-rt": "dd54ae21aee1780fac59445b51ebff601ad016b31ac3a7de3b21126fd3ccb229",
-    "libcxx": "6422a58a5c29b7f4fda224cfdc07842be8a208a61301bbba7a219116e3351809",
-    "libcxxabi": "709c9a63bde1e36a80d8675becc38073b85f0fa1b4111e34542b885c9e1239da",
-    "libunwind": "03e8adc6c3bdde657dcaedc94886ea70d1f7d551d622fcd8a36a8300e5c36cbc",
+_LLVM_VERSIONS = {
+    "21.1.8": struct(
+        source_archive = struct(
+            sha256 = "4633a23617fa31a3ea51242586ea7fb1da7140e426bd62fc164261fe036aa142",
+            strip_prefix = "llvm-project-21.1.8.src",
+            urls = ["https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.8/llvm-project-21.1.8.src.tar.xz"],
+            patch_args = ["-p1"],
+            patches = _LLVM_21_SOURCE_PATCHES,
+        ),
+    ),
+    "22.1.0": struct(
+        source_archive = struct(
+            sha256 = "25d2e2adc4356d758405dd885fcfd6447bce82a90eb78b6b87ce0934bd077173",
+            strip_prefix = "llvm-project-22.1.0.src",
+            urls = ["https://github.com/llvm/llvm-project/releases/download/llvmorg-22.1.0/llvm-project-22.1.0.src.tar.xz"],
+            patch_args = ["-p1"],
+            patches = _LLVM_22_SOURCE_PATCHES,
+        ),
+    ),
 }
 
-def _create_llvm_raw_repo(mctx):
+def _create_llvm_raw_repo(mctx, version_config):
     had_override = False
 
     for module in mctx.modules:
@@ -82,7 +100,7 @@ def _create_llvm_raw_repo(mctx):
         http_archive(
             name = "llvm-raw",
             build_file_content = "# EMPTY",
-            **structs.to_dict(_LLVM_RAW_ARCHIVE),
+            **structs.to_dict(version_config.source_archive),
         )
 
     return had_override
@@ -115,41 +133,66 @@ _llvm_subproject_repository = repository_rule(
     },
 )
 
+def _runtime_build_file(name, label_repo_prefix):
+    return "{repo}//3rd_party/llvm-project/{version}/{name}:{name}.BUILD.bazel".format(
+        repo = label_repo_prefix,
+        name = name,
+        version = "x.x",
+    )
+
+def _create_runtime_repositories(had_override):
+    build_label_repo_prefix = "@llvm" if had_override else ""
+
+    for name in ["compiler-rt", "libcxx", "libcxxabi", "libunwind"]:
+        _llvm_subproject_repository(
+            name = name,
+            build_file = _runtime_build_file(name, build_label_repo_prefix),
+            dir = name,
+        )
+
+def _get_llvm_version(mctx):
+    llvm_version = DEFAULT_LLVM_VERSION
+    module_selected_version = None
+
+    for mod in mctx.modules:
+        module_versions = [tag.llvm_version for tag in mod.tags.version]
+        if len(module_versions) > 1:
+            fail("Only 1 llvm_source.version(...) tag is allowed per module")
+
+        if not module_versions:
+            continue
+
+        if getattr(mod, "is_root", False):
+            return module_versions[0]
+
+        module_selected_version = module_versions[0]
+
+    if module_selected_version != None:
+        return module_selected_version
+
+    return llvm_version
+
 def _llvm_source_impl(mctx):
-    had_override = _create_llvm_raw_repo(mctx)
+    llvm_version = _get_llvm_version(mctx)
+    version_config = _LLVM_VERSIONS.get(llvm_version)
+    if version_config == None:
+        fail("Unsupported LLVM version '{}'. Supported versions: {}".format(llvm_version, ", ".join(sorted(_LLVM_VERSIONS.keys()))))
+
+    had_override = _create_llvm_raw_repo(mctx, version_config)
     _create_support_archives()
-
-    if had_override:
-        for name in _LLVM_RELEASE_ASSETS_SHA256.keys():
-            _llvm_subproject_repository(
-                name = name,
-                build_file = "@llvm//3rd_party/llvm-project/21.x/{name}:{name}.BUILD.bazel".format(name = name),
-                dir = name,
-            )
-
-    else:
-        for (name, sha256) in _LLVM_RELEASE_ASSETS_SHA256.items():
-            http_archive(
-                name = name,
-                build_file = "//3rd_party/llvm-project/21.x/{name}:{name}.BUILD.bazel".format(name = name),
-                patch_args = ["-p1"],
-                patches = (["//3rd_party/llvm-project/21.x/libcxx:lgamma_r.patch"] if name == "libcxx" else []) + (["//3rd_party/llvm-project/21.x/compiler-rt:symbolizer_skip_cxa_atexit.patch"] if name == "compiler-rt" else []),
-                sha256 = sha256,
-                strip_prefix = "{name}-{llvm_version}.src".format(
-                    name = name,
-                    llvm_version = LLVM_VERSION,
-                ),
-                urls = ["https://github.com/llvm/llvm-project/releases/download/llvmorg-{llvm_version}/{name}-{llvm_version}.src.tar.xz".format(
-                    name = name,
-                    llvm_version = LLVM_VERSION,
-                )],
-            )
+    _create_runtime_repositories(had_override)
 
     return mctx.extension_metadata(
         reproducible = True,
         root_module_direct_deps = "all",
         root_module_direct_dev_deps = [],
     )
+
+_version_tag = tag_class(
+    attrs = {
+        "llvm_version": attr.string(mandatory = True),
+    },
+)
 
 _from_path_tag = tag_class(
     attrs = {
@@ -208,6 +251,7 @@ _from_archive_tag = tag_class(
 llvm_source = module_extension(
     implementation = _llvm_source_impl,
     tag_classes = {
+        "version": _version_tag,
         "from_path": _from_path_tag,
         "from_git": _from_git_tag,
         "from_archive": _from_archive_tag,

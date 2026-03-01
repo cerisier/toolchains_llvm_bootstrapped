@@ -1,6 +1,6 @@
-diff --git a/include/__random/binomial_distribution.h b/include/__random/binomial_distribution.h
---- a/include/__random/binomial_distribution.h
-+++ b/include/__random/binomial_distribution.h
+diff --git a/libcxx/include/__random/binomial_distribution.h b/libcxx/include/__random/binomial_distribution.h
+--- a/libcxx/include/__random/binomial_distribution.h
++++ b/libcxx/include/__random/binomial_distribution.h
 @@ -97,13 +97,25 @@ class binomial_distribution {
    }
  };

@@ -4,12 +4,15 @@ load("@llvm//:directory.bzl", "headers_directory")
 load("@llvm//toolchain/runtimes:cc_stage0_object.bzl", "cc_stage0_object")
 load("@llvm//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
 load("@llvm//toolchain/runtimes:cc_unsanitized_library.bzl", "cc_unsanitized_library")
-load("@llvm//3rd_party/llvm-project/21.x/compiler-rt:targets.bzl", "atomic_helper_cc_library")
-load("@llvm//3rd_party/llvm-project/21.x/compiler-rt:filter_builtin_sources.bzl", "filter_builtin_sources")
+load("@llvm//3rd_party/llvm-project/x.x/compiler-rt:targets.bzl", "atomic_helper_cc_library")
+load("@llvm//3rd_party/llvm-project/x.x/compiler-rt:filter_builtin_sources.bzl", "filter_builtin_sources")
+load("@llvm-project//:vars.bzl", "LLVM_VERSION_MAJOR")
 load("@llvm//:sh_script.bzl", "sh_script")
 load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
+IS_LLVM_22_OR_NEWER = int(LLVM_VERSION_MAJOR) >= 22
 
 ###
 ### compiler-rt/lib/builtins/CMakeLists.txt.
@@ -436,7 +439,7 @@ cc_library(
         "//conditions:default": [],
     }) + select({
         "@llvm//platforms/config:linux_aarch64": [
-            "lib/builtins/cpu_model/aarch64/fmv/mrs.inc",
+            "lib/builtins/cpu_model/aarch64/fmv/hwcap.inc" if IS_LLVM_22_OR_NEWER else "lib/builtins/cpu_model/aarch64/fmv/mrs.inc",
             "lib/builtins/cpu_model/aarch64/fmv/getauxval.inc",
         ],
         "@llvm//platforms/config:macos_aarch64": [
