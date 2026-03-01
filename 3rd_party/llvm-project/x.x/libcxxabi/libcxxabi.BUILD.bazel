@@ -1,9 +1,12 @@
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
 load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@llvm-project//:vars.bzl", "LLVM_VERSION_MAJOR")
 load("@llvm//toolchain/runtimes:cc_runtime_library.bzl", "cc_runtime_stage0_library")
 load("@llvm//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
 load("@llvm//toolchain/runtimes:cc_runtime_shared_library.bzl", "cc_runtime_stage0_shared_library")
+
+IS_LLVM_22_OR_NEWER = int(LLVM_VERSION_MAJOR) >= 22
 
 filegroup(
     name = "libcxxabi_headers_files",
@@ -60,6 +63,9 @@ cc_library(
         "NDEBUG",
         "_LIBCPP_BUILDING_LIBRARY",
         "LIBCXX_BUILDING_LIBCXXABI",
+    ] + ([
+        "_LIBCPP_AVAILABILITY_MINIMUM_HEADER_VERSION=2",
+    ] if IS_LLVM_22_OR_NEWER else []) + [
         # DHAVE___CXA_THREAD_ATEXIT_IMPL (gnu but not linux and glibc >= 2.18)
     ] + select({
         ":windows_static": [
@@ -138,7 +144,7 @@ cc_library(
         # libcxx depends on a set of internal llvm-libc headers. (libc/shared)
         # See project hand-in-hand.
         # https://discourse.llvm.org/t/rfc-project-hand-in-hand-llvm-libc-libc-code-sharing/77701
-        "@llvm//3rd_party/llvm-project/21.x/libc:libc_headers",
+        "@llvm//3rd_party/llvm-project/x.x/libc:libc_headers",
     ] + select({
         "@llvm//platforms/config:musl": [
             "@musl_libc//:musl_libc_headers",
