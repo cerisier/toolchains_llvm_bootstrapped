@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Why this wrapper exists:
+# Bazel's downloader path uses ProxyHelper and can read *_proxy env vars, but
+# other Bazel networking paths do not consistently go through ProxyHelper.
+# In particular, remote_cache, bes_backend and remote_executor rely on host JVM
+# proxy system properties. We bridge this gap by translating HTTP(S)_PROXY env
+# vars into --host_jvm_args=-Dhttp(s).proxyHost/-Dhttp(s).proxyPort.
+#
+# Bazelisk executes this wrapper (if present) and sets BAZEL_REAL to the
+# selected Bazel binary.
+BAZEL_BIN="${BAZEL_REAL:-bazel}"
+
+parse_proxy() {
+  local proxy_url="$1"
+  local default_port="$2"
+
+  # Strip scheme, credentials and path/query/fragment.
+  local address="${proxy_url#*://}"
+  if [[ "$address" == "$proxy_url" ]]; then
+    address="$proxy_url"
+  fi
+  address="${address##*@}"
+  address="${address%%/*}"
+  address="${address%%\?*}"
+  address="${address%%#*}"
+
+  local host=""
+  local port=""
+
+  if [[ "$address" =~ ^\[(.*)\]:(.*)$ ]]; then
+    host="${BASH_REMATCH[1]}"
+    port="${BASH_REMATCH[2]}"
+  elif [[ "$address" =~ ^\[(.*)\]$ ]]; then
+    host="${BASH_REMATCH[1]}"
+  elif [[ "$address" == *:* ]]; then
+    host="${address%:*}"
+    port="${address##*:}"
+  else
+    host="$address"
+  fi
+
+  if [[ -z "$host" ]]; then
+    return 1
+  fi
+  if [[ -z "$port" ]]; then
+    port="$default_port"
+  fi
+
+  printf '%s\n%s\n' "$host" "$port"
+}
+
+startup_args=()
+
+HTTP_PROXY_VALUE="${HTTP_PROXY:-${http_proxy:-}}"
+if [[ -n "$HTTP_PROXY_VALUE" ]]; then
+  if mapfile -t http_proxy_parts < <(parse_proxy "$HTTP_PROXY_VALUE" 80); then
+    startup_args+=("--host_jvm_args=-Dhttp.proxyHost=${http_proxy_parts[0]}")
+    startup_args+=("--host_jvm_args=-Dhttp.proxyPort=${http_proxy_parts[1]}")
+  fi
+fi
+
+HTTPS_PROXY_VALUE="${HTTPS_PROXY:-${https_proxy:-}}"
+if [[ -n "$HTTPS_PROXY_VALUE" ]]; then
+  if mapfile -t https_proxy_parts < <(parse_proxy "$HTTPS_PROXY_VALUE" 443); then
+    startup_args+=("--host_jvm_args=-Dhttps.proxyHost=${https_proxy_parts[0]}")
+    startup_args+=("--host_jvm_args=-Dhttps.proxyPort=${https_proxy_parts[1]}")
+  fi
+fi
+
+exec "$BAZEL_BIN" "${startup_args[@]}" "$@"
