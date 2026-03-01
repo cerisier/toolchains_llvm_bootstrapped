@@ -142,6 +142,35 @@ We use a cross-platform reimplementation of `pkgutil` to unpack SDK packages, wh
 In theory, this toolchain can target all LLVM-supported targets.
 We prioritize adding support based on demand.
 
+# Selecting the LLVM version
+
+This module allows choosing a specific LLVM version for both the compiler and the runtimes.
+
+### Configure via `use_extension(...)`
+
+To select another LLVM release (for example `22.1.0`), configure the `llvm_source` extension before `use_repo(...)`:
+
+```starlark
+llvm_source = use_extension("@llvm//extensions:llvm_source.bzl", "llvm_source")
+llvm_source.index(file = "@llvm//:llvm_versions.json")  # Optional: default index.
+llvm_source.version(llvm_version = "22.1.0")
+use_repo(llvm_source, "compiler-rt", "libcxx", "libcxxabi", "libunwind", "llvm-raw", "llvm_zlib", "llvm_zstd")
+```
+
+You can also provide your own index file:
+
+```starlark
+llvm_source = use_extension("@llvm//extensions:llvm_source.bzl", "llvm_source")
+llvm_source.index(file = "//:my_llvm_versions.json")
+llvm_source.version(llvm_version = "21.1.8")
+```
+
+Important: Since this module uses prebuilt compiler archives by default. If you set `llvm_source.version(...)` to another version, use:
+
+`--@llvm//toolchain:source=bootstrapped`
+
+This switches to source bootstrapping (building the compiler), which is required when prebuilts for your exact version are not available.
+
 # Additional LLVM targets
 
 This module exposes LLVM and runtime projects as first-class Bazel repos, so you can depend on them directly.
@@ -156,20 +185,6 @@ bazel_dep(name = "llvm", version = "0.3.1")
 llvm = use_extension("@llvm//extensions:llvm.bzl", "llvm")
 use_repo(llvm, "llvm-project")
 ```
-
-### Selecting the LLVM release version
-
-By default this module tracks LLVM `21.1.8`.
-
-To select another supported LLVM release (for example `22.1.0`), configure the `llvm_source` extension before `use_repo(...)`:
-
-```starlark
-llvm_source = use_extension("@llvm//extensions:llvm_source.bzl", "llvm_source")
-llvm_source.version(llvm_version = "22.1.0")
-use_repo(llvm_source, "compiler-rt", "libcxx", "libcxxabi", "libunwind", "llvm-raw", "llvm_zlib", "llvm_zstd")
-```
-
-The extension routes the LLVM source archive and runtime repositories through per-version metadata, so you can keep one module setup while switching LLVM major versions.
 
 Then consume targets from `@llvm-project` and the runtime repos in BUILD files:
 

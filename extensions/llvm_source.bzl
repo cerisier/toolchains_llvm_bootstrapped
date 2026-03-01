@@ -5,6 +5,7 @@ load("@bazel_skylib//lib:structs.bzl", "structs")
 
 # Keep this in sync with MODULE.bazel.
 DEFAULT_LLVM_VERSION = "21.1.8"
+DEFAULT_LLVM_VERSIONS_INDEX_FILE = "//:llvm_versions.json"
 
 _DEFAULT_SOURCE_PATCHES = [
     "//3rd_party/llvm-project/x.x/patches:llvm-extra.patch",
@@ -32,6 +33,12 @@ _LLVM_22_SOURCE_PATCHES = _DEFAULT_SOURCE_PATCHES + [
     "//3rd_party/llvm-project/22.x/patches:no_rules_python.patch",
 ]
 
+_LLVM_PATCHES_BY_MAJOR = {
+    21: _LLVM_21_SOURCE_PATCHES,
+    22: _LLVM_22_SOURCE_PATCHES,
+    # So that anyone can test with the next LLVM major easily.
+    23: _LLVM_22_SOURCE_PATCHES,
+}
 
 _LLVM_SUPPORT_ARCHIVES = {
     "llvm_zlib": struct(
@@ -45,27 +52,6 @@ _LLVM_SUPPORT_ARCHIVES = {
         sha256 = "7c42d56fac126929a6a85dbc73ff1db2411d04f104fae9bdea51305663a83fd0",
         strip_prefix = "zstd-1.5.2",
         urls = ["https://github.com/facebook/zstd/releases/download/v1.5.2/zstd-1.5.2.tar.gz"],
-    ),
-}
-
-_LLVM_VERSIONS = {
-    "21.1.8": struct(
-        source_archive = struct(
-            sha256 = "4633a23617fa31a3ea51242586ea7fb1da7140e426bd62fc164261fe036aa142",
-            strip_prefix = "llvm-project-21.1.8.src",
-            urls = ["https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.8/llvm-project-21.1.8.src.tar.xz"],
-            patch_args = ["-p1"],
-            patches = _LLVM_21_SOURCE_PATCHES,
-        ),
-    ),
-    "22.1.0": struct(
-        source_archive = struct(
-            sha256 = "25d2e2adc4356d758405dd885fcfd6447bce82a90eb78b6b87ce0934bd077173",
-            strip_prefix = "llvm-project-22.1.0.src",
-            urls = ["https://github.com/llvm/llvm-project/releases/download/llvmorg-22.1.0/llvm-project-22.1.0.src.tar.xz"],
-            patch_args = ["-p1"],
-            patches = _LLVM_22_SOURCE_PATCHES,
-        ),
     ),
 }
 
@@ -104,6 +90,47 @@ def _create_llvm_raw_repo(mctx, version_config):
         )
 
     return had_override
+
+def _parse_llvm_major(llvm_version):
+    if not llvm_version:
+        fail("LLVM version must not be empty")
+
+    major_token = llvm_version.split(".", 1)[0]
+    if not major_token:
+        fail("Invalid LLVM version '{}': expected '<major>.<minor>.<patch>'".format(llvm_version))
+
+    for i in range(len(major_token)):
+        c = major_token[i]
+        if c < "0" or c > "9":
+            fail("Invalid LLVM version '{}': expected numeric major version prefix".format(llvm_version))
+
+    return int(major_token)
+
+def _source_archive_for_version(llvm_version, source_info, patches):
+    return struct(
+        strip_prefix = source_info.get("strip_prefix", "llvm-project-{}.src".format(llvm_version)),
+        urls = [source_info["url"]],
+        sha256 = source_info["sha256"],
+        patch_args = ["-p1"],
+        patches = patches,
+    )
+
+def _version_config_for(llvm_version, llvm_version_index):
+    major = _parse_llvm_major(llvm_version)
+    source_info = llvm_version_index.get(llvm_version)
+    if source_info == None:
+        fail("LLVM version '{}' is missing from llvm version index.".format(llvm_version))
+
+    if type(source_info) != "dict":
+        fail("Invalid llvm version index entry for '{}': expected dict, got {}".format(llvm_version, type(source_info)))
+
+    if source_info.get("url") == None or source_info.get("sha256") == None:
+        fail("Invalid llvm version index entry for '{}': expected keys 'url' and 'sha256'".format(llvm_version))
+
+    return struct(
+        major = major,
+        source_archive = _source_archive_for_version(llvm_version, source_info, _LLVM_PATCHES_BY_MAJOR.get(major, [])),
+    )
 
 def _create_support_archives():
     for name, params in _LLVM_SUPPORT_ARCHIVES.items():
@@ -172,11 +199,38 @@ def _get_llvm_version(mctx):
 
     return llvm_version
 
+def _get_llvm_version_index_file(mctx):
+    module_selected_index = None
+
+    for mod in mctx.modules:
+        module_indexes = [tag.file for tag in mod.tags.index]
+        if len(module_indexes) > 1:
+            fail("Only 1 llvm_source.index(...) tag is allowed per module")
+
+        if not module_indexes:
+            continue
+
+        if getattr(mod, "is_root", False):
+            return module_indexes[0]
+
+        module_selected_index = module_indexes[0]
+
+    if module_selected_index != None:
+        return module_selected_index
+
+    return Label(DEFAULT_LLVM_VERSIONS_INDEX_FILE)
+
+def _get_llvm_version_index(mctx):
+    index_file = _get_llvm_version_index_file(mctx)
+    decoded = json.decode(mctx.read(index_file))
+    if type(decoded) != "dict":
+        fail("Invalid llvm version index in '{}': expected top-level dict".format(index_file))
+    return decoded
+
 def _llvm_source_impl(mctx):
     llvm_version = _get_llvm_version(mctx)
-    version_config = _LLVM_VERSIONS.get(llvm_version)
-    if version_config == None:
-        fail("Unsupported LLVM version '{}'. Supported versions: {}".format(llvm_version, ", ".join(sorted(_LLVM_VERSIONS.keys()))))
+    llvm_version_index = _get_llvm_version_index(mctx)
+    version_config = _version_config_for(llvm_version, llvm_version_index)
 
     had_override = _create_llvm_raw_repo(mctx, version_config)
     _create_support_archives()
@@ -192,6 +246,16 @@ _version_tag = tag_class(
     attrs = {
         "llvm_version": attr.string(mandatory = True),
     },
+)
+
+_index_tag = tag_class(
+    attrs = {
+        "file": attr.label(doc = "The LLVM versions index JSON file.", mandatory = True),
+    },
+    doc = """\
+Extend the set of known LLVM source versions based on a JSON index.
+The index must map version strings to objects containing `url` and `sha256`.
+""",
 )
 
 _from_path_tag = tag_class(
@@ -251,6 +315,7 @@ _from_archive_tag = tag_class(
 llvm_source = module_extension(
     implementation = _llvm_source_impl,
     tag_classes = {
+        "index": _index_tag,
         "version": _version_tag,
         "from_path": _from_path_tag,
         "from_git": _from_git_tag,
