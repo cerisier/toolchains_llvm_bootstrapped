@@ -1,4 +1,5 @@
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
+load("//toolchain:linker_policy.bzl", "linker_arg_group")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -42,22 +43,7 @@ cc_args(
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
-    args = [
-        "-L{mingw_import_library_search_path}",
-        "-L{mingw_crt_library_search_path}",
-
-        # Clang will respect the user's chosen crt variant.
-        # It defaults on -lmsvcrt if it doesn't find any -l<crt> option
-        # For now, we force on ucrt.
-        # TODO(cerisier): make this either a constraint or a build setting
-        "-lucrt",
-    ],
-    data = [
-        "//runtimes/mingw:mingw_crt_library_search_directory",
-        "//runtimes/mingw:mingw_import_libraries_directory",
-    ],
-    format = {
-        "mingw_crt_library_search_path": "//runtimes/mingw:mingw_crt_library_search_directory",
-        "mingw_import_library_search_path": "//runtimes/mingw:mingw_import_libraries_directory",
-    },
+    args = linker_arg_group("windows_default_libs").args,
+    data = linker_arg_group("windows_default_libs").data,
+    format = linker_arg_group("windows_default_libs").format,
 )

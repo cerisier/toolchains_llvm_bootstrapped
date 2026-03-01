@@ -1,6 +1,7 @@
 load("@bazel_lib//:bzl_library.bzl", "bzl_library")
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
+load("//toolchain:linker_policy.bzl", "linker_arg_group")
 load("//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
 
 package(default_visibility = ["//visibility:public"])
@@ -21,16 +22,9 @@ cc_args(
         "@rules_cc//cc/toolchains/actions:link_actions",
         # We may need it for other actions too?
     ],
-    args = [
-        "-resource-dir",
-        "{resource_dir}",
-    ],
-    data = [
-        "//runtimes:resource_directory",
-    ],
-    format = {
-        "resource_dir": "//runtimes:resource_directory",
-    },
+    args = linker_arg_group("resource_dir").args,
+    data = linker_arg_group("resource_dir").data,
+    format = linker_arg_group("resource_dir").format,
 )
 
 cc_args(
@@ -101,15 +95,9 @@ cc_args(
     ],
     # clang::driver::Toolchain::GetFilePath("crtn.o") looks for those using
     # prefix directories (-B).
-    args = [
-        "-B{crt_objects_directory}",
-    ],
-    data = [
-        "//runtimes:crt_objects_directory",
-    ],
-    format = {
-        "crt_objects_directory": "//runtimes:crt_objects_directory",
-    },
+    args = linker_arg_group("crt_search_directory").args,
+    data = linker_arg_group("crt_search_directory").data,
+    format = linker_arg_group("crt_search_directory").format,
 )
 
 cc_args(
@@ -131,12 +119,7 @@ cc_args(
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
-    args = [
-        "-fuse-ld=lld",
-        # lld will be used if it's next to clang.
-        # It would have been great to set the path explicitly.
-        # "--ld-path={lld_path}",
-    ],
+    args = linker_arg_group("fuse_ld").args,
 )
 
 cc_args(
@@ -679,7 +662,7 @@ cc_args(
     ],
     args = select({
         ":empty_sysroot": [
-            "--sysroot=/dev/null",
+            linker_arg_group("empty_sysroot_flags").args[0],
         ],
         "//conditions:default": [],
     }),
@@ -690,9 +673,7 @@ cc_args(
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
-    args = [
-        "-rtlib=compiler-rt",
-    ],
+    args = linker_arg_group("rtlib_compiler_rt").args,
 )
 
 cc_args(
@@ -702,10 +683,7 @@ cc_args(
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
-    args = [
-        # will prevent clang to choose which libc++ to link against
-        "-nostdlib++",
-    ],
+    args = linker_arg_group("stdlib").args,
 )
 
 cc_args(
@@ -718,7 +696,7 @@ cc_args(
         # would result in a warning when targeting macOS.
         "@platforms//os:macos": [],
         # Will prevent clang from choosing which libunwind to link against.
-        "//conditions:default": ["--unwindlib=none"],
+        "//conditions:default": linker_arg_group("unwindlib_none").args,
     }),
 )
 
@@ -794,4 +772,7 @@ cc_args(
 bzl_library(
     name = "llvm_target_triple",
     srcs = ["llvm_target_triple.bzl"],
+    deps = [
+        "//toolchain:linker_policy",
+    ],
 )

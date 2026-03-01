@@ -1,6 +1,12 @@
 load("@bazel_lib//:bzl_library.bzl", "bzl_library")
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load(
+    "//toolchain:linker_policy.bzl",
+    "MACOS_AARCH64_MINIMUM_OS_VERSION",
+    "MACOS_AARCH64_SYSROOT_LABEL",
+    "linker_arg_group",
+)
+load(
     ":macos_minimum_os_flag.bzl",
     "MACOS_MINIMUM_OS_VERSIONS",
     "macos_minimum_os_flag",
@@ -15,12 +21,12 @@ package(default_visibility = ["//visibility:public"])
 cc_sysroot(
     name = "macos_sdk_sysroot",
     allowlist_include_directories = [
-        "@macos_sdk//sysroot",
+        MACOS_AARCH64_SYSROOT_LABEL,
     ],
     data = [
-        "@macos_sdk//sysroot",
+        MACOS_AARCH64_SYSROOT_LABEL,
     ],
-    sysroot = "@macos_sdk//sysroot",
+    sysroot = MACOS_AARCH64_SYSROOT_LABEL,
 )
 
 #TODO(cerisier): Fix with new cc_args BuildSettingInfo formatter once it is ready.
@@ -53,7 +59,7 @@ cc_args(
     } | {
         "//conditions:default": [
             # Keep current default behavior when the Apple minimum OS is not specified.
-            "-mmacosx-version-min=14.0",
+            "-mmacosx-version-min=%s" % MACOS_AARCH64_MINIMUM_OS_VERSION,
         ],
     }),
 )
@@ -65,14 +71,8 @@ cc_args(
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
     args = [
-        "-headerpad_max_install_names",
-        "-Wl,-no_warn_duplicate_libraries",
-        "-Wl,-oso_prefix,.",  # Strip absolute paths from debug info file references
-    ],
-    env = {
-        # Required for hermetic links on macOS
-        "ZERO_AR_DATE": "1",
-    },
+    ] + linker_arg_group("macos_default_link_flags").args,
+    env = linker_arg_group("macos_default_link_flags").env,
 )
 
 cc_args(
@@ -81,16 +81,9 @@ cc_args(
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
     # -l: is not supported by lld64
-    args = [
-        "{libclang_rt.builtins.a}",
-        "-lSystem",
-    ],
-    data = [
-        "//runtimes/compiler-rt:clang_rt.builtins.static",
-    ],
-    format = {
-        "libclang_rt.builtins.a": "//runtimes/compiler-rt:clang_rt.builtins.static",
-    },
+    args = linker_arg_group("macos_default_libs").args,
+    data = linker_arg_group("macos_default_libs").data,
+    format = linker_arg_group("macos_default_libs").format,
 )
 
 bzl_library(
