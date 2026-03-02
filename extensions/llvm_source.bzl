@@ -161,6 +161,54 @@ _llvm_subproject_repository = repository_rule(
     },
 )
 
+def _llvm_config_repository_impl(rctx):
+    version = rctx.attr.llvm_version
+    parts = version.split(".")
+    if len(parts) != 3:
+        fail("Invalid LLVM version '{}': expected '<major>.<minor>.<patch>[suffix]'".format(version))
+
+    major = int(parts[0])
+    minor = int(parts[1])
+    patch = int(parts[2])
+
+    rctx.file("BUILD.bazel", """\
+load("@bazel_lib//:bzl_library.bzl", "bzl_library")
+
+bzl_library(
+    name = "version",
+    srcs = ["version.bzl"],
+    visibility = ["//visibility:public"],
+)
+""")
+
+    rctx.file("version.bzl", """\
+LLVM_VERSION_MAJOR = "{major}"
+LLVM_VERSION_MINOR = "{minor}"
+LLVM_VERSION_PATCH = "{patch}"
+LLVM_VERSION = "{version}"
+
+llvm_vars = {{
+    "LLVM_VERSION_MAJOR": "{major}",
+    "LLVM_VERSION_MINOR": "{minor}",
+    "LLVM_VERSION_PATCH": "{patch}",
+    "LLVM_VERSION": "{version}",
+}}
+""".format(
+        major = major,
+        minor = minor,
+        patch = patch,
+        version = version,
+    ))
+
+    return rctx.repo_metadata(reproducible = True)
+
+_llvm_config_repository = repository_rule(
+    implementation = _llvm_config_repository_impl,
+    attrs = {
+        "llvm_version": attr.string(mandatory = True),
+    },
+)
+
 def _runtime_build_file(name, label_repo_prefix):
     return "{repo}//3rd_party/llvm-project/{version}/{name}:{name}.BUILD.bazel".format(
         repo = label_repo_prefix,
@@ -210,6 +258,11 @@ def _llvm_source_impl(mctx):
     llvm_version = _get_llvm_version(mctx)
     llvm_version_index = _get_llvm_version_index(mctx)
     version_config = _version_config_for(llvm_version, llvm_version_index)
+
+    _llvm_config_repository(
+        name = "llvm_config",
+        llvm_version = llvm_version,
+    )
 
     had_override = _create_llvm_raw_repo(mctx, version_config)
     _create_support_archives()

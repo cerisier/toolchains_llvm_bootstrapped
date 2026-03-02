@@ -161,6 +161,22 @@ Important: Since this module uses prebuilt compiler archives by default. If you 
 
 This switches to source bootstrapping (building the compiler), which is required when prebuilts for your exact version are not available.
 
+### Starlark LLVM version variables
+
+If you need LLVM version variables from Starlark, `llvm_source` generates an `llvm_config` repo exposing those values.
+This lets consumers read LLVM version vars without eagerly fetching the entire `@llvm-project` source tree.
+
+```starlark
+llvm_source = use_extension("@llvm//extensions:llvm_source.bzl", "llvm_source")
+llvm_source.version(llvm_version = "22.1.0")
+use_repo(llvm_source, "llvm_config")
+```
+
+Then:
+```starlark
+load("@llvm_config//:version.bzl", "LLVM_VERSION", "llvm_vars")
+```
+
 # Additional LLVM targets
 
 This module exposes LLVM and runtime projects as first-class Bazel repos, so you can depend on them directly.
