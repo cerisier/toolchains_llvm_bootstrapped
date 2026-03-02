@@ -3,8 +3,6 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:local.bzl", "new_local_repository")
 load("@bazel_skylib//lib:structs.bzl", "structs")
 
-# Keep this in sync with MODULE.bazel.
-DEFAULT_LLVM_VERSION = "21.1.8"
 DEFAULT_LLVM_VERSIONS_INDEX_FILE = "//:llvm_versions.json"
 
 _DEFAULT_SOURCE_PATCHES = [
@@ -227,7 +225,6 @@ def _create_runtime_repositories(had_override):
         )
 
 def _get_llvm_version(mctx):
-    llvm_version = DEFAULT_LLVM_VERSION
     module_selected_version = None
 
     for mod in mctx.modules:
@@ -246,7 +243,7 @@ def _get_llvm_version(mctx):
     if module_selected_version != None:
         return module_selected_version
 
-    return llvm_version
+    fail("Missing llvm_source.version(...): set llvm_source.version(llvm_version = \"<major>.<minor>.<patch>\") in your MODULE.bazel")
 
 def _get_llvm_version_index(mctx):
     decoded = json.decode(mctx.read(Label(DEFAULT_LLVM_VERSIONS_INDEX_FILE)))
