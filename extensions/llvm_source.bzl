@@ -202,32 +202,10 @@ def _get_llvm_version(mctx):
 
     return llvm_version
 
-def _get_llvm_version_index_file(mctx):
-    module_selected_index = None
-
-    for mod in mctx.modules:
-        module_indexes = [tag.file for tag in mod.tags.index]
-        if len(module_indexes) > 1:
-            fail("Only 1 llvm_source.index(...) tag is allowed per module")
-
-        if not module_indexes:
-            continue
-
-        if getattr(mod, "is_root", False):
-            return module_indexes[0]
-
-        module_selected_index = module_indexes[0]
-
-    if module_selected_index != None:
-        return module_selected_index
-
-    return Label(DEFAULT_LLVM_VERSIONS_INDEX_FILE)
-
 def _get_llvm_version_index(mctx):
-    index_file = _get_llvm_version_index_file(mctx)
-    decoded = json.decode(mctx.read(index_file))
+    decoded = json.decode(mctx.read(Label(DEFAULT_LLVM_VERSIONS_INDEX_FILE)))
     if type(decoded) != "dict":
-        fail("Invalid llvm version index in '{}': expected top-level dict".format(index_file))
+        fail("Invalid llvm version index in '{}': expected top-level dict".format(DEFAULT_LLVM_VERSIONS_INDEX_FILE))
     return decoded
 
 def _llvm_source_impl(mctx):
@@ -249,16 +227,6 @@ _version_tag = tag_class(
     attrs = {
         "llvm_version": attr.string(mandatory = True),
     },
-)
-
-_index_tag = tag_class(
-    attrs = {
-        "file": attr.label(doc = "The LLVM versions index JSON file.", mandatory = True),
-    },
-    doc = """\
-Extend the set of known LLVM source versions based on a JSON index.
-The index must map version strings to objects containing `url` and `sha256`.
-""",
 )
 
 _from_path_tag = tag_class(
@@ -318,7 +286,6 @@ _from_archive_tag = tag_class(
 llvm_source = module_extension(
     implementation = _llvm_source_impl,
     tag_classes = {
-        "index": _index_tag,
         "version": _version_tag,
         "from_path": _from_path_tag,
         "from_git": _from_git_tag,
