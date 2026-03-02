@@ -6,8 +6,6 @@ load("@llvm//toolchain/runtimes:cc_runtime_library.bzl", "cc_runtime_stage0_libr
 load("@llvm//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
 load("@llvm//toolchain/runtimes:cc_runtime_shared_library.bzl", "cc_runtime_stage0_shared_library")
 
-IS_LLVM_22_OR_NEWER = int(LLVM_VERSION_MAJOR) >= 22
-
 filegroup(
     name = "libcxxabi_headers_files",
     srcs = [
@@ -65,7 +63,7 @@ cc_library(
         "LIBCXX_BUILDING_LIBCXXABI",
     ] + ([
         "_LIBCPP_AVAILABILITY_MINIMUM_HEADER_VERSION=2",
-    ] if IS_LLVM_22_OR_NEWER else []) + [
+    ] if int(LLVM_VERSION_MAJOR) >= 22 else []) + [
         # DHAVE___CXA_THREAD_ATEXIT_IMPL (gnu but not linux and glibc >= 2.18)
     ] + select({
         ":windows_static": [

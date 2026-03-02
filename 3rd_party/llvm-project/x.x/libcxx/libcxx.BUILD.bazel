@@ -9,8 +9,6 @@ load("@llvm//3rd_party/llvm-project/22.x/libcxx:libcxx_headers.bzl", "LIBCXX_HEA
 load("@llvm//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
 load("@llvm//toolchain/runtimes:cc_runtime_shared_library.bzl", "cc_runtime_stage1_shared_library")
 
-IS_LLVM_22_OR_NEWER = int(LLVM_VERSION_MAJOR) >= 22
-
 # Should replicate libcxx/include/CMakeLists.txt
 filegroup(
     name = "libcxx_21_headers_files",
@@ -26,7 +24,11 @@ filegroup(
 
 filegroup(
     name = "libcxx_headers_files",
-    srcs = [":libcxx_22_headers_files"] if IS_LLVM_22_OR_NEWER else [":libcxx_21_headers_files"],
+    srcs = ([
+        ":libcxx_22_headers_files",
+    ] if int(LLVM_VERSION_MAJOR) >= 22 else [
+        ":libcxx_21_headers_files",
+    ]),
     visibility = ["//visibility:public"],
 )
 
@@ -139,9 +141,8 @@ cc_library(
         "include",
         "generated_headers",
     ],
-    hdrs = [(
-        ":libcxx_22_headers_files" if IS_LLVM_22_OR_NEWER else ":libcxx_21_headers_files"
-    ),
+    hdrs = [
+        ":libcxx_headers_files",
         ":__config_site",
         ":__assertion_handler",
     ],
@@ -197,9 +198,8 @@ cc_library(
         "include",
         "src",
     ],
-    hdrs = [(
-        ":libcxx_22_headers_files" if IS_LLVM_22_OR_NEWER else ":libcxx_21_headers_files"
-    ),
+    hdrs = [
+        ":libcxx_headers_files",
         ":__config_site",
         ":__assertion_handler",
     ],

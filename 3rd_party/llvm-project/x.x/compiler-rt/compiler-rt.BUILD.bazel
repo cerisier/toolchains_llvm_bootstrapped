@@ -12,8 +12,6 @@ load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
-IS_LLVM_22_OR_NEWER = int(LLVM_VERSION_MAJOR) >= 22
-
 ###
 ### compiler-rt/lib/builtins/CMakeLists.txt.
 ###
@@ -438,8 +436,11 @@ cc_library(
         ],
         "//conditions:default": [],
     }) + select({
-        "@llvm//platforms/config:linux_aarch64": [
-            "lib/builtins/cpu_model/aarch64/fmv/hwcap.inc" if IS_LLVM_22_OR_NEWER else "lib/builtins/cpu_model/aarch64/fmv/mrs.inc",
+        "@llvm//platforms/config:linux_aarch64": ([
+            "lib/builtins/cpu_model/aarch64/fmv/hwcap.inc"
+        ] if int(LLVM_VERSION_MAJOR) >= 22 else [
+            "lib/builtins/cpu_model/aarch64/fmv/mrs.inc",
+        ]) + [
             "lib/builtins/cpu_model/aarch64/fmv/getauxval.inc",
         ],
         "@llvm//platforms/config:macos_aarch64": [
