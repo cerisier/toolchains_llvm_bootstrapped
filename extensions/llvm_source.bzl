@@ -102,10 +102,8 @@ def _parse_llvm_major(llvm_version):
     if not major_token:
         fail("Invalid LLVM version '{}': expected '<major>.<minor>.<patch>'".format(llvm_version))
 
-    for i in range(len(major_token)):
-        c = major_token[i]
-        if c < "0" or c > "9":
-            fail("Invalid LLVM version '{}': expected numeric major version prefix".format(llvm_version))
+    if not major_token.isdigit():
+        fail("Invalid LLVM version '{}': expected numeric major version prefix".format(llvm_version))
 
     return int(major_token)
 
