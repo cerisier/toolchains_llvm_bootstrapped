@@ -1,0 +1,17 @@
+load(":declare_abis_constraints.bzl", "declare_abis_constraints")
+
+package(default_visibility = ["//visibility:public"])
+
+# TODO: is this really needed?
+constraint_setting(
+    name = "variant",
+    # For windows, this maps to a default gnu
+    default_constraint_value = "unconstrained",
+)
+
+constraint_value(
+    name = "unconstrained",
+    constraint_setting = "variant",
+)
+
+declare_abis_constraints()

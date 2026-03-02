@@ -1,6 +1,7 @@
 load("@bazel_skylib//lib:selects.bzl", "selects")
+load("//constraints/abi:abis.bzl", "ABIS")
 load("//constraints/libc:libc_versions.bzl", "GLIBCS", "LIBCS")
-load("//platforms:common.bzl", "LIBC_SUPPORTED_TARGETS", "SUPPORTED_TARGETS")
+load("//platforms:common.bzl", "ABI_SUPPORTED_TARGETS", "LIBC_SUPPORTED_TARGETS", "SUPPORTED_TARGETS")
 
 def declare_config_settings():
     for (target_os, target_cpu) in SUPPORTED_TARGETS:
@@ -26,6 +27,7 @@ def declare_config_settings():
         )
 
     declare_config_settings_libc_aware()
+    declare_config_settings_abi_aware()
 
 def declare_config_settings_libc_aware():
     for (target_os, target_cpu) in LIBC_SUPPORTED_TARGETS:
@@ -69,3 +71,24 @@ def declare_config_settings_libc_aware():
         ],
         visibility = ["//visibility:public"],
     )
+
+def declare_config_settings_abi_aware():
+    for abi in ABIS + ["unconstrained"]:
+        for (target_os, target_cpu) in ABI_SUPPORTED_TARGETS:
+            native.config_setting(
+                name = "{}_{}_{}".format(target_os, target_cpu, abi),
+                constraint_values = [
+                    "@platforms//cpu:{}".format(target_cpu),
+                    "@platforms//os:{}".format(target_os),
+                    "//constraints/abi:{}".format(abi),
+                ],
+                visibility = ["//visibility:public"],
+            )
+
+        native.config_setting(
+            name = "abi_{}".format(abi),
+            constraint_values = [
+                "//constraints/abi:{}".format(abi),
+            ],
+            visibility = ["//visibility:public"],
+        )

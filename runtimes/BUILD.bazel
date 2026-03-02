@@ -49,11 +49,17 @@ filegroup(
             "@libcxxabi//:libcxxabi.static",
             "@libunwind//:libunwind.static",
         ],
-        "@platforms//os:windows": [
+        "@llvm//platforms/config:abi_gnu": [
             "@libcxx//:libcxx.static",
             "@libcxxabi//:libcxxabi.static",
             "@libunwind//:libunwind.static",
         ],
+        "@llvm//platforms/config:abi_gnullvm": [
+            "@libcxx//:libcxx.static",
+            "@libcxxabi//:libcxxabi.static",
+            "@libunwind//:libunwind.static",
+        ],
+        "@llvm//platforms/config:abi_msvc": [],  # TODO: why?
         "//conditions:default": [],
     }),
     visibility = ["//visibility:public"],
@@ -70,6 +76,14 @@ filegroup(
         # TODO(zbarsky): windows?
         "//conditions:default": [],
     }),
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "windows_msvc_runtime_lib",
+    srcs = [
+        "@compiler-rt//:clang_rt.builtins.static",
+    ],
     visibility = ["//visibility:public"],
 )
 

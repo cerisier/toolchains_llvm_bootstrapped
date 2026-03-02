@@ -252,10 +252,8 @@ filter_builtin_sources(
     srcs = [
         "lib/builtins/x86_64/floatdidf.c",
         "lib/builtins/x86_64/floatdisf.c",
-        "lib/builtins/x86_64/floatdixf.c",  # if not ANDROID
         ":builtins_generic_srcs",
         ":builtins_generic_tf_sources",
-        ":builtins_x86_80_bit_sources",
         ":builtins_x86_arch_sources",
     ] + select({
         "@platforms//os:windows": [
@@ -265,6 +263,12 @@ filter_builtin_sources(
             "lib/builtins/x86_64/floatundidf.S",
             "lib/builtins/x86_64/floatundisf.S",
             "lib/builtins/x86_64/floatundixf.S",  # if not ANDROID
+        ],
+    }) + select({
+        "@llvm//constraints/abi:msvc": [],  # error: unknown type name 'xf_float'
+        "//conditions:default": [
+            "lib/builtins/x86_64/floatdixf.c",  # if not ANDROID
+            ":builtins_x86_80_bit_sources",
         ],
     }),
 )
@@ -429,7 +433,7 @@ cc_library(
         "@platforms//os:macos": [],
         "@platforms//os:linux": [
             # TODO(cerisier): Provide only a subset of linux UAPI headers for musl.
-            # https://github.com/hermeticbuild/hermetic-llvm/issues/146
+            # https://github.com/cerisier/toolchains_llvm_bootstrapped/issues/146
             "@kernel_headers",
         ],
         "@platforms//os:windows": [],
@@ -444,8 +448,15 @@ cc_library(
         "@platforms//os:macos": [
             # on macOS we implicitly use SDK provided headers
         ],
-        "@platforms//os:windows": [
+        "@llvm//platforms/config:abi_gnu": [
             "@mingw//:mingw_headers",
+        ],
+        "@llvm//platforms/config:abi_gnullvm": [
+            "@mingw//:mingw_headers",
+        ],
+        "@llvm//platforms/config:abi_msvc": [
+            # TODO: should we declare something here?
+            # "@mingw//:mingw_headers",
         ],
         "@platforms//os:none": [],
     }),
@@ -535,9 +546,13 @@ cc_runtime_stage0_static_library(
 
 CRT_CFLAGS = [
     "-std=c11",
-    "-fPIC",
     "-fno-addrsig",
-]
+] + select({
+    "@platforms//os:windows": [],
+    "//conditions:default": [
+        "-fPIC",
+    ],
+})
 
 CRT_DEFINES = [
     "CRT_HAS_INITFINI_ARRAY",

@@ -95,10 +95,16 @@ cc_args_list(
         "@platforms//os:linux": [
             "//toolchain/args:crt_search_directory",
         ],
-        "@platforms//os:windows": [
+        "@platforms//os:windows": [],
+        "@platforms//os:none": [],
+    }) + select({
+        "//platforms/config:windows_x86_64_gnu": [
             "//toolchain/args:crt_search_directory",
         ],
-        "@platforms//os:none": [],
+        "//platforms/config:windows_aarch64_gnu": [
+            "//toolchain/args:crt_search_directory",
+        ],
+        "//conditions:default": [],
     }),
 )
 
@@ -168,6 +174,7 @@ cc_args_list(
         "@platforms//os:macos": [
             "//toolchain/args/macos:macos_sdk_sysroot",
         ],
+        "@platforms//os:windows": [],
         "//conditions:default": [
             "//toolchain/args:empty_sysroot_flags",
         ],
@@ -252,10 +259,20 @@ cc_args_list(
 # TODO(zbarsky): This must match llvm/toolchains/llvm.bzl
 cc_args_list(
     name = "windows_toolchain_args",
-    args = [
-        "//toolchain/args:libcxx_headers_include_search_paths",
-        "//toolchain/args/windows:mingw_headers_include_search_paths",
-    ],
+    args = select({
+        "@llvm//constraints/abi:gnu": [
+            "//toolchain/args:libcxx_headers_include_search_paths",
+            "//toolchain/args/windows:mingw_headers_include_search_paths",
+        ],
+        "@llvm//constraints/abi:gnullvm": [
+            "//toolchain/args:libcxx_headers_include_search_paths",
+            "//toolchain/args/windows:mingw_headers_include_search_paths",
+        ],
+        "@llvm//constraints/abi:msvc": [
+            "//toolchain/args/windows:msvc_headers_include_search_paths",
+        ],
+        "//conditions:default": [],
+    }),
 )
 
 cc_args_list(
@@ -298,14 +315,44 @@ cc_args_list(
         "//toolchain/args:lsan_flags",
 
         # Common default link flags.
-        "//toolchain/args:fuse_ld",
+    ] + select({
+        "//platforms/config:windows_x86_64_gnu": ["//toolchain/args:llvm_target_for_platform_link"],
+        "//platforms/config:windows_aarch64_gnu": ["//toolchain/args:llvm_target_for_platform_link"],
+        "@platforms//os:windows": [],
+        "//conditions:default": ["//toolchain/args:llvm_target_for_platform_link"],
+    }) + select({
+        "//platforms/config:windows_x86_64_gnu": ["//toolchain/args:fuse_ld"],
+        "//platforms/config:windows_aarch64_gnu": ["//toolchain/args:fuse_ld"],
+        "@platforms//os:windows": [],
+        "//conditions:default": ["//toolchain/args:fuse_ld"],
+    }) + select({
+        "//platforms/config:windows_x86_64_gnu": [
+            ":libcxx_library_search_paths",
+            ":libunwind_library_search_paths",
+            ":rtlib",
+            ":stdlib",
+            ":unwindlib",
+            ":resource_dir",
+        ],
+        "//platforms/config:windows_aarch64_gnu": [
+            ":libcxx_library_search_paths",
+            ":libunwind_library_search_paths",
+            ":rtlib",
+            ":stdlib",
+            ":unwindlib",
+            ":resource_dir",
+        ],
+        "@platforms//os:windows": [],
+        "//conditions:default": [
+            ":libcxx_library_search_paths",
+            ":libunwind_library_search_paths",
+            ":rtlib",
+            ":stdlib",
+            ":unwindlib",
+            ":resource_dir",
+        ],
+    }) + [
         "//toolchain/args:lto_plugin_target_flags",
-        ":libcxx_library_search_paths",
-        ":libunwind_library_search_paths",
-        ":rtlib",
-        ":stdlib",
-        ":unwindlib",
-        ":resource_dir",
         "//toolchain/args:validate_static_library_args",
         ":default_link_flags",
         # Needs to stay out of resource_dir since clang does not always search for crtstuff for all targets.
