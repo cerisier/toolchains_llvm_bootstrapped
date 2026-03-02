@@ -153,7 +153,6 @@ To select another LLVM release (for example `22.1.0`), configure the `llvm_sourc
 ```starlark
 llvm_source = use_extension("@llvm//extensions:llvm_source.bzl", "llvm_source")
 llvm_source.version(llvm_version = "22.1.0")
-use_repo(llvm_source, "compiler-rt", "libcxx", "libcxxabi", "libunwind", "llvm-raw", "llvm_zlib", "llvm_zstd")
 ```
 
 Important: Since this module uses prebuilt compiler archives by default. If you set `llvm_source.version(...)` to another version, use:
