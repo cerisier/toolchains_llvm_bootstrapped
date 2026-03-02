@@ -1,16 +1,17 @@
 diff --git a/utils/bazel/llvm-project-overlay/clang/BUILD.bazel b/utils/bazel/llvm-project-overlay/clang/BUILD.bazel
+index 3ae48c1..78c2383 100644
 --- a/utils/bazel/llvm-project-overlay/clang/BUILD.bazel
 +++ b/utils/bazel/llvm-project-overlay/clang/BUILD.bazel
-@@ -3,7 +3,6 @@
- # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
- 
+@@ -5,7 +5,6 @@
+ load("@bazel_skylib//rules:run_binary.bzl", "run_binary")
+ load("@bazel_skylib//rules:write_file.bzl", "write_file")
  load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
 -load("@rules_python//python:defs.bzl", "py_binary")
  load(
      "//:vars.bzl",
      "LLVM_VERSION_MAJOR",
-@@ -620,14 +619,6 @@
-     cmd = "echo '#undef CLANG_REVISION' > $@",
+@@ -619,14 +618,6 @@ write_file(
+     ],
  )
  
 -py_binary(
@@ -25,17 +26,18 @@ diff --git a/utils/bazel/llvm-project-overlay/clang/BUILD.bazel b/utils/bazel/ll
      name = "basic",
      srcs = [
 diff --git a/utils/bazel/llvm-project-overlay/llvm/BUILD.bazel b/utils/bazel/llvm-project-overlay/llvm/BUILD.bazel
+index e89ad57..efcd940 100644
 --- a/utils/bazel/llvm-project-overlay/llvm/BUILD.bazel
 +++ b/utils/bazel/llvm-project-overlay/llvm/BUILD.bazel
-@@ -5,7 +5,6 @@
- load("@bazel_skylib//rules:common_settings.bzl", "string_flag")
+@@ -6,7 +6,6 @@ load("@bazel_skylib//rules:common_settings.bzl", "string_flag")
  load("@bazel_skylib//rules:expand_template.bzl", "expand_template")
+ load("@bazel_skylib//rules:write_file.bzl", "write_file")
  load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
 -load("@rules_python//python:defs.bzl", "py_binary")
  load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
  load("//mlir:tblgen.bzl", "gentbl_cc_library", "gentbl_filegroup", "td_library")
  load(":binary_alias.bzl", "binary_alias")
-@@ -6232,45 +6231,6 @@
+@@ -6269,45 +6268,6 @@ cc_library(
      ],
  )
  
