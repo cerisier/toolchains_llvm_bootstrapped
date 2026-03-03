@@ -201,6 +201,13 @@ These targets are what release workflows use to produce `.tar.zst` artifacts tod
 
 See https://github.com/cerisier/toolchains_llvm_bootstrapped/milestone/1
 
+## Users
+- [OpenAI](https://github.com/openai/codex)
+- [Aspect](https://github.com/aspect-build/aspect-cli)
+- [ZML](https://github.com/zml/zml)
+- [rules_py](https://github.com/aspect-build/rules_py)
+- [rules_scala_native](https://github.com/Programming-Rivers/rules_scala_native)
+
 ## Prior art
 
 https://andrewkelley.me/post/zig-cc-powerful-drop-in-replacement-gcc-clang.html We were heavily inspired by (and rely on) the work of [Andrew Kelley](https://github.com/andrewrk) on the [zig](https://github.com/ziglang/zig) programming language compiler.
