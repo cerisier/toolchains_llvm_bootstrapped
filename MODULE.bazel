@@ -11,6 +11,7 @@ bazel_dep(name = "bazel_features", version = "1.42.0")
 bazel_dep(name = "platforms", version = "1.0.0")
 bazel_dep(name = "rules_cc", version = "0.2.16")
 bazel_dep(name = "rules_shell", version = "0.6.1")
+bazel_dep(name = "rules_python", version = "1.7.0")
 bazel_dep(name = "with_cfg.bzl", version = "0.12.0")
 bazel_dep(name = "tar.bzl", version = "0.9.0")
 
@@ -87,7 +88,7 @@ use_repo(
 
 llvm_source = use_extension("//extensions:llvm_source.bzl", "llvm_source")
 llvm_source.version(llvm_version = LLVM_VERSION)
-use_repo(llvm_source, "compiler-rt", "libcxx", "libcxxabi", "libunwind", "llvm-libc", "llvm-raw", "llvm_config", "llvm_zlib", "llvm_zstd")
+use_repo(llvm_source, "compiler-rt", "libcxx", "libcxxabi", "libunwind", "llvm-libc", "llvm-raw", "llvm_config", "llvm_zlib", "llvm_zstd", "openmp")
 
 llvm = use_extension("//extensions:llvm.bzl", "llvm")
 llvm.configure(

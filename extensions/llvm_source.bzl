@@ -72,7 +72,6 @@ def _llvm_source_archive_excludes():
         "flang",
         "polly",
         "orc-rt",
-        "openmp",
         "libclc",
         "offload",
         "libc/docs",
@@ -263,7 +262,14 @@ def _runtime_build_file(name, label_repo_prefix):
 def _create_runtime_repositories(had_override):
     build_label_repo_prefix = "@llvm" if had_override else ""
 
-    for repo_name, subproject in [("compiler-rt", "compiler-rt"), ("libcxx", "libcxx"), ("libcxxabi", "libcxxabi"), ("libunwind", "libunwind"), ("llvm-libc", "libc")]:
+    for repo_name, subproject in [
+        ("compiler-rt", "compiler-rt"),
+        ("libcxx", "libcxx"),
+        ("libcxxabi", "libcxxabi"),
+        ("libunwind", "libunwind"),
+        ("llvm-libc", "libc"),
+        ("openmp", "openmp"),
+    ]:
         _llvm_subproject_repository(
             name = repo_name,
             build_file = _runtime_build_file(subproject, build_label_repo_prefix),
