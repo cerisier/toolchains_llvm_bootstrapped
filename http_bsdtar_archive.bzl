@@ -60,13 +60,9 @@ def _ensure_placeholder_dirs(rctx, add_prefix):
         rctx.delete(keep_file)
 
 def _host_bsdtar_label(rctx):
-    host = repo_utils.platform(rctx).replace("_", "-")
-    suffix = ""
-    if host.startswith("linux-"):
-        suffix = "-musl"
-    elif host.startswith("windows-"):
-        suffix = "-gnu"
-    return Label("@tar-{host}{suffix}//file:downloaded".format(host = host, suffix = suffix))
+    platform = repo_utils.platform(rctx)
+    binary = "tar.exe" if platform.startswith("windows_") else "tar"
+    return Label("@bsd_tar_toolchains_{}//:{}".format(platform, binary))
 
 def _update_integrity_attrs(rctx, attrs, archive_info, remote_files_info, remote_patches_info):
     integrity_override = {}

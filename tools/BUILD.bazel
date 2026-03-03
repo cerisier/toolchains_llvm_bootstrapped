@@ -1,5 +1,4 @@
 load("@bazel_lib//:bzl_library.bzl", "bzl_library")
-load("@bazel_skylib//rules:native_binary.bzl", "native_binary")
 load("@llvm//toolchain:selects.bzl", "platform_llvm_binary")
 load("@llvm//tools:defs.bzl", "TOOLCHAIN_BINARIES")
 
@@ -12,18 +11,6 @@ package(default_visibility = ["//visibility:public"])
     )
     for tool in TOOLCHAIN_BINARIES
 ]
-
-native_binary(
-    name = "bsdtar",
-    src = select({
-        "@llvm//platforms/config:macos_aarch64": "@tar-darwin-arm64//file",
-        "@llvm//platforms/config:linux_x86_64": "@tar-linux-amd64//file",
-        "@llvm//platforms/config:linux_aarch64": "@tar-linux-arm64//file",
-        "@llvm//platforms/config:windows_aarch64": "@tar-windows-arm64//file",
-        "@llvm//platforms/config:windows_x86_64": "@tar-windows-amd64//file",
-    }),
-    visibility = ["//visibility:public"],
-)
 
 bzl_library(
     name = "defs",

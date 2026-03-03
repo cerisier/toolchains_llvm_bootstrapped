@@ -74,28 +74,16 @@ TOOLCHAIN_EXTRAS_VERSION = "20260216"
     for (target, sha256) in TOOLCHAIN_EXTRAS_SHA256.items()
 ]
 
-http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
-
-BSDTAR_PREBUILTS_SHA256 = {
-    "darwin-arm64": "48c1bd214aac26487eaf623d17b77ebce4db3249be851a54edcc940d09d50999",
-    "linux-amd64-musl": "fff8f72758a52e60fe82beae64b18e7996467013ffe8bec09173d1ba6b66e490",
-    "linux-arm64-musl": "683468ae45d371e4f392b0e5a524440f6f4507d7da0db60d03ff31f3cf951fc3",
-    "windows-amd64-gnu": "f48c81e1812956adb4906c6f057ca856dd280a455e7867d77800e6d5ef9fc81d",
-    "windows-arm64-gnu": "130d69268b0a387bca387d00663821779dd1915557caf7fcbfd5ded3f41074f3",
-}
-
-[
-    http_file(
-        name = "tar-{target}".format(target = target),
-        sha256 = sha256,
-        urls = ["https://github.com/aspect-build/bsdtar-prebuilt/releases/download/v3.8.1-fix.1/tar_{target}{extension}".format(
-            target = target.replace("-musl", "").replace("-gnu", "").replace("-", "_").replace("windows_amd64", "windows_x86_64"),
-            extension = ".exe" if target.startswith("windows-") else "",
-        )],
-        executable = True,
-    )
-    for (target, sha256) in BSDTAR_PREBUILTS_SHA256.items()
-]
+tar_toolchains = use_extension("@tar.bzl//tar:extensions.bzl", "toolchains")
+use_repo(
+    tar_toolchains,
+    "bsd_tar_toolchains_darwin_amd64",
+    "bsd_tar_toolchains_darwin_arm64",
+    "bsd_tar_toolchains_linux_amd64",
+    "bsd_tar_toolchains_linux_arm64",
+    "bsd_tar_toolchains_windows_amd64",
+    "bsd_tar_toolchains_windows_arm64",
+)
 
 llvm_source = use_extension("//extensions:llvm_source.bzl", "llvm_source")
 llvm_source.version(llvm_version = LLVM_VERSION)
