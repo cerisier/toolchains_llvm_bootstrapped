@@ -1,66 +1,10 @@
 {
-  "21.1.0-rc1": {
-    "url": "https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.0-rc1/llvm-project-21.1.0-rc1.src.tar.xz",
-    "sha256": "17ea18653be3773001eb55c2ab25cca0488b0689cb9dd7c1df8d50e1f5c7fef8"
-  },
-  "21.1.0-rc2": {
-    "url": "https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.0-rc2/llvm-project-21.1.0-rc2.src.tar.xz",
-    "sha256": "93d0c6ba2ba8bfd0416d8d4bd5438dc069f608160d19799387cd8fb46040598e"
-  },
-  "21.1.0-rc3": {
-    "url": "https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.0-rc3/llvm-project-21.1.0-rc3.src.tar.xz",
-    "sha256": "7c61598f3902e61499b4a8d0302087ed2421c75bf504d084f2e6fa5450ab94d7"
-  },
-  "21.1.0": {
-    "url": "https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.0/llvm-project-21.1.0.src.tar.xz",
-    "sha256": "1672e3efb4c2affd62dbbe12ea898b28a451416c7d95c1bd0190c26cbe878825"
-  },
-  "21.1.1": {
-    "url": "https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.1/llvm-project-21.1.1.src.tar.xz",
-    "sha256": "8863980e14484a72a9b7d2c80500e1749054d74f08f8c5102fd540a3c5ac9f8a"
-  },
-  "21.1.2": {
-    "url": "https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.2/llvm-project-21.1.2.src.tar.xz",
-    "sha256": "1a417d1c8faf8d93e73fec1cbb76d393ed3218974c2283c7bac9672d3d47c54b"
-  },
-  "21.1.3": {
-    "url": "https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.3/llvm-project-21.1.3.src.tar.xz",
-    "sha256": "9c9db50d8046f668156d83f6b594631b4ca79a0d96e4f19bed9dc019b022e58f"
-  },
-  "21.1.4": {
-    "url": "https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.4/llvm-project-21.1.4.src.tar.xz",
-    "sha256": "a01ad7e5167780c945871d75c0413081d12067607a6de5cf71dc3e8d1a82112c"
-  },
-  "21.1.5": {
-    "url": "https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.5/llvm-project-21.1.5.src.tar.xz",
-    "sha256": "1794be4bf974e99a3fe1da4b2b9b1456c02ae9479c942f365441d8d207bd650c"
-  },
-  "21.1.6": {
-    "url": "https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.6/llvm-project-21.1.6.src.tar.xz",
-    "sha256": "ae67086eb04bed7ca11ab880349b5f1ab6f50e1b88cda376eaf8a845b935762b"
-  },
-  "21.1.7": {
-    "url": "https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.7/llvm-project-21.1.7.src.tar.xz",
-    "sha256": "e5b65fd79c95c343bb584127114cb2d252306c1ada1e057899b6aacdd445899e"
-  },
   "21.1.8": {
-    "url": "https://github.com/llvm/llvm-project/releases/download/llvmorg-21.1.8/llvm-project-21.1.8.src.tar.xz",
-    "sha256": "4633a23617fa31a3ea51242586ea7fb1da7140e426bd62fc164261fe036aa142"
-  },
-  "22.1.0-rc1": {
-    "url": "https://github.com/llvm/llvm-project/releases/download/llvmorg-22.1.0-rc1/llvm-project-22.1.0-rc1.src.tar.xz",
-    "sha256": "6787a69b5c40f1db32cdcf21c15828419f10ca6921e4d0dc2a81854072f73a74"
-  },
-  "22.1.0-rc2": {
-    "url": "https://github.com/llvm/llvm-project/releases/download/llvmorg-22.1.0-rc2/llvm-project-22.1.0-rc2.src.tar.xz",
-    "sha256": "cb7235f0e98a8e54260573c475d22920a9f52230c2c6fcfa1ec222c5740a5643"
-  },
-  "22.1.0-rc3": {
-    "url": "https://github.com/llvm/llvm-project/releases/download/llvmorg-22.1.0-rc3/llvm-project-22.1.0-rc3.src.tar.xz",
-    "sha256": "cfccf081ae6ee6ae7367b1915acccb8935c030d74b33b6e833bf5e2f03d96a30"
+    "url": "https://github.com/hermeticbuild/llvm-redist/releases/download/llvmorg-21.1.8-r1/llvm-project-21.1.8.src.tar.zst",
+    "sha256": "64a773b61d91abec7faab139aeda3b8773f2330abc4d97bd26d1513a4e98cf55"
   },
   "22.1.0": {
-    "url": "https://github.com/llvm/llvm-project/releases/download/llvmorg-22.1.0/llvm-project-22.1.0.src.tar.xz",
-    "sha256": "25d2e2adc4356d758405dd885fcfd6447bce82a90eb78b6b87ce0934bd077173"
+    "url": "https://github.com/hermeticbuild/llvm-redist/releases/download/llvmorg-22.1.0-r1/llvm-project-22.1.0.src.tar.zst",
+    "sha256": "809905fedfb5016afdef4da9047169a86c671396da5db00ef839c611ad6efcc1"
   }
 }

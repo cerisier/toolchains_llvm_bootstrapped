@@ -2,6 +2,7 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:local.bzl", "new_local_repository")
 load("@bazel_skylib//lib:structs.bzl", "structs")
+load("//:http_bsdtar_archive.bzl", "http_bsdtar_archive")
 
 DEFAULT_LLVM_VERSIONS_INDEX_FILE = "//:llvm_versions.json"
 
@@ -56,6 +57,49 @@ _LLVM_SUPPORT_ARCHIVES = {
     ),
 }
 
+_LLVM_SOURCE_BSDTAR_EXTRA_ARGS = [
+    "--no-xattrs",
+    "--no-fflags",
+    "--no-mac-metadata",
+    "--no-same-permissions",
+    "--no-acls",
+    "-m",
+]
+
+def _llvm_source_archive_excludes():
+    excludes = [
+        "flang-rt",
+        "flang",
+        "polly",
+        "orc-rt",
+        "openmp",
+        "libclc",
+        "offload",
+        "libc/docs",
+        "libc/utils/gn",
+    ]
+
+    test_docs_subprojects = [
+        "bolt",
+        "clang-tools-extra",
+        "clang",
+        "compiler-rt",
+        "libcxx",
+        "libcxxabi",
+        "libunwind",
+        "lld",
+        "lldb",
+        "llvm",
+        "mlir",
+    ]
+
+    for subproject in test_docs_subprojects:
+        if subproject != "mlir":
+            excludes.append("{}/test/*".format(subproject))
+        excludes.append("{}/docs/*".format(subproject))
+
+    return excludes
+
 def _create_llvm_raw_repo(mctx, version_config):
     had_override = False
 
@@ -84,7 +128,7 @@ def _create_llvm_raw_repo(mctx, version_config):
             http_archive(name = "llvm-raw", **structs.to_dict(tag))
 
     if not had_override:
-        http_archive(
+        http_bsdtar_archive(
             name = "llvm-raw",
             build_file_content = "# EMPTY",
             **structs.to_dict(version_config.source_archive),
@@ -110,6 +154,8 @@ def _source_archive_for_version(llvm_version, source_info, patches):
         strip_prefix = source_info.get("strip_prefix", "llvm-project-{}.src".format(llvm_version)),
         urls = [source_info["url"]],
         sha256 = source_info["sha256"],
+        excludes = _llvm_source_archive_excludes(),
+        bsdtar_extra_args = _LLVM_SOURCE_BSDTAR_EXTRA_ARGS,
         patch_args = ["-p1"],
         patches = patches,
     )
@@ -312,9 +358,14 @@ _from_archive_tag = tag_class(
         "urls": attr.string_list(default = []),
         "sha256": attr.string(default = ""),
         "integrity": attr.string(default = ""),
+        "netrc": attr.string(default = ""),
+        "auth_patterns": attr.string_dict(default = {}),
         "strip_prefix": attr.string(default = ""),
+        "add_prefix": attr.string(default = ""),
+        "files": attr.string_keyed_label_dict(default = {}),
         "type": attr.string(default = ""),
         "patches": attr.label_list(default = []),
+        "patch_strip": attr.int(default = 0),
         "patch_args": attr.string_list(default = ["-p0"]),
         "patch_cmds": attr.string_list(default = []),
         "patch_cmds_win": attr.string_list(default = []),
@@ -326,8 +377,13 @@ _from_archive_tag = tag_class(
         "canonical_id": attr.string(default = ""),
         "remote_file_urls": attr.string_list_dict(default = {}),
         "remote_file_integrity": attr.string_dict(default = {}),
+        "remote_module_file_urls": attr.string_list(default = []),
+        "remote_module_file_integrity": attr.string(default = ""),
         "remote_patches": attr.string_dict(default = {}),
         "remote_patch_strip": attr.int(default = 0),
+        "includes": attr.string_list(default = []),
+        "excludes": attr.string_list(default = []),
+        "bsdtar_extra_args": attr.string_list(default = []),
     },
 )
 
