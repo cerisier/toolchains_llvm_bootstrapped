@@ -65,16 +65,6 @@ jobs:
         working-directory: ${{ matrix.folder }}
         shell: bash
         run: |
-          EXTRA_ARGS=""
-          if [[ "${{ matrix.folder }}" == *"rules_rust"* ]]; then
-            EXTRA_ARGS="--config=rust"
-          fi
-          if [[ "${{ matrix.folder }}" == *"wasm"* ]]; then
-            EXTRA_ARGS="--config=wasm"
-          fi
-          if [[ "${{ matrix.folder }}" == *"rules_cc"* ]]; then
-            EXTRA_ARGS="--config=cc"
-          fi
           REMOTE_HEADER_ARGS=()
           if [[ -n "${BUILDBUDDY_API_KEY:-}" ]]; then
             REMOTE_HEADER_ARGS=(--remote_header="x-buildbuddy-api-key=${BUILDBUDDY_API_KEY}")
@@ -85,7 +75,6 @@ jobs:
             --bazelrc=.bazelrc \
             test \
             "${REMOTE_HEADER_ARGS[@]}" \
-            $EXTRA_ARGS \
             //...
 
   test_windows:
@@ -117,17 +106,8 @@ jobs:
         shell: bash
         run: |
           EXTRA_ARGS=""
-          if [[ "${{ matrix.folder }}" == *"rules_rust"* ]]; then
-            EXTRA_ARGS="--config=rust"
-          fi
           if [[ "${{ matrix.folder }}" == *"cross_compilation"* ]]; then
             EXTRA_ARGS="--//:test_glibc_versions=none"
-          fi
-          if [[ "${{ matrix.folder }}" == *"wasm"* ]]; then
-            EXTRA_ARGS="--config=wasm"
-          fi
-          if [[ "${{ matrix.folder }}" == *"rules_cc"* ]]; then
-            EXTRA_ARGS="--config=cc"
           fi
           REMOTE_HEADER_ARGS=()
           if [[ -n "${BUILDBUDDY_API_KEY:-}" ]]; then
