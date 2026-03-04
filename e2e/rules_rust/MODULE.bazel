@@ -21,6 +21,8 @@ single_version_override(
         "//:rules_rust_windows1.patch",
         "//:rules_rust_windows2.patch",
         "//:rules_rust_default_libs.patch",
+        # https://github.com/bazelbuild/rules_rust/pull/3832
+        "//:rules_rust_resource_dir.patch",
     ],
 )
 
