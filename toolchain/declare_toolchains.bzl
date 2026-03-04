@@ -1,6 +1,7 @@
 load("//platforms:common.bzl", "SUPPORTED_TARGETS", "SUPPORTED_EXECS")
 load("//toolchain:selects.bzl", "platform_cc_tool_map", "platform_module_map")
 load(":cc_toolchain.bzl", "cc_toolchain")
+load("//toolchain/cuda:cc_toolchain.bzl", cuda_cc_toolchain = "cc_toolchain")
 
 def declare_toolchains(*, execs = SUPPORTED_EXECS, targets = SUPPORTED_TARGETS):
     """Declares the configured LLVM toolchains.
@@ -39,3 +40,31 @@ def declare_toolchains(*, execs = SUPPORTED_EXECS, targets = SUPPORTED_TARGETS):
                 toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
                 visibility = ["//visibility:public"],
             )
+
+        # TODO(cerisier): This will only work with prebuilts LLVM >= 22.x
+        # Since before that we didn't have nvptx support in the prebuilts.
+        cuda_cc_toolchain_name = "cuda_{}_{}_cc_toolchain".format(exec_os, exec_cpu)
+        cuda_cc_toolchain(
+            name = cuda_cc_toolchain_name,
+            tool_map = select({
+                "@rules_cc//cc/toolchains/args/archiver_flags:use_libtool_on_macos_setting": ":{}_{}/tools_with_libtool".format(exec_os, exec_cpu),
+                "//conditions:default": ":{}_{}/default_tools".format(exec_os, exec_cpu),
+            }),
+        )
+
+        native.toolchain(
+            name = "cuda_{}_{}_to_none_nvptx64".format(exec_os, exec_cpu),
+            exec_compatible_with = [
+                "@platforms//cpu:{}".format(exec_cpu),
+                "@platforms//os:{}".format(exec_os),
+            ],
+            target_compatible_with = [
+                "@llvm//constraints/accelerator/arch:nvptx64",
+            ],
+            target_settings = [
+                "@llvm//toolchain:prebuilt_toolchain",
+            ],
+            toolchain = cuda_cc_toolchain_name,
+            toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
+            visibility = ["//visibility:public"],
+        )
