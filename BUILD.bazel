@@ -18,6 +18,7 @@ alias(
         "//platforms/config:linux_aarch64_prebuilt": "@llvm-toolchain-minimal-%s-linux-arm64//:builtin_headers" % LLVM_VERSION,
         "//platforms/config:windows_aarch64_prebuilt": "@llvm-toolchain-minimal-%s-windows-arm64//:builtin_headers" % LLVM_VERSION,
         "//platforms/config:windows_x86_64_prebuilt": "@llvm-toolchain-minimal-%s-windows-amd64//:builtin_headers" % LLVM_VERSION,
+        "//conditions:default": "@llvm-toolchain-minimal-%s-linux-amd64//:builtin_headers" % LLVM_VERSION,
     }),
     visibility = ["//visibility:public"],
 )

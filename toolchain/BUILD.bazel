@@ -103,10 +103,8 @@ cc_args_list(
 )
 
 cc_args_list(
-    name = "resource_dir",
-    args = [
-        "//toolchain/args:compile_resource_dir",
-    ] + select({
+    name = "link_resource_dir",
+    args = select({
         "@platforms//os:macos": [],
         "//conditions:default": [
             "//toolchain/args:link_resource_dir",
@@ -275,6 +273,7 @@ cc_args_list(
     name = "toolchain_args",
     args = [
         # Common default compile flags.
+        "//toolchain/args:compile_resource_dir",
         "//toolchain/args:llvm_target_for_platform",
         "//toolchain/args:no_absolute_paths_for_builtins",
         "//toolchain/args:deterministic_compile_flags",
@@ -305,7 +304,7 @@ cc_args_list(
         ":rtlib",
         ":stdlib",
         ":unwindlib",
-        ":resource_dir",
+        ":link_resource_dir",
         "//toolchain/args:validate_static_library_args",
         ":default_link_flags",
         # Needs to stay out of resource_dir since clang does not always search for crtstuff for all targets.

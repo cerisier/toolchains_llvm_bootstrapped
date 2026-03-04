@@ -37,9 +37,9 @@ cc_args_list(
 #TODO(cerisier): Maybe with a _gt_x select we could reuse this everywhere.
 
 cc_args_list(
-    name = "resource_dir",
+    name = "link_resource_dir",
     args = select({
-        "//toolchain:runtimes_stage1": ["//toolchain:resource_dir"],
+        "//toolchain:runtimes_stage1": ["//toolchain:link_resource_dir"],
         "//toolchain:runtimes_none": [],
     }),
 )
@@ -77,6 +77,7 @@ cc_args_list(
     name = "toolchain_args",
     args = [
         # Common default compile flags.
+        "//toolchain/args:compile_resource_dir",
         "//toolchain/args:llvm_target_for_platform",
         "//toolchain/args:no_absolute_paths_for_builtins",
         "//toolchain/args:deterministic_compile_flags",
@@ -102,7 +103,7 @@ cc_args_list(
         # Common default link flags.
         "//toolchain/args:fuse_ld",
         ":rtlib",
-        ":resource_dir",
+        ":link_resource_dir",
         ":default_link_flags",
         # Needs to stay out of resource_dir since clang does not always search for crtstuff for all targets.
         ":default_startfiles",
