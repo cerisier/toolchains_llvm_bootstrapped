@@ -43,6 +43,16 @@ bzl_library(
 )
 
 bzl_library(
+    name = "http_bsdtar_archive",
+    srcs = ["http_bsdtar_archive.bzl"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@bazel_lib//lib:repo_utils",
+        "@bazel_tools//tools/build_defs/repo:bzl_srcs",
+    ],
+)
+
+bzl_library(
     name = "sh_script",
     srcs = ["sh_script.bzl"],
     visibility = ["//visibility:public"],

@@ -1,3 +1,4 @@
+load("@bazel_features//:features.bzl", "bazel_features")
 load("@bazel_skylib//lib:paths.bzl", "paths")
 load("@bazel_skylib//rules/directory:providers.bzl", "DirectoryInfo")
 load("//:directory.bzl", "SourceDirectoryInfo")
@@ -24,28 +25,36 @@ def _module_map_impl(ctx):
     execroot_prefix = (module_map.dirname.count("/") + 1) * "../"
     include_path_info = ctx.attr.include_path[IncludePathInfo]
 
-    template_dict = ctx.actions.template_dict()
+    module_map_args = ctx.actions.args()
+    module_map_args.set_param_file_format("multiline")
+    module_map_args.add('module "crosstool" [system] {')
 
-    template_dict.add_joined(
-        "%submodules%",
+    module_map_args.add_joined(
         include_path_info.submodule_directories,
         join_with = "\n",
         map_each = lambda directory: _umbrella_submodule(directory, execroot_prefix = execroot_prefix),
         allow_closure = True,
+        expand_directories = False,
     )
 
-    template_dict.add_joined(
-        "%textual_headers%",
+    module_map_args.add_joined(
         include_path_info.textual_headers,
         join_with = "\n",
         map_each = lambda file: _textual_header(file, execroot_prefix = execroot_prefix),
         allow_closure = True,
+        expand_directories = False,
     )
 
-    ctx.actions.expand_template(
-        template = ctx.file._module_map_template,
+    module_map_args.add('}')
+
+    write_kwargs = {}
+    if bazel_features.rules.write_action_has_mnemonic:
+        write_kwargs["mnemonic"] = "CppModuleMap"
+
+    ctx.actions.write(
         output = module_map,
-        computed_substitutions = template_dict,
+        content = module_map_args,
+        **write_kwargs,
     )
     return DefaultInfo(files = depset([module_map]))
 
@@ -59,10 +68,6 @@ module_map = rule(
         "include_path": attr.label(
             providers = [IncludePathInfo],
             mandatory = True,
-        ),
-        "_module_map_template": attr.label(
-            default = "//runtimes:module_map.BUILD.bazel",
-            allow_single_file = True,
         ),
     },
 )

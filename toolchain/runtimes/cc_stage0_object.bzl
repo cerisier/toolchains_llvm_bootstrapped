@@ -1,5 +1,5 @@
 
-load("@rules_cc//cc:find_cc_toolchain.bzl", "find_cc_toolchain", "use_cc_toolchain")
+load("@rules_cc//cc:find_cc_toolchain.bzl", "find_cc_toolchain", "use_cc_toolchain", "CC_TOOLCHAIN_TYPE")
 load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
 load("@rules_cc//cc:action_names.bzl", "ACTION_NAMES")
 
@@ -97,6 +97,7 @@ def _cc_stage0_object_impl(ctx):
         executable = cc_tool,
         execution_requirements = {"supports-path-mapping": "1"},
         mnemonic = "CcStage0Compile",
+        toolchain = CC_TOOLCHAIN_TYPE,
     )
 
     return [DefaultInfo(files = depset([ctx.outputs.out]))]

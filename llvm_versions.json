@@ -1,0 +1,10 @@
+{
+  "21.1.8": {
+    "url": "https://github.com/hermeticbuild/llvm-redist/releases/download/llvmorg-21.1.8-r1/llvm-project-21.1.8.src.tar.zst",
+    "sha256": "64a773b61d91abec7faab139aeda3b8773f2330abc4d97bd26d1513a4e98cf55"
+  },
+  "22.1.0": {
+    "url": "https://github.com/hermeticbuild/llvm-redist/releases/download/llvmorg-22.1.0-r1/llvm-project-22.1.0.src.tar.zst",
+    "sha256": "809905fedfb5016afdef4da9047169a86c671396da5db00ef839c611ad6efcc1"
+  }
+}
