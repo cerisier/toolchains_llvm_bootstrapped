@@ -1,5 +1,5 @@
-load("//platforms:common.bzl", "SUPPORTED_TARGETS", "SUPPORTED_EXECS")
-load("//toolchain:selects.bzl", "platform_cc_tool_map", "platform_module_map")
+load("//platforms:common.bzl", "SUPPORTED_EXECS", "SUPPORTED_TARGETS")
+load("//toolchain:selects.bzl", "platform_cc_tool_map")
 load(":cc_toolchain.bzl", "cc_toolchain")
 
 def declare_toolchains(*, execs = SUPPORTED_EXECS, targets = SUPPORTED_TARGETS):
@@ -18,7 +18,7 @@ def declare_toolchains(*, execs = SUPPORTED_EXECS, targets = SUPPORTED_TARGETS):
         cc_toolchain(
             name = cc_toolchain_name,
             tool_map = platform_cc_tool_map(exec_os, exec_cpu),
-            module_map = platform_module_map(exec_os, exec_cpu),
+            module_map = "@llvm//:module_map",
         )
 
         for (target_os, target_cpu) in targets:

@@ -1,4 +1,5 @@
 load("@bazel_lib//:bzl_library.bzl", "bzl_library")
+load("//runtimes:module_map.bzl", "include_path", "module_map")
 load("//toolchain:selects.bzl", "LLVM_VERSION")
 
 # gazelle:map_kind bzl_library bzl_library @bazel_lib//:bzl_library.bzl
@@ -17,6 +18,66 @@ alias(
         "//platforms/config:linux_aarch64_prebuilt": "@llvm-toolchain-minimal-%s-linux-arm64//:builtin_headers" % LLVM_VERSION,
         "//platforms/config:windows_aarch64_prebuilt": "@llvm-toolchain-minimal-%s-windows-arm64//:builtin_headers" % LLVM_VERSION,
         "//platforms/config:windows_x86_64_prebuilt": "@llvm-toolchain-minimal-%s-windows-amd64//:builtin_headers" % LLVM_VERSION,
+    }),
+    visibility = ["//visibility:public"],
+)
+
+include_path(
+    name = "macos_target_headers",
+    srcs = [
+        "//:builtin_headers",
+        "@macos_sdk//sysroot",
+    ],
+)
+
+# This must match //toolchain:linux_toolchain_args
+include_path(
+    name = "linux_target_headers",
+    srcs = [
+        "//:builtin_headers",
+        "@kernel_headers//:kernel_headers_directory",
+        "@llvm//runtimes/libcxx:libcxx_headers_include_search_directory",
+        "@llvm//runtimes/libcxx:libcxxabi_headers_include_search_directory",
+        "@llvm//sanitizers:sanitizers_headers_include_search_directory",
+    ] + select({
+        "@llvm//platforms/config:musl": [
+            "@llvm//runtimes/musl:musl_headers_include_search_directory",
+        ],
+        "@llvm//platforms/config:gnu": [
+            "@llvm//runtimes/glibc:glibc_headers_include_search_directory",
+        ],
+    }),
+)
+
+# this must match //toolchain:windows_toolchain_args
+include_path(
+    name = "windows_target_headers",
+    srcs = [
+        "//:builtin_headers",
+        "@llvm//runtimes/libcxx:libcxx_headers_include_search_directory",
+        "@llvm//runtimes/libcxx:libcxxabi_headers_include_search_directory",
+        "@mingw//:mingw_generated_headers_crt_directory",
+        "@mingw//:mingw_w64_headers_crt_directory",
+        "@mingw//:mingw_w64_headers_include_directory",
+        "@mingw//:mingw_w64_winpthreads_include_directory",
+    ],
+)
+
+include_path(
+    name = "wasm_target_headers",
+    srcs = [
+        "//:builtin_headers",
+        # TODO(zbarsky): We'll want to add wasi libc headers here.
+    ],
+)
+
+module_map(
+    name = "module_map",
+    include_path = select({
+        "@platforms//os:macos": ":macos_target_headers",
+        "@platforms//os:linux": ":linux_target_headers",
+        "@platforms//os:windows": ":windows_target_headers",
+        "@platforms//os:none": ":wasm_target_headers",
     }),
     visibility = ["//visibility:public"],
 )

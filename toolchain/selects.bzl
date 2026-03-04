@@ -28,9 +28,6 @@ def _tool_repo(exec_os, exec_cpu):
     else:
         return "@llvm-toolchain-minimal-%s-%s-arm64//" % (LLVM_VERSION, exec_os)
 
-def platform_module_map(exec_os, exec_cpu):
-    return _tool_repo(exec_os, exec_cpu) + ":module_map"
-
 def platform_cc_tool_map(exec_os, exec_cpu):
     tool_repo = _tool_repo(exec_os, exec_cpu)
 
