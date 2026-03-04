@@ -86,6 +86,7 @@ jobs:
             test \
             "${REMOTE_HEADER_ARGS[@]}" \
             $EXTRA_ARGS \
+            --process_headers_in_dependencies \
             //...
 
   test_windows:
