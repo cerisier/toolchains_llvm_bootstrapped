@@ -1,13 +1,10 @@
-# LLVM libc
+# LLVM libc runtime headers
 
-This contains a subset of internal headers from the LLVM libc which fall under
-the Apache License 2.0  with LLVM Exceptions.
+This Bazel package declares the subset of LLVM libc internal headers that
+`libcxx` and `libcxxabi` require.
 
-Sadly, starting LLVM 20.1.0, libcxx started depending on internal headers of the
-LLVM libc implementation.
+Those headers are consumed from the LLVM source set selected by
+`llvm_source.version(...)` through the `@llvm-libc` external repository.
 
-For now, I've resorted to not depend on llvm-project source tarball because it is
-140MB and decided to go the same way ziglang does: include the subset of headers
-required by libcxx.
-
-These will have to be monitored when updating LLVM.
+The list in `BUILD.bazel` is intentionally explicit to only expose the required
+files and to keep runtime builds tied to the selected LLVM version.

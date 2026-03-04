@@ -142,7 +142,7 @@ cc_library(
         # libcxx depends on a set of internal llvm-libc headers. (libc/shared)
         # See project hand-in-hand.
         # https://discourse.llvm.org/t/rfc-project-hand-in-hand-llvm-libc-libc-code-sharing/77701
-        "@llvm//3rd_party/llvm-project/x.x/libc:libc_headers",
+        "@llvm-libc//:libc_headers",
     ] + select({
         "@llvm//platforms/config:musl": [
             "@musl_libc//:musl_libc_headers",

@@ -263,11 +263,11 @@ def _runtime_build_file(name, label_repo_prefix):
 def _create_runtime_repositories(had_override):
     build_label_repo_prefix = "@llvm" if had_override else ""
 
-    for name in ["compiler-rt", "libcxx", "libcxxabi", "libunwind"]:
+    for repo_name, subproject in [("compiler-rt", "compiler-rt"), ("libcxx", "libcxx"), ("libcxxabi", "libcxxabi"), ("libunwind", "libunwind"), ("llvm-libc", "libc")]:
         _llvm_subproject_repository(
-            name = name,
-            build_file = _runtime_build_file(name, build_label_repo_prefix),
-            dir = name,
+            name = repo_name,
+            build_file = _runtime_build_file(subproject, build_label_repo_prefix),
+            dir = subproject,
         )
 
 def _get_llvm_version(mctx):
