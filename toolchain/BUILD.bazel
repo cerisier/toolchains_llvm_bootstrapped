@@ -273,7 +273,7 @@ cc_args_list(
     name = "toolchain_args",
     args = [
         # Common default compile flags.
-        "//toolchain/args:compile_resource_dir",
+        # "//toolchain/args:compile_resource_dir",
         "//toolchain/args:llvm_target_for_platform",
         "//toolchain/args:no_absolute_paths_for_builtins",
         "//toolchain/args:deterministic_compile_flags",
