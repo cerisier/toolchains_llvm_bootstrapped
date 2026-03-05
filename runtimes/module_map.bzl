@@ -76,7 +76,7 @@ def _include_path_impl(ctx):
     submodule_directories = []
     textual_headers_depsets = []
 
-    for src in ctx.attr.srcs:
+    for src in ctx.attr.srcs + ctx.attr.exec_srcs:
         if SourceDirectoryInfo in src or DirectoryInfo not in src:
             # We're either a source directory or an output directory (Tree Artifact).
             submodule_directories.append(src[DefaultInfo].files)
@@ -90,10 +90,10 @@ def _include_path_impl(ctx):
         ),
     ]
 
-
 include_path = rule(
     implementation = _include_path_impl,
     attrs = {
-        "srcs": attr.label_list()
+        "srcs": attr.label_list(),
+        "exec_srcs": attr.label_list(cfg = "exec"),
     },
 )
