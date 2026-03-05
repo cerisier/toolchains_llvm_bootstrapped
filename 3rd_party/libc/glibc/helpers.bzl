@@ -1,5 +1,4 @@
 def glibc_includes(cpu):
-
     x86_64_variant = [
         "sysdeps/unix/sysv/linux/x86_64/64".format(cpu),
     ] if cpu == "x86_64" else []
@@ -15,7 +14,7 @@ def glibc_includes(cpu):
         "sysdeps/unix/sysv/linux/{}".format(cpu),
     ] + x86_64_variant + [
         "sysdeps/{}".format(cpu),
-    ] + x86_parent + [
+    ] + [
         "sysdeps/unix/sysv/linux/generic",
         "sysdeps/unix/sysv/linux/include",
         "sysdeps/unix/sysv/linux",
