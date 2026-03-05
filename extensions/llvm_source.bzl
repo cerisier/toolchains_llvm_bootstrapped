@@ -15,6 +15,7 @@ _DEFAULT_SOURCE_PATCHES = [
     "//3rd_party/llvm-project/x.x/patches:llvm-driver-tool-order.patch",
     "//3rd_party/llvm-project/x.x/patches:llvm-dsymutil-corefoundation.patch",
     "//3rd_party/llvm-project/x.x/patches:compiler-rt-symbolizer_skip_cxa_atexit.patch",
+    "//3rd_party/llvm-project/x.x/patches:lit_test_stub.patch",
 ]
 
 _LLVM_21_SOURCE_PATCHES = _DEFAULT_SOURCE_PATCHES + [
@@ -25,7 +26,7 @@ _LLVM_21_SOURCE_PATCHES = _DEFAULT_SOURCE_PATCHES + [
     "//3rd_party/llvm-project/21.x/patches:no_rules_python.patch",
     "//3rd_party/llvm-project/21.x/patches:llvm-overlay-starlark.patch",
     "//3rd_party/llvm-project/21.x/patches:llvm-windows-stack-size.patch",
-    "//3rd_party/llvm-project/x.x/patches:libcxx-lgamma_r.patch",
+    "//3rd_party/llvm-project/21.x/patches:libcxx-lgamma_r.patch",
 ]
 
 _LLVM_22_SOURCE_PATCHES = _DEFAULT_SOURCE_PATCHES + [
@@ -33,6 +34,7 @@ _LLVM_22_SOURCE_PATCHES = _DEFAULT_SOURCE_PATCHES + [
     "//3rd_party/llvm-project/22.x/patches:bundle_resources_no_python.patch",
     "//3rd_party/llvm-project/22.x/patches:no_rules_python.patch",
     "//3rd_party/llvm-project/22.x/patches:llvm-windows-stack-size.patch",
+    "//3rd_party/llvm-project/22.x/patches:libcxx-lgamma_r.patch",
 ]
 
 _LLVM_PATCHES_BY_MAJOR = {
