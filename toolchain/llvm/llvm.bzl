@@ -34,10 +34,8 @@ def declare_llvm_targets(*, suffix = ""):
         name = "header_parser",
         src = ":header-parser",
         data = [
-            ":builtin_headers",
             ":prebuilt-clang++",
         ],
-        allowlist_include_directories = [":builtin_headers"],
     )
 
     # TODO(zbarsky): If we could specify the paths to these via env vars, we wouldn't need to copy things around.
@@ -101,16 +99,12 @@ def declare_llvm_targets(*, suffix = ""):
         name = "clang",
         src = "bin/clang" + suffix,
         capabilities = ["@rules_cc//cc/toolchains/capabilities:supports_pic"],
-        data = [":builtin_headers"],
-        allowlist_include_directories = [":builtin_headers"],
     )
 
     cc_tool(
         name = "clang++",
         src = "bin/clang++" + suffix,
         capabilities = ["@rules_cc//cc/toolchains/capabilities:supports_pic"],
-        data = [":builtin_headers"],
-        allowlist_include_directories = [":builtin_headers"],
     )
 
     cc_tool(
