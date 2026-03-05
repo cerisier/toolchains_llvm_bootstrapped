@@ -16,31 +16,28 @@ alias(
     actual = "@kernel_headers//:kernel_headers",
 )
 
-HDRS = glob(
-    [
-        "bits/**/*.h",
-        "csu/**",
-        "debug/**/*.h",
-        "elf/**/*.h",
-        "include/**/*.h",
-        "io/**/*.h",
-        "locale/**/*.h",
-        "misc/**/*.h",
-        "posix/**/*.h",
-        "signal/**/*.h",
-        "stdlib/**/*.h",
-        "string/**/*.h",
-        "sysdeps/**/*.h",
-        "time/**/*.h",
-    ],
-    exclude = [
-        # These are template stubs with unconditional #error directives.
-        # The real versions come from arch-specific sysdeps/ or system headers.
-        "bits/endian.h",
-        "bits/link.h",
-        "bits/wordsize.h",
-    ],
-)
+HDRS = glob([
+    "bits/**/*.h",
+    "csu/**",
+    "debug/**/*.h",
+    "elf/**/*.h",
+    "include/**/*.h",
+    "io/**/*.h",
+    "locale/**/*.h",
+    "misc/**/*.h",
+    "posix/**/*.h",
+    "signal/**/*.h",
+    "stdlib/**/*.h",
+    "string/**/*.h",
+    "sysdeps/**/*.h",
+    "time/**/*.h",
+], exclude = [
+    # These are template stubs with unconditional #error directives.
+    # The real versions come from arch-specific sysdeps/ or system headers.
+    "bits/endian.h",
+    "bits/link.h",
+    "bits/wordsize.h",
+])
 
 cc_runtime_stage0_library(
     name = "glibc_init",
