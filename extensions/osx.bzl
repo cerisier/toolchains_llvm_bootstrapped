@@ -60,7 +60,6 @@ def _osx_extension_impl(mctx):
         "usr/include/apr-1/*",
         "usr/include/atm/*",
         "usr/include/bank/*",
-        "usr/include/cups/*",
         "usr/include/default_pager/*",
         "usr/include/EndpointSecurity/*",
         "usr/include/libexslt/*",
@@ -81,6 +80,8 @@ def _osx_extension_impl(mctx):
         excludes.append("usr/include/tcl*")
     if "Tk" not in frameworks:
         excludes.append("usr/include/tk*")
+    if "PrintCore" not in frameworks:
+        excludes.append("usr/include/cups/*")
 
     http_pkg_archive(
         name = "macos_sdk",
@@ -115,4 +116,3 @@ osx = module_extension(
         "framework": _framework_tag,
     },
 )
-
