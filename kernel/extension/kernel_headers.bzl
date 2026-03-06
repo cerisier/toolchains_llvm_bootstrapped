@@ -15,22 +15,38 @@ _kernel_headers_trampoline_repository = repository_rule(
     }
 )
 
+_SUPPORTED_ARCHS = [
+    # "alpha",
+    # "arc",
+    # "arm",
+    # "csky",
+    # "loongarch",
+    # "m68k",
+    # "mips",
+    # "openrisc",
+    # "powerpc",
+    # "riscv",
+    # "s390",
+    # "sh",
+    # "sparc",
+    "x86",
+    "arm64",
+]
+
 def _kernel_headers_impl(module_ctx):
     """Kernel headers extension."""
 
-    index = {}
+    decoded_index = {}
     for mod in module_ctx.modules:
-        for index in mod.tags.index:
-            file_path = module_ctx.path(index.file)
+        for index_tag in mod.tags.index:
+            file_path = module_ctx.path(index_tag.file)
             file_content = module_ctx.read(file_path)
-            index = json.decode(file_content, default = None)
+            decoded_index = json.decode(file_content, default = None)
 
-    for version in index:
-        for kernel_arch in index[version]:
-            index_entry = index.get(version, {}).get(kernel_arch, None)
-            if index_entry == None:
-                fail("Kernel headers for %s %s not found in index" % (version, kernel_arch))
-
+    for version, archs in decoded_index.items():
+        for kernel_arch, index_entry in archs.items():
+            if kernel_arch not in _SUPPORTED_ARCHS:
+                continue
             repo = "linux_kernel_headers_%s.%s" % (kernel_arch, version)
             http_archive(
                 name = repo,

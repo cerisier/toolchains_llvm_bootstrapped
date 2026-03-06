@@ -12,6 +12,7 @@ bzl_library(
     srcs = ["llvm_source.bzl"],
     visibility = ["//visibility:public"],
     deps = [
+        "//:http_bsdtar_archive",
         "@bazel_skylib//lib:structs",
         "@bazel_tools//tools/build_defs/repo:bzl_srcs",
     ],

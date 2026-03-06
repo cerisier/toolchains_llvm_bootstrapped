@@ -142,6 +142,41 @@ We use a cross-platform reimplementation of `pkgutil` to unpack SDK packages, wh
 In theory, this toolchain can target all LLVM-supported targets.
 We prioritize adding support based on demand.
 
+# Selecting the LLVM version
+
+This module allows choosing a specific LLVM version for both the compiler and the runtimes.
+
+### Configure via `use_extension(...)`
+
+To select another LLVM release (for example `22.1.0`), configure the `llvm_source` extension before `use_repo(...)`:
+
+```starlark
+llvm_source = use_extension("@llvm//extensions:llvm_source.bzl", "llvm_source")
+llvm_source.version(llvm_version = "22.1.0")
+```
+
+Important: Since this module uses prebuilt compiler archives by default. If you set `llvm_source.version(...)` to another version, use:
+
+`--@llvm//toolchain:source=bootstrapped`
+
+This switches to source bootstrapping (building the compiler), which is required when prebuilts for your exact version are not available.
+
+### Starlark LLVM version variables
+
+If you need LLVM version variables from Starlark, `llvm_source` generates an `llvm_config` repo exposing those values.
+This lets consumers read LLVM version vars without eagerly fetching the entire `@llvm-project` source tree.
+
+```starlark
+llvm_source = use_extension("@llvm//extensions:llvm_source.bzl", "llvm_source")
+llvm_source.version(llvm_version = "22.1.0")
+use_repo(llvm_source, "llvm_config")
+```
+
+Then:
+```starlark
+load("@llvm_config//:version.bzl", "LLVM_VERSION", "llvm_vars")
+```
+
 # Additional LLVM targets
 
 This module exposes LLVM and runtime projects as first-class Bazel repos, so you can depend on them directly.
@@ -200,6 +235,13 @@ These targets are what release workflows use to produce `.tar.zst` artifacts tod
 ## Roadmap
 
 See https://github.com/cerisier/toolchains_llvm_bootstrapped/milestone/1
+
+## Users
+- [OpenAI](https://github.com/openai/codex)
+- [Aspect](https://github.com/aspect-build/aspect-cli)
+- [ZML](https://github.com/zml/zml)
+- [rules_py](https://github.com/aspect-build/rules_py)
+- [rules_scala_native](https://github.com/Programming-Rivers/rules_scala_native)
 
 ## Prior art
 

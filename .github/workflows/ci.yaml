@@ -11,7 +11,7 @@ on:
   workflow_call:
     secrets:
       BUILDBUDDY_API_KEY:
-        required: true
+        required: false
 concurrency:
   # Cancel previous actions from the same PR or branch except 'main' branch.
   # See https://docs.github.com/en/actions/using-jobs/using-concurrency and https://docs.github.com/en/actions/learn-github-actions/contexts for more info.
@@ -65,20 +65,16 @@ jobs:
         working-directory: ${{ matrix.folder }}
         shell: bash
         run: |
-          EXTRA_ARGS=""
-          if [[ "${{ matrix.folder }}" == *"rules_rust"* ]]; then
-            EXTRA_ARGS="--config=rust"
-          fi
-          if [[ "${{ matrix.folder }}" == *"wasm"* ]]; then
-            EXTRA_ARGS="--config=wasm"
+          REMOTE_HEADER_ARGS=()
+          if [[ -n "${BUILDBUDDY_API_KEY:-}" ]]; then
+            REMOTE_HEADER_ARGS=(--remote_header="x-buildbuddy-api-key=${BUILDBUDDY_API_KEY}")
           fi
 
           bazel \
             --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc \
             --bazelrc=.bazelrc \
             test \
-            --remote_header=x-buildbuddy-api-key=$BUILDBUDDY_API_KEY \
-            $EXTRA_ARGS \
+            "${REMOTE_HEADER_ARGS[@]}" \
             //...
 
   test_windows:
@@ -110,14 +106,12 @@ jobs:
         shell: bash
         run: |
           EXTRA_ARGS=""
-          if [[ "${{ matrix.folder }}" == *"rules_rust"* ]]; then
-            EXTRA_ARGS="--config=rust"
-          fi
           if [[ "${{ matrix.folder }}" == *"cross_compilation"* ]]; then
             EXTRA_ARGS="--//:test_glibc_versions=none"
           fi
-          if [[ "${{ matrix.folder }}" == *"wasm"* ]]; then
-            EXTRA_ARGS="--config=wasm"
+          REMOTE_HEADER_ARGS=()
+          if [[ -n "${BUILDBUDDY_API_KEY:-}" ]]; then
+            REMOTE_HEADER_ARGS=(--remote_header="x-buildbuddy-api-key=${BUILDBUDDY_API_KEY}")
           fi
 
           bazel \
@@ -127,7 +121,7 @@ jobs:
             test \
             --repository_cache= \
             --repo_contents_cache= \
-            --remote_header=x-buildbuddy-api-key=$BUILDBUDDY_API_KEY \
+            "${REMOTE_HEADER_ARGS[@]}" \
             --jobs=100 \
             $EXTRA_ARGS \
             //...
@@ -141,11 +135,17 @@ jobs:
       - name: Ensure Gazelle updated
         env:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        shell: bash
         run: |
+          REMOTE_HEADER_ARGS=()
+          if [[ -n "${BUILDBUDDY_API_KEY:-}" ]]; then
+            REMOTE_HEADER_ARGS=(--remote_header="x-buildbuddy-api-key=${BUILDBUDDY_API_KEY}")
+          fi
+
           bazel \
             run \
             --config=remote \
-            --remote_header=x-buildbuddy-api-key=$BUILDBUDDY_API_KEY \
+            "${REMOTE_HEADER_ARGS[@]}" \
             //gazelle:gazelle -- -mode=diff
 
       - name: Build release docs

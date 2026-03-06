@@ -17,6 +17,8 @@ common --experimental_platform_in_output_dir
 
 common --incompatible_config_setting_private_default_visibility
 
+common:cc --@rules_python//python/config_settings:bootstrap_impl=script
+
 common:bootstrap   --@llvm//toolchain:source=bootstrapped
 
 # Bootstrap Go compilers from source with our patch.

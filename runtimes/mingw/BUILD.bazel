@@ -319,6 +319,19 @@ copy_file(
     visibility = ["//visibility:public"],
 )
 
+# An empty library that provides "-lm", which is pervasive in Bazel build files
+# but not actually needed for Windows.
+cc_runtime_stage0_static_library(
+    name = "fake_math_lib",
+)
+
+copy_file(
+    name = "m",
+    src = ":fake_math_lib",
+    out = "libm.a",
+    visibility = ["//visibility:public"],
+)
+
 # TODO(zbarsky): Hack for now until we have real libstdc++ support...
 stub_library(
     name = "stdc++",
@@ -327,6 +340,7 @@ stub_library(
 copy_to_directory(
     name = "mingw_crt_library_search_directory",
     srcs = [
+        ":m",
         ":mingw32",
         ":mingwex",
         ":moldname",
