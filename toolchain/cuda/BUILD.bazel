@@ -62,10 +62,10 @@ cc_args(
         "-fno-ident",
     ],
     data = [
-        "@cuda_sdk//:cuda_path",
+        "@cuda//cuda:cuda_path",
     ],
     format = {
-        "cuda_path": "@cuda_sdk//:cuda_path",
+        "cuda_path": "@cuda//cuda:cuda_path",
     },
 )
 

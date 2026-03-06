@@ -21,7 +21,7 @@ cuda_library(
         "sm_120",
     ],
     deps = [
-        "@cuda_sdk//:cuda_headers",
+        "@cuda//cuda:cuda_headers",
     ],
 )
 
@@ -29,8 +29,8 @@ cc_binary(
     name = "saxpy_cuda_binary",
     deps = [
         ":saxpy_cuda",
-        "@cuda_sdk//:cudart",
-        "@cuda_sdk//:cuda_headers",
+        "@cuda//cudart",
+        "@cuda//cuda:cuda_headers",
     ],
 )
 
@@ -48,7 +48,7 @@ cuda_library(
         "sm_120",
     ],
     deps = [
-        "@cuda_sdk//:cuda_headers",
+        "@cuda//cuda:cuda_headers",
     ],
 )
 
@@ -60,8 +60,8 @@ cc_binary(
     ],
     deps = [
         ":vector_cuda",
-        "@cuda_sdk//:cudart",
-        "@cuda_sdk//:cuda_headers",
+        "@cuda//cudart",
+        "@cuda//cuda:cuda_headers",
     ],
     tags = [
         "no-remote",
@@ -76,8 +76,8 @@ cc_test(
     ],
     deps = [
         ":vector_cuda",
-        "@cuda_sdk//:cudart",
-        "@cuda_sdk//:cuda_headers",
+        "@cuda//cudart",
+        "@cuda//cuda:cuda_headers",
         "@googletest//:gtest_main",
     ],
     tags = [
