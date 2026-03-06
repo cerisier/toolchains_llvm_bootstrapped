@@ -26,7 +26,8 @@ alias(
 include_path(
     name = "macos_target_headers",
     srcs = [
-        "//runtimes:resource_directory",
+        # macOS doesn't use the built from source resource directory, just these headers directly
+        "//:builtin_headers",
         "@macos_sdk//sysroot",
     ],
 )
