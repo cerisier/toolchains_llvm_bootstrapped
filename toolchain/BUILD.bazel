@@ -105,7 +105,9 @@ cc_args_list(
 cc_args_list(
     name = "resource_dir",
     args = select({
-        "@platforms//os:macos": [],
+        "@platforms//os:macos": [
+            "//toolchain/args:compile_resource_dir",
+        ],
         "//conditions:default": [
             "//toolchain/args:resource_dir",
         ],
