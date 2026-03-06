@@ -26,7 +26,7 @@ alias(
 include_path(
     name = "macos_target_headers",
     srcs = [
-        "//:builtin_headers",
+        "//runtimes:resource_directory",
         "@macos_sdk//sysroot",
     ],
 )
@@ -35,7 +35,7 @@ include_path(
 include_path(
     name = "linux_target_headers",
     srcs = [
-        "//:builtin_headers",
+        "//runtimes:resource_directory",
         "@kernel_headers//:kernel_headers_directory",
         "@llvm//runtimes/libcxx:libcxx_headers_include_search_directory",
         "@llvm//runtimes/libcxx:libcxxabi_headers_include_search_directory",
@@ -54,7 +54,7 @@ include_path(
 include_path(
     name = "windows_target_headers",
     srcs = [
-        "//:builtin_headers",
+        "//runtimes:resource_directory",
         "@llvm//runtimes/libcxx:libcxx_headers_include_search_directory",
         "@llvm//runtimes/libcxx:libcxxabi_headers_include_search_directory",
         "@mingw//:mingw_generated_headers_crt_directory",
@@ -67,7 +67,7 @@ include_path(
 include_path(
     name = "wasm_target_headers",
     srcs = [
-        "//:builtin_headers",
+        "//runtimes:resource_directory",
         # TODO(zbarsky): We'll want to add wasi libc headers here.
     ],
 )

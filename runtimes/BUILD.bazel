@@ -214,6 +214,9 @@ copy_to_resource_directory(
         },
         "//conditions:default": {},
     }),
+    hdrs = [
+        "//:builtin_headers",
+    ],
     visibility = ["//visibility:public"],
 )
 

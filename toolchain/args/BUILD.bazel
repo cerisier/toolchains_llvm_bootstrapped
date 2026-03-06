@@ -16,10 +16,13 @@ package(default_visibility = ["//visibility:public"])
 # -mcpu for arm assembly
 
 cc_args(
-    name = "link_resource_dir",
+    name = "resource_dir",
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
-        # We may need it for other actions too?
+        "@rules_cc//cc/toolchains/actions:compile_actions",
+    ],
+    allowlist_absolute_include_directories = [
+        "//runtimes:resource_directory",
     ],
     args = [
         "-resource-dir",
