@@ -2,6 +2,7 @@ LLVM_VERSION = "22.1.0"
 
 def platform_llvm_binary(binary):
     return select({
+        "@llvm//platforms/config:macos_x86_64_prebuilt": "@llvm-toolchain-minimal-%s-darwin-amd64//:bin/%s" % (LLVM_VERSION, binary),
         "@llvm//platforms/config:macos_aarch64_prebuilt": "@llvm-toolchain-minimal-%s-darwin-arm64//:bin/%s" % (LLVM_VERSION, binary),
         "@llvm//platforms/config:linux_x86_64_prebuilt": "@llvm-toolchain-minimal-%s-linux-amd64//:bin/%s" % (LLVM_VERSION, binary),
         "@llvm//platforms/config:linux_aarch64_prebuilt": "@llvm-toolchain-minimal-%s-linux-arm64//:bin/%s" % (LLVM_VERSION, binary),
@@ -12,6 +13,7 @@ def platform_llvm_binary(binary):
 
 def platform_extra_binary(binary):
     return select({
+        "@llvm//platforms/config:macos_x86_64": "@toolchain-extra-prebuilts-darwin-amd64//:%s" % binary,
         "@llvm//platforms/config:macos_aarch64": "@toolchain-extra-prebuilts-darwin-arm64//:%s" % binary,
         "@llvm//platforms/config:linux_x86_64": "@toolchain-extra-prebuilts-linux-amd64//:%s" % binary,
         "@llvm//platforms/config:linux_aarch64": "@toolchain-extra-prebuilts-linux-arm64//:%s" % binary,
@@ -21,12 +23,9 @@ def platform_extra_binary(binary):
     })
 
 def _tool_repo(exec_os, exec_cpu):
-    if exec_os == "macos":
-        return "@llvm-toolchain-minimal-%s-darwin-arm64//" % LLVM_VERSION
-    elif exec_cpu == "x86_64":
-        return "@llvm-toolchain-minimal-%s-%s-amd64//" % (LLVM_VERSION, exec_os)
-    else:
-        return "@llvm-toolchain-minimal-%s-%s-arm64//" % (LLVM_VERSION, exec_os)
+    os_part = "darwin" if exec_os == "macos" else exec_os
+    cpu_part = "amd64" if exec_cpu == "x86_64" else "arm64"
+    return "@llvm-toolchain-minimal-%s-%s-%s//" % (LLVM_VERSION, os_part, cpu_part)
 
 def platform_module_map(exec_os, exec_cpu):
     return _tool_repo(exec_os, exec_cpu) + ":module_map"

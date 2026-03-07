@@ -15,6 +15,7 @@ SUPPORTED_TARGETS = [
 ]
 
 SUPPORTED_EXECS = [
+    ("macos", "x86_64"),
     ("macos", "aarch64"),
     ("linux", "x86_64"),
     ("linux", "aarch64"),

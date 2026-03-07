@@ -25,14 +25,15 @@ rbe_platform_repository(
 
 LLVM_VERSION = "22.1.0"
 
-PREBUILT_LLVM_SUFFIX = ""
+PREBUILT_LLVM_SUFFIX = "-1"
 
 LLVM_TOOLCHAIN_MINIMAL_SHA256 = {
-    "darwin-arm64": "74d21bd1030901c15b04820cd63add7836d11182bffdc7453253ddca73131d29",
-    "linux-amd64-musl": "32e322a69b6d204a0654f88d25cb0cd8266f20625161cd57b02f90022103c153",
-    "linux-arm64-musl": "313df6125a075c74fafafb28dc34e177d91812e7f3f16d0aa12b2d50abe1a5f2",
-    "windows-amd64": "7d6ef62a202d37a95ebd25adcc2f632e10d7c7ca2062b68f7815710bcbd9b3ed",
-    "windows-arm64": "798f8ccf08b027c35a922039cc097744016b4ad58728907050b3100693da3b1f",
+    "darwin-amd64": "647cf748862443ea6257e8dc497191adb1ec50d4f4326ff89be8ae5c9c473bf5",
+    "darwin-arm64": "ebc804c29b7da43ee8a6cd29bdf0d47e5329ce1aef079df70d84759d8f66413f",
+    "linux-amd64-musl": "3e8f15e89fb5a23609002f314edf38645f6bbaaf4ae51f20dc4df05aef6e2ef7",
+    "linux-arm64-musl": "e35a1a25adcb6f599ad7b8afb8d231895b04fe0c0cfa97bdc65ba6ce78cedcc5",
+    "windows-amd64": "c145aa0dbcb16e6b1adb9d75e36442d50de837d0bc25ac7217b99d394b46f058",
+    "windows-arm64": "6d7b1cff48bf3724f4d0803c952554e703edf71b6d8c0f4948ef361a9f54d501",
 }
 
 [
@@ -53,14 +54,15 @@ LLVM_TOOLCHAIN_MINIMAL_SHA256 = {
 ]
 
 TOOLCHAIN_EXTRAS_SHA256 = {
-    "darwin-arm64": "541c90801795bda277de7cd5c7b7b56f5448c844551b7841450ebb2e1d17649e",
-    "linux-amd64-musl": "345c5b0697c7d3f361728482d45098b5e9be171f866e905df1a76b773df759fe",
-    "linux-arm64-musl": "65292928bc505b90705ddfcf4b60d0fb9d7ca87e1f601d19e262c575cb83bdca",
-    "windows-amd64-gnu": "0cdc02ca846402c0c24b0330a38bd29242b425015db8a469763143f8029a761d",
-    "windows-arm64-gnu": "d79781778b0a58b0469092b0fa7f3cb68d2391a830610eaefb54b4f536887184",
+    "darwin-amd64": "8ca592e4fa4fb834f19b7b888dfc17b333636eb8bc17a5acca9ef222aa76f02c",
+    "darwin-arm64": "fb27e74ad1dfa381bd066ebb9f07e19f8a0b4a35233a24967696ae2956c6ba6f",
+    "linux-amd64-musl": "ce21e4697c37a6e0cd8e13c195c6d7f6f1efe7c4a4664128253c26bcb970fadc",
+    "linux-arm64-musl": "2e229e13cd25e45e7f810c36384b17d8376826a26c6c90f13dd5dc04988a398f",
+    "windows-amd64-gnu": "0a660dc8039a585a32cbe60edec56c195f357b7b01299f11a9a613046aca19bb",
+    "windows-arm64-gnu": "9fe79b08e9ec308584f1f83455a77f0e3451b8b009c093a070eaa633304c0f1a",
 }
 
-TOOLCHAIN_EXTRAS_VERSION = "20260216"
+TOOLCHAIN_EXTRAS_VERSION = "20260307"
 
 [
     http_archive(
