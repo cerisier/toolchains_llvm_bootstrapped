@@ -149,12 +149,12 @@ archive_override(
     urls = ["https://github.com/cerisier/libstdcxx-stubs-generator/archive/{}.tar.gz".format(LIBSTDCXX_STUBS_GENERATOR_COMMIT)],
 )
 
-PKGUTIL_COMMIT = "f04b36f28972e469ad993dff6f9dc00e68531931"  #main
+PKGUTIL_COMMIT = "2fdc9a2d34d62332aa18e0c735afc8a7e7270530"  # v1.2.0
 
-bazel_dep(name = "xpkgutil", version = "1.0.14", dev_dependency = True)
+bazel_dep(name = "xpkgutil", version = "1.2.0", dev_dependency = True)
 archive_override(
     module_name = "xpkgutil",
-    integrity = "sha256-6TyP2o2//KXXb43eLAldl1fKS5gaZt/uL0IUQ8Iz8Hs=",
+    integrity = "sha256-XHk51jB2RHDmeUI6JiYBAd5hqfI4kN+wpjTqE17WTqA=",
     strip_prefix = "pkgutil-{}".format(PKGUTIL_COMMIT),
     urls = ["https://github.com/cerisier/pkgutil/archive/{}.tar.gz".format(PKGUTIL_COMMIT)],
 )
