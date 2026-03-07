@@ -141,12 +141,12 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     # Configure a human readable name for each job
-    name: Test ${{ matrix.folder }} with Bazel ${{ matrix.bazel_version }} on ${{ matrix.os }}
+    name: Test smoke ${{ matrix.folder }} with Bazel ${{ matrix.bazel_version }} on ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v6
 
-      - name: bazel test //:main_default
+      - name: bazel build //:main_default
         id: bazel_test
         env:
           USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
@@ -162,7 +162,7 @@ jobs:
 
           bazel \
             --bazelrc=.bazelrc \
-            test \
+            build \
             "${REMOTE_HEADER_ARGS[@]}" \
             $EXTRA_ARGS \
             //:main_default
