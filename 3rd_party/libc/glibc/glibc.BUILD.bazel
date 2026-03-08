@@ -17,6 +17,7 @@ alias(
 )
 
 HDRS = glob([
+    "bits/**/*.h",
     "csu/**",
     "debug/**/*.h",
     "elf/**/*.h",
@@ -30,23 +31,12 @@ HDRS = glob([
     "string/**/*.h",
     "sysdeps/**/*.h",
     "time/**/*.h",
-] + [
-    "bits/types/__sigset_t.h",
-    "bits/types/struct_sched_param.h",
-    "bits/waitstatus.h",
-    "bits/stat.h",
-    "bits/libc-header-start.h",
-    "bits/stdint-intn.h",
-    "bits/waitflags.h",
-    "bits/byteswap.h",
-    "bits/long-double.h",
-    "bits/typesizes.h",
-    "bits/uintn-identity.h",
-    "bits/floatn-common.h",
-    "bits/signum-generic.h",
-    "bits/pthreadtypes.h",
-    "bits/stdlib-bsearch.h",
-    "bits/select.h",
+], exclude = [
+    # These are template stubs with unconditional #error directives.
+    # The real versions come from arch-specific sysdeps/ or system headers.
+    "bits/endian.h",
+    "bits/link.h",
+    "bits/wordsize.h",
 ])
 
 cc_runtime_stage0_library(
