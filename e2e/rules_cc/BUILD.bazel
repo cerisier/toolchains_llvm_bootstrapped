@@ -447,6 +447,20 @@ cc_test(
     tags = ["no-remote"],
 )
 
+cc_test(
+    name = "libomp_test",
+    srcs = ["libomp_test.cc"],
+    copts = ["-fopenmp"],
+    linkstatic = True,
+    deps = ["@openmp//:libomp"],
+    exec_compatible_with = HOST_CONSTRAINTS,
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+    tags = ["no-remote"],
+)
+
 #######################################################
 
 cc_library(

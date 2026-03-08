@@ -41,7 +41,8 @@ jobs:
           path: release/*
 
       - name: Publish release
-        uses: softprops/action-gh-release@v2
+        # TODO(cerisier): Revert me to @v2 once they fixed make_latest broken behavior starting at v2.5.0.
+        uses: softprops/action-gh-release@v2.4.2
         with:
           tag_name: ${{ github.ref_name }}
           target_commitish: ${{ github.sha }}

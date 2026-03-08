@@ -34,6 +34,7 @@ PLATFORMS=(
   linux_amd64_musl linux-amd64-musl
   linux_arm64_musl linux-arm64-musl
   macos_arm64      darwin-arm64
+  macos_amd64      darwin-amd64
   windows_amd64    windows-amd64-gnu
   windows_arm64    windows-arm64-gnu
 )

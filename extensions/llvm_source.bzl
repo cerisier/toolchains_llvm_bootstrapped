@@ -12,12 +12,15 @@ _DEFAULT_SOURCE_PATCHES = [
     "//3rd_party/llvm-project/x.x/patches:llvm-sanitizers-ignorelists.patch",
     "//3rd_party/llvm-project/x.x/patches:no_frontend_builtin_headers.patch",
     "//3rd_party/llvm-project/x.x/patches:llvm-bzl-library.patch",
+    "//3rd_party/llvm-project/x.x/patches:llvm-cov-multicall.patch",
     "//3rd_party/llvm-project/x.x/patches:llvm-driver-tool-order.patch",
     "//3rd_party/llvm-project/x.x/patches:llvm-dsymutil-corefoundation.patch",
     "//3rd_party/llvm-project/x.x/patches:compiler-rt-symbolizer_skip_cxa_atexit.patch",
+    "//3rd_party/llvm-project/x.x/patches:lit_test_stub.patch",
 ]
 
 _LLVM_21_SOURCE_PATCHES = _DEFAULT_SOURCE_PATCHES + [
+    "//3rd_party/llvm-project/21.x/patches:llvm-link-multicall.patch",
     "//3rd_party/llvm-project/21.x/patches:llvm-bazel9.patch",
     "//3rd_party/llvm-project/21.x/patches:windows_link_and_genrule.patch",
     "//3rd_party/llvm-project/21.x/patches:bundle_resources_no_python.patch",
@@ -25,14 +28,17 @@ _LLVM_21_SOURCE_PATCHES = _DEFAULT_SOURCE_PATCHES + [
     "//3rd_party/llvm-project/21.x/patches:no_rules_python.patch",
     "//3rd_party/llvm-project/21.x/patches:llvm-overlay-starlark.patch",
     "//3rd_party/llvm-project/21.x/patches:llvm-windows-stack-size.patch",
-    "//3rd_party/llvm-project/x.x/patches:libcxx-lgamma_r.patch",
+    "//3rd_party/llvm-project/21.x/patches:libcxx-lgamma_r.patch",
 ]
 
 _LLVM_22_SOURCE_PATCHES = _DEFAULT_SOURCE_PATCHES + [
+    "//3rd_party/llvm-project/22.x/patches:llvm-link-multicall.patch",
+    "//3rd_party/llvm-project/22.x/patches:llvm-profdata-multicall.patch",
     "//3rd_party/llvm-project/22.x/patches:windows_link_and_genrule.patch",
     "//3rd_party/llvm-project/22.x/patches:bundle_resources_no_python.patch",
     "//3rd_party/llvm-project/22.x/patches:no_rules_python.patch",
     "//3rd_party/llvm-project/22.x/patches:llvm-windows-stack-size.patch",
+    "//3rd_party/llvm-project/22.x/patches:libcxx-lgamma_r.patch",
 ]
 
 _LLVM_PATCHES_BY_MAJOR = {
@@ -72,7 +78,6 @@ def _llvm_source_archive_excludes():
         "flang",
         "polly",
         "orc-rt",
-        "openmp",
         "libclc",
         "offload",
         "libc/docs",
@@ -263,7 +268,14 @@ def _runtime_build_file(name, label_repo_prefix):
 def _create_runtime_repositories(had_override):
     build_label_repo_prefix = "@llvm" if had_override else ""
 
-    for repo_name, subproject in [("compiler-rt", "compiler-rt"), ("libcxx", "libcxx"), ("libcxxabi", "libcxxabi"), ("libunwind", "libunwind"), ("llvm-libc", "libc")]:
+    for repo_name, subproject in [
+        ("compiler-rt", "compiler-rt"),
+        ("libcxx", "libcxx"),
+        ("libcxxabi", "libcxxabi"),
+        ("libunwind", "libunwind"),
+        ("llvm-libc", "libc"),
+        ("openmp", "openmp"),
+    ]:
         _llvm_subproject_repository(
             name = repo_name,
             build_file = _runtime_build_file(subproject, build_label_repo_prefix),

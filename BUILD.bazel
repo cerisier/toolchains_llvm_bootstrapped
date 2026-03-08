@@ -12,6 +12,7 @@ alias(
 alias(
     name = "builtin_headers",
     actual = select({
+        "//platforms/config:macos_x86_64_prebuilt": "@llvm-toolchain-minimal-%s-darwin-amd64//:builtin_headers" % LLVM_VERSION,
         "//platforms/config:macos_aarch64_prebuilt": "@llvm-toolchain-minimal-%s-darwin-arm64//:builtin_headers" % LLVM_VERSION,
         "//platforms/config:linux_x86_64_prebuilt": "@llvm-toolchain-minimal-%s-linux-amd64//:builtin_headers" % LLVM_VERSION,
         "//platforms/config:linux_aarch64_prebuilt": "@llvm-toolchain-minimal-%s-linux-arm64//:builtin_headers" % LLVM_VERSION,
@@ -48,7 +49,8 @@ bzl_library(
     visibility = ["//visibility:public"],
     deps = [
         "@bazel_lib//lib:repo_utils",
-        "@bazel_tools//tools/build_defs/repo:bzl_srcs",
+        "@bazel_tools//tools/build_defs/repo:cache.bzl",
+        "@bazel_tools//tools/build_defs/repo:utils.bzl",
     ],
 )
 

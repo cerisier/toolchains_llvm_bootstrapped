@@ -226,6 +226,7 @@ Current packaging targets include:
 
 - `//prebuilt/llvm:for_linux_amd64_musl`
 - `//prebuilt/llvm:for_linux_arm64_musl`
+- `//prebuilt/llvm:for_macos_amd64`
 - `//prebuilt/llvm:for_macos_arm64`
 - `//prebuilt/llvm:for_windows_amd64`
 - `//prebuilt/llvm:for_windows_arm64`
