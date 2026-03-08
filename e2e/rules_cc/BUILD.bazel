@@ -471,6 +471,8 @@ cc_test(
         "layering_check",
         "parse_headers",
     ],
+    # TODO(zbarsky): Tests can't execute remotely from Windows hosts
+    tags = ["no-remote"],
 )
 
 #######################################################
