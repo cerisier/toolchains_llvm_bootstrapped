@@ -12,6 +12,7 @@ _DEFAULT_SOURCE_PATCHES = [
     "//3rd_party/llvm-project/x.x/patches:llvm-sanitizers-ignorelists.patch",
     "//3rd_party/llvm-project/x.x/patches:no_frontend_builtin_headers.patch",
     "//3rd_party/llvm-project/x.x/patches:llvm-bzl-library.patch",
+    "//3rd_party/llvm-project/x.x/patches:llvm-cov-multicall.patch",
     "//3rd_party/llvm-project/x.x/patches:llvm-driver-tool-order.patch",
     "//3rd_party/llvm-project/x.x/patches:llvm-dsymutil-corefoundation.patch",
     "//3rd_party/llvm-project/x.x/patches:compiler-rt-symbolizer_skip_cxa_atexit.patch",
@@ -19,6 +20,7 @@ _DEFAULT_SOURCE_PATCHES = [
 ]
 
 _LLVM_21_SOURCE_PATCHES = _DEFAULT_SOURCE_PATCHES + [
+    "//3rd_party/llvm-project/21.x/patches:llvm-link-multicall.patch",
     "//3rd_party/llvm-project/21.x/patches:llvm-bazel9.patch",
     "//3rd_party/llvm-project/21.x/patches:windows_link_and_genrule.patch",
     "//3rd_party/llvm-project/21.x/patches:bundle_resources_no_python.patch",
@@ -30,6 +32,8 @@ _LLVM_21_SOURCE_PATCHES = _DEFAULT_SOURCE_PATCHES + [
 ]
 
 _LLVM_22_SOURCE_PATCHES = _DEFAULT_SOURCE_PATCHES + [
+    "//3rd_party/llvm-project/22.x/patches:llvm-link-multicall.patch",
+    "//3rd_party/llvm-project/22.x/patches:llvm-profdata-multicall.patch",
     "//3rd_party/llvm-project/22.x/patches:windows_link_and_genrule.patch",
     "//3rd_party/llvm-project/22.x/patches:bundle_resources_no_python.patch",
     "//3rd_party/llvm-project/22.x/patches:no_rules_python.patch",
