@@ -1,8 +1,7 @@
-load("@rules_cc//cc/toolchains:toolchain.bzl", _cc_toolchain = "cc_toolchain")
 load("@rules_cc//cc/toolchains:feature_set.bzl", "cc_feature_set")
+load("@rules_cc//cc/toolchains:toolchain.bzl", _cc_toolchain = "cc_toolchain")
 
-def cc_toolchain(name, tool_map, module_map = None):
-
+def cc_toolchain(name, tool_map, module_map = None, extra_args = []):
     cc_feature_set(
         name = name + "_known_features",
         all_of = [
@@ -33,7 +32,6 @@ def cc_toolchain(name, tool_map, module_map = None):
             # TODO(zbarsky): Do we want layering check for runtime libs?
             #"@rules_cc//cc/toolchains/args/layering_check:layering_check",
             #"@rules_cc//cc/toolchains/args/layering_check:use_module_maps",
-
             "@llvm//toolchain/features:archive_param_file",
             "@llvm//toolchain/features:prefer_pic_for_opt_binaries",
             # Always last (contains user_compile_flags and user_link_flags who should apply last).
@@ -88,7 +86,7 @@ def cc_toolchain(name, tool_map, module_map = None):
         }) + [
             # TODO: rules_cc passes extra args to these actions, ideally these would be fixed in rules_cc.
             "@llvm//toolchain/args:ignore_unused_command_line_argument",
-        ],
+        ] + extra_args,
         supports_header_parsing = True,
         supports_param_files = True,
         artifact_name_patterns = select({

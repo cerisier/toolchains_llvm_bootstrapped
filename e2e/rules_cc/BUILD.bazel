@@ -461,6 +461,19 @@ cc_test(
     tags = ["no-remote"],
 )
 
+cc_test(
+    name = "header_parse_system_header",
+    srcs = [
+        "header_parse_system_header.h",
+        "main.cc",
+    ],
+    features = [
+        "layering_check",
+        "parse_headers",
+    ],
+    target_compatible_with = ["@platforms//os:linux"],
+)
+
 #######################################################
 
 cc_library(

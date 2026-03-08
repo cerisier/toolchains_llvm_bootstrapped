@@ -1,44 +1,24 @@
 load("@bazel_lib//lib:copy_file.bzl", "copy_file")
+load("@bazel_skylib//rules:native_binary.bzl", "native_binary")
 load("@bazel_skylib//rules/directory:directory.bzl", "directory")
 load("@bazel_skylib//rules/directory:subdirectory.bzl", "subdirectory")
-load("@bazel_skylib//rules:native_binary.bzl", "native_binary")
+load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains:tool.bzl", "cc_tool")
 load("@rules_cc//cc/toolchains:tool_map.bzl", "cc_tool_map")
-load("//runtimes:module_map.bzl", "module_map", "include_path")
-load("//toolchain:selects.bzl", "platform_extra_binary")
 load("//:directory.bzl", "headers_directory")
+load("//runtimes:module_map.bzl", "include_path", "module_map")
+load("//toolchain:selects.bzl", "platform_extra_binary")
 
 def declare_llvm_targets(*, suffix = ""):
     headers_directory(
         name = "builtin_headers",
         # Grab whichever version-specific dir is there.
-        path = native.glob(["lib/clang/*"], exclude_directories = 0)[0] + "/include",
+        path = native.glob(["lib/clang/*"], exclude_directories = 0)[0],
         visibility = ["//visibility:public"],
     )
 
     # Convenient exports
     native.exports_files(native.glob(["bin/*"]))
-
-    copied_headers = []
-    for file in native.glob(["lib/clang/**"]):
-        copy_file(
-            name  = "copy_" + file,
-            src = file,
-            out = "prebuilts/" + file,
-        )
-        copied_headers.append("prebuilts/" + file)
-
-    directory(
-        name = "builtin_headers_for_header_parser_directory",
-        srcs = copied_headers,
-    )
-
-    subdirectory(
-        name = "builtin_headers_for_header_parser_subdirectory",
-        # Grab whichever version-specific dir is there.
-        path = "prebuilts/" + native.glob(["lib/clang/*"], exclude_directories = 0)[0] + "/include",
-        parent = "builtin_headers_for_header_parser_directory",
-    )
 
     native_binary(
         name = "header-parser",
@@ -56,9 +36,31 @@ def declare_llvm_targets(*, suffix = ""):
         name = "header_parser",
         src = ":header-parser",
         data = [
-            ":builtin_headers_for_header_parser_subdirectory",
+            ":builtin_headers",
             ":prebuilt-clang++",
         ],
+        allowlist_include_directories = [":builtin_headers"],
+    )
+
+    cc_args(
+        name = "header_parsing_resource_dir",
+        actions = [
+            "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
+        ],
+        allowlist_include_directories = [
+            ":builtin_headers",
+        ],
+        args = [
+            "-resource-dir",
+            "{resource_dir}",
+        ],
+        data = [
+            ":builtin_headers",
+        ],
+        format = {
+            "resource_dir": ":builtin_headers",
+        },
+        visibility = ["//visibility:public"],
     )
 
     # TODO(zbarsky): If we could specify the paths to these via env vars, we wouldn't need to copy things around.
@@ -193,7 +195,7 @@ def declare_llvm_targets(*, suffix = ""):
             "@llvm//sanitizers:sanitizers_headers_include_search_directory",
         ] + select({
             "@llvm//platforms/config:musl": [
-                "@llvm//runtimes/musl:musl_headers_include_search_directory"
+                "@llvm//runtimes/musl:musl_headers_include_search_directory",
             ],
             "@llvm//platforms/config:gnu": [
                 "@llvm//runtimes/glibc:glibc_headers_include_search_directory",
