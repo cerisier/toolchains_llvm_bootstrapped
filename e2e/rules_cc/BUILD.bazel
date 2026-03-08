@@ -471,10 +471,6 @@ cc_test(
         "layering_check",
         "parse_headers",
     ],
-    target_compatible_with = select({
-        "@llvm//platforms/config:linux_x86_64": [],
-        "//conditions:default": ["@platforms//:incompatible"],
-    }),
 )
 
 #######################################################
