@@ -19,7 +19,7 @@ def rust_binary_test_suite(name, check, platform = None, **kwargs):
 
     # Test if the host binary works.
     exec_test(
-        sh_test,
+        rule = sh_test,
         name = name,
         srcs = ["test_platform.sh"] if platform else ["test_hello_world.sh"],
         args = [
