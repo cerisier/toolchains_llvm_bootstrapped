@@ -1,5 +1,5 @@
 load("//platforms:common.bzl", "SUPPORTED_EXECS", "SUPPORTED_TARGETS")
-load("//toolchain:selects.bzl", "platform_cc_tool_map", "platform_module_map", "resource_dir_arg")
+load("//toolchain:selects.bzl", "platform_cc_tool_map", "platform_module_map", "resource_dir_args")
 load(":cc_toolchain.bzl", "cc_toolchain")
 
 def declare_toolchains(*, execs = SUPPORTED_EXECS, targets = SUPPORTED_TARGETS):
@@ -21,7 +21,7 @@ def declare_toolchains(*, execs = SUPPORTED_EXECS, targets = SUPPORTED_TARGETS):
             module_map = platform_module_map(exec_os, exec_cpu),
             extra_args = select({
                 "@llvm//toolchain:runtimes_none": [],
-                "//conditions:default": [resource_dir_arg(exec_os, exec_cpu)],
+                "//conditions:default": resource_dir_args(exec_os, exec_cpu),
             }),
         )
 

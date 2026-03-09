@@ -44,13 +44,32 @@ def declare_llvm_targets(*, suffix = ""):
     )
 
     cc_args(
-        name = "resource_dir",
+        name = "compile_resource_dir",
         actions = [
             "@rules_cc//cc/toolchains/actions:compile_actions",
-            "@rules_cc//cc/toolchains/actions:link_actions",
         ],
         allowlist_include_directories = [
             ":builtin_headers",
+        ],
+        args = [
+            "-resource-dir",
+            "{resource_dir}",
+        ],
+        data = [
+            ":builtin_headers",
+        ],
+        format = {
+            "resource_dir": ":builtin_headers",
+        },
+        visibility = ["//visibility:public"],
+    )
+
+    cc_args(
+        name = "link_resource_dir",
+        actions = [
+            # Also includes headers to satisfy rules_foreign_cc
+            "@rules_cc//cc/toolchains/actions:compile_actions",
+            "@rules_cc//cc/toolchains/actions:link_actions",
         ],
         args = [
             "-resource-dir",
@@ -236,7 +255,7 @@ def declare_llvm_targets(*, suffix = ""):
     include_path(
         name = "macos_target_headers",
         srcs = [
-            ":resource_directory",
+            ":builtin_headers",
             "@macos_sdk//sysroot",
         ],
     )
@@ -245,7 +264,7 @@ def declare_llvm_targets(*, suffix = ""):
     include_path(
         name = "linux_target_headers",
         srcs = [
-            ":resource_directory",
+            ":builtin_headers",
             "@llvm//runtimes/libcxx:libcxx_headers_include_search_directory",
             "@llvm//runtimes/libcxx:libcxxabi_headers_include_search_directory",
             "@kernel_headers//:kernel_headers_directory",
@@ -264,7 +283,7 @@ def declare_llvm_targets(*, suffix = ""):
     include_path(
         name = "windows_target_headers",
         srcs = [
-            ":resource_directory",
+            ":builtin_headers",
             "@llvm//runtimes/libcxx:libcxx_headers_include_search_directory",
             "@llvm//runtimes/libcxx:libcxxabi_headers_include_search_directory",
             "@mingw//:mingw_generated_headers_crt_directory",
@@ -277,7 +296,7 @@ def declare_llvm_targets(*, suffix = ""):
     include_path(
         name = "wasm_target_headers",
         srcs = [
-            ":resource_directory",
+            ":builtin_headers",
             # TODO(zbarsky): We'll want to add wasi libc headers here.
         ],
     )

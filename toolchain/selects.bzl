@@ -30,8 +30,11 @@ def _tool_repo(exec_os, exec_cpu):
 def platform_module_map(exec_os, exec_cpu):
     return _tool_repo(exec_os, exec_cpu) + ":module_map"
 
-def resource_dir_arg(exec_os, exec_cpu):
-    return _tool_repo(exec_os, exec_cpu) + ":resource_dir"
+def resource_dir_args(exec_os, exec_cpu):
+    return [
+        _tool_repo(exec_os, exec_cpu) + ":compile_resource_dir",
+        _tool_repo(exec_os, exec_cpu) + ":link_resource_dir",
+    ]
 
 def platform_cc_tool_map(exec_os, exec_cpu):
     tool_repo = _tool_repo(exec_os, exec_cpu)
