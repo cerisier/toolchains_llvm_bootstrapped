@@ -1,0 +1,4 @@
+import %workspace%/../../.bazelrc
+
+common --config=cc
+common --process_headers_in_dependencies

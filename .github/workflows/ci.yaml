@@ -27,6 +27,7 @@ jobs:
         bazel_version: [8.x, last_rc]
         folder:
           - "e2e/rules_cc"
+          - "e2e/rules_foreign_cc"
           - "e2e/rules_rust"
           - "e2e/cross_compilation"
           - "e2e/wasm"
@@ -86,6 +87,7 @@ jobs:
         bazel_version: [last_rc]
         folder:
           - "e2e/rules_cc"
+          # - "e2e/rules_foreign_cc" TODO: Current tests only support linux
           # - "e2e/rules_rust" - Need a bazel nightly with https://github.com/bazelbuild/bazel/pull/28038
           - "e2e/cross_compilation"
           # - "e2e/wasm"
@@ -135,6 +137,7 @@ jobs:
         bazel_version: [last_rc]
         folder:
           - "e2e/rules_cc"
+          # - "e2e/rules_foreign_cc" TODO: Current tests only support linux
           # - "e2e/rules_rust" - Need a bazel nightly with https://github.com/bazelbuild/bazel/pull/28038
           # - "e2e/cross_compilation"
           # - "e2e/wasm"
