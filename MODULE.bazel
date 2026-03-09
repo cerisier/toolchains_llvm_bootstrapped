@@ -28,12 +28,12 @@ LLVM_VERSION = "22.1.0"
 PREBUILT_LLVM_SUFFIX = "-1"
 
 LLVM_TOOLCHAIN_MINIMAL_SHA256 = {
-    "darwin-amd64": "647cf748862443ea6257e8dc497191adb1ec50d4f4326ff89be8ae5c9c473bf5",
-    "darwin-arm64": "ebc804c29b7da43ee8a6cd29bdf0d47e5329ce1aef079df70d84759d8f66413f",
-    "linux-amd64-musl": "3e8f15e89fb5a23609002f314edf38645f6bbaaf4ae51f20dc4df05aef6e2ef7",
-    "linux-arm64-musl": "e35a1a25adcb6f599ad7b8afb8d231895b04fe0c0cfa97bdc65ba6ce78cedcc5",
-    "windows-amd64": "c145aa0dbcb16e6b1adb9d75e36442d50de837d0bc25ac7217b99d394b46f058",
-    "windows-arm64": "6d7b1cff48bf3724f4d0803c952554e703edf71b6d8c0f4948ef361a9f54d501",
+    "darwin-amd64": "59f79d29676e3dec24f387ea5ac523aa55895eeeed1a5b987d0be75e55ece4eb",
+    "darwin-arm64": "390796080323f2253c75e17789687f2fbc995cd8dcca5904ea770e6f311ff172",
+    "linux-amd64-musl": "5261627da8e5ae6331dc5c95b3a37055e18f68a3e64b503ae8f0bc69947a2eb8",
+    "linux-arm64-musl": "bd68bf79677489c006bdc4c9cd3416f9f9cc33e4d410d57d258d2608346a7191",
+    "windows-amd64": "1b9603ef6e25cf1991f0786c1852fde9dc2b21095ce50563d6c875ed9c01dee9",
+    "windows-arm64": "94ca7c793f42a4d48116db1c80ab64edaaa10ce04b13ec56a52a0afedac2b170",
 }
 
 [
