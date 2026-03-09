@@ -1,7 +1,9 @@
-load("@bazel_lib//lib:copy_file.bzl", "copy_file_action", "COPY_FILE_TOOLCHAINS")
+load("@bazel_lib//lib:copy_file.bzl", "COPY_FILE_TOOLCHAINS", "copy_file_action")
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory_bin_action")
+load("@bazel_skylib//lib:paths.bzl", "paths")
+load("@bazel_skylib//rules/directory:providers.bzl", "DirectoryInfo")
 
-# echo 'int main() {}' | bazel run //tools:clang -- -x c - -fuse-ld=lld -v --rtlib=compiler-rt -### --target=<triple> 
+# echo 'int main() {}' | bazel run //tools:clang -- -x c - -fuse-ld=lld -v --rtlib=compiler-rt -### --target=<triple>
 TRIPLE_SELECT_DICT = {
     "@llvm//platforms/config:linux_x86_64": "x86_64-unknown-linux-gnu",
     "@llvm//platforms/config:linux_aarch64": "aarch64-unknown-linux-gnu",
@@ -25,10 +27,12 @@ def _copy_to_resource_directory_rule_impl(ctx):
     for src_label, out_basename in ctx.attr.srcs.items():
         src = src_label.files.to_list()[0]
         extension_src = src.path.split(".")[-1]
+
         # we need to respect the extension since it may differ between platforms.
         out_filename = "%s.%s" % (out_basename, extension_src)
         out = ctx.actions.declare_file("%s/%s" % (staging_prefix, out_filename))
-        copy_file_action(ctx,
+        copy_file_action(
+            ctx,
             src = src,
             dst = out,
         )
@@ -36,13 +40,21 @@ def _copy_to_resource_directory_rule_impl(ctx):
 
     copy_to_directory_bin = ctx.toolchains["@bazel_lib//lib:copy_to_directory_toolchain_type"].copy_to_directory_info.bin
     out_dir = ctx.actions.declare_directory(ctx.label.name)
+
+    header_replace_prefixes = {}
+    for target in ctx.attr.hdrs:
+        relative_path = paths.relativize(target[DirectoryInfo].path, target.label.workspace_root)
+        header_replace_prefixes[relative_path] = ""
+
     copy_to_directory_bin_action(
         ctx,
         name = ctx.attr.name,
         copy_to_directory_bin = copy_to_directory_bin,
         dst = out_dir,
-        files = staged,
-        replace_prefixes = {staging_prefix: "lib/%s" % ctx.attr.target_triple},
+        files = staged + ctx.files.hdrs,
+        replace_prefixes = header_replace_prefixes | {
+            staging_prefix: "lib/%s" % ctx.attr.target_triple,
+        },
         include_external_repositories = ["**"],
         root_paths = ["."],
     )
@@ -53,6 +65,11 @@ copy_to_resource_directory_rule = rule(
     doc = "Copies the given srcs into a resource directory layout under lib/<triple>/.",
     implementation = _copy_to_resource_directory_rule_impl,
     attrs = {
+        "hdrs": attr.label_list(
+            doc = "List of headers to include in the resource directory. These will be placed under include/<triple>/",
+            allow_files = True,
+            providers = [DirectoryInfo],
+        ),
         "srcs": attr.label_keyed_string_dict(
             doc = "Dict of label -> basename. Each value is the filename to appear under lib/<triple>/",
             mandatory = True,
@@ -72,7 +89,7 @@ def _copy_to_resource_directory_macro_impl(name, srcs, target_triple, **kwargs):
         name = name,
         srcs = srcs,
         target_triple = target_triple if target_triple else select(TRIPLE_SELECT_DICT),
-        **kwargs,
+        **kwargs
     )
 
 copy_to_resource_directory = macro(

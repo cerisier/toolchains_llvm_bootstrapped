@@ -103,16 +103,6 @@ cc_args_list(
 )
 
 cc_args_list(
-    name = "resource_dir",
-    args = select({
-        "@platforms//os:macos": [],
-        "//conditions:default": [
-            "//toolchain/args:resource_dir",
-        ],
-    }),
-)
-
-cc_args_list(
     name = "default_libs",
     args = select({
         "@platforms//os:macos": [
@@ -303,7 +293,6 @@ cc_args_list(
         ":rtlib",
         ":stdlib",
         ":unwindlib",
-        ":resource_dir",
         "//toolchain/args:validate_static_library_args",
         ":default_link_flags",
         # Needs to stay out of resource_dir since clang does not always search for crtstuff for all targets.

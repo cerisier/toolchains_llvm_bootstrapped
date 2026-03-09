@@ -19,9 +19,10 @@ def declare_toolchains(*, execs = SUPPORTED_EXECS, targets = SUPPORTED_TARGETS):
             name = cc_toolchain_name,
             tool_map = platform_cc_tool_map(exec_os, exec_cpu),
             module_map = platform_module_map(exec_os, exec_cpu),
-            extra_args = [
-                resource_dir_arg(exec_os, exec_cpu),
-            ],
+            extra_args = select({
+                "@llvm//toolchain:runtimes_none": [],
+                "//conditions:default": [resource_dir_arg(exec_os, exec_cpu)],
+            }),
         )
 
         for (target_os, target_cpu) in targets:

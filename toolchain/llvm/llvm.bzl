@@ -2,11 +2,12 @@ load("@bazel_lib//lib:copy_file.bzl", "copy_file")
 load("@bazel_skylib//rules:native_binary.bzl", "native_binary")
 load("@bazel_skylib//rules/directory:directory.bzl", "directory")
 load("@bazel_skylib//rules/directory:subdirectory.bzl", "subdirectory")
+load("@llvm//runtimes:copy_to_resource_directory.bzl", "copy_to_resource_directory")
+load("@llvm//runtimes:module_map.bzl", "include_path", "module_map")
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains:tool.bzl", "cc_tool")
 load("@rules_cc//cc/toolchains:tool_map.bzl", "cc_tool_map")
 load("//:directory.bzl", "headers_directory")
-load("//runtimes:module_map.bzl", "include_path", "module_map")
 load("//toolchain:selects.bzl", "platform_extra_binary")
 
 def declare_llvm_targets(*, suffix = ""):
@@ -43,9 +44,10 @@ def declare_llvm_targets(*, suffix = ""):
     )
 
     cc_args(
-        name = "header_parsing_resource_dir",
+        name = "resource_dir",
         actions = [
-            "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
+            "@rules_cc//cc/toolchains/actions:compile_actions",
+            "@rules_cc//cc/toolchains/actions:link_actions",
         ],
         allowlist_include_directories = [
             ":builtin_headers",
@@ -55,10 +57,10 @@ def declare_llvm_targets(*, suffix = ""):
             "{resource_dir}",
         ],
         data = [
-            ":builtin_headers",
+            ":resource_directory",
         ],
         format = {
-            "resource_dir": ":builtin_headers",
+            "resource_dir": ":resource_directory",
         },
         visibility = ["//visibility:public"],
     )
@@ -176,10 +178,65 @@ def declare_llvm_targets(*, suffix = ""):
         src = "bin/llvm-strip" + suffix,
     )
 
+    copy_to_resource_directory(
+        name = "resource_directory",
+        hdrs = [":builtin_headers"],
+        srcs = {
+            "@llvm//runtimes/compiler-rt:clang_rt.builtins.static": "libclang_rt.builtins",
+        } | select({
+            "@llvm//config:ubsan_enabled": {
+                "@llvm//runtimes/compiler-rt:clang_rt.ubsan_standalone.static": "libclang_rt.ubsan_standalone",
+                "@llvm//runtimes/compiler-rt:clang_rt.ubsan_standalone_cxx.static": "libclang_rt.ubsan_standalone_cxx",
+            },
+            "@llvm//config:cfi_enabled": {
+                "@llvm//runtimes/compiler-rt:clang_rt.cfi.static": "libclang_rt.cfi",
+                "@llvm//runtimes/compiler-rt:clang_rt.cfi_diag.static": "libclang_rt.cfi_diag",
+                "@llvm//runtimes/compiler-rt:clang_rt.ubsan_standalone.static": "libclang_rt.ubsan_standalone",
+                "@llvm//runtimes/compiler-rt:clang_rt.ubsan_standalone_cxx.static": "libclang_rt.ubsan_standalone_cxx",
+                "@llvm//runtimes/compiler-rt:clang_rt.cfi_ignorelist": "share/cfi_ignorelist.txt",
+            },
+            "@llvm//config:msan_enabled": {
+                "@llvm//runtimes/compiler-rt:clang_rt.msan.static": "libclang_rt.msan",
+                "@llvm//runtimes/compiler-rt:clang_rt.msan_cxx.static": "libclang_rt.msan_cxx",
+            },
+            "@llvm//config:dfsan_enabled": {
+                "@llvm//runtimes/compiler-rt:clang_rt.dfsan.static": "libclang_rt.dfsan",
+                "@llvm//runtimes/compiler-rt:clang_rt.dfsan_abilist": "share/dfsan_abilist",
+            },
+            "@llvm//config:nsan_enabled": {
+                "@llvm//runtimes/compiler-rt:clang_rt.nsan.static": "libclang_rt.nsan",
+            },
+            "@llvm//config:safestack_enabled": {
+                "@llvm//runtimes/compiler-rt:clang_rt.safestack.static": "libclang_rt.safestack",
+            },
+            "@llvm//config:rtsan_enabled": {
+                "@llvm//runtimes/compiler-rt:clang_rt.rtsan.static": "libclang_rt.rtsan",
+            },
+            "@llvm//config:tysan_enabled": {
+                "@llvm//runtimes/compiler-rt:clang_rt.tysan.static": "libclang_rt.tysan",
+            },
+            "@llvm//config:tsan_enabled": {
+                "@llvm//runtimes/compiler-rt:clang_rt.tsan.static": "libclang_rt.tsan",
+                "@llvm//runtimes/compiler-rt:clang_rt.tsan_cxx.static": "libclang_rt.tsan_cxx",
+            },
+            "@llvm//config:asan_enabled": {
+                "@llvm//runtimes/compiler-rt:clang_rt.asan_cxx.static": "libclang_rt.asan_cxx",
+                "@llvm//runtimes/compiler-rt:clang_rt.asan_static.static": "libclang_rt.asan_static",
+                "@llvm//runtimes/compiler-rt:clang_rt.asan.static": "libclang_rt.asan",
+                "@llvm//runtimes/compiler-rt:clang_rt.asan.shared": "libclang_rt.asan",
+            },
+            "@llvm//config:lsan_enabled": {
+                "@llvm//runtimes/compiler-rt:clang_rt.lsan.static": "libclang_rt.lsan",
+            },
+            "//conditions:default": {},
+        }),
+        visibility = ["//visibility:public"],
+    )
+
     include_path(
         name = "macos_target_headers",
         srcs = [
-            ":builtin_headers",
+            ":resource_directory",
             "@macos_sdk//sysroot",
         ],
     )
@@ -188,7 +245,7 @@ def declare_llvm_targets(*, suffix = ""):
     include_path(
         name = "linux_target_headers",
         srcs = [
-            ":builtin_headers",
+            ":resource_directory",
             "@llvm//runtimes/libcxx:libcxx_headers_include_search_directory",
             "@llvm//runtimes/libcxx:libcxxabi_headers_include_search_directory",
             "@kernel_headers//:kernel_headers_directory",
@@ -207,7 +264,7 @@ def declare_llvm_targets(*, suffix = ""):
     include_path(
         name = "windows_target_headers",
         srcs = [
-            ":builtin_headers",
+            ":resource_directory",
             "@llvm//runtimes/libcxx:libcxx_headers_include_search_directory",
             "@llvm//runtimes/libcxx:libcxxabi_headers_include_search_directory",
             "@mingw//:mingw_generated_headers_crt_directory",
@@ -220,7 +277,7 @@ def declare_llvm_targets(*, suffix = ""):
     include_path(
         name = "wasm_target_headers",
         srcs = [
-            ":builtin_headers",
+            ":resource_directory",
             # TODO(zbarsky): We'll want to add wasi libc headers here.
         ],
     )

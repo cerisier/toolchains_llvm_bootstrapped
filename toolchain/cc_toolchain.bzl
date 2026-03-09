@@ -109,7 +109,10 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = []):
             "//conditions:default": [name + "_enabled_features"],
         }),
         tool_map = tool_map,
-        module_map = module_map,
+        module_map = select({
+            "@llvm//toolchain:runtimes_none": None,
+            "//conditions:default": module_map,
+        }),
         static_runtime_lib = select({
             "@llvm//toolchain:runtimes_none": "@llvm//runtimes:none",
             "@llvm//toolchain:runtimes_stage1": "@llvm//runtimes:none",
