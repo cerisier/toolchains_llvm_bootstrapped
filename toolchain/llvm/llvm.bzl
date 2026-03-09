@@ -68,7 +68,10 @@ def declare_llvm_targets(*, suffix = ""):
         name = "link_resource_dir",
         actions = [
             # Also includes headers to satisfy rules_foreign_cc
-            "@rules_cc//cc/toolchains/actions:compile_actions",
+            "@llvm//toolchain:cpp_compile_actions_without_header_parsing",
+            "@rules_cc//cc/toolchains/actions:preprocess_assemble",
+            "@rules_cc//cc/toolchains/actions:c_compile_actions",
+            "@rules_cc//cc/toolchains/actions:assembly_actions",
             "@rules_cc//cc/toolchains/actions:link_actions",
         ],
         args = [
