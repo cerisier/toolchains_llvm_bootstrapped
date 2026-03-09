@@ -17,6 +17,8 @@ def _osx_extension_impl(mctx):
     for module in mctx.modules:
         for framework_tag in module.tags.framework:
             frameworks.append(framework_tag.name)
+        for frameworks_tag in module.tags.frameworks:
+            frameworks.extend(frameworks_tag.names)
 
     if not frameworks:
         frameworks = _DEFAULT_FRAMEWORKS
@@ -109,10 +111,17 @@ _framework_tag = tag_class(
     },
 )
 
+_frameworks_tag = tag_class(
+    attrs = {
+        "names": attr.string_list(mandatory = True),
+    },
+)
+
 osx = module_extension(
     implementation = _osx_extension_impl,
     doc = "Generates an OSX sysroot with the requested set of frameworks (or a reasonable default)",
     tag_classes = {
         "framework": _framework_tag,
+        "frameworks": _frameworks_tag,
     },
 )
