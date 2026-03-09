@@ -27,16 +27,8 @@ def _osx_extension_impl(mctx):
 
     includes = [
         "usr/include/*",
-        "usr/lib/libc.tbd",
+        "usr/lib/*.tbd",
         "usr/lib/libc++*",
-        "usr/lib/libcharset*",
-        "usr/lib/libdl*",
-        "usr/lib/libiconv*",
-        "usr/lib/libm.tbd",
-        "usr/lib/libobjc*",
-        "usr/lib/libresolv*",
-        "usr/lib/libpthread.tbd",
-        "usr/lib/libSystem*",
     ]
 
     for framework in frameworks:
@@ -70,6 +62,35 @@ def _osx_extension_impl(mctx):
         "usr/include/pexpert/*",
         "usr/include/Spatial/*",
         "usr/include/tidy/*",
+
+        # Probably not needed, saves space
+        "usr/lib/log/*",
+        "usr/lib/rdma/*",
+        "usr/lib/system/*",
+        "usr/lib/usd/*",
+        "usr/lib/i18n/*",
+        "usr/lib/libicucore*",
+
+        # These are symlinks to frameworks directory, which might not be included
+        "usr/lib/lib*blas*",
+        "usr/lib/libclapack.tbd",
+        "usr/lib/libcom_err.tbd",
+        "usr/lib/libdes425.tbd",
+        "usr/lib/libextension.tbd",
+        "usr/lib/libf77lapack.tbd",
+        "usr/lib/libgssapi_krb5.tbd",
+        "usr/lib/libipconfig.tbd",
+        "usr/lib/libk5crypto.tbd",
+        "usr/lib/libkrb4.tbd",
+        "usr/lib/libkrb5.tbd",
+        "usr/lib/libkrb524.tbd",
+        "usr/lib/libkrb5support.tbd",
+        "usr/lib/liblapack.tbd",
+        "usr/lib/liblber.tbd",
+        "usr/lib/libldap*",
+        "usr/lib/libnet*",
+        "usr/lib/libtcl*",
+        "usr/lib/libtk*",
     ]
 
     if "IOKit" not in frameworks:
