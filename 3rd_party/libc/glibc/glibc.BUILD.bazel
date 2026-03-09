@@ -1,10 +1,10 @@
 load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
 load("@llvm//3rd_party/libc/glibc:helpers.bzl", "glibc_includes")
+load("@llvm//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
 load("@llvm//toolchain/runtimes:cc_runtime_library.bzl", "cc_runtime_stage0_library")
 load("@llvm//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
 load("@llvm//toolchain/runtimes:cc_stage0_object.bzl", "cc_stage0_object")
-load("@llvm//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
 
 alias(
     name = "gnu_libc_headers",
@@ -187,7 +187,7 @@ cc_runtime_stage0_library(
         "-fgnu89-inline",
         "-fmerge-all-constants",
         "-frounding-math",
-        "-Wno-unsupported-floating-point-opt", # For targets that don't support -frounding-math.
+        "-Wno-unsupported-floating-point-opt",  # For targets that don't support -frounding-math.
         "-fno-common",
         "-fmath-errno",
         # glibc states that c_nonshared can end up in shared libraries, and so
@@ -196,9 +196,7 @@ cc_runtime_stage0_library(
         "-ftls-model=initial-exec",
         "-Wno-ignored-attributes",
         "-Qunused-arguments",
-
         "-Wno-nonportable-include-path",
-
         "-include",
         "$(location include/libc-modules.h)",
         "-include",

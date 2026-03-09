@@ -1,8 +1,8 @@
 load("@gazelle//:def.bzl", "gazelle")
+load("@llvm//:defs.bzl", "exec_test")
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_go//go:def.bzl", "go_test")
 load("@rules_platform//platform_data:defs.bzl", "platform_data")
-load("@llvm//:defs.bzl", "exec_test")
 
 gazelle(name = "gazelle")
 
@@ -46,15 +46,15 @@ platform_data(
 
 # TODO: Add a wasm64 test once wazero gains memory64 support.
 exec_test(
-    go_test,
     name = "wasm_test",
     srcs = ["wasm_test.go"],
     data = [":wasm_blob"],
+    rule = go_test,
+    x_defs = {
+        "wasmBlobRlocationpath": "$(rlocationpath :wasm_blob)",
+    },
     deps = [
         "@com_github_tetratelabs_wazero//:wazero",
         "@rules_go//go/runfiles",
     ],
-    x_defs = {
-        "wasmBlobRlocationpath": "$(rlocationpath :wasm_blob)",
-    },
 )

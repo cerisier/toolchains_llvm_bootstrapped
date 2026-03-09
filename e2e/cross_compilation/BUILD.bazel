@@ -1,15 +1,18 @@
 load("@bazel_lib//lib:transitions.bzl", "platform_transition_binary")
 load("@bazel_skylib//rules:common_settings.bzl", "string_flag")
+load("@llvm//constraints/libc:libc_versions.bzl", "LIBCS")
 load("@platforms//host:constraints.bzl", "HOST_CONSTRAINTS")
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@rules_cc//cc:cc_test.bzl", "cc_test")
-load("@llvm//constraints/libc:libc_versions.bzl", "LIBCS")
 
 string_flag(
     name = "test_glibc_versions",
     build_setting_default = "all",
-    values = ["all", "none"],
+    values = [
+        "all",
+        "none",
+    ],
 )
 
 config_setting(
@@ -28,8 +31,8 @@ cc_library(
 
 cc_binary(
     name = "main",
-    deps = [":add"],
     srcs = ["test.cc"],
+    deps = [":add"],
 )
 
 cc_test(
@@ -50,9 +53,11 @@ PLATFORMS = [
     "@llvm//platforms:windows_amd64",
     "@llvm//platforms:windows_arm64",
 ] + [
-    "@llvm//platforms:linux_x86_64_{}".format(libc) for libc in LIBCS
+    "@llvm//platforms:linux_x86_64_{}".format(libc)
+    for libc in LIBCS
 ] + [
-    "@llvm//platforms:linux_aarch64_{}".format(libc) for libc in LIBCS
+    "@llvm//platforms:linux_aarch64_{}".format(libc)
+    for libc in LIBCS
 ]
 
 [

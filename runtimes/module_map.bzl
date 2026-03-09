@@ -3,7 +3,13 @@ load("@bazel_skylib//lib:paths.bzl", "paths")
 load("@bazel_skylib//rules/directory:providers.bzl", "DirectoryInfo")
 load("//:directory.bzl", "SourceDirectoryInfo")
 
-IncludePathInfo = provider()
+IncludePathInfo = provider(
+    "IncludePathInfo",
+    fields = {
+        "submodule_directories": "A depset of File objects representing directories to be included as umbrella submodules.",
+        "textual_headers": "A depset of File objects representing headers to be included as textual headers.",
+    },
+)
 
 def _textual_header(file, *, execroot_prefix):
     return "  textual header \"{}{}\"".format(execroot_prefix, file.path)
@@ -45,7 +51,7 @@ def _module_map_impl(ctx):
         expand_directories = False,
     )
 
-    module_map_args.add('}')
+    module_map_args.add("}")
 
     write_kwargs = {}
     if bazel_features.rules.write_action_has_mnemonic:
@@ -54,7 +60,7 @@ def _module_map_impl(ctx):
     ctx.actions.write(
         output = module_map,
         content = module_map_args,
-        **write_kwargs,
+        **write_kwargs
     )
     return DefaultInfo(files = depset([module_map]))
 
@@ -90,10 +96,9 @@ def _include_path_impl(ctx):
         ),
     ]
 
-
 include_path = rule(
     implementation = _include_path_impl,
     attrs = {
-        "srcs": attr.label_list()
+        "srcs": attr.label_list(),
     },
 )

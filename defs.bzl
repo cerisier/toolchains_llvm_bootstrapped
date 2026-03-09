@@ -1,4 +1,4 @@
-def exec_test(rule, name, tags=[], args=[], env={}, data = [], tools = [], **kwargs):
+def exec_test(*, rule, name, tags = [], args = [], env = {}, data = [], tools = [], **kwargs):
     rule(
         name = name + "_",
         tags = tags + (["manual"] if "manual" not in tags else []),

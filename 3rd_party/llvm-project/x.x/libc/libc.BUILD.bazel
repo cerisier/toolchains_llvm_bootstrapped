@@ -1,7 +1,7 @@
-load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@llvm-project//:vars.bzl", "LLVM_VERSION_MAJOR")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
-EMPTY_STRING_LIST = [""][:0] # empty list[string]
+EMPTY_STRING_LIST = [""][:0]  # empty list[string]
 
 # Only the subset of headers required to build libc++.
 #
@@ -16,14 +16,14 @@ cc_library(
         "hdr/fenv_macros.h",
         "hdr/float_macros.h",
         "hdr/limits_macros.h",
-    ] + ([
-        "hdr/stdint_proxy.h",
-        "hdr/types/wchar_t.h",
-        "hdr/wchar_overlay.h",
-        "include/llvm-libc-macros/cfloat16-macros.h",
-        "include/llvm-libc-macros/cfloat128-macros.h",
-    ] if int(LLVM_VERSION_MAJOR) >= 22 else 
-        EMPTY_STRING_LIST
+    ] + (
+        [
+            "hdr/stdint_proxy.h",
+            "hdr/types/wchar_t.h",
+            "hdr/wchar_overlay.h",
+            "include/llvm-libc-macros/cfloat16-macros.h",
+            "include/llvm-libc-macros/cfloat128-macros.h",
+        ] if int(LLVM_VERSION_MAJOR) >= 22 else EMPTY_STRING_LIST
     ) + [
         "include/llvm-libc-macros/float-macros.h",
         "include/llvm-libc-macros/float16-macros.h",
@@ -132,10 +132,10 @@ cc_library(
         "src/__support/str_to_integer.h",
         "src/__support/str_to_num_result.h",
         "src/__support/uint128.h",
-    ] + ([
-        "src/__support/wctype_utils.h",
-    ] if int(LLVM_VERSION_MAJOR) >= 22 else 
-        EMPTY_STRING_LIST
+    ] + (
+        [
+            "src/__support/wctype_utils.h",
+        ] if int(LLVM_VERSION_MAJOR) >= 22 else EMPTY_STRING_LIST
     ),
     includes = [
         ".",

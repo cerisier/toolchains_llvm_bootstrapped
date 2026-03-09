@@ -1,6 +1,6 @@
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
-load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@llvm//:sh_script.bzl", "sh_script")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
 MUSL_SUPPORTED_ARCHS = ["x86_64", "aarch64"]
 
@@ -13,7 +13,7 @@ filegroup(
     ], exclude = glob([
         # As of this commit, oldmalloc and mallocng are the only subdir that are
         # not an <arch>
-        "src/malloc/oldmalloc/**", # only mallocng
+        "src/malloc/oldmalloc/**",  # only mallocng
     ])),
     visibility = ["//visibility:public"],
 )
@@ -42,8 +42,8 @@ sh_script(
     outs = ["obj/src/internal/version.h"],
     cmd = """printf '#define VERSION \"%s\"\\n' "$(cat $1)" > $2""",
     args = [
-       "$(location VERSION)",
-       "$(location obj/src/internal/version.h)",
+        "$(location VERSION)",
+        "$(location obj/src/internal/version.h)",
     ],
 )
 
@@ -55,7 +55,7 @@ sh_script(
             "arch/generic",
             "src/include",
             "src/internal",
-            "obj/src/internal", # version_h
+            "obj/src/internal",  # version_h
             "ldso",
             "include",
         ],
@@ -71,7 +71,8 @@ sh_script(
             "ldso/**",
         ]),
         visibility = ["//visibility:public"],
-    ) for arch in MUSL_SUPPORTED_ARCHS
+    )
+    for arch in MUSL_SUPPORTED_ARCHS
 ]
 
 alias(
@@ -102,9 +103,9 @@ filegroup(
             "arch/{arch}/bits/*.h".format(arch = arch),
         ]),
         visibility = ["//visibility:public"],
-    ) for arch in MUSL_SUPPORTED_ARCHS
+    )
+    for arch in MUSL_SUPPORTED_ARCHS
 ]
-
 
 [
     sh_script(
@@ -123,7 +124,8 @@ filegroup(
             "$(location obj/{arch}/include/bits/alltypes.h)".format(arch = arch),
         ],
         visibility = ["//visibility:public"],
-    ) for arch in MUSL_SUPPORTED_ARCHS
+    )
+    for arch in MUSL_SUPPORTED_ARCHS
 ]
 
 [
@@ -139,7 +141,8 @@ filegroup(
             "$(location obj/{arch}/include/bits/syscall.h)".format(arch = arch),
         ],
         visibility = ["//visibility:public"],
-    ) for arch in MUSL_SUPPORTED_ARCHS
+    )
+    for arch in MUSL_SUPPORTED_ARCHS
 ]
 
 [
@@ -152,7 +155,8 @@ filegroup(
             ":syscall_h_{arch}".format(arch = arch),
         ],
         visibility = ["//visibility:public"],
-    ) for arch in MUSL_SUPPORTED_ARCHS
+    )
+    for arch in MUSL_SUPPORTED_ARCHS
 ]
 
 [
@@ -171,7 +175,8 @@ filegroup(
         allow_overwrites = True,
         out = "generated/{arch}/includes".format(arch = arch),
         visibility = ["//visibility:public"],
-    ) for arch in MUSL_SUPPORTED_ARCHS
+    )
+    for arch in MUSL_SUPPORTED_ARCHS
 ]
 
 # For use when building user code that links against musl
@@ -189,7 +194,8 @@ filegroup(
         features = ["system_include_paths"],
         hdrs = [":headers_{arch}".format(arch = arch)],
         visibility = ["//visibility:public"],
-    ) for arch in MUSL_SUPPORTED_ARCHS
+    )
+    for arch in MUSL_SUPPORTED_ARCHS
 ]
 
 # For use when building musl itself
@@ -210,7 +216,8 @@ filegroup(
         ],
         hdrs = [":headers_{arch}".format(arch = arch)],
         visibility = ["//visibility:public"],
-    ) for arch in MUSL_SUPPORTED_ARCHS
+    )
+    for arch in MUSL_SUPPORTED_ARCHS
 ]
 
 alias(

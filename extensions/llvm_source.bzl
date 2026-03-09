@@ -1,7 +1,7 @@
+load("@bazel_skylib//lib:structs.bzl", "structs")
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:local.bzl", "new_local_repository")
-load("@bazel_skylib//lib:structs.bzl", "structs")
 load("//:http_bsdtar_archive.bzl", "http_bsdtar_archive")
 
 DEFAULT_LLVM_VERSIONS_INDEX_FILE = "//:llvm_versions.json"
@@ -136,7 +136,7 @@ def _create_llvm_raw_repo(mctx, version_config):
         http_bsdtar_archive(
             name = "llvm-raw",
             build_file_content = "# EMPTY",
-            **structs.to_dict(version_config.source_archive),
+            **structs.to_dict(version_config.source_archive)
         )
 
     return had_override

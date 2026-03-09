@@ -1,6 +1,5 @@
-
-load("@tar.bzl", "tar", "mtree_spec", "mtree_mutate")
 load("@llvm_config//:version.bzl", "LLVM_VERSION_MAJOR")
+load("@tar.bzl", "mtree_mutate", "mtree_spec", "tar")
 load("//prebuilt:mtree.bzl", "mtree")
 load("//tools:defs.bzl", "TOOLCHAIN_BINARIES")
 

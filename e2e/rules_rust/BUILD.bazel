@@ -4,16 +4,12 @@ package(default_visibility = ["//visibility:public"])
 
 filegroup(
     name = "proc_macros",
-    srcs = ["@crates//:serde_derive"]
+    srcs = ["@crates//:serde_derive"],
 )
 
 rust_binary_cross_build_test_suite(
     name = "hello_world",
     srcs = ["src/main.rs"],
-    deps = [
-        "@crates//:lz4-sys",
-        "@crates//:mimalloc",
-    ],
     platforms = {
         "@llvm//platforms:linux_x86_64": "x86-64",
         "@llvm//platforms:linux_aarch64": "aarch64",
@@ -22,4 +18,8 @@ rust_binary_cross_build_test_suite(
         # "@llvm//platforms:macos_x86_64": "x86-64",
         # "@llvm//platforms:macos_aarch64": "aarch64",
     },
+    deps = [
+        "@crates//:lz4-sys",
+        "@crates//:mimalloc",
+    ],
 )

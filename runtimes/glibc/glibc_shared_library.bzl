@@ -2,12 +2,11 @@ load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("//toolchain/runtimes:cc_runtime_shared_library.bzl", "cc_runtime_stage0_shared_library")
 
 def make_glibc_shared_library(
-    name,
-    lib_name,
-    lib_version,
-    srcs,
-    extra_link_flags = [],
-):
+        name,
+        lib_name,
+        lib_version,
+        srcs,
+        extra_link_flags = []):
     cc_library(
         name = "lib%s" % lib_name,
         copts = [
@@ -21,7 +20,7 @@ def make_glibc_shared_library(
 
     soname = "lib{lib}.so{version}".format(
         lib = lib_name,
-        version = "."+lib_version if len(lib_version) > 0 else ""
+        version = "." + lib_version if len(lib_version) > 0 else "",
     )
 
     # Stage0 because libc doesn't depend on anything at all
@@ -33,7 +32,7 @@ def make_glibc_shared_library(
         ],
         user_link_flags = [
             "-Wl,--version-script=$(location :all.map)",
-            "-Wl,-soname,{}".format(soname)
+            "-Wl,-soname,{}".format(soname),
         ] + extra_link_flags,
         shared_lib_name = soname,
         visibility = ["//visibility:public"],

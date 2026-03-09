@@ -1,4 +1,3 @@
-
 load("@bazel_features//:features.bzl", "bazel_features")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
@@ -12,7 +11,7 @@ _kernel_headers_trampoline_repository = repository_rule(
             allow_single_file = True,
             default = ":trampoline.BUILD.bazel",
         ),
-    }
+    },
 )
 
 _SUPPORTED_ARCHS = [
@@ -75,7 +74,6 @@ def _kernel_headers_impl(module_ctx):
         **metadata_kwargs
     )
 
-
 kernel_headers_index = tag_class(
     attrs = {
         "file": attr.label(
@@ -83,7 +81,7 @@ kernel_headers_index = tag_class(
             default = ":kernel_headers_index.json",
             mandatory = True,
         ),
-    }
+    },
 )
 
 kernel_headers = module_extension(

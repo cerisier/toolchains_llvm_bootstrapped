@@ -1,4 +1,3 @@
-
 """
 Utilities used by compiler-rt BUILD rules.
 
@@ -23,7 +22,7 @@ _MACOS_EXCLUDE_LIST = [
 
 def _filter_builtin_sources_impl(ctx):
     is_macos = ctx.target_platform_has_constraint(
-        ctx.attr._macos_constraint[platform_common.ConstraintValueInfo]
+        ctx.attr._macos_constraint[platform_common.ConstraintValueInfo],
     )
 
     basename_to_file = {}
@@ -46,7 +45,7 @@ def _filter_builtin_sources_impl(ctx):
     return [
         DefaultInfo(
             files = depset(unique_files),
-        )
+        ),
     ]
 
 filter_builtin_sources = rule(

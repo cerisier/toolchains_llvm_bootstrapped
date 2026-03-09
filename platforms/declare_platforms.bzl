@@ -1,10 +1,8 @@
-
-load("//platforms:common.bzl", "ARCH_ALIASES", "SUPPORTED_TARGETS", "LIBC_SUPPORTED_TARGETS")
-load("//constraints/libc:libc_versions.bzl", "LIBCS", "DEFAULT_LIBC")
+load("//constraints/libc:libc_versions.bzl", "DEFAULT_LIBC", "LIBCS")
+load("//platforms:common.bzl", "ARCH_ALIASES", "LIBC_SUPPORTED_TARGETS", "SUPPORTED_TARGETS")
 
 def declare_platforms():
     for (target_os, target_cpu) in SUPPORTED_TARGETS:
-
         constraints = [
             "@platforms//cpu:{}".format(target_cpu),
             "@platforms//os:{}".format(target_os),

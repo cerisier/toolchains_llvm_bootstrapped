@@ -31,7 +31,7 @@ _LLVM_TOOLS = [
     "sancov",
 ]
 
-def _bootstrap_transition_impl(settings, attr):
+def _bootstrap_transition_impl(_settings, attr):
     return {
         "//command_line_option:platforms": str(attr.platform),
 
@@ -64,7 +64,6 @@ def _bootstrap_transition_impl(settings, attr):
 
         # We want to build those binaries using the prebuilt compiler toolchain
         "//toolchain:source": "prebuilt",
-
         "@llvm-project//llvm:driver-tools": _LLVM_TOOLS,
     }
 
@@ -73,7 +72,6 @@ bootstrap_transition = transition(
     inputs = [],
     outputs = [
         "//command_line_option:platforms",
-
         "//config:ubsan",
         "//config:cfi",
         "//config:msan",
@@ -96,7 +94,6 @@ bootstrap_transition = transition(
         "//config:host_tsan",
         "//config:host_asan",
         "//config:host_lsan",
-
         "//toolchain:runtime_stage",
         "//toolchain:source",
         "@llvm-project//llvm:driver-tools",
@@ -122,7 +119,7 @@ def _bootstrap_binary_impl(ctx):
             files = depset([out]),
             executable = out,
             runfiles = actual.default_runfiles,
-        )
+        ),
     ]
 
 bootstrap_binary = rule(
@@ -146,7 +143,7 @@ bootstrap_binary = rule(
 )
 
 # TODO(zbarsky): This should replace bootstrap_binary once rules_cc is fixed.
-def _exec_bootstrap_transition_impl(settings, attr):
+def _exec_bootstrap_transition_impl(_settings, _attr):
     return {
         "//config:ubsan": False,
         "//config:cfi": False,
@@ -207,7 +204,6 @@ exec_bootstrap_transition = transition(
         "//config:host_tsan",
         "//config:host_asan",
         "//config:host_lsan",
-
         "//toolchain:runtime_stage",
         "//toolchain:source",
         "@llvm-project//llvm:driver-tools",

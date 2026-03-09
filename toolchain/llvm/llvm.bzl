@@ -1,7 +1,4 @@
-load("@bazel_lib//lib:copy_file.bzl", "copy_file")
 load("@bazel_skylib//rules:native_binary.bzl", "native_binary")
-load("@bazel_skylib//rules/directory:directory.bzl", "directory")
-load("@bazel_skylib//rules/directory:subdirectory.bzl", "subdirectory")
 load("@llvm//runtimes:module_map.bzl", "include_path", "module_map")
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains:tool.bzl", "cc_tool")

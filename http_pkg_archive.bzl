@@ -1,5 +1,5 @@
-load("@bazel_tools//tools/build_defs/repo:utils.bzl", "get_auth")
 load("@bazel_lib//lib:repo_utils.bzl", "repo_utils")
+load("@bazel_tools//tools/build_defs/repo:utils.bzl", "get_auth")
 
 def _http_pkg_archive_impl(rctx):
     rctx.download(
