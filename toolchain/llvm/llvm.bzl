@@ -2,18 +2,19 @@ load("@bazel_lib//lib:copy_file.bzl", "copy_file")
 load("@bazel_skylib//rules:native_binary.bzl", "native_binary")
 load("@bazel_skylib//rules/directory:directory.bzl", "directory")
 load("@bazel_skylib//rules/directory:subdirectory.bzl", "subdirectory")
+load("@llvm//runtimes:copy_to_resource_directory.bzl", "copy_to_resource_directory")
+load("@llvm//runtimes:module_map.bzl", "include_path", "module_map")
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains:tool.bzl", "cc_tool")
 load("@rules_cc//cc/toolchains:tool_map.bzl", "cc_tool_map")
 load("//:directory.bzl", "headers_directory")
-load("//runtimes:module_map.bzl", "include_path", "module_map")
 load("//toolchain:selects.bzl", "platform_extra_binary")
 
 def declare_llvm_targets(*, suffix = ""):
     headers_directory(
         name = "builtin_headers",
         # Grab whichever version-specific dir is there.
-        path = native.glob(["lib/clang/*"], exclude_directories = 0)[0],
+        path = native.glob(["lib/clang/*"], exclude_directories = 0)[0] + "/include",
         visibility = ["//visibility:public"],
     )
 
@@ -43,15 +44,18 @@ def declare_llvm_targets(*, suffix = ""):
     )
 
     cc_args(
-        name = "header_parsing_resource_dir",
+        name = "compile_resource_dir",
         actions = [
-            "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
+            "@rules_cc//cc/toolchains/actions:compile_actions",
         ],
         allowlist_include_directories = [
             ":builtin_headers",
         ],
         args = [
-            "-resource-dir",
+            # Use -isystem instead of -resource-dir to avoid conflicts with the
+            # linking specific -resource-dir and rules_foreign_cc which does
+            # 'CC CFLAGS LDFLAGS'
+            "-isystem",
             "{resource_dir}",
         ],
         data = [

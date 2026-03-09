@@ -19,7 +19,6 @@ cc_args(
     name = "resource_dir",
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
-        # We may need it for other actions too?
     ],
     args = [
         "-resource-dir",
