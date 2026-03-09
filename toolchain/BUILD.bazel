@@ -216,6 +216,7 @@ cc_args_list(
     name = "macos_toolchain_args",
     args = [
         "//toolchain/args/macos:macos_minimum_os_flags",
+        "//toolchain/args/macos:macos_default_framework_flags",
     ],
 )
 
