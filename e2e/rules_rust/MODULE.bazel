@@ -17,9 +17,13 @@ single_version_override(
     module_name = "rules_rust",
     patch_strip = 1,
     patches = [
+        # https://github.com/bazelbuild/rules_rust/pull/3784
         "//:rules_rust_artifact_names.patch",
+        # https://github.com/bazelbuild/rules_rust/pull/3785
         "//:rules_rust_windows1.patch",
+        # Part of https://github.com/bazelbuild/rules_rust/pull/3794
         "//:rules_rust_windows2.patch",
+        # Part of https://github.com/bazelbuild/rules_rust/pull/3794
         "//:rules_rust_default_libs.patch",
     ],
 )
