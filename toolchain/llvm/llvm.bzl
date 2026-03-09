@@ -54,8 +54,10 @@ def declare_llvm_targets(*, suffix = ""):
         args = [
             # Use -isystem instead of -resource-dir to avoid conflicts with the
             # linking specific -resource-dir and rules_foreign_cc which does
-            # 'CC CFLAGS LDFLAGS'
-            "-isystem",
+            # 'CC CFLAGS LDFLAGS'. This has to be last in the search paths
+            "-Xclang",
+            "-internal-isystem",
+            "-Xclang",
             "{resource_dir}",
         ],
         data = [
