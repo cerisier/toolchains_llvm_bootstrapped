@@ -32,7 +32,7 @@ def platform_module_map(exec_os, exec_cpu):
 
 def resource_dir_args(exec_os, exec_cpu):
     return [
-        _tool_repo(exec_os, exec_cpu) + ":compile_resource_dir",
+        _tool_repo(exec_os, exec_cpu) + ":header_parsing_resource_dir",
         _tool_repo(exec_os, exec_cpu) + ":link_resource_dir",
     ]
 

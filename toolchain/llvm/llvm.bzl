@@ -44,9 +44,9 @@ def declare_llvm_targets(*, suffix = ""):
     )
 
     cc_args(
-        name = "compile_resource_dir",
+        name = "header_parsing_resource_dir",
         actions = [
-            "@rules_cc//cc/toolchains/actions:compile_actions",
+            "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
         ],
         allowlist_include_directories = [
             ":builtin_headers",
