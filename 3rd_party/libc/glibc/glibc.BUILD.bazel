@@ -50,6 +50,7 @@ cc_runtime_stage0_library(
         # -nostdinc = -nostdlibinc -nobuiltininc
         "-nostdlibinc",
         "-nobuiltininc",
+        "-fno-addrsig",
     ],
     srcs = ["csu/init.c"],
     visibility = ["//visibility:public"],

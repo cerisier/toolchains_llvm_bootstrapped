@@ -76,6 +76,7 @@ filegroup(
 cc_library(
     name = "empty",
     srcs = ["empty.c"],
+    copts = ["-fno-addrsig"],
 )
 
 cc_stage0_object(
