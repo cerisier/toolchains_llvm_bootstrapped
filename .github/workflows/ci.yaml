@@ -197,3 +197,12 @@ jobs:
           docs="$(mktemp -d)"
           targets="$(mktemp)"
           bash ./.github/workflows/build_public_starlark_docs.sh "$targets" "$docs"
+
+  buildifier:
+    runs-on: ubuntu-latest
+    name: Verify buildifier formatting
+    steps:
+      - uses: actions/checkout@v6
+      - name: Verify buildifier formatting
+        shell: bash
+        run: bazel run //internal_tools:buildifier.check

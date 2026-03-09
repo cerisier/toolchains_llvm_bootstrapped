@@ -3,6 +3,8 @@ load("//toolchain:selects.bzl", "LLVM_VERSION")
 
 # gazelle:map_kind bzl_library bzl_library @bazel_lib//:bzl_library.bzl
 
+exports_files(["MODULE.bazel"])
+
 alias(
     name = "rbe_platform",
     actual = "@rbe_platform//:rbe_platform",
