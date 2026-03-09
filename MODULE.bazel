@@ -14,13 +14,24 @@ bazel_dep(name = "rules_shell", version = "0.6.1")
 bazel_dep(name = "rules_python", version = "1.7.0")
 bazel_dep(name = "with_cfg.bzl", version = "0.12.0")
 bazel_dep(name = "tar.bzl", version = "0.9.0")
-bazel_dep(name = "cuda_toolkit", version = "")
+bazel_dep(name = "rules_cuda", version = "0.1.0")
 local_path_override(
-    module_name = "cuda_toolkit",
-    path = "/home/corentin/cuda_toolkit",
+    module_name = "rules_cuda",
+    path = "/home/corentin/rules_cuda",
 )
 
-cuda = use_extension("@cuda_toolkit//extensions:cuda.bzl", "cuda")
+cuda = use_extension("@rules_cuda//cuda:extensions.bzl", "toolchain")
+cuda.redist_json(
+    name = "cuda_13_1_1",
+    platforms = [
+        "linux-x86_64",
+        "windows-x86_64",
+    ],
+    version = "13.1.1",
+)
+cuda.toolkit(
+    name = "cuda",
+)
 use_repo(cuda, "cuda")
 
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")

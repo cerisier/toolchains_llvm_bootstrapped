@@ -18,11 +18,25 @@ register_toolchains("@llvm_toolchains//:all")
 
 # Bump transitive zlib version to avoid genrules.
 bazel_dep(name = "zlib", version = "1.3.1.bcr.8")
-bazel_dep(name = "cuda_toolkit", version = "")
+bazel_dep(name = "rules_cuda", version = "0.1.0")
 local_path_override(
-    module_name = "cuda_toolkit",
-    path = "/home/corentin/cuda_toolkit",
+    module_name = "rules_cuda",
+    path = "/home/corentin/rules_cuda",
 )
+
+cuda = use_extension("@rules_cuda//cuda:extensions.bzl", "toolchain")
+cuda.redist_json(
+    name = "cuda_13_1_1",
+    platforms = [
+        "linux-x86_64",
+        "windows-x86_64",
+    ],
+    version = "13.1.1",
+)
+cuda.toolkit(
+    name = "cuda",
+)
+use_repo(cuda, "cuda")
 
 archive_override(
     module_name = "googletest",

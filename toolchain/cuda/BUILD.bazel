@@ -60,12 +60,13 @@ cc_args(
         "-fvisibility=hidden",
         "-fvisibility-inlines-hidden",
         "-fno-ident",
+        "-D_ALLOW_UNSUPPORTED_LIBCPP",
     ],
     data = [
-        "@cuda//cuda:cuda_path",
+        "@llvm//:cuda_path",
     ],
     format = {
-        "cuda_path": "@cuda//cuda:cuda_path",
+        "cuda_path": "@llvm//:cuda_path",
     },
 )
 

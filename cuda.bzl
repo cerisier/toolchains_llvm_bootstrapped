@@ -81,7 +81,7 @@ cuda_fatbinary = rule(
         ),
         "archs": attr.string_list(),
         "_fatbinary": attr.label(
-            default = Label("@cuda//nvcc:fatbinary"),
+            default = Label("@cuda//:fatbinary"),
             allow_files = True,
             executable = True,
             cfg = "exec",
@@ -122,7 +122,7 @@ def cuda_library(
             ],
             defines = defines,
             deps = deps + [
-                Label("@cuda//cuda:implicit_cuda_headers_dependency"),
+                Label("@cuda//:cuda_headers"),
             ],
             visibility = ["//visibility:private"],
         )
@@ -138,12 +138,14 @@ def cuda_library(
             name = host_src_target,
             srcs = [src],
             hdrs = hdrs,
-            defines = defines,
+            defines = defines + [
+                "_ALLOW_UNSUPPORTED_LIBCPP",
+            ],
             deps = deps + host_deps + [
-                Label("@cuda//cuda:implicit_cuda_headers_dependency"),
+                Label("@cuda//:cuda_headers"),
             ],
             copts = copts + [
-                "--cuda-path=$(location {})".format(Label("@cuda//cuda:cuda_path")),
+                "--cuda-path=$(location {})".format(Label("@llvm//:cuda_path")),
                 "--offload-host-only",
                 "-Xclang", "-fcuda-include-gpubinary",
                 "-Xclang", "$(execpath :%s)" % fatbin_src_target,
@@ -151,7 +153,7 @@ def cuda_library(
                 "-Wno-error=invalid-specialization",
             ],
             additional_compiler_inputs = [
-                Label("@cuda//cuda:cuda_path"),
+                Label("@llvm//:cuda_path"),
                 fatbin_src_target,
             ],
             visibility = ["//visibility:private"],
