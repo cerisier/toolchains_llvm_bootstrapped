@@ -1,10 +1,10 @@
 load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
 load("@llvm//3rd_party/libc/glibc:helpers.bzl", "glibc_includes")
+load("@llvm//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
 load("@llvm//toolchain/runtimes:cc_runtime_library.bzl", "cc_runtime_stage0_library")
 load("@llvm//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
 load("@llvm//toolchain/runtimes:cc_stage0_object.bzl", "cc_stage0_object")
-load("@llvm//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
 
 alias(
     name = "gnu_libc_headers",
@@ -41,16 +41,6 @@ HDRS = glob([
 
 cc_runtime_stage0_library(
     name = "glibc_init",
-    copts = [
-        # Normally, we would pass -nostdinc, but since we pass -nostdlibinc
-        # from the stage0 toolchain args regarless, having them both cause a
-        # warning about -nostdlibinc being ignored, so we duplicate the
-        # -nostdlibinc and add -nobuiltininc to avoid the warning.
-        #
-        # -nostdinc = -nostdlibinc -nobuiltininc
-        "-nostdlibinc",
-        "-nobuiltininc",
-    ],
     srcs = ["csu/init.c"],
     visibility = ["//visibility:public"],
 )
@@ -61,14 +51,6 @@ cc_runtime_stage0_library(
         "@llvm//3rd_party/libc/glibc/csu:abi-note-2.31.S",
     ],
     copts = [
-        # Normally, we would pass -nostdinc, but since we pass -nostdlibinc
-        # from the stage0 toolchain args regarless, having them both cause a
-        # warning about -nostdlibinc being ignored, so we duplicate the
-        # -nostdlibinc and add -nobuiltininc to avoid the warning.
-        #
-        # -nostdinc = -nostdlibinc -nobuiltininc
-        "-nostdlibinc",
-        "-nobuiltininc",
         "-Wa,--noexecstack",
     ],
     local_defines = [
@@ -94,14 +76,6 @@ cc_runtime_stage0_library(
         "@platforms//cpu:aarch64": ["sysdeps/aarch64/start.S"],
     }, no_match_error = "Unsupported platform"),
     copts = [
-        # Normally, we would pass -nostdinc, but since we pass -nostdlibinc
-        # from the stage0 toolchain args regarless, having them both cause a
-        # warning about -nostdlibinc being ignored, so we duplicate the
-        # -nostdlibinc and add -nobuiltininc to avoid the warning.
-        #
-        # -nostdinc = -nostdlibinc -nobuiltininc
-        "-nostdlibinc",
-        "-nobuiltininc",
         "-Wno-nonportable-include-path",
         "-Wa,--noexecstack",
         "-include",
@@ -187,7 +161,7 @@ cc_runtime_stage0_library(
         "-fgnu89-inline",
         "-fmerge-all-constants",
         "-frounding-math",
-        "-Wno-unsupported-floating-point-opt", # For targets that don't support -frounding-math.
+        "-Wno-unsupported-floating-point-opt",  # For targets that don't support -frounding-math.
         "-fno-common",
         "-fmath-errno",
         # glibc states that c_nonshared can end up in shared libraries, and so

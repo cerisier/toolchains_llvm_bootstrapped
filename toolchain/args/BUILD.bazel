@@ -655,9 +655,9 @@ cc_args(
         "@rules_cc//cc/toolchains/actions:objcpp_compile",
     ],
     args = [
-        # We want to disable everything except builtin headers since they are
-        # provided as part of the compiler toolchain repository.
-        "-nostdlibinc",
+        # We want to disable all implicit include paths to make sure they are
+        # all passed by the toolchain.
+        "-nostdinc",
     ],
 )
 
