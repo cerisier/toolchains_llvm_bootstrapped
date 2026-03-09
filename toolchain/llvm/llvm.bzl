@@ -14,7 +14,7 @@ def declare_llvm_targets(*, suffix = ""):
     headers_directory(
         name = "builtin_headers",
         # Grab whichever version-specific dir is there.
-        path = native.glob(["lib/clang/*"], exclude_directories = 0)[0] + "/include",
+        path = native.glob(["lib/clang/*"], exclude_directories = 0)[0],
         visibility = ["//visibility:public"],
     )
 
@@ -58,7 +58,7 @@ def declare_llvm_targets(*, suffix = ""):
             "-Xclang",
             "-internal-isystem",
             "-Xclang",
-            "{resource_dir}",
+            "{resource_dir}/include",
         ],
         data = [
             ":builtin_headers",
