@@ -50,6 +50,7 @@ jobs:
           files: |
             release/*.tar.zst
             release/SHA256.txt
+          overwrite_files: false
           draft: false
           prerelease: false
           generate_release_notes: false
