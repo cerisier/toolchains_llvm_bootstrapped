@@ -46,10 +46,8 @@ def declare_toolchains(*, execs = SUPPORTED_EXECS, targets = SUPPORTED_TARGETS):
         cuda_cc_toolchain_name = "cuda_{}_{}_cc_toolchain".format(exec_os, exec_cpu)
         cuda_cc_toolchain(
             name = cuda_cc_toolchain_name,
-            tool_map = select({
-                "@rules_cc//cc/toolchains/args/archiver_flags:use_libtool_on_macos_setting": ":{}_{}/tools_with_libtool".format(exec_os, exec_cpu),
-                "//conditions:default": ":{}_{}/default_tools".format(exec_os, exec_cpu),
-            }),
+            tool_map = platform_cc_tool_map(exec_os, exec_cpu),
+            module_map = platform_module_map(exec_os, exec_cpu),
         )
 
         native.toolchain(
