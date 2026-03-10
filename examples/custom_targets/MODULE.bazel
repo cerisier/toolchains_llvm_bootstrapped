@@ -11,7 +11,7 @@ local_path_override(
 
 bazel_dep(name = "rules_cc", version = "0.2.16")
 
-toolchain = use_extension("@llvm//extensions:toolchain.bzl", "llvm")
+toolchain = use_extension("@llvm//extensions:toolchain.bzl", "toolchain")
 toolchain.exec(
     arch = "x86_64",
     os = "linux",
