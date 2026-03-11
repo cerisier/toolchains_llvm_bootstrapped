@@ -18,7 +18,7 @@ def _osx_extension_impl(mctx):
     for module in mctx.modules:
         for frameworks_tag in module.tags.frameworks:
             frameworks.extend(frameworks_tag.names)
-        for _ in module.tags.experimental_include_all_sdk_libs:
+        if len(module.tags.experimental_include_all_sdk_libs) > 0:
             experimental_include_all_sdk_libs = True
 
     if not frameworks:
@@ -148,7 +148,7 @@ _frameworks_tag = tag_class(
 )
 
 _experimental_include_all_sdk_libs_tag = tag_class(
-    doc = "Include all usr/lib/*.tbd from the macOS SDK sysroot instead of only the minimal default set.",
+    doc = "Include most usr/lib/*.tbd from the macOS SDK sysroot instead of only the minimal default set. Some libraries that are symlinks to frameworks are still excluded.",
 )
 
 osx = module_extension(
