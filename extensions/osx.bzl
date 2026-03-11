@@ -13,10 +13,13 @@ _DEFAULT_FRAMEWORKS = [
 
 def _osx_extension_impl(mctx):
     frameworks = []
+    experimental_include_all_sdk_libs = False
 
     for module in mctx.modules:
         for frameworks_tag in module.tags.frameworks:
             frameworks.extend(frameworks_tag.names)
+        for _ in module.tags.experimental_include_all_sdk_libs:
+            experimental_include_all_sdk_libs = True
 
     if not frameworks:
         frameworks = _DEFAULT_FRAMEWORKS
@@ -27,9 +30,23 @@ def _osx_extension_impl(mctx):
 
     includes = [
         "usr/include/*",
-        "usr/lib/*.tbd",
         "usr/lib/libc++*",
     ]
+
+    if experimental_include_all_sdk_libs:
+        includes.append("usr/lib/*.tbd")
+    else:
+        includes.extend([
+            "usr/lib/libc.tbd",
+            "usr/lib/libcharset*",
+            "usr/lib/libdl*",
+            "usr/lib/libiconv*",
+            "usr/lib/libm.tbd",
+            "usr/lib/libobjc*",
+            "usr/lib/libresolv*",
+            "usr/lib/libpthread.tbd",
+            "usr/lib/libSystem*",
+        ])
 
     for framework in frameworks:
         includes.append("System/Library/Frameworks/%s.framework/*" % framework)
@@ -130,10 +147,15 @@ _frameworks_tag = tag_class(
     },
 )
 
+_experimental_include_all_sdk_libs_tag = tag_class(
+    doc = "Include all usr/lib/*.tbd from the macOS SDK sysroot instead of only the minimal default set.",
+)
+
 osx = module_extension(
     implementation = _osx_extension_impl,
     doc = "Generates an OSX sysroot with the requested set of frameworks (or a reasonable default)",
     tag_classes = {
         "frameworks": _frameworks_tag,
+        "experimental_include_all_sdk_libs": _experimental_include_all_sdk_libs_tag,
     },
 )
