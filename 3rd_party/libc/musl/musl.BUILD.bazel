@@ -135,7 +135,7 @@ filegroup(
             "arch/{arch}/bits/syscall.h.in".format(arch = arch),
         ],
         outs = ["obj/{arch}/include/bits/syscall.h".format(arch = arch)],
-        cmd = "cp $1 $2 && sed -n -e 's/__NR_/SYS_/p' $1 >> $2",
+        cmd = "cat $1 > $2 && sed -n -e 's/__NR_/SYS_/p' $1 >> $2",
         args = [
             "$(location arch/{arch}/bits/syscall.h.in)".format(arch = arch),
             "$(location obj/{arch}/include/bits/syscall.h)".format(arch = arch),
