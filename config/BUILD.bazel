@@ -22,13 +22,13 @@ string_setting(
 )
 
 bool_setting(
-    name = "cuda_mode",
+    name = "cuda_device_mode",
     build_setting_default = False,
 )
 
 config_setting(
-    name = "cuda_mode_enabled",
+    name = "cuda_device_mode_enabled",
     flag_values = {
-        ":cuda_mode": "True",
+        ":cuda_device_mode": "True",
     },
 )

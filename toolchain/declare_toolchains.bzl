@@ -50,19 +50,22 @@ def declare_toolchains(*, execs = SUPPORTED_EXECS, targets = SUPPORTED_TARGETS):
             module_map = platform_module_map(exec_os, exec_cpu),
         )
 
-        native.toolchain(
-            name = "cuda_{}_{}_to_none_nvptx64".format(exec_os, exec_cpu),
-            exec_compatible_with = [
-                "@platforms//cpu:{}".format(exec_cpu),
-                "@platforms//os:{}".format(exec_os),
-            ],
-            target_compatible_with = [
-                "@llvm//constraints/accelerator/arch:nvptx64",
-            ],
-            target_settings = [
-                "@llvm//toolchain:prebuilt_toolchain",
-            ],
-            toolchain = cuda_cc_toolchain_name,
-            toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
-            visibility = ["//visibility:public"],
-        )
+        for (target_os, target_cpu) in targets:
+            native.toolchain(
+                name = "cuda_{}_{}_to_{}_{}".format(exec_os, exec_cpu, target_os, target_cpu),
+                exec_compatible_with = [
+                    "@platforms//cpu:{}".format(exec_cpu),
+                    "@platforms//os:{}".format(exec_os),
+                ],
+                target_compatible_with = [
+                    "@platforms//cpu:{}".format(target_cpu),
+                    "@platforms//os:{}".format(target_os),
+                ],
+                target_settings = [
+                    "@llvm//toolchain:prebuilt_toolchain",
+                    "@llvm//config:cuda_device_mode_enabled",
+                ],
+                toolchain = cuda_cc_toolchain_name,
+                toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
+                visibility = ["//visibility:public"],
+            )

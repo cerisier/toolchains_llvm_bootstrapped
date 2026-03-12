@@ -8,7 +8,7 @@ def _cuda_arch_transition_impl(settings, attr):
     return {
         arch: {
             "//config:nvidia_compute_capability": arch,
-            "//command_line_option:platforms": "//platforms:none_nvptx64",
+            "//config:cuda_device_mode": True,
         }
         for arch in attr.archs
     }
@@ -18,7 +18,7 @@ _cuda_arch_transition = transition(
     inputs = [],
     outputs = [
         "//config:nvidia_compute_capability",
-        "//command_line_option:platforms",
+        "//config:cuda_device_mode",
     ],
 )
 
@@ -88,8 +88,6 @@ cuda_fatbinary = rule(
         ),
     },
 )
-def _dev(label): return label + "__cuda_dev"
-def _fatbin(label): return label + "__fatbin"
 def _dev_src(label, idx): return "%s__cuda_dev_%d" % (label, idx)
 def _fatbin_src(label, idx): return "%s__fatbin_%d" % (label, idx)
 def _host_src(label, idx): return "%s__cuda_host_%d" % (label, idx)

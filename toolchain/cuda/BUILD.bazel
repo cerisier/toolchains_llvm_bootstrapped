@@ -89,7 +89,7 @@ cc_args_list(
         "//toolchain/cuda:default_compile_flags",
 
         # Common default compile flags.
-        # "//toolchain/args:llvm_target_for_platform",
+        "//toolchain/args:llvm_target_for_platform",
         "//toolchain/args:no_absolute_paths_for_builtins",
         "//toolchain/args:deterministic_compile_flags",
         "//toolchain/args:module_map",
@@ -97,10 +97,9 @@ cc_args_list(
         "//toolchain:hermetic_compile_flags",
 
         "//toolchain/args:libcxx_headers_include_search_paths",
-    ] + [
-            "//toolchain/args/linux:kernel_headers_include_search_paths",
-            # "//toolchain/args/linux:musl_libc_headers_include_search_paths",
-            "//toolchain/args/linux:glibc_headers_include_search_paths",
+
+        "//toolchain/args/linux:kernel_headers_include_search_paths",
+        "//toolchain/args/linux:glibc_headers_include_search_paths",
 
         # no link
         ":fail_on_link_actions",
