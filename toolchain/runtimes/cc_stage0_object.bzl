@@ -8,6 +8,9 @@ bootstrap_transition = transition(
     implementation = lambda settings, attr: {
         # we are compiling runtimes without any kind of other dependencies
         "//toolchain:runtime_stage": "stage0",
+        # Targets past this transition will never target CUDA
+        # Otherwise, if cuda_device_mode is enabled, the CUDA toolchain gets matched
+        "//config:cuda_device_mode": False,
         # Stage0 objects must never be built with sanitizers enabled.
         "//config:asan": False,
         "//config:msan": False,
@@ -35,6 +38,8 @@ bootstrap_transition = transition(
     inputs = [],
     outputs = [
         "//toolchain:runtime_stage",
+        "//config:cuda_device_mode",
+
         "//config:asan",
         "//config:msan",
         "//config:dfsan",

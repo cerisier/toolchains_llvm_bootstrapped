@@ -27,6 +27,13 @@ def configure_builder_for_runtimes(builder, runtime_stage, linkmode = "static", 
         linkmode,
     )
 
+    # Targets past this transition will never target CUDA
+    # Otherwise, if cuda_device_mode is enabled, the CUDA toolchain gets matched
+    builder.set(
+        Label("//config:cuda_device_mode"),
+        False,
+    )
+
     if sanitizers == False:
         builder.set(Label("//config:ubsan"), False)
         builder.set(Label("//config:cfi"), False)

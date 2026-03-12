@@ -66,6 +66,10 @@ def _bootstrap_transition_impl(settings, attr):
         "//toolchain:source": "prebuilt",
 
         "@llvm-project//llvm:driver-tools": _LLVM_TOOLS,
+
+        # Targets past this transition will never target CUDA
+        # Otherwise, if cuda_device_mode is enabled, the CUDA toolchain gets matched
+        "//config:cuda_device_mode": False,
     }
 
 bootstrap_transition = transition(
@@ -99,6 +103,7 @@ bootstrap_transition = transition(
 
         "//toolchain:runtime_stage",
         "//toolchain:source",
+        "//config:cuda_device_mode",
         "@llvm-project//llvm:driver-tools",
     ],
 )
@@ -179,6 +184,10 @@ def _exec_bootstrap_transition_impl(settings, attr):
 
         # Enable the same set of tools we provide with prebuilts.
         "@llvm-project//llvm:driver-tools": _LLVM_TOOLS,
+
+        # Targets past this transition will never target CUDA
+        # Otherwise, if cuda_device_mode is enabled, the CUDA toolchain gets matched
+        "//config:cuda_device_mode": False,
     }
 
 exec_bootstrap_transition = transition(
@@ -210,6 +219,7 @@ exec_bootstrap_transition = transition(
 
         "//toolchain:runtime_stage",
         "//toolchain:source",
+        "//config:cuda_device_mode",
         "@llvm-project//llvm:driver-tools",
     ],
 )
