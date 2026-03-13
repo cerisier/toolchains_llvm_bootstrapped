@@ -23,6 +23,17 @@ SUPPORTED_EXECS = [
     ("windows", "aarch64"),
 ]
 
+CUDA_SUPPORTED_TARGETS = [
+    ("linux", "x86_64"),
+    ("linux", "aarch64"),
+    # ("windows", "x86_64"),
+]
+
+CUDA_SUPPORTED_EXECS = [
+    ("linux", "x86_64"),
+    ("linux", "aarch64"),
+]
+
 LIBC_SUPPORTED_TARGETS = [
     ("linux", "x86_64"),
     ("linux", "aarch64"),
