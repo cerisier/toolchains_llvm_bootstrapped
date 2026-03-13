@@ -27,7 +27,7 @@ def _cuda_fatbinary_impl(ctx):
     fatbin = ctx.actions.declare_file(ctx.label.name + ".fatbin")
     args = ctx.actions.args()
     args.add("--64")
-    args.add("--create=%s" % fatbin.path)
+    args.add(fatbin, format="--create=%s")
     args.add("--compress-mode=size")
 
     fatbin_inputs = []
