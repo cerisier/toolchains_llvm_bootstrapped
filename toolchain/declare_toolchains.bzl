@@ -40,32 +40,3 @@ def declare_toolchains(*, execs = SUPPORTED_EXECS, targets = SUPPORTED_TARGETS):
                 toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
                 visibility = ["//visibility:public"],
             )
-
-        # TODO(cerisier): This will only work with prebuilts LLVM >= 22.x
-        # Since before that we didn't have nvptx support in the prebuilts.
-        cuda_cc_toolchain_name = "cuda_{}_{}_cc_toolchain".format(exec_os, exec_cpu)
-        cuda_cc_toolchain(
-            name = cuda_cc_toolchain_name,
-            tool_map = platform_cc_tool_map(exec_os, exec_cpu),
-            module_map = platform_module_map(exec_os, exec_cpu),
-        )
-
-        for (target_os, target_cpu) in targets:
-            native.toolchain(
-                name = "cuda_{}_{}_to_{}_{}".format(exec_os, exec_cpu, target_os, target_cpu),
-                exec_compatible_with = [
-                    "@platforms//cpu:{}".format(exec_cpu),
-                    "@platforms//os:{}".format(exec_os),
-                ],
-                target_compatible_with = [
-                    "@platforms//cpu:{}".format(target_cpu),
-                    "@platforms//os:{}".format(target_os),
-                ],
-                target_settings = [
-                    "@llvm//toolchain:prebuilt_toolchain",
-                    "@llvm//config:cuda_device_mode_enabled",
-                ],
-                toolchain = cuda_cc_toolchain_name,
-                toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
-                visibility = ["//visibility:public"],
-            )

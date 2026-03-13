@@ -3,7 +3,6 @@ load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("//config:defs.bzl", "NVIDIA_COMPUTE_CAPABILITIES")
 load(":cc_toolchain.bzl", "cc_toolchain")
-load(":declare_toolchains.bzl", "declare_toolchains")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -105,5 +104,3 @@ cc_args_list(
         ":fail_on_link_actions",
     ],
 )
-
-declare_toolchains()
