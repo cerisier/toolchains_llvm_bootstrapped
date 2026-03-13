@@ -18,7 +18,6 @@ def cc_toolchain(name, tool_map, module_map = None):
             # Those features are enabled internally by --compilation_mode flags family.
             # We add them to the list of known_features but not in the list of enabled_features.
             "@llvm//toolchain/features:all_non_legacy_builtin_features",
-            # "@llvm//toolchain/features/legacy:all_legacy_builtin_features",
             # Always last (contains user_compile_flags and user_link_flags who should apply last).
             "@rules_cc//cc/toolchains/args:experimental_replace_legacy_action_config_features",
         ],
@@ -34,8 +33,6 @@ def cc_toolchain(name, tool_map, module_map = None):
             "@llvm//toolchain/features:opt",
             "@llvm//toolchain/features:dbg",
             "@llvm//toolchain/features:archive_param_file",
-            # "@llvm//toolchain/features:parse_headers",
-            # "@llvm//toolchain/features/legacy:all_legacy_builtin_features",
             # Always last (contains user_compile_flags and user_link_flags who should apply last).
             "@rules_cc//cc/toolchains/args:experimental_replace_legacy_action_config_features",
         ],
