@@ -75,7 +75,6 @@ cc_args(
     ],
     args = [
         "-x", "cuda",
-        "-std=c++20",
     ],
 )
 
