@@ -69,7 +69,9 @@ def _bootstrap_transition_impl(settings, attr):
 
         # Targets past this transition will never target CUDA
         # Otherwise, if cuda_device_mode is enabled, the CUDA toolchain gets matched
+        # And config hashes are duplicated for each nvidia_compute_capability for nothing.
         "//config:cuda_device_mode": False,
+        "//config:nvidia_compute_capability": "unset",
     }
 
 bootstrap_transition = transition(
@@ -104,6 +106,7 @@ bootstrap_transition = transition(
         "//toolchain:runtime_stage",
         "//toolchain:source",
         "//config:cuda_device_mode",
+        "//config:nvidia_compute_capability",
         "@llvm-project//llvm:driver-tools",
     ],
 )
@@ -187,7 +190,9 @@ def _exec_bootstrap_transition_impl(settings, attr):
 
         # Targets past this transition will never target CUDA
         # Otherwise, if cuda_device_mode is enabled, the CUDA toolchain gets matched
+        # And config hashes are duplicated for each nvidia_compute_capability for nothing.
         "//config:cuda_device_mode": False,
+        "//config:nvidia_compute_capability": "unset",
     }
 
 exec_bootstrap_transition = transition(
@@ -220,6 +225,7 @@ exec_bootstrap_transition = transition(
         "//toolchain:runtime_stage",
         "//toolchain:source",
         "//config:cuda_device_mode",
+        "//config:nvidia_compute_capability",
         "@llvm-project//llvm:driver-tools",
     ],
 )

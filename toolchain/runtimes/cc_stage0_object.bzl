@@ -10,7 +10,9 @@ bootstrap_transition = transition(
         "//toolchain:runtime_stage": "stage0",
         # Targets past this transition will never target CUDA
         # Otherwise, if cuda_device_mode is enabled, the CUDA toolchain gets matched
+        # And config hashes are duplicated for each nvidia_compute_capability for nothing.
         "//config:cuda_device_mode": False,
+        "//config:nvidia_compute_capability": "unset",
         # Stage0 objects must never be built with sanitizers enabled.
         "//config:asan": False,
         "//config:msan": False,
@@ -39,6 +41,7 @@ bootstrap_transition = transition(
     outputs = [
         "//toolchain:runtime_stage",
         "//config:cuda_device_mode",
+        "//config:nvidia_compute_capability",
 
         "//config:asan",
         "//config:msan",
