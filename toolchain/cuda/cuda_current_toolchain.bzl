@@ -75,10 +75,3 @@ def cuda_current_toolchain_component(name, component, executable = False, **kwar
         component = component,
         **kwargs
     )
-
-def cuda_current_toolchain(name, **kwargs):
-    cuda_current_toolchain_component(
-        name = name,
-        component = "ptxas",
-        **kwargs
-    )
