@@ -116,6 +116,7 @@ def cuda_library(
             srcs = [src],
             hdrs = hdrs,
             copts = copts + [
+                # cute and other specialize is_reference<>
                 "-Wno-error=invalid-specialization",
             ],
             defines = defines,

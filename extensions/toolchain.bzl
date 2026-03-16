@@ -5,7 +5,7 @@ load("@llvm//platforms:common.bzl", "CUDA_SUPPORTED_EXECS", "CUDA_SUPPORTED_TARG
 load("@llvm//toolchain:declare_toolchains.bzl", "declare_toolchains")
 load("@llvm//toolchain/cuda:declare_toolchains.bzl", declare_cuda_toolchains = "declare_toolchains")
 load("@llvm//toolchain/bootstrap:declare_toolchains.bzl", declare_bootstrap_toolchains = "declare_toolchains")
-load("@toolchain/cuda/bootstrap:declare_toolchains.bzl", declare_cuda_bootstrap_toolchains = "declare_toolchains")
+load("@llvm//toolchain/cuda/bootstrap:declare_toolchains.bzl", declare_cuda_bootstrap_toolchains = "declare_toolchains")
 
 _EXECS = [
     {execs}
