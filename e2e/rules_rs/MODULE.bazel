@@ -1,0 +1,72 @@
+# Derived from bazelbuild/rules_rust (cross_compile example)
+# Copyright (c) The Bazel Authors, licensed under Apache-2.0
+# Modifications © 2025 Corentin Kerisit
+
+module(
+    name = "hello_cross",
+    version = "0.0.0",
+)
+
+bazel_dep(name = "bazel_lib", version = "3.0.0")
+
+###############################################################################
+# Bazel dependencies # https://registry.bazel.build/
+###############################################################################
+bazel_dep(name = "platforms", version = "1.0.0")
+bazel_dep(name = "rules_shell", version = "0.6.1")
+bazel_dep(name = "rules_cc", version = "0.2.8")
+bazel_dep(name = "libmagic", version = "5.46.bcr.4")
+single_version_override(
+    module_name = "libmagic",
+    patch_strip = 1,
+    patches = [
+        # TODO(zbarsky): This patch is incorrect, it confuses target and exec for the magic binary.
+        # We need to write a genrule.bzl rule...
+        "//:libmagic_sh_script.patch",
+    ],
+    version = "5.46.bcr.4",
+)
+
+bazel_dep(name = "llvm", version = "0.0.0", dev_dependency = True)
+local_path_override(
+    module_name = "llvm",
+    path = "../..",
+)
+
+register_toolchains(
+    "@llvm//toolchain:all",
+    dev_dependency = True,
+)
+
+bazel_dep(name = "rules_rs", version = "0.0.44")
+single_version_override(
+    module_name = "rules_rs",
+    patch_strip = 1,
+    patches = ["//:rules_rs_disable_strip.patch"],
+    version = "0.0.44",
+)
+
+toolchains = use_extension("@rules_rs//rs/experimental/toolchains:module_extension.bzl", "toolchains")
+toolchains.toolchain(
+    edition = "2021",
+    version = "1.92.0",
+)
+use_repo(toolchains, "default_rust_toolchains")
+
+register_toolchains("@default_rust_toolchains//:all")
+
+crate = use_extension("@rules_rs//rs:extensions.bzl", "crate")
+crate.from_cargo(
+    name = "crates",
+    cargo_lock = "//:Cargo.lock",
+    cargo_toml = "//:Cargo.toml",
+    platform_triples = [
+        "aarch64-unknown-linux-gnu",
+        "aarch64-apple-darwin",
+        "aarch64-pc-windows-gnullvm",
+        "x86_64-unknown-linux-gnu",
+        "x86_64-apple-darwin",
+        "x86_64-pc-windows-gnullvm",
+    ],
+)
+use_repo(crate, "crates")

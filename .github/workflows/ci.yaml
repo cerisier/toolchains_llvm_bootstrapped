@@ -29,6 +29,7 @@ jobs:
           - "e2e/rules_cc"
           - "e2e/rules_foreign_cc"
           - "e2e/rules_rust"
+          - "e2e/rules_rs"
           - "e2e/cross_compilation"
           - "e2e/wasm"
     runs-on: ${{ matrix.os }}
