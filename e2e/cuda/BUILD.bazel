@@ -63,10 +63,6 @@ cc_binary(
         "@cuda//cudart",
         "@cuda//cuda:cuda_headers",
     ],
-    tags = [
-        "no-remote",
-        "local",
-    ],
 )
 
 cc_test(

@@ -14,14 +14,11 @@ bazel_dep(name = "rules_shell", version = "0.6.1")
 bazel_dep(name = "rules_python", version = "1.7.0")
 bazel_dep(name = "with_cfg.bzl", version = "0.12.0")
 bazel_dep(name = "tar.bzl", version = "0.9.0")
-bazel_dep(name = "cuda_toolkit", version = "")
+bazel_dep(name = "cuda_toolchain_types", version = "")
 local_path_override(
-    module_name = "cuda_toolkit",
-    path = "../../hermeticbuild/cuda-toolkit",
+    module_name = "cuda_toolchain_types",
+    path = "../../hermeticbuild/cuda_toolchain_types",
 )
-
-cuda = use_extension("@cuda_toolkit//extensions:cuda.bzl", "cuda")
-use_repo(cuda, "cuda")
 
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 

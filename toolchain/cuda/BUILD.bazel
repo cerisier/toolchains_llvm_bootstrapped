@@ -3,6 +3,24 @@ load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("//config:defs.bzl", "NVIDIA_COMPUTE_CAPABILITIES")
 load(":cc_toolchain.bzl", "cc_toolchain")
+load(":cuda_current_toolchain.bzl", "cuda_current_toolchain", "cuda_current_toolchain_component")
+
+cuda_current_toolchain_component(
+    name = "current_ptxas",
+    component = "ptxas",
+    executable = True,
+)
+
+cuda_current_toolchain_component(
+    name = "current_fatbinary",
+    component = "fatbinary",
+    executable = True,
+)
+
+cuda_current_toolchain_component(
+    name = "current_cuda_path",
+    component = "cuda_path",
+)
 
 package(default_visibility = ["//visibility:public"])
 
@@ -61,10 +79,10 @@ cc_args(
         "-fno-ident",
     ],
     data = [
-        "@cuda//cuda:cuda_path",
+        "//toolchain/cuda:current_cuda_path",
     ],
     format = {
-        "cuda_path": "@cuda//cuda:cuda_path",
+        "cuda_path": "//toolchain/cuda:current_cuda_path",
     },
 )
 
