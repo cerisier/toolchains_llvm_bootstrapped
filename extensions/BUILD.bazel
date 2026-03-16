@@ -23,6 +23,7 @@ bzl_library(
     srcs = ["osx.bzl"],
     visibility = ["//visibility:public"],
     deps = [
+        "//:http_bsdtar_archive",
         "//:http_pkg_archive",
         "@bazel_features//:features",
     ],
