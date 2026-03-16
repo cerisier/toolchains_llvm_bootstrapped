@@ -3,7 +3,7 @@ load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("//config:defs.bzl", "NVIDIA_COMPUTE_CAPABILITIES")
 load(":cc_toolchain.bzl", "cc_toolchain")
-load(":cuda_current_toolchain.bzl", "cuda_current_toolchain", "cuda_current_toolchain_component")
+load(":cuda_current_toolchain.bzl", "cuda_current_toolchain_component")
 
 cuda_current_toolchain_component(
     name = "current_ptxas",
