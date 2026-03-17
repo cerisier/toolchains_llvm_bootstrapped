@@ -54,10 +54,8 @@ cc_args(
     ],
     args = select(
         {
-            ":nvidia_compute_capability_{}".format(compute_capability): [
-                "--offload-arch={}".format(compute_capability),
-            ]
-            for compute_capability in NVIDIA_COMPUTE_CAPABILITIES
+            ":nvidia_compute_capability_" +  arch: ["--offload-arch=" + arch]
+            for arch in NVIDIA_COMPUTE_CAPABILITIES
         } | {
             # letting clang decide
             "//conditions:default": [],
