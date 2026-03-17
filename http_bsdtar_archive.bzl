@@ -108,6 +108,7 @@ def symlink_files(ctx):
         if ctx.path(path).exists:
             ctx.delete(path)
         ctx.symlink(src_path, path)
+
 # TODO(cerisier): Remove when we no longer support bazel < 8.5.0
 def download_remote_files(ctx, auth = None):
     """Utility function for downloading remote files.
