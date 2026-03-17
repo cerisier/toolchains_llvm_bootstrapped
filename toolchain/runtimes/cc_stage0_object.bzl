@@ -1,7 +1,6 @@
-
-load("@rules_cc//cc:find_cc_toolchain.bzl", "find_cc_toolchain", "use_cc_toolchain", "CC_TOOLCHAIN_TYPE")
-load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
 load("@rules_cc//cc:action_names.bzl", "ACTION_NAMES")
+load("@rules_cc//cc:find_cc_toolchain.bzl", "CC_TOOLCHAIN_TYPE", "find_cc_toolchain", "use_cc_toolchain")
+load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
 
 #TODO(cerisier): use a single shared transition
 bootstrap_transition = transition(

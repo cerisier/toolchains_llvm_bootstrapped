@@ -1,4 +1,4 @@
-load("//constraints/libc:libc_versions.bzl", "LIBCS", "DEFAULT_LIBC")
+load("//constraints/libc:libc_versions.bzl", "DEFAULT_LIBC", "LIBCS")
 load("//platforms:common.bzl", "LIBC_SUPPORTED_TARGETS")
 
 # For use with zig tools that consume parse zig targets triples

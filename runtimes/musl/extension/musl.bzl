@@ -1,5 +1,5 @@
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_features//:features.bzl", "bazel_features")
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 def _musl_extension_impl(module_ctx):
     """Implementation of the musl module extension."""

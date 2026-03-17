@@ -3,14 +3,14 @@ def _mtree_impl(ctx):
 
     for tgt, dst in ctx.attr.files.items():
         lines.append(
-            "%s uid=0 gid=0 time=1672560000 mode=0755 type=file content=$(location %s)"
-            % (dst, str(tgt.label))
+            "%s uid=0 gid=0 time=1672560000 mode=0755 type=file content=$(location %s)" %
+            (dst, str(tgt.label)),
         )
 
     for link_path, target in ctx.attr.symlinks.items():
         lines.append(
-            "%s uid=0 gid=0 time=1672560000 mode=0755 type=link link=%s"
-            % (link_path, target)
+            "%s uid=0 gid=0 time=1672560000 mode=0755 type=link link=%s" %
+            (link_path, target),
         )
 
     content = "\n".join(lines)
@@ -27,7 +27,7 @@ def _mtree_impl(ctx):
     )
 
     return [
-        DefaultInfo(files = depset([out]))
+        DefaultInfo(files = depset([out])),
     ]
 
 mtree = rule(

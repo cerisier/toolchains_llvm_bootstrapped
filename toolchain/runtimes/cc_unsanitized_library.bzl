@@ -1,7 +1,7 @@
 load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
-load("@rules_cc//cc/private/rules_impl:cc_shared_library.bzl", "GraphNodeInfo", "graph_structure_aspect")
+load("@rules_cc//cc/private/rules_impl:cc_shared_library.bzl", "GraphNodeInfo", "graph_structure_aspect")  # buildifier: disable=bzl-visibility
 
-def _reset_sanitizers_impl(settings, attr):
+def _reset_sanitizers_impl(_settings, _attr):
     return {
         "//config:ubsan": False,
         "//config:cfi": False,
@@ -60,7 +60,6 @@ _reset_sanitizers = transition(
         "//config:host_tsan",
         "//config:host_asan",
         "//config:host_lsan",
-
         "//toolchain:runtime_stage",
         "//toolchain:source",
     ],

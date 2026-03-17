@@ -16,4 +16,3 @@ def stub_library(name, out = None, visibility = None):
         }),
         visibility = visibility,
     )
-

@@ -1,6 +1,6 @@
+load("@llvm_config//:version.bzl", "LLVM_VERSION_MAJOR")
 load("@rules_cc//cc/toolchains:tool.bzl", "cc_tool")
 load("@rules_cc//cc/toolchains:tool_map.bzl", "cc_tool_map")
-load("@llvm_config//:version.bzl", "LLVM_VERSION_MAJOR")
 load("//platforms:common.bzl", "SUPPORTED_TARGETS")
 load("//toolchain:cc_toolchain.bzl", "cc_toolchain")
 load("//toolchain/cuda:cc_toolchain.bzl", cuda_cc_toolchain = "cc_toolchain")
@@ -218,7 +218,6 @@ def declare_tool_map(exec_os, exec_cpu):
         src = prefix + "/bin/llvm-strip",
     )
 
-
 def declare_toolchains(*, execs = None, targets = SUPPORTED_TARGETS):
     """Declares the configured LLVM toolchains.
 
@@ -233,7 +232,7 @@ def declare_toolchains(*, execs = None, targets = SUPPORTED_TARGETS):
             # If we can compile a compiler for that target, we can use that compiler
             # to compile for any other target.
             for (arch, os) in targets
-            if arch != "none" # wasm is no good for us.
+            if arch != "none"  # wasm is no good for us.
         ]
 
     for (exec_os, exec_cpu) in execs:

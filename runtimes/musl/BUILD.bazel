@@ -118,7 +118,7 @@ cc_runtime_stage0_shared_library(
 cc_library(
     name = "musl_crt1",
     srcs = ["@musl_libc//:crt/crt1.c"],
-    copts = CFLAGS_ALL + ["-DCRT"] + CFLAGS_NOSSP,
+    copts = CFLAGS_ALL + ["-DCRT"] + CFLAGS_NOSSP + ["-fno-addrsig"],
     implementation_deps = [
         "@musl_libc//:musl_internal_headers",
         "@musl_libc//:musl_libc_headers_for_musl",
@@ -129,7 +129,10 @@ cc_library(
 cc_library(
     name = "musl_rcrt1",
     srcs = ["@musl_libc//:crt/rcrt1.c"],
-    copts = CFLAGS_ALL + ["-DCRT"] + CFLAGS_NOSSP + ["-fPIC"],
+    copts = CFLAGS_ALL + ["-DCRT"] + CFLAGS_NOSSP + [
+        "-fPIC",
+        "-fno-addrsig",
+    ],
     implementation_deps = [
         "@musl_libc//:musl_internal_headers",
         "@musl_libc//:musl_libc_headers_for_musl",
@@ -140,7 +143,10 @@ cc_library(
 cc_library(
     name = "musl_Scrt1",
     srcs = ["@musl_libc//:crt/Scrt1.c"],
-    copts = CFLAGS_ALL + ["-DCRT"] + CFLAGS_NOSSP + ["-fPIC"],
+    copts = CFLAGS_ALL + ["-DCRT"] + CFLAGS_NOSSP + [
+        "-fPIC",
+        "-fno-addrsig",
+    ],
     implementation_deps = [
         "@musl_libc//:musl_internal_headers",
         "@musl_libc//:musl_libc_headers_for_musl",

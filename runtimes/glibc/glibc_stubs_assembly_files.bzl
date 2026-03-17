@@ -1,4 +1,3 @@
-
 def _glibc_stubs_impl(ctx):
     target = ctx.attr.target
 

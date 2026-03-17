@@ -27,6 +27,7 @@ jobs:
         bazel_version: [8.x, last_rc]
         folder:
           - "e2e/rules_cc"
+          - "e2e/rules_foreign_cc"
           - "e2e/rules_rust"
           - "e2e/cross_compilation"
           - "e2e/wasm"
@@ -86,6 +87,7 @@ jobs:
         bazel_version: [last_rc]
         folder:
           - "e2e/rules_cc"
+          # - "e2e/rules_foreign_cc" TODO: Current tests only support linux
           # - "e2e/rules_rust" - Need a bazel nightly with https://github.com/bazelbuild/bazel/pull/28038
           - "e2e/cross_compilation"
           # - "e2e/wasm"
@@ -135,6 +137,7 @@ jobs:
         bazel_version: [last_rc]
         folder:
           - "e2e/rules_cc"
+          # - "e2e/rules_foreign_cc" TODO: Current tests only support linux
           # - "e2e/rules_rust" - Need a bazel nightly with https://github.com/bazelbuild/bazel/pull/28038
           # - "e2e/cross_compilation"
           # - "e2e/wasm"
@@ -168,7 +171,7 @@ jobs:
             //:main_default
 
   docs:
-    runs-on: macos-14
+    runs-on: macos-15-intel
     name: Verify public docs generation
     steps:
       - uses: actions/checkout@v6
@@ -194,3 +197,12 @@ jobs:
           docs="$(mktemp -d)"
           targets="$(mktemp)"
           bash ./.github/workflows/build_public_starlark_docs.sh "$targets" "$docs"
+
+  buildifier:
+    runs-on: ubuntu-latest
+    name: Verify buildifier formatting
+    steps:
+      - uses: actions/checkout@v6
+      - name: Verify buildifier formatting
+        shell: bash
+        run: bazel run //internal_tools:buildifier.check

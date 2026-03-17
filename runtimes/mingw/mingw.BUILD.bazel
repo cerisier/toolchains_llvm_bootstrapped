@@ -1,28 +1,27 @@
-load("@bazel_skylib//rules/directory:directory.bzl", "directory")
-load("@bazel_skylib//rules/directory:subdirectory.bzl", "subdirectory")
 load("@bazel_skylib//rules:expand_template.bzl", "expand_template")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
-load("@bazel_lib//lib:run_binary.bzl", "run_binary")
-load("@llvm//runtimes/mingw:import_libs.bzl", "mingw_import_libraries")
-load("@llvm//toolchain/runtimes:cc_runtime_library.bzl", "cc_runtime_stage0_library")
+load("@bazel_skylib//rules/directory:directory.bzl", "directory")
+load("@bazel_skylib//rules/directory:subdirectory.bzl", "subdirectory")
+load("@llvm//:directory.bzl", "headers_directory")
 load(
     "@llvm//runtimes/mingw:crt_sources.bzl",
     "MINGW32_HDRS",
     "MINGW32_SRCS",
     "MINGW32_TEXTUAL_HDRS",
     "MINGW32_X86_EXTRA_SRCS",
+    "MINGWEX_ARM64_SRCS",
     "MINGWEX_HDRS",
     "MINGWEX_SRCS",
     "MINGWEX_TEXTUAL_SRCS",
     "MINGWEX_X86_HDRS",
     "MINGWEX_X86_SRCS",
-    "MINGWEX_ARM64_SRCS",
-    "UUID_SRCS",
     "UCRT_BASE_SRCS",
     "UCRT_BASE_X86_64_ADDITIONAL_SRCS",
+    "UUID_SRCS",
     "WS2_32_SRCS",
 )
-load("@llvm//:directory.bzl", "headers_directory")
+load("@llvm//runtimes/mingw:import_libs.bzl", "mingw_import_libraries")
+load("@llvm//toolchain/runtimes:cc_runtime_library.bzl", "cc_runtime_stage0_library")
 
 package(default_visibility = ["//visibility:public"])
 

@@ -1,5 +1,5 @@
-load("//platforms:common.bzl", "SUPPORTED_TARGETS", "SUPPORTED_EXECS")
-load("//toolchain:selects.bzl", "platform_cc_tool_map", "platform_module_map")
+load("//platforms:common.bzl", "SUPPORTED_EXECS", "SUPPORTED_TARGETS")
+load("//toolchain:selects.bzl", "platform_cc_tool_map", "platform_module_map", "resource_dir_arg")
 load(":cc_toolchain.bzl", "cc_toolchain")
 load("//toolchain/cuda:cc_toolchain.bzl", cuda_cc_toolchain = "cc_toolchain")
 
@@ -20,6 +20,9 @@ def declare_toolchains(*, execs = SUPPORTED_EXECS, targets = SUPPORTED_TARGETS):
             name = cc_toolchain_name,
             tool_map = platform_cc_tool_map(exec_os, exec_cpu),
             module_map = platform_module_map(exec_os, exec_cpu),
+            extra_args = [
+                resource_dir_arg(exec_os, exec_cpu),
+            ],
         )
 
         for (target_os, target_cpu) in targets:

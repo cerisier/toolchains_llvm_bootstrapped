@@ -34,8 +34,7 @@ def headers_directory(name, path, visibility = None):
         visibility = visibility,
     )
 
-# Marker provider.
-SourceDirectoryInfo = provider()
+SourceDirectoryInfo = provider("Marker Provider", fields = [])
 
 def _headers_directory_impl(ctx):
     return [
@@ -53,4 +52,3 @@ _headers_directory = rule(
         "source_directory": attr.label(),
     },
 )
-

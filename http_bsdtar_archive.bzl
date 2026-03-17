@@ -6,10 +6,8 @@ load(
 )
 load(
     "@bazel_tools//tools/build_defs/repo:utils.bzl",
-    "download_remote_files",
     "get_auth",
     "patch",
-    "symlink_files",
     "update_attrs",
     "workspace_and_buildfile",
 )
@@ -73,9 +71,11 @@ def _update_integrity_attrs(rctx, attrs, archive_info, remote_files_info, remote
     if rctx.attr.remote_file_integrity != remote_file_integrity:
         integrity_override["remote_file_integrity"] = remote_file_integrity
 
-    remote_patch_integrity = {url: info.integrity for url, info in remote_patches_info.items()}
-    if rctx.attr.remote_patches != remote_patch_integrity:
-        integrity_override["remote_patches"] = remote_patch_integrity
+    # TODO(cerisier): Remove this "if" when we no longer support bazel < 8.5.0
+    if remote_patches_info:
+        remote_patch_integrity = {url: info.integrity for url, info in remote_patches_info.items()}
+        if rctx.attr.remote_patches != remote_patch_integrity:
+            integrity_override["remote_patches"] = remote_patch_integrity
 
     if not integrity_override:
         return rctx.repo_metadata(reproducible = True)
@@ -83,6 +83,66 @@ def _update_integrity_attrs(rctx, attrs, archive_info, remote_files_info, remote
     return rctx.repo_metadata(
         attrs_for_reproducibility = update_attrs(rctx.attr, attrs.keys(), integrity_override),
     )
+
+# TODO(cerisier): Remove when we no longer support bazel < 8.5.0
+def symlink_files(ctx):
+    # type: (repository_ctx) -> None
+    """Utility function for symlinking local files.
+
+    This is intended to be used in the implementation function of a repository rule. It assumes the
+    parameter `files` is present in `ctx.attr`.
+
+    Existing files will be overwritten.
+
+    Args:
+      ctx: The repository context of the repository rule calling this utility
+        function.
+    """
+    for path, label in ctx.attr.files.items():
+        src_path = ctx.path(label)
+
+        # On Windows `ctx.symlink` may be implemented as a copy, so the file MUST be watched
+        ctx.watch(src_path)
+        if not src_path.exists:
+            fail("Input %s does not exist" % label)
+        if ctx.path(path).exists:
+            ctx.delete(path)
+        ctx.symlink(src_path, path)
+
+# TODO(cerisier): Remove when we no longer support bazel < 8.5.0
+def download_remote_files(ctx, auth = None):
+    """Utility function for downloading remote files.
+
+    This rule is intended to be used in the implementation function of
+    a repository rule. It assumes the parameters `remote_file_urls` and
+    `remote_file_integrity` to be present in `ctx.attr`.
+
+    Existing files will be overwritten.
+
+    Args:
+      ctx: The repository context of the repository rule calling this utility
+        function.
+      auth: An optional dict specifying authentication information for some of the URLs.
+
+    Returns:
+        dict mapping file paths to a download info.
+    """
+    pending = {
+        path: ctx.download(
+            remote_file_urls,
+            path,
+            canonical_id = ctx.attr.canonical_id,
+            auth = get_auth(ctx, remote_file_urls) if auth == None else auth,
+            integrity = ctx.attr.remote_file_integrity.get(path, ""),
+            block = False,
+            # Overlaid files may be shell scripts.
+            executable = True,
+        )
+        for path, remote_file_urls in ctx.attr.remote_file_urls.items()
+    }
+
+    # Wait until the requests are done
+    return {path: token.wait() for path, token in pending.items()}
 
 def _http_bsdtar_archive_impl(rctx):
     source_urls = _get_source_urls(rctx)

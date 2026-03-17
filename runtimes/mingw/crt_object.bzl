@@ -19,4 +19,3 @@ def crt_object(name, out, visibility, **kwargs):
         out = out,
         visibility = visibility,
     )
-

@@ -19,7 +19,6 @@ cc_args(
     name = "resource_dir",
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
-        # We may need it for other actions too?
     ],
     args = [
         "-resource-dir",
@@ -59,6 +58,8 @@ cc_args(
         "-Xclang",
         "-fno-cxx-modules",
         "-Wno-module-import-in-extern-c",
+        # This warning would mean we had an error configuring the toolchain or modulemap
+        "-Werror=incomplete-umbrella",
     ],
 )
 

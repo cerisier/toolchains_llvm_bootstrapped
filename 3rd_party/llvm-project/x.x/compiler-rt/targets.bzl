@@ -1,11 +1,11 @@
-load("@rules_cc//cc:cc_library.bzl", "cc_library")
-load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
-
 """
 Helper functions for defining targets.
 """
-def atomic_helper_cc_library(name, pat, size, model):
 
+load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
+def atomic_helper_cc_library(name, pat, size, model):
     unique_filename = "lse_{}_{}_{}".format(pat, size, model)
 
     # cc_library will always produce an archive file containing lse.o.

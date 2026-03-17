@@ -1,4 +1,4 @@
-load("//constraints/libc:libc_versions.bzl", "GLIBCS", "DEFAULT_LIBC")
+load("//constraints/libc:libc_versions.bzl", "DEFAULT_LIBC", "GLIBCS")
 load("//platforms:common.bzl", "LIBC_SUPPORTED_TARGETS")
 
 def make_select_glibc_repository_target(bazel_repository, bazel_target):
