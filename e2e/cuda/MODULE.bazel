@@ -10,12 +10,6 @@ local_path_override(
     path = "../../",
 )
 
-bazel_dep(name = "cuda_toolchain_types", version = "")
-local_path_override(
-    module_name = "cuda_toolchain_types",
-    path = "../../../../hermeticbuild/cuda_toolchain_types",
-)
-
 bazel_dep(name = "cuda_toolkit", version = "")
 local_path_override(
     module_name = "cuda_toolkit",
