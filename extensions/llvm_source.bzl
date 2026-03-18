@@ -140,7 +140,7 @@ def _create_llvm_raw_repo(mctx, version_config):
         http_bsdtar_archive(
             name = "llvm-raw",
             build_file_content = "# EMPTY",
-            **kwargs,
+            **kwargs
         )
 
     return had_override
