@@ -133,14 +133,12 @@ def _create_llvm_raw_repo(mctx, version_config):
             http_archive(name = "llvm-raw", **structs.to_dict(tag))
 
     if not had_override:
-        kwargs = structs.to_dict(version_config.source_archive) | {
-            "excludes": _llvm_source_archive_excludes(),
-            "bsdtar_extra_args": _LLVM_SOURCE_BSDTAR_EXTRA_ARGS,
-        }
         http_bsdtar_archive(
             name = "llvm-raw",
             build_file_content = "# EMPTY",
-            **kwargs
+            excludes = _llvm_source_archive_excludes(),
+            bsdtar_extra_args = _LLVM_SOURCE_BSDTAR_EXTRA_ARGS,
+            **structs.to_dict(version_config.source_archive)
         )
 
     return had_override
