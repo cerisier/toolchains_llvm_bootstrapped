@@ -123,7 +123,6 @@ def cuda_library(
             copts = copts + [
                 # cute and other specialize is_reference<>
                 "-Wno-error=invalid-specialization",
-                "-S",
             ],
             defines = defines,
             deps = deps,
