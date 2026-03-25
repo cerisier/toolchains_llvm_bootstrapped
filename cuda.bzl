@@ -126,6 +126,8 @@ def cuda_library(
             ],
             defines = defines,
             deps = deps,
+            # This target only makes sense to be used within the transition
+            tags = ["manual"],
             visibility = ["//visibility:private"],
         )
 
