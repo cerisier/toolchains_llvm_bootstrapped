@@ -13,21 +13,6 @@ package(default_visibility = ["//visibility:public"])
     for tool in TOOLCHAIN_BINARIES
 ]
 
-# TODO(zbarsky): Remove these after we rebuild dists with proper names.
-[
-    alias(
-        name = tool,
-        actual = platform_llvm_binary(tool),
-        tags = ["manual"],
-    )
-    for tool in [
-        "addr2line",
-        "otool",
-        "readelf",
-        "windres",
-    ]
-]
-
 bzl_library(
     name = "defs",
     srcs = ["defs.bzl"],

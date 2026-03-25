@@ -445,16 +445,6 @@ crt_object(
     visibility = ["//visibility:public"],
 )
 
-copy_file(
-    name = "version_lib",
-    src = select({
-        "@platforms//cpu:x86_64": "@mingw//:import_lib_x86_64_version",
-        "@platforms//cpu:aarch64": "@mingw//:import_lib_aarch64_version",
-    }),
-    out = "version.lib",
-    visibility = ["//visibility:public"],
-)
-
 bzl_library(
     name = "crt_object",
     srcs = ["crt_object.bzl"],
