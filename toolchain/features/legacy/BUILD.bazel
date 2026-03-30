@@ -93,10 +93,8 @@ cc_feature_set(
         # aka user_compile_flags_feature.
         # NOTE: This should come last as it must be able to override other features' flags if needed.
         "@rules_cc//cc/toolchains/args/compile_flags:feature",
-
         "@rules_cc//cc/toolchains/args/compiler_input_flags:feature",
         "@rules_cc//cc/toolchains/args/compiler_output_flags:feature",
-
         "@rules_cc//cc/toolchains/args/fission_flags:feature",
         "@rules_cc//cc/toolchains/args/link_flags:feature",
         "@rules_cc//cc/toolchains/args/linkstamp_flags:feature",
