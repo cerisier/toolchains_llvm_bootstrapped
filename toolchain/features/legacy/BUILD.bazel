@@ -89,17 +89,19 @@ cc_feature_set(
         # including this flag just raises a warning.
         # "@rules_cc//cc/toolchains/args/static_libgcc:feature",
         "@rules_cc//cc/toolchains/args/include_flags:feature",
-
-        # aka user_compile_flags_feature.
-        # NOTE: This should come last as it must be able to override other features' flags if needed.
-        "@rules_cc//cc/toolchains/args/compile_flags:feature",
-        "@rules_cc//cc/toolchains/args/compiler_input_flags:feature",
-        "@rules_cc//cc/toolchains/args/compiler_output_flags:feature",
         "@rules_cc//cc/toolchains/args/fission_flags:feature",
         "@rules_cc//cc/toolchains/args/link_flags:feature",
         "@rules_cc//cc/toolchains/args/linkstamp_flags:feature",
         "@rules_cc//cc/toolchains/args/library_search_directories:feature",
         "@rules_cc//cc/toolchains/args/dependency_file:feature",
+
+        # aka user_compile_flags_feature.
+        # NOTE: This should come last as it must be able to override other features' flags if needed.
+        "@rules_cc//cc/toolchains/args/compile_flags:feature",
+
+        # NOTE: This should come after user compile flags since some flags need to be added before the input file (e.g., -x lang)
+        "@rules_cc//cc/toolchains/args/compiler_input_flags:feature",
+        "@rules_cc//cc/toolchains/args/compiler_output_flags:feature",
     ],
     visibility = ["//visibility:public"],
 )
