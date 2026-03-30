@@ -96,7 +96,7 @@ cc_feature_set(
         "@rules_cc//cc/toolchains/args/dependency_file:feature",
 
         # aka user_compile_flags_feature.
-        # NOTE: This should come last as it must be able to override other features' flags if needed.
+        # NOTE: This should come last as it must be able to override other features but before compiler inputs.
         "@rules_cc//cc/toolchains/args/compile_flags:feature",
 
         # NOTE: This should come after user compile flags since some flags need to be added before the input file (e.g., -x lang)
