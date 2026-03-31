@@ -14,8 +14,6 @@ if "${BAZEL_BIN}" \
     build \
     --color=yes \
     --curses=yes \
-    --remote_cache= \
-    --bes_backend= \
     //:duplicate_symbol_lib 2>&1 | tee "${LOG}"; then
   echo "Expected duplicate_symbol_lib to fail duplicate symbol validation, but build succeeded."
   exit 1
