@@ -6,9 +6,12 @@ def _mingw_extension_impl(module_ctx):
 
     http_archive(
         name = "mingw",
-        urls = ["https://sourceforge.net/projects/mingw-w64/files/mingw-w64/mingw-w64-release/mingw-w64-v13.0.0.tar.bz2"],
-        integrity = "sha256-Wv6CKvXE7b9n2q9F7sYdU49J7vaxlSTeZIl8a5WCjK8=",
-        strip_prefix = "mingw-w64-v13.0.0",
+        # Technically sourceforge is the project's recommended primary download location, but they serve
+        # an HTML page to Go-based downloader so they're incompatible with Buildbuddy's remote downloader...
+        # https://sourceforge.net/projects/mingw-w64/files/mingw-w64/mingw-w64-release/mingw-w64-v13.0.0.tar.bz2
+        urls = ["https://github.com/mingw-w64/mingw-w64/archive/refs/tags/v13.0.0.tar.gz"],
+        integrity = "sha256-GpEEczE6MpMWAl+kVjFg3q43iITkuO5XPR0DrABrLmE=",
+        strip_prefix = "mingw-w64-13.0.0",
         build_file = "//runtimes/mingw:mingw.BUILD.bazel",
         patches = [
             "//runtimes/mingw/patches:remove-fpreset-from-msvcrt-def.patch",
