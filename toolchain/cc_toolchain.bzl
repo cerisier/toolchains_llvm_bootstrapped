@@ -61,6 +61,7 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = []):
             "@llvm//toolchain/features:dbg",
             "@llvm//toolchain/features:archive_param_file",
             "@llvm//toolchain/features:parse_headers",
+            "@llvm//toolchain/features/header_modules:all_header_module_features",
             "@llvm//toolchain/features/legacy:all_legacy_builtin_features",
             # Always last (contains user_compile_flags and user_link_flags who should apply last).
             "@llvm//toolchain/features/legacy:experimental_replace_legacy_action_config_features",
