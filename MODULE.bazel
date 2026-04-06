@@ -27,6 +27,8 @@ LLVM_VERSION = "22.1.2"
 
 PREBUILT_LLVM_SUFFIX = "-1"
 
+PREBUILT_LLVM_VERSION = "22.1.0{prebuilt_llvm_suffix}".format(prebuilt_llvm_suffix = PREBUILT_LLVM_SUFFIX)
+
 LLVM_TOOLCHAIN_MINIMAL_SHA256 = {
     "darwin-amd64": "88c39005ab8c141b4bc2c66c3a945d02214be0171db952cc4dc2efe15fc032bf",
     "darwin-arm64": "258cda3bf8ae6dd72c80ef50462da0470006a057769ab828f937932dd5451779",
