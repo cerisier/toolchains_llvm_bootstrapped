@@ -16,12 +16,6 @@ def configure_builder_for_runtimes(builder, runtime_stage, linkmode = "static", 
         runtime_stage,
     )
 
-    # TODO(cerisier): Why constraint here ?
-    builder.set(
-        Label("//toolchain:source"),
-        "prebuilt",
-    )
-
     builder.set(
         Label("//runtimes:linkmode"),
         linkmode,

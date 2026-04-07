@@ -29,9 +29,6 @@ def _reset_sanitizers_impl(_settings, _attr):
         # we are compiling sanitizers, so we want all runtimes except sanitizers.
         # TODO(cerisier): Should this be exressed with a dedicated stage ?
         "//toolchain:runtime_stage": "complete",
-
-        # We want to build those binaries using the prebuilt compiler toolchain
-        "//toolchain:source": "prebuilt",
     }
 
 _reset_sanitizers = transition(
@@ -61,7 +58,6 @@ _reset_sanitizers = transition(
         "//config:host_asan",
         "//config:host_lsan",
         "//toolchain:runtime_stage",
-        "//toolchain:source",
     ],
 )
 
