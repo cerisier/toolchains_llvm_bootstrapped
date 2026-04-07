@@ -292,6 +292,19 @@ filter_builtin_sources(
 )
 
 filter_builtin_sources(
+    name = "builtins_riscv64_sources",
+    srcs = [
+        ":builtins_generic_srcs",
+        ":builtins_generic_tf_sources",
+        "lib/builtins/cpu_model/riscv.c",
+        "lib/builtins/riscv/fp_mode.c",
+        "lib/builtins/riscv/save.S",
+        "lib/builtins/riscv/restore.S",
+        "lib/builtins/riscv/muldi3.S",
+    ],
+)
+
+filter_builtin_sources(
     name = "builtins_wasm32_sources",
     srcs = [
         ":builtins_generic_srcs",
@@ -331,6 +344,7 @@ cc_library(
     srcs = select({
         "@platforms//cpu:x86_64": [":builtins_x86_64_sources"],
         "@platforms//cpu:aarch64": [":builtins_aarch64_sources"],
+        "@platforms//cpu:riscv64": [":builtins_riscv64_sources"],
         "@platforms//cpu:wasm32": [":builtins_wasm32_sources"],
         "@platforms//cpu:wasm64": [":builtins_wasm64_sources"],
     }, no_match_error = """
@@ -361,6 +375,7 @@ cc_library(
             # - riscv32
             # - riscv64
             "@platforms//cpu:aarch64",
+            "@platforms//cpu:riscv64",
             "@platforms//cpu:x86_64",
         ): [
             ":builtins_bf16_sources",
@@ -402,6 +417,7 @@ cc_library(
             # - thumb
             # - thumbeb
             "@platforms//cpu:aarch64",
+            "@platforms//cpu:riscv64",
             "@platforms//cpu:x86_64",
         ): [
             "COMPILER_RT_HAS_FLOAT16",
@@ -422,6 +438,7 @@ cc_library(
         "lib/builtins/int_mulv_impl.inc",
         "lib/builtins/int_to_fp_impl.inc",
         "lib/builtins/cpu_model/cpu_model.h",
+        "lib/builtins/riscv/int_mul_impl.inc",
     ] + select({
         "@platforms//cpu:aarch64": [
             "lib/builtins/cpu_model/AArch64CPUFeatures.inc",
@@ -1971,6 +1988,9 @@ filegroup(
         ],
         "@platforms//cpu:aarch64": [
             "lib/tsan/rtl/tsan_rtl_aarch64.S",
+        ],
+        "@platforms//cpu:riscv64": [
+            "lib/tsan/rtl/tsan_rtl_riscv64.S",
         ],
         "//conditions:default": [],
     }),

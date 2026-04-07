@@ -98,6 +98,7 @@ llvm = use_extension("//extensions:llvm.bzl", "llvm")
 llvm.configure(
     targets = [
         "AArch64",
+        "RISCV",
         "X86",
         "WebAssembly",
         "NVPTX",

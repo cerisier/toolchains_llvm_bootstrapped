@@ -2,7 +2,7 @@
 Helper functions for defining targets.
 """
 
-load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
+load("@bazel_lib//lib:copy_file.bzl", "copy_file")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
 def atomic_helper_cc_library(name, pat, size, model):
@@ -15,7 +15,6 @@ def atomic_helper_cc_library(name, pat, size, model):
         name = unique_filename,
         src = "lib/builtins/aarch64/lse.S",
         out = "{}.S".format(unique_filename),
-        allow_symlink = True,
     )
 
     cc_library(

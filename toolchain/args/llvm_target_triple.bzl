@@ -2,6 +2,7 @@ LLVM_TARGET_TRIPLE = select({
     #TODO: Generate this automatically
     "@llvm//platforms/config:linux_x86_64_gnu": ["x86_64-linux-gnu"],
     "@llvm//platforms/config:linux_aarch64_gnu": ["aarch64-linux-gnu"],
+    "@llvm//platforms/config:linux_riscv64_gnu": ["riscv64-linux-gnu"],
     "@llvm//platforms/config:linux_x86_64_musl": ["x86_64-linux-musl"],
     "@llvm//platforms/config:linux_aarch64_musl": ["aarch64-linux-musl"],
     "@llvm//platforms/config:macos_x86_64": ["x86_64-apple-darwin"],

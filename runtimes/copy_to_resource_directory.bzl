@@ -5,8 +5,10 @@ load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory_bin_action")
 TRIPLE_SELECT_DICT = {
     "@llvm//platforms/config:linux_x86_64": "x86_64-unknown-linux-gnu",
     "@llvm//platforms/config:linux_aarch64": "aarch64-unknown-linux-gnu",
+    "@llvm//platforms/config:linux_riscv64": "riscv64-unknown-linux-gnu",
     "@llvm//platforms/config:linux_x86_64_gnu": "x86_64-unknown-linux-gnu",
     "@llvm//platforms/config:linux_aarch64_gnu": "aarch64-unknown-linux-gnu",
+    "@llvm//platforms/config:linux_riscv64_gnu": "riscv64-unknown-linux-gnu",
     "@llvm//platforms/config:linux_x86_64_musl": "x86_64-unknown-linux-musl",
     "@llvm//platforms/config:linux_aarch64_musl": "aarch64-unknown-linux-musl",
     "@llvm//platforms/config:macos_x86_64": "darwin",

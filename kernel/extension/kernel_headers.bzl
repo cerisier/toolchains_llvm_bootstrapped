@@ -24,7 +24,7 @@ _SUPPORTED_ARCHS = [
     # "mips",
     # "openrisc",
     # "powerpc",
-    # "riscv",
+    "riscv",
     # "s390",
     # "sh",
     # "sparc",

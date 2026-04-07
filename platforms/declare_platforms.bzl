@@ -1,4 +1,4 @@
-load("//constraints/libc:libc_versions.bzl", "DEFAULT_LIBC", "LIBCS")
+load("//constraints/libc:libc_versions.bzl", "LIBCS", "default_libc")
 load("//platforms:common.bzl", "ARCH_ALIASES", "LIBC_SUPPORTED_TARGETS", "SUPPORTED_TARGETS")
 
 def declare_platforms():
@@ -17,7 +17,7 @@ def declare_platforms():
             #
             # Users can still create their own platforms without a libc
             # constraint if they want to.
-            constraints.append("//constraints/libc:{}".format(DEFAULT_LIBC))
+            constraints.append("//constraints/libc:{}".format(default_libc(target_os, target_cpu)))
 
         native.platform(
             name = "{}_{}".format(target_os, target_cpu),

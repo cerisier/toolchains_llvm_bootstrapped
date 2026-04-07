@@ -1,4 +1,29 @@
 def glibc_includes(cpu):
+    if cpu == "riscv64":
+        return [
+            "include",
+            "sysdeps/unix/sysv/linux/riscv/rv64",
+            "sysdeps/unix/sysv/linux/riscv",
+            "sysdeps/unix/sysv/linux/wordsize-64",
+            "sysdeps/riscv/rv64/rvd",
+            "sysdeps/riscv/rv64/rvf",
+            "sysdeps/riscv/rv64",
+            "sysdeps/riscv/rvd",
+            "sysdeps/riscv/rvf",
+            "sysdeps/riscv/nptl",
+            "sysdeps/riscv",
+            "sysdeps/unix/sysv/linux/generic",
+            "sysdeps/unix/sysv/linux/include",
+            "sysdeps/unix/sysv/linux",
+            "sysdeps/nptl",
+            "sysdeps/pthread",
+            "sysdeps/unix/sysv",
+            "sysdeps/unix",
+            "sysdeps/wordsize-64",
+            "sysdeps/generic",
+            ".",
+        ]
+
     x86_64_variant = [
         "sysdeps/unix/sysv/linux/x86_64/64".format(cpu),
     ] if cpu == "x86_64" else []
