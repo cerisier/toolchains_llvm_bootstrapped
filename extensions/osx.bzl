@@ -44,6 +44,11 @@ def _osx_extension_impl(mctx):
         if len(module.tags.experimental_include_all_sdk_libs) > 0:
             experimental_include_all_sdk_libs = True
 
+    experimental_include_all_sdk_libs = mctx.getenv("BAZEL_MACOS_EXPERIMENTAL_INCLUDE_ALL_SDK_LIBS") == "1"
+    frameworks_env = mctx.getenv("BAZEL_MACOS_FRAMEWORKS")
+    if frameworks_env:
+        frameworks = [f.strip() for f in frameworks_env.split(",") if f.strip()]
+
     if not frameworks:
         frameworks = _DEFAULT_FRAMEWORKS
 
