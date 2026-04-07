@@ -5,6 +5,7 @@ LLVM_TARGET_TRIPLE = select({
     "@llvm//platforms/config:linux_riscv64_gnu": ["riscv64-linux-gnu"],
     "@llvm//platforms/config:linux_x86_64_musl": ["x86_64-linux-musl"],
     "@llvm//platforms/config:linux_aarch64_musl": ["aarch64-linux-musl"],
+    "@llvm//platforms/config:linux_riscv64_musl": ["riscv64-linux-musl"],
     "@llvm//platforms/config:macos_x86_64": ["x86_64-apple-darwin"],
     "@llvm//platforms/config:macos_aarch64": ["aarch64-apple-darwin"],
     "@llvm//platforms/config:windows_x86_64": ["x86_64-w64-windows-gnu"],
