@@ -438,13 +438,15 @@ cc_library(
         "lib/builtins/int_mulv_impl.inc",
         "lib/builtins/int_to_fp_impl.inc",
         "lib/builtins/cpu_model/cpu_model.h",
-        "lib/builtins/riscv/int_mul_impl.inc",
     ] + select({
         "@platforms//cpu:aarch64": [
             "lib/builtins/cpu_model/AArch64CPUFeatures.inc",
             "lib/builtins/cpu_model/aarch64/hwcap.inc",
             # "lib/builtins/cpu_model/aarch64/lse_atomics/atomic_helper.inc",
             "lib/builtins/cpu_model/aarch64/lse_atomics/getauxval.inc",
+        ],
+        "@platforms//cpu:riscv64": [
+            "lib/builtins/riscv/int_mul_impl.inc",
         ],
         "//conditions:default": [],
     }) + select({
