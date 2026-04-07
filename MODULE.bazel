@@ -101,6 +101,7 @@ llvm.configure(
         "X86",
         "WebAssembly",
         "NVPTX",
+        "RISCV",
     ],
 )
 use_repo(llvm, "llvm-project")
