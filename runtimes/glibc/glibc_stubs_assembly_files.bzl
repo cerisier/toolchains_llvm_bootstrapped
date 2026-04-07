@@ -3,17 +3,17 @@ def _glibc_stubs_impl(ctx):
 
     version_script = ctx.actions.declare_file("build/all.map")
 
-    outputs = [
-        ctx.actions.declare_file("build/c.s"),
-        ctx.actions.declare_file("build/dl.s"),
-        ctx.actions.declare_file("build/ld.s"),
-        ctx.actions.declare_file("build/m.s"),
-        ctx.actions.declare_file("build/pthread.s"),
-        ctx.actions.declare_file("build/resolv.s"),
-        ctx.actions.declare_file("build/rt.s"),
-        ctx.actions.declare_file("build/util.s"),
-        version_script,
-    ]
+    assembly_outputs = {
+        "c": ctx.actions.declare_file("build/c.s"),
+        "dl": ctx.actions.declare_file("build/dl.s"),
+        "ld": ctx.actions.declare_file("build/ld.s"),
+        "m": ctx.actions.declare_file("build/m.s"),
+        "pthread": ctx.actions.declare_file("build/pthread.s"),
+        "resolv": ctx.actions.declare_file("build/resolv.s"),
+        "rt": ctx.actions.declare_file("build/rt.s"),
+        "util": ctx.actions.declare_file("build/util.s"),
+    }
+    outputs = list(assembly_outputs.values()) + [version_script]
 
     args = ctx.actions.args()
     args.add("-target")
@@ -28,8 +28,16 @@ def _glibc_stubs_impl(ctx):
         arguments = [args],
         outputs = outputs,
     )
+
+    output_groups = {
+        lib + "_s": depset([output])
+        for (lib, output) in assembly_outputs.items()
+    }
+    output_groups["all_map"] = depset([version_script])
+
     return [
         DefaultInfo(files = depset(outputs)),
+        OutputGroupInfo(**output_groups),
     ]
 
 glibc_stubs_assembly_files = rule(

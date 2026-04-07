@@ -1,7 +1,6 @@
 load("@bazel_lib//:bzl_library.bzl", "bzl_library")
 load("@bazel_lib//lib:copy_file.bzl", "copy_file")
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
-load("@bazel_skylib//rules:select_file.bzl", "select_file")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("//toolchain:selects.bzl", "platform_extra_binary")
 load(":glibc_linker_script.bzl", "make_glibc_linker_script")
@@ -40,19 +39,19 @@ glibc_stubs_assembly_files(
 
 # Make one target per lib assembly file
 [
-    select_file(
+    filegroup(
         name = "lib" + lib + ".s",
-        srcs = ":generate_glibc_stubs",
-        subpath = "glibc/build/" + lib + ".s",
+        srcs = [":generate_glibc_stubs"],
+        output_group = lib + "_s",
         visibility = ["//visibility:public"],
     )
     for lib in LIBC_SO_VERSIONS.keys()
 ]
 
-select_file(
+filegroup(
     name = "all.map",
-    srcs = ":generate_glibc_stubs",
-    subpath = "glibc/build/all.map",
+    srcs = [":generate_glibc_stubs"],
+    output_group = "all_map",
     visibility = ["//visibility:public"],
 )
 
