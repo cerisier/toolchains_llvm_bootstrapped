@@ -1,19 +1,19 @@
-diff --git a/utils/bazel/llvm-project-overlay/clang/BUILD.bazel b/utils/bazel/llvm-project-overlay/clang/BUILD.bazel
-index a17b0b54a49b..12aa69678e2c 100644
---- a/utils/bazel/llvm-project-overlay/clang/BUILD.bazel
-+++ b/utils/bazel/llvm-project-overlay/clang/BUILD.bazel
-@@ -1900,6 +1900,11 @@ genrule(
-     toolchains = [":workspace_root"],
- )
+# diff --git a/utils/bazel/llvm-project-overlay/clang/BUILD.bazel b/utils/bazel/llvm-project-overlay/clang/BUILD.bazel
+# index a17b0b54a49b..12aa69678e2c 100644
+# --- a/utils/bazel/llvm-project-overlay/clang/BUILD.bazel
+# +++ b/utils/bazel/llvm-project-overlay/clang/BUILD.bazel
+# @@ -1900,6 +1900,11 @@ genrule(
+#      toolchains = [":workspace_root"],
+#  )
  
-+filegroup(
-+    name = "builtin_headers_files",
-+    srcs = builtin_headers,
-+)
-+
- cc_library(
-     name = "frontend",
-     srcs = glob([
+# +filegroup(
+# +    name = "builtin_headers_files",
+# +    srcs = builtin_headers,
+# +)
+# +
+#  cc_library(
+#      name = "frontend",
+#      srcs = glob([
 diff --git a/utils/bazel/llvm-project-overlay/llvm/config.bzl b/utils/bazel/llvm-project-overlay/llvm/config.bzl
 index 2309175d04a9..4b3c6b2791db 100644
 --- a/utils/bazel/llvm-project-overlay/llvm/config.bzl

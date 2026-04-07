@@ -54,7 +54,7 @@ def declare_tool_map(exec_os, exec_cpu):
         srcs = "@llvm-project//clang:builtin_headers_files",
         # TODO(zbarsky): Probably shouldn't force platform here.
         platform = prefix + "_platform",
-        destination = prefix + "/lib/clang/{}/include".format(LLVM_VERSION_MAJOR),
+        destination = prefix + "/lib/clang/23/include",
         strip_prefix = "clang/lib/Headers",
     )
 

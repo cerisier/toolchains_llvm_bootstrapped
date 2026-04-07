@@ -11,11 +11,11 @@ _DEFAULT_SOURCE_PATCHES = [
     "//3rd_party/llvm-project/x.x/patches:clang-prepend-arg-reexec.patch",
     "//3rd_party/llvm-project/x.x/patches:llvm-sanitizers-ignorelists.patch",
     "//3rd_party/llvm-project/x.x/patches:no_frontend_builtin_headers.patch",
-    "//3rd_party/llvm-project/x.x/patches:llvm-bzl-library.patch",
+    # "//3rd_party/llvm-project/x.x/patches:llvm-bzl-library.patch",
     "//3rd_party/llvm-project/x.x/patches:llvm-cov-multicall.patch",
-    "//3rd_party/llvm-project/x.x/patches:llvm-driver-tool-order.patch",
-    "//3rd_party/llvm-project/x.x/patches:llvm-driver-best-tool-match.patch",
-    "//3rd_party/llvm-project/x.x/patches:llvm-dsymutil-corefoundation.patch",
+    # "//3rd_party/llvm-project/x.x/patches:llvm-driver-tool-order.patch",
+    # "//3rd_party/llvm-project/x.x/patches:llvm-driver-best-tool-match.patch",
+    # "//3rd_party/llvm-project/x.x/patches:llvm-dsymutil-corefoundation.patch",
     "//3rd_party/llvm-project/x.x/patches:compiler-rt-symbolizer_skip_cxa_atexit.patch",
     "//3rd_party/llvm-project/x.x/patches:lit_test_stub.patch",
 ]
@@ -33,13 +33,13 @@ _LLVM_21_SOURCE_PATCHES = _DEFAULT_SOURCE_PATCHES + [
 ]
 
 _LLVM_22_SOURCE_PATCHES = _DEFAULT_SOURCE_PATCHES + [
-    "//3rd_party/llvm-project/22.x/patches:llvm-link-multicall.patch",
-    "//3rd_party/llvm-project/22.x/patches:llvm-profdata-multicall.patch",
-    "//3rd_party/llvm-project/22.x/patches:windows_link_and_genrule.patch",
+    # "//3rd_party/llvm-project/22.x/patches:llvm-link-multicall.patch",
+    # "//3rd_party/llvm-project/22.x/patches:llvm-profdata-multicall.patch",
+    # "//3rd_party/llvm-project/22.x/patches:windows_link_and_genrule.patch",
     "//3rd_party/llvm-project/22.x/patches:bundle_resources_no_python.patch",
-    "//3rd_party/llvm-project/22.x/patches:no_rules_python.patch",
-    "//3rd_party/llvm-project/22.x/patches:llvm-windows-stack-size.patch",
-    "//3rd_party/llvm-project/22.x/patches:libcxx-lgamma_r.patch",
+    # "//3rd_party/llvm-project/22.x/patches:no_rules_python.patch",
+    # "//3rd_party/llvm-project/22.x/patches:llvm-windows-stack-size.patch",
+    # "//3rd_party/llvm-project/22.x/patches:libcxx-lgamma_r.patch",
 ]
 
 _LLVM_PATCHES_BY_MAJOR = {
@@ -124,14 +124,26 @@ def _create_llvm_raw_repo(mctx, version_config):
             if had_override:
                 fail("Only 1 LLVM override is allowed currently!")
             had_override = True
-            git_repository(name = "llvm-raw", **structs.to_dict(tag))
+            git_repository(
+                name = "llvm-raw",
+                **structs.to_dict(tag) | {
+                    "build_file_content": tag.build_file_content or "# EMPTY",
+                    "patches": tag.patches + _LLVM_22_SOURCE_PATCHES,
+                    "patch_args": ["-p1"],
+                },
+            )
 
         for tag in module.tags.from_archive:
             if had_override:
                 fail("Only 1 LLVM override is allowed currently!")
             had_override = True
 
-            http_archive(name = "llvm-raw", **structs.to_dict(tag))
+            http_archive(
+                name = "llvm-raw",
+                **structs.to_dict(tag) | {
+                    "build_file_content": tag.build_file_content or "# EMPTY",
+                },
+            )
 
     if not had_override:
         http_bsdtar_archive(
