@@ -78,6 +78,7 @@ cc_args_list(
     args = [
         # Common default compile flags.
         "//toolchain/args:llvm_target_for_platform",
+        "//toolchain/args:target_arch_flags",
         "//toolchain/args:no_absolute_paths_for_builtins",
         "//toolchain/args:deterministic_compile_flags",
         "//toolchain/runtimes/args:optimization_flags",
@@ -101,6 +102,7 @@ cc_args_list(
 
         # Common default link flags.
         "//toolchain/args:fuse_ld",
+        "//toolchain/args:lto_plugin_target_flags",
         ":rtlib",
         ":resource_dir",
         ":default_link_flags",

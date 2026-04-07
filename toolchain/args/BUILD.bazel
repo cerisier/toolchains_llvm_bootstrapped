@@ -44,6 +44,35 @@ cc_args(
 )
 
 cc_args(
+    name = "target_arch_flags",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:compile_actions",
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = select({
+        "@platforms//cpu:riscv64": [
+            "-march=rv64gc",
+            "-mabi=lp64d",
+        ],
+        "//conditions:default": [],
+    }),
+)
+
+cc_args(
+    name = "lto_plugin_target_flags",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = select({
+        "@platforms//cpu:riscv64": [
+            "-Xlinker",
+            "-plugin-opt=-mattr=+m,+a,+f,+d,+c",
+        ],
+        "//conditions:default": [],
+    }),
+)
+
+cc_args(
     name = "module_map",
     actions = [
         "@rules_cc//cc/toolchains/actions:compile_actions",
