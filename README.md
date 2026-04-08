@@ -60,6 +60,7 @@ toolchain.exec(arch = "x86_64", os = "linux")
 toolchain.exec(arch = "aarch64", os = "linux")
 toolchain.target(arch = "x86_64", os = "linux")
 toolchain.target(arch = "aarch64", os = "linux")
+toolchain.target(arch = "riscv64", os = "linux")
 
 use_repo(toolchain, "llvm_toolchains")
 
@@ -93,8 +94,10 @@ Rust builds commonly require a few flags:
 | **x86_64-apple-darwin**  | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **aarch64-linux-gnu ¹**  | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **x86_64-linux-gnu ¹**   | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **riscv64-linux-gnu ¹**   | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **aarch64-linux-musl**   | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **x86_64-linux-musl**    | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **riscv64-linux-musl**    | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **aarch64-windows-gnu ²**| ✅ | ✅ | ✅ | ✅ | ✅ |
 | **x86_64-windows-gnu ²** | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **wasm32-unknown-unknown** | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -136,6 +139,12 @@ Cross-compiling to macOS from any host is supported.
 
 By default, the official macOS SDK is downloaded from Apple CDN and used hermetically.
 We use a cross-platform reimplementation of `pkgutil` to unpack SDK packages, which works on all hosts.
+
+### RISC-V
+
+For now, RISC-V support is limited to Linux and currently hard-wired to the
+rv64gc ISA and lp64d ABI while we work out a clean way to configure freestanding
+targets and ISA matrices.
 
 ### Other platforms
 
