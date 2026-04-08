@@ -59,6 +59,10 @@ PLATFORMS = [
 ] + [
     "@llvm//platforms:linux_aarch64_{}".format(libc)
     for libc in LIBCS
+] + [
+    # RISC-V needs special LIBC treatment because of the kernel-glibc association we do.
+    # Builtins requires kernel headers >= 5.10 which we hardcode to be 2.33+
+    "@llvm//platforms:linux_riscv64_musl",
 ]
 
 [
