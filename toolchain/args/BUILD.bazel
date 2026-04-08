@@ -33,24 +33,19 @@ cc_args(
 )
 
 cc_args(
-    name = "llvm_target_for_platform",
+    name = "target_flags",
     actions = [
         "@rules_cc//cc/toolchains/actions:compile_actions",
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
     args = [
         "-target",
-    ] + LLVM_TARGET_TRIPLE,
-)
-
-cc_args(
-    name = "target_arch_flags",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:compile_actions",
-        "@rules_cc//cc/toolchains/actions:link_actions",
-    ],
-    args = select({
+    ] + LLVM_TARGET_TRIPLE + select({
+        # We hardcode these for now given the complexity of RISC-V extensions.
+        # TODO(cerisier): Support ISA configuration.
         "@platforms//cpu:riscv64": [
+            # General-purpose 64-bit RISC-V.
+            # Common in most Linux distros.
             "-march=rv64gc",
             "-mabi=lp64d",
         ],
@@ -58,6 +53,11 @@ cc_args(
     }),
 )
 
+# See https://discourse.llvm.org/t/myterious-soft-float-output-in-lto-cache/70753/16
+# Target features are currently not passed to the LTO linker for RISC-V.
+# So we need to pass matching flags ourselves
+# NOTE: These neeed to be fully synchronized with the target_flags.
+# NOTE: partial linking (cc_stage0_object) maybe affected by https://github.com/llvm/llvm-project/issues/59350
 cc_args(
     name = "lto_plugin_target_flags",
     actions = [
@@ -66,7 +66,8 @@ cc_args(
     args = select({
         "@platforms//cpu:riscv64": [
             "-Xlinker",
-            "-plugin-opt=-mattr=+m,+a,+f,+d,+c",
+            # "-plugin-opt=-mattr=+m,+a,+f,+d,+c",
+            "-plugin-opt=-target-abi=lp64d",
         ],
         "//conditions:default": [],
     }),
