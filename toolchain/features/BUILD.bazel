@@ -141,10 +141,16 @@ cc_feature(
 )
 
 cc_feature(
-    name = "parse_headers",
+    name = "parse_headers_wrapper",
     args = [
         "//toolchain/args:parse_header_args",
     ],
+    feature_name = "__parse_headers_wrapper",
+    requires_any_of = [":parse_headers"],
+)
+
+cc_feature(
+    name = "parse_headers",
     feature_name = "parse_headers",
 )
 
