@@ -48,6 +48,7 @@ cc_test(
 PLATFORMS = [
     "@llvm//platforms:linux_x86_64",
     "@llvm//platforms:linux_aarch64",
+    "@llvm//platforms:linux_riscv64",
     "@llvm//platforms:macos_x86_64",
     "@llvm//platforms:macos_aarch64",
     "@llvm//platforms:windows_amd64",

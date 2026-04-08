@@ -67,6 +67,7 @@ rust.toolchain(
         "x86_64-unknown-linux-musl",
         "x86_64-apple-darwin",
         "x86_64-pc-windows-gnullvm",
+        "riscv64-unknown-linux-gnu",
     ],
     versions = ["1.81.0"],
 )
