@@ -19,16 +19,12 @@ def glibc_includes(cpu):
 
     return [
         "include",
-
         "sysdeps/unix/sysv/linux/{}".format(cpu),
     ] + x86_64_variant + x86_parent + riscv64_variant + [
-
         "sysdeps/{}/nptl".format(cpu),
-
         "sysdeps/unix/sysv/linux/generic",
         "sysdeps/unix/sysv/linux/include",
         "sysdeps/unix/sysv/linux",
-
         "sysdeps/nptl",
         "sysdeps/pthread",
         "sysdeps/unix/sysv",
