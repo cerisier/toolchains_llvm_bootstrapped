@@ -51,12 +51,21 @@ cc_feature(
     visibility = ["//visibility:public"],
 )
 
+# Define a no-op static_libgcc feature so rules_cc does not backfill its
+# legacy default `-static-libgcc` flag when static_link_cpp_runtimes is enabled.
+cc_feature(
+    name = "static_libgcc",
+    overrides = "@rules_cc//cc/toolchains/features/legacy:static_libgcc",
+    visibility = ["//visibility:public"],
+)
+
 ###
 
 cc_feature_set(
     name = "all_legacy_builtin_features",
     all_of = [
         ":default_compile_flags",
+        ":static_libgcc",
     ] + select({
         "@platforms//os:windows": [],
         "//conditions:default": [
