@@ -3,8 +3,14 @@ load("@llvm//runtimes:module_map.bzl", "include_path", "module_map")
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains:tool.bzl", "cc_tool")
 load("@rules_cc//cc/toolchains:tool_map.bzl", "cc_tool_map")
+load("//constraints/libc:libc_versions.bzl", "LIBCS")
 load("//:directory.bzl", "headers_directory")
+load("//platforms:common.bzl", "LIBC_SUPPORTED_TARGETS")
+load("//toolchain:module_map_names.bzl", "module_map_target_name")
 load("//toolchain:selects.bzl", "platform_extra_binary")
+
+def _linux_target_headers_name(target_cpu, libc):
+    return "linux_target_headers_{}_{}".format(target_cpu, libc.replace(".", "_"))
 
 def declare_llvm_targets(*, suffix = ""):
     headers_directory(
@@ -187,23 +193,18 @@ def declare_llvm_targets(*, suffix = ""):
     )
 
     # This must match //toolchain:linux_toolchain_args
-    include_path(
-        name = "linux_target_headers",
-        srcs = [
-            ":builtin_resource_dir",
-            "@llvm//runtimes/libcxx:libcxx_headers_include_search_directory",
-            "@llvm//runtimes/libcxx:libcxxabi_headers_include_search_directory",
-            "@kernel_headers//:kernel_headers_directory",
-            "@llvm//sanitizers:sanitizers_headers_include_search_directory",
-        ] + select({
-            "@llvm//platforms/config:musl": [
-                "@llvm//runtimes/musl:musl_headers_include_search_directory",
-            ],
-            "@llvm//platforms/config:gnu": [
-                "@llvm//runtimes/glibc:glibc_headers_include_search_directory",
-            ],
-        }),
-    )
+    for (_, target_cpu) in LIBC_SUPPORTED_TARGETS:
+        for libc in LIBCS + ["unconstrained"]:
+            include_path(
+                name = _linux_target_headers_name(target_cpu, libc),
+                srcs = [
+                    ":builtin_resource_dir",
+                    "@llvm//runtimes/libcxx:libcxx_headers_include_search_directory",
+                    "@llvm//runtimes/libcxx:libcxxabi_headers_include_search_directory",
+                    "@kernel_headers//:kernel_headers_directory",
+                    "@llvm//sanitizers:sanitizers_headers_include_search_directory",
+                ] + (["@llvm//runtimes/musl:musl_headers_include_search_directory"] if libc == "musl" else ["@llvm//runtimes/glibc:glibc_headers_include_search_directory"]),
+            )
 
     # this must match //toolchain:windows_toolchain_args
     include_path(
@@ -231,9 +232,16 @@ def declare_llvm_targets(*, suffix = ""):
         name = "module_map",
         include_path = select({
             "@platforms//os:macos": ":macos_target_headers",
-            "@platforms//os:linux": ":linux_target_headers",
             "@platforms//os:windows": ":windows_target_headers",
             "@platforms//os:none": ":wasm_target_headers",
         }),
         visibility = ["//visibility:public"],
     )
+
+    for (target_os, target_cpu) in LIBC_SUPPORTED_TARGETS:
+        for libc in LIBCS + ["unconstrained"]:
+            module_map(
+                name = module_map_target_name(target_os, target_cpu, libc),
+                include_path = ":" + _linux_target_headers_name(target_cpu, libc),
+                visibility = ["//visibility:public"],
+            )

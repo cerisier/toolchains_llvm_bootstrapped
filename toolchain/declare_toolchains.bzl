@@ -10,21 +10,21 @@ def declare_toolchains(*, execs = SUPPORTED_EXECS, targets = SUPPORTED_TARGETS):
         targets: List of (os, arch) tuples describing target platforms.
     """
     for (exec_os, exec_cpu) in execs:
-        cc_toolchain_name = "{}_{}_cc_toolchain".format(exec_os, exec_cpu)
-
-        # Even though `tool_map` has an exec transition, Bazel doesn't properly handle
-        # binding a single `cc_toolchain` to multiple toolchains with different `exec_compatible_with`.
-        # See https://github.com/bazelbuild/rules_cc/issues/299#issuecomment-2660340534
-        cc_toolchain(
-            name = cc_toolchain_name,
-            tool_map = platform_cc_tool_map(exec_os, exec_cpu),
-            module_map = platform_module_map(exec_os, exec_cpu),
-            extra_args = [
-                resource_dir_arg(exec_os, exec_cpu),
-            ],
-        )
-
         for (target_os, target_cpu) in targets:
+            cc_toolchain_name = "{}_{}_to_{}_{}_cc_toolchain".format(exec_os, exec_cpu, target_os, target_cpu)
+
+            # Even though `tool_map` has an exec transition, Bazel doesn't properly handle
+            # binding a single `cc_toolchain` to multiple toolchains with different `exec_compatible_with`.
+            # See https://github.com/bazelbuild/rules_cc/issues/299#issuecomment-2660340534
+            cc_toolchain(
+                name = cc_toolchain_name,
+                tool_map = platform_cc_tool_map(exec_os, exec_cpu),
+                module_map = platform_module_map(exec_os, exec_cpu, target_os, target_cpu),
+                extra_args = [
+                    resource_dir_arg(exec_os, exec_cpu),
+                ],
+            )
+
             native.toolchain(
                 name = "{}_{}_to_{}_{}".format(exec_os, exec_cpu, target_os, target_cpu),
                 exec_compatible_with = [
@@ -42,3 +42,12 @@ def declare_toolchains(*, execs = SUPPORTED_EXECS, targets = SUPPORTED_TARGETS):
                 toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
                 visibility = ["//visibility:public"],
             )
+
+        # Alias {exec_os}_{exec_cpu}_cc_toolchain to the "cross compilation"
+        # toolchain {exec_os}_{exec_cpu}_to_{exec_os}_{exec_cpu}_cc_toolchain to
+        # maintain backwards compatibility.
+        native.alias(
+            name = "{}_{}_cc_toolchain".format(exec_os, exec_cpu),
+            actual = ":{}_{}_to_{}_{}_cc_toolchain".format(exec_os, exec_cpu, exec_os, exec_cpu),
+            visibility = ["//visibility:public"],
+        )

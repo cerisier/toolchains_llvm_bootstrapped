@@ -1,3 +1,6 @@
+load("//constraints/libc:libc_versions.bzl", "LIBCS")
+load("//toolchain:module_map_names.bzl", "module_map_target_name")
+
 LLVM_VERSION = "22.1.3"
 
 def platform_llvm_binary(binary):
@@ -27,8 +30,16 @@ def _tool_repo(exec_os, exec_cpu):
     cpu_part = "amd64" if exec_cpu == "x86_64" else "arm64"
     return "@llvm-toolchain-minimal-%s-%s-%s//" % (LLVM_VERSION, os_part, cpu_part)
 
-def platform_module_map(exec_os, exec_cpu):
-    return _tool_repo(exec_os, exec_cpu) + ":module_map"
+def platform_module_map(exec_os, exec_cpu, target_os, target_cpu):
+    tool_repo = _tool_repo(exec_os, exec_cpu)
+
+    if target_os == "linux":
+        return select({
+            "@llvm//platforms/config:{}_{}_{}".format(target_os, target_cpu, libc): tool_repo + ":" + module_map_target_name(target_os, target_cpu, libc)
+            for libc in LIBCS + ["unconstrained"]
+        })
+
+    return tool_repo + ":module_map"
 
 def resource_dir_arg(exec_os, exec_cpu):
     return _tool_repo(exec_os, exec_cpu) + ":compile_resource_dir"
