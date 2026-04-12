@@ -1,0 +1,16 @@
+diff --git a/utils/bazel/third_party_build/zlib-ng.BUILD b/utils/bazel/third_party_build/zlib-ng.BUILD
+index d97d7e65f7f8..6f1c6ad6aef0 100644
+--- a/utils/bazel/third_party_build/zlib-ng.BUILD
++++ b/utils/bazel/third_party_build/zlib-ng.BUILD
+@@ -91,8 +91,9 @@ cc_library(
+         ],
+         "//conditions:default": [],
+     }),
+-    # Clang includes zlib with angled instead of quoted includes, so we need
+-    # strip_include_prefix here.
++    # LLVM consumes zlib via angle includes, so export the repo root as a
++    # normal include directory in addition to rewriting the include prefix.
++    includes = ["."],
+     strip_include_prefix = ".",
+     visibility = ["//visibility:public"],
+ )
