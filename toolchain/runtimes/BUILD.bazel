@@ -1,6 +1,8 @@
 load("@bazel_lib//:bzl_library.bzl", "bzl_library")
 load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 
+# gazelle:exclude cc_unsanitized_library.bzl
+
 cc_args_list(
     name = "hermetic_link_flags",
     args = select({
