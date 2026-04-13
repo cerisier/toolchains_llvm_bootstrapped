@@ -154,6 +154,7 @@ cc_feature(
     feature_name = "parse_headers",
 )
 
+# TODO: Remove after https://github.com/bazelbuild/rules_cc/pull/385
 cc_feature(
     name = "coverage_stub",
     overrides = "@rules_cc//cc/toolchains/features/legacy:coverage",
