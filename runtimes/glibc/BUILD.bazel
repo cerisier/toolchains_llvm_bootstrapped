@@ -1,5 +1,4 @@
 load("@bazel_lib//:bzl_library.bzl", "bzl_library")
-load("@bazel_lib//lib:copy_file.bzl", "copy_file")
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("//toolchain:selects.bzl", "platform_extra_binary")
@@ -147,13 +146,6 @@ LINKER_SCRIPTS = [
     )
     for (lib, version) in LIBC_SO_VERSIONS.items()
 ]
-
-copy_file(
-    name = "glibc_libc_nonshared.static",
-    src = "@glibc//:glibc_c_nonshared.static",
-    out = "libc_nonshared.a",
-    allow_symlink = True,
-)
 
 # In newer versions of glibc various libs such as libm, librt are
 # normally included in libc and not available as separate libraries.
