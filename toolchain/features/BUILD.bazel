@@ -154,6 +154,73 @@ cc_feature(
     feature_name = "parse_headers",
 )
 
+cc_feature(
+    name = "coverage_stub",
+    overrides = "@rules_cc//cc/toolchains/features/legacy:coverage",
+)
+
+cc_feature(
+    name = "llvm_coverage_map_format",
+    args = [
+        ":llvm_coverage_map_format_compile_args",
+        ":llvm_coverage_map_format_link_args",
+    ],
+    overrides = "@rules_cc//cc/toolchains/features/legacy:llvm_coverage_map_format",
+    requires_any_of = [":coverage_stub"],
+)
+
+cc_args(
+    name = "llvm_coverage_map_format_compile_args",
+    actions = ["@rules_cc//cc/toolchains/actions:compile_actions"],
+    args = [
+        "-fprofile-instr-generate",
+        "-fcoverage-mapping",
+    ],
+)
+
+cc_args(
+    name = "llvm_coverage_map_format_link_args",
+    actions = ["@rules_cc//cc/toolchains/actions:link_actions"],
+    args = ["-fprofile-instr-generate"],
+)
+
+cc_feature(
+    name = "gcc_coverage_map_format",
+    args = [
+        ":gcc_coverage_map_format_compile_args",
+        ":gcc_coverage_map_format_link_args",
+    ],
+    overrides = "@rules_cc//cc/toolchains/features/legacy:gcc_coverage_map_format",
+    requires_any_of = [":coverage_stub"],
+)
+
+cc_args(
+    name = "gcc_coverage_map_format_compile_args",
+    actions = ["@rules_cc//cc/toolchains/actions:compile_actions"],
+    args = [
+        "-fprofile-arcs",
+        "-ftest-coverage",
+    ],
+)
+
+cc_args(
+    name = "gcc_coverage_map_format_link_args",
+    actions = ["@rules_cc//cc/toolchains/actions:link_actions"],
+    args = ["--coverage"],
+)
+
+cc_feature(
+    name = "fully_static_link",
+    args = [":fully_static_link_args"],
+    overrides = "@rules_cc//cc/toolchains/features/legacy:fully_static_link",
+)
+
+cc_args(
+    name = "fully_static_link_args",
+    actions = ["@rules_cc//cc/toolchains/actions:link_actions"],
+    args = ["-static"],
+)
+
 ###
 
 cc_feature_set(
@@ -165,6 +232,10 @@ cc_feature_set(
         ":dbg_stub",
         ":static_link_cpp_runtimes",
         ":parse_headers",
+        ":coverage_stub",
+        ":llvm_coverage_map_format",
+        ":gcc_coverage_map_format",
+        ":fully_static_link",
     ],
     visibility = ["//visibility:public"],
 )

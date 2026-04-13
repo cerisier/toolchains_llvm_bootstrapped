@@ -51,12 +51,9 @@ cc_feature(
     visibility = ["//visibility:public"],
 )
 
-# Define a no-op static_libgcc feature so rules_cc does not backfill its
-# legacy default `-static-libgcc` flag when static_link_cpp_runtimes is enabled.
 cc_feature(
-    name = "static_libgcc",
-    overrides = "@rules_cc//cc/toolchains/features/legacy:static_libgcc",
-    visibility = ["//visibility:public"],
+    name = "no_legacy_features",
+    feature_name = "no_legacy_features",
 )
 
 ###
@@ -65,7 +62,6 @@ cc_feature_set(
     name = "all_legacy_builtin_features",
     all_of = [
         ":default_compile_flags",
-        ":static_libgcc",
     ] + select({
         "@platforms//os:windows": [],
         "//conditions:default": [
@@ -80,7 +76,7 @@ cc_feature_set(
 cc_feature_set(
     name = "experimental_replace_legacy_action_config_features",
     all_of = [
-        ":backfill_legacy_args",
+        ":no_legacy_features",
         "@rules_cc//cc/toolchains/args/archiver_flags:feature",
         "@rules_cc//cc/toolchains/args/pic_flags:feature",
         "@rules_cc//cc/toolchains/args/libraries_to_link:feature",
@@ -141,17 +137,4 @@ cc_args(
     args = ["-Wl,-soname,{runtime_solib_name}"],
     format = {"runtime_solib_name": "@rules_cc//cc/toolchains/variables:runtime_solib_name"},
     requires_not_none = "@rules_cc//cc/toolchains/variables:runtime_solib_name",
-)
-
-# Taken from
-# https://github.com/bazelbuild/rules_cc/blob/541eda5d72e9b5f18e6a24e8d14975afcd865717/cc/toolchains/args/BUILD#L44-L53
-cc_feature(
-    name = "backfill_legacy_args",
-    feature_name = "experimental_replace_legacy_action_config_features",
-    # TODO: Convert remaining items in this list into their actual args.
-    implies = [
-        "@rules_cc//cc/toolchains/features/legacy:build_interface_libraries",
-        "@rules_cc//cc/toolchains/features/legacy:dynamic_library_linker_tool",
-    ],
-    visibility = ["//visibility:private"],
 )
