@@ -14,7 +14,11 @@ bzl_library(
     deps = [
         "//:http_bsdtar_archive",
         "@bazel_skylib//lib:structs",
-        "@bazel_tools//tools/build_defs/repo:bzl_srcs",
+        "@bazel_tools//tools/build_defs/repo:cache.bzl",
+        "@bazel_tools//tools/build_defs/repo:git.bzl",
+        "@bazel_tools//tools/build_defs/repo:http.bzl",
+        "@bazel_tools//tools/build_defs/repo:git_worker.bzl",
+        "@bazel_tools//tools/build_defs/repo:local.bzl",
     ],
 )
 

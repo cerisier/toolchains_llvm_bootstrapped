@@ -10,7 +10,7 @@ bzl_library(
     srcs = ["targets.bzl"],
     visibility = ["//visibility:public"],
     deps = [
-        "@bazel_skylib//rules:copy_file",
+        "@bazel_lib//lib:copy_file",
         "@rules_cc//cc:core_rules",
     ],
 )

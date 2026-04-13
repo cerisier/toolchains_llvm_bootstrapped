@@ -13,6 +13,8 @@ bzl_library(
         "//constraints/libc:libc_versions",
         "//platforms:common",
         "@bazel_features//:features",
+        "@bazel_tools//tools/build_defs/repo:cache.bzl",
+        "@bazel_tools//tools/build_defs/repo:utils.bzl",
         "@bazel_tools//tools/build_defs/repo:http.bzl",
     ],
 )
