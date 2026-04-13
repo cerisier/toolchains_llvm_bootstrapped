@@ -39,6 +39,7 @@ cc_args_list(
 cc_args_list(
     name = "resource_dir",
     args = select({
+        "//toolchain:runtimes_all": [],
         "//toolchain:runtimes_stage1": ["//toolchain:resource_dir"],
         "//toolchain:runtimes_none": [],
     }),
@@ -47,6 +48,7 @@ cc_args_list(
 cc_args_list(
     name = "default_startfiles",
     args = select({
+        "//toolchain:runtimes_all": [],
         "//toolchain:runtimes_stage1": ["//toolchain:default_startfiles"],
         "//toolchain:runtimes_none": [],
     }),
@@ -55,6 +57,7 @@ cc_args_list(
 cc_args_list(
     name = "rtlib",
     args = select({
+        "//toolchain:runtimes_all": [],
         "//toolchain:runtimes_stage1": [
             "//toolchain:rtlib",
         ],
@@ -66,6 +69,7 @@ cc_args_list(
 cc_args_list(
     name = "default_libs",
     args = select({
+        "//toolchain:runtimes_all": [],
         "//toolchain:runtimes_stage1": [
             "//toolchain:default_libs",
         ],
