@@ -7,7 +7,7 @@ bzl_library(
     deps = [
         "@bazel_features//:features",
         "@bazel_tools//tools/build_defs/repo:cache.bzl",
-        "@bazel_tools//tools/build_defs/repo:utils.bzl",
         "@bazel_tools//tools/build_defs/repo:http.bzl",
+        "@bazel_tools//tools/build_defs/repo:utils.bzl",
     ],
 )
