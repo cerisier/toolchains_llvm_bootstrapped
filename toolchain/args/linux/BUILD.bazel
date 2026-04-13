@@ -33,6 +33,7 @@ cc_args(
     format = {
         "kernel_headers_include_search_path": "@kernel_headers//:kernel_headers_directory",
     },
+    target_compatible_with = ["@platforms//os:linux"],
 )
 
 cc_args(
@@ -54,6 +55,7 @@ cc_args(
     format = {
         "libc_headers_include_search_path": "//runtimes/glibc:glibc_headers_include_search_directory",
     },
+    target_compatible_with = ["@platforms//os:linux"],
 )
 
 cc_args(
@@ -148,6 +150,7 @@ cc_args(
     format = {
         "libc_library_search_path": "//runtimes/musl:musl_library_search_directory",
     },
+    target_compatible_with = ["@platforms//os:linux"],
 )
 
 alias(
@@ -156,4 +159,5 @@ alias(
         "//platforms/config:musl": ":default_libs_musl",
         "//platforms/config:gnu": ":default_libs_gnu",
     }),
+    target_compatible_with = ["@platforms//os:linux"],
 )

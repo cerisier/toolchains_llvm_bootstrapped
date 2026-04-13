@@ -34,6 +34,7 @@ glibc_stubs_assembly_files(
     name = "generate_glibc_stubs",
     abilist = "abilists",
     target = libc_aware_target_triple(),
+    target_compatible_with = ["@platforms//os:linux"],
     visibility = ["//visibility:public"],
 )
 
