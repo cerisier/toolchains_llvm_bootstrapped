@@ -241,6 +241,7 @@ bzl_library(
     visibility = ["//visibility:public"],
     deps = [
         "//:directory",
+        "@bazel_features//:features",
         "@bazel_skylib//lib:paths",
         "@bazel_skylib//rules/directory:providers",
     ],
