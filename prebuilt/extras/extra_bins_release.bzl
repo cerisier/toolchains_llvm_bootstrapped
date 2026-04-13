@@ -1,4 +1,4 @@
-load("@tar.bzl", "tar")
+load("@tar.bzl//tar:tar.bzl", "tar")
 load("//prebuilt:mtree.bzl", "mtree")
 
 def extra_bins_release(name):
