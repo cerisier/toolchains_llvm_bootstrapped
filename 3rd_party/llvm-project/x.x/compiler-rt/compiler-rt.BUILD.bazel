@@ -691,6 +691,7 @@ cc_library(
     deps = select({
         "@platforms//os:macos": [],
         "@platforms//os:linux": [
+            # do not sort: linux_libc_headers have to come after libcxx
             "@libcxx//:headers",
             "@libcxxabi//:headers",
             ":linux_libc_headers",
