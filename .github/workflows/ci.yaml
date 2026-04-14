@@ -86,7 +86,7 @@ jobs:
       matrix:
         # Add windows-11-arm when bazel supports it better.
         os: [windows-latest]
-        bazel_version: [last_rc]
+        bazel_version: [latest]
         folder:
           - "e2e/rules_cc"
           # - "e2e/rules_foreign_cc" TODO: Current tests only support linux
