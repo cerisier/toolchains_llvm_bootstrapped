@@ -135,9 +135,9 @@ cc_runtime_stage0_library(
     # but it seems mingw itself includes as <...>
     features = ["system_include_paths"],
     includes = [
-        "mingw-w64-libraries/winpthreads/include",
-        "mingw-w64-headers/include",
         "mingw-w64-headers/crt",
+        "mingw-w64-headers/include",
+        "mingw-w64-libraries/winpthreads/include",
     ],
 )
 
@@ -153,12 +153,12 @@ cc_runtime_stage0_library(
 
 expand_template(
     name = "gen_mingw.h.in",
-    template = "mingw-w64-headers/crt/_mingw.h.in",
+    out = "mingw-w64-headers/crt/_mingw.h",
     substitutions = {
         "@DEFAULT_MSVCRT_VERSION@": "0xE00",
         "@DEFAULT_WIN32_WINNT@": "0xa00",
     },
-    out = "mingw-w64-headers/crt/_mingw.h",
+    template = "mingw-w64-headers/crt/_mingw.h.in",
 )
 
 headers_directory(

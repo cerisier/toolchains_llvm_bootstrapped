@@ -4,9 +4,9 @@ load("@rules_cc//cc:cc_library.bzl", "cc_library")
 cc_library(
     name = "kernel_headers",
     hdrs = ["include"],
-    includes = ["include"],
     # Any code should always get passed linux UAPI headers as -isystem
     features = ["system_include_paths"],
+    includes = ["include"],
     visibility = ["//visibility:public"],
 )
 

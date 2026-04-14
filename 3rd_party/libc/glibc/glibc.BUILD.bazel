@@ -16,31 +16,35 @@ alias(
     actual = "@kernel_headers//:kernel_headers",
 )
 
-HDRS = glob([
-    "bits/**/*.h",
-    "csu/**",
-    "debug/**/*.h",
-    "elf/**/*.h",
-    "include/**/*.h",
-    "io/**/*.h",
-    "locale/**/*.h",
-    "misc/**/*.h",
-    "posix/**/*.h",
-    "signal/**/*.h",
-    "stdlib/**/*.h",
-    "string/**/*.h",
-    "sysdeps/**/*.h",
-    "time/**/*.h",
-], exclude = [
-    # These are template stubs with unconditional #error directives.
-    # The real versions come from arch-specific sysdeps/ or system headers.
-    "bits/endian.h",
-    "bits/link.h",
-    "bits/wordsize.h",
-])
+HDRS = glob(
+    [
+        "bits/**/*.h",
+        "csu/**",
+        "debug/**/*.h",
+        "elf/**/*.h",
+        "include/**/*.h",
+        "io/**/*.h",
+        "locale/**/*.h",
+        "misc/**/*.h",
+        "posix/**/*.h",
+        "signal/**/*.h",
+        "stdlib/**/*.h",
+        "string/**/*.h",
+        "sysdeps/**/*.h",
+        "time/**/*.h",
+    ],
+    exclude = [
+        # These are template stubs with unconditional #error directives.
+        # The real versions come from arch-specific sysdeps/ or system headers.
+        "bits/endian.h",
+        "bits/link.h",
+        "bits/wordsize.h",
+    ],
+)
 
 cc_runtime_stage0_library(
     name = "glibc_init",
+    srcs = ["csu/init.c"],
     copts = [
         # Normally, we would pass -nostdinc, but since we pass -nostdlibinc
         # from the stage0 toolchain args regarless, having them both cause a
@@ -52,7 +56,6 @@ cc_runtime_stage0_library(
         "-nobuiltininc",
         "-fno-addrsig",
     ],
-    srcs = ["csu/init.c"],
     visibility = ["//visibility:public"],
 )
 
@@ -61,6 +64,7 @@ cc_runtime_stage0_library(
     srcs = [
         "@llvm//3rd_party/libc/glibc/csu:abi-note-2.31.S",
     ],
+    hdrs = HDRS,
     copts = [
         # Normally, we would pass -nostdinc, but since we pass -nostdlibinc
         # from the stage0 toolchain args regarless, having them both cause a
@@ -72,13 +76,6 @@ cc_runtime_stage0_library(
         "-nobuiltininc",
         "-Wa,--noexecstack",
     ],
-    local_defines = [
-        "_LIBC_REENTRANT",
-        "MODULE_NAME=libc",
-        "TOP_NAMESPACE=glibc",
-        "ASSEMBLER",
-    ],
-    hdrs = HDRS,
     includes = [
         "csu",
     ] + select({
@@ -86,16 +83,30 @@ cc_runtime_stage0_library(
         "@platforms//cpu:aarch64": glibc_includes("aarch64"),
         "@platforms//cpu:riscv64": glibc_includes("riscv64"),
     }),
+    local_defines = [
+        "_LIBC_REENTRANT",
+        "MODULE_NAME=libc",
+        "TOP_NAMESPACE=glibc",
+        "ASSEMBLER",
+    ],
     visibility = ["//visibility:public"],
 )
 
 cc_runtime_stage0_library(
     name = "glibc_start",
-    srcs = select({
-        "@platforms//cpu:x86_64": ["sysdeps/x86_64/start.S"],
-        "@platforms//cpu:aarch64": ["sysdeps/aarch64/start.S"],
-        "@platforms//cpu:riscv64": ["sysdeps/riscv/start.S"],
-    }, no_match_error = "Unsupported platform"),
+    srcs = select(
+        {
+            "@platforms//cpu:x86_64": ["sysdeps/x86_64/start.S"],
+            "@platforms//cpu:aarch64": ["sysdeps/aarch64/start.S"],
+            "@platforms//cpu:riscv64": ["sysdeps/riscv/start.S"],
+        },
+        no_match_error = "Unsupported platform",
+    ),
+    hdrs = HDRS,
+    additional_compiler_inputs = [
+        "include/libc-modules.h",
+        "include/libc-symbols.h",
+    ],
     copts = [
         # Normally, we would pass -nostdinc, but since we pass -nostdlibinc
         # from the stage0 toolchain args regarless, having them both cause a
@@ -113,6 +124,15 @@ cc_runtime_stage0_library(
         "-include",
         "$(location include/libc-symbols.h)",
     ],
+    implementation_deps = [
+        ":gnu_libc_headers",
+        ":kernel_headers",
+    ],
+    includes = select({
+        "@platforms//cpu:x86_64": glibc_includes("x86_64"),
+        "@platforms//cpu:aarch64": glibc_includes("aarch64"),
+        "@platforms//cpu:riscv64": glibc_includes("riscv64"),
+    }),
     local_defines = [
         "_LIBC_REENTRANT",
         "MODULE_NAME=libc",
@@ -121,36 +141,30 @@ cc_runtime_stage0_library(
         "TOP_NAMESPACE=glibc",
         "ASSEMBLER",
     ],
-    additional_compiler_inputs = [
-        "include/libc-modules.h",
-        "include/libc-symbols.h",
-    ],
-    hdrs = HDRS,
-    includes = select({
-        "@platforms//cpu:x86_64": glibc_includes("x86_64"),
-        "@platforms//cpu:aarch64": glibc_includes("aarch64"),
-        "@platforms//cpu:riscv64": glibc_includes("riscv64"),
-    }),
-    implementation_deps = [
-        ":kernel_headers",
-        ":gnu_libc_headers",
-    ],
     visibility = ["//visibility:public"],
 )
 
 cc_runtime_stage0_library(
     name = "glibc_Scrt1",
-    deps = [":glibc_start", ":glibc_init", ":glibc_abi_note"],
     visibility = ["//visibility:public"],
+    deps = [
+        ":glibc_abi_note",
+        ":glibc_init",
+        ":glibc_start",
+    ],
 )
 
 cc_stage0_object(
     name = "glibc_Scrt1.object",
-    srcs = [":glibc_start", ":glibc_init", ":glibc_abi_note"],
+    srcs = [
+        ":glibc_abi_note",
+        ":glibc_init",
+        ":glibc_start",
+    ],
+    out = "Scrt1.o",
     copts = [
         "-target",
     ] + LLVM_TARGET_TRIPLE,
-    out = "Scrt1.o",
     visibility = ["//visibility:public"],
 )
 
@@ -186,51 +200,6 @@ copy_file(
 
 cc_runtime_stage0_library(
     name = "glibc_c_nonshared",
-    copts = [
-        "-std=gnu11",
-        "-fgnu89-inline",
-        "-fmerge-all-constants",
-        "-frounding-math",
-        "-Wno-unsupported-floating-point-opt",  # For targets that don't support -frounding-math.
-        "-fno-common",
-        "-fmath-errno",
-        # glibc states that c_nonshared can end up in shared libraries, and so
-        # it needs to be compiled with -fPIC.
-        "-fPIC",
-        "-ftls-model=initial-exec",
-        "-Wno-ignored-attributes",
-        "-Qunused-arguments",
-        "-Wno-nonportable-include-path",
-        "-include",
-        "$(location include/libc-modules.h)",
-        "-include",
-        "$(location include/libc-symbols.h)",
-
-        # glibc has compile-time checks ensuring we compile it optimized.
-        "-O2",
-    ],
-    local_defines = [
-        "NO_INITFINI",
-        "_LIBC_REENTRANT",
-        "MODULE_NAME=libc",
-        "PIC",
-        "LIBC_NONSHARED=1",
-        "TOP_NAMESPACE=glibc",
-    ] + select({
-        "@platforms//cpu:x86_64": [
-            "CAN_USE_REGISTER_ASM_EBP",
-        ],
-        "//conditions:default": [],
-    }),
-    #TODO: glibc_includes with glob
-    hdrs = HDRS,
-    includes = [
-        "csu",
-    ] + select({
-        "@platforms//cpu:x86_64": glibc_includes("x86_64"),
-        "@platforms//cpu:aarch64": glibc_includes("aarch64"),
-        "@platforms//cpu:riscv64": glibc_includes("riscv64"),
-    }),
     srcs = [
         # From stdlib/Makefile
         "@llvm//3rd_party/libc/glibc/stdlib:atexit.c",
@@ -279,21 +248,66 @@ cc_runtime_stage0_library(
         ],
         "//conditions:default": [],
     }),
+    #TODO: glibc_includes with glob
+    hdrs = HDRS,
     additional_compiler_inputs = [
         "include/libc-modules.h",
         "include/libc-symbols.h",
     ],
-    implementation_deps = [
-        ":kernel_headers",
-        ":gnu_libc_headers",
+    copts = [
+        "-std=gnu11",
+        "-fgnu89-inline",
+        "-fmerge-all-constants",
+        "-frounding-math",
+        "-Wno-unsupported-floating-point-opt",  # For targets that don't support -frounding-math.
+        "-fno-common",
+        "-fmath-errno",
+        # glibc states that c_nonshared can end up in shared libraries, and so
+        # it needs to be compiled with -fPIC.
+        "-fPIC",
+        "-ftls-model=initial-exec",
+        "-Wno-ignored-attributes",
+        "-Qunused-arguments",
+        "-Wno-nonportable-include-path",
+        "-include",
+        "$(location include/libc-modules.h)",
+        "-include",
+        "$(location include/libc-symbols.h)",
+
+        # glibc has compile-time checks ensuring we compile it optimized.
+        "-O2",
     ],
+    implementation_deps = [
+        ":gnu_libc_headers",
+        ":kernel_headers",
+    ],
+    includes = [
+        "csu",
+    ] + select({
+        "@platforms//cpu:x86_64": glibc_includes("x86_64"),
+        "@platforms//cpu:aarch64": glibc_includes("aarch64"),
+        "@platforms//cpu:riscv64": glibc_includes("riscv64"),
+    }),
+    local_defines = [
+        "NO_INITFINI",
+        "_LIBC_REENTRANT",
+        "MODULE_NAME=libc",
+        "PIC",
+        "LIBC_NONSHARED=1",
+        "TOP_NAMESPACE=glibc",
+    ] + select({
+        "@platforms//cpu:x86_64": [
+            "CAN_USE_REGISTER_ASM_EBP",
+        ],
+        "//conditions:default": [],
+    }),
     visibility = ["//visibility:public"],
 )
 
 cc_runtime_stage0_static_library(
     name = "c_nonshared",
+    visibility = ["//visibility:public"],
     deps = [
         ":glibc_c_nonshared",
     ],
-    visibility = ["//visibility:public"],
 )

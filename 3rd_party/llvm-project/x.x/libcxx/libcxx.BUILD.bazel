@@ -123,8 +123,8 @@ copy_file(
 copy_to_directory(
     name = "libcxx_headers_include_search_directory",
     srcs = [
-        ":__config_site",
         ":__assertion_handler",
+        ":__config_site",
     ] + [
         ":libcxx_headers_files",
     ],
@@ -136,15 +136,15 @@ copy_to_directory(
 
 cc_library(
     name = "headers",
-    includes = [
-        "src",
-        "include",
-        "generated_headers",
-    ],
     hdrs = [
-        ":libcxx_headers_files",
-        ":__config_site",
         ":__assertion_handler",
+        ":__config_site",
+        ":libcxx_headers_files",
+    ],
+    includes = [
+        "generated_headers",
+        "include",
+        "src",
     ],
     visibility = ["//visibility:public"],
 )
@@ -160,54 +160,6 @@ filegroup(
 
 cc_library(
     name = "libcxx",
-    local_defines = [
-        "NDEBUG",
-        "LIBC_NAMESPACE=__llvm_libc_common_utils",
-        "_LIBCPP_BUILDING_LIBRARY",
-        "_LIBCPP_REMOVE_TRANSITIVE_INCLUDES",
-        "LIBCXX_BUILDING_LIBCXXABI",
-        "_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER",
-    ],
-    copts = [
-        "-faligned-allocation",
-        "-std=c++23",
-        "-fvisibility=hidden",
-        "-fvisibility-inlines-hidden",
-
-        # "-fno-exceptions", # if no exceptions
-        # "-fno-rtti",       # if no rtti
-
-        # Compiler agnostic warnings to disable
-        "-Wno-unused-parameter",
-        "-Wno-long-long",
-        "-Wno-nullability-completeness",
-
-        # Clang specific warnings to disable
-        "-Wno-user-defined-literals",
-        "-Wno-covered-switch-default",
-        "-Wno-suggest-override",
-    ] + select({
-        "@platforms//os:windows": [
-            "-Wno-pragma-pack",
-            "-Wno-unused-value",
-        ],
-        "//conditions:default": [],
-    }),
-    includes = [
-        "include",
-        "src",
-    ],
-    hdrs = [
-        ":libcxx_headers_files",
-        ":__config_site",
-        ":__assertion_handler",
-    ],
-    textual_hdrs = glob([
-        "src/**/*.h",
-        "src/**/*.ipp",
-    ]) + [
-        "@libcxxabi//:textual_hdrs",
-    ],
     srcs = [
         # LIBCXX_SOURCES
         "src/algorithm.cpp",
@@ -317,6 +269,36 @@ cc_library(
     ] + [
         # LIBCXX_ENABLE_NEW_DELETE_DEFINITIONS
     ],
+    hdrs = [
+        ":__assertion_handler",
+        ":__config_site",
+        ":libcxx_headers_files",
+    ],
+    copts = [
+        "-faligned-allocation",
+        "-std=c++23",
+        "-fvisibility=hidden",
+        "-fvisibility-inlines-hidden",
+
+        # "-fno-exceptions", # if no exceptions
+        # "-fno-rtti",       # if no rtti
+
+        # Compiler agnostic warnings to disable
+        "-Wno-unused-parameter",
+        "-Wno-long-long",
+        "-Wno-nullability-completeness",
+
+        # Clang specific warnings to disable
+        "-Wno-user-defined-literals",
+        "-Wno-covered-switch-default",
+        "-Wno-suggest-override",
+    ] + select({
+        "@platforms//os:windows": [
+            "-Wno-pragma-pack",
+            "-Wno-unused-value",
+        ],
+        "//conditions:default": [],
+    }),
     implementation_deps = [
         # Order matter. Search path should have C++ headers before any lib C headers.
         "@libcxx//:headers",
@@ -327,7 +309,7 @@ cc_library(
         "@platforms//os:linux": [
             # TODO(cerisier): Provide only a subset of linux UAPI headers for musl.
             # https://github.com/cerisier/toolchains_llvm_bootstrapped/issues/146
-            "@kernel_headers//:kernel_headers",
+            "@kernel_headers",
         ],
     }) + [
         # libcxx depends on a set of internal llvm-libc headers. (libc/shared)
@@ -346,24 +328,42 @@ cc_library(
         ],
         "@platforms//os:macos": [],
     }),
+    includes = [
+        "include",
+        "src",
+    ],
+    local_defines = [
+        "NDEBUG",
+        "LIBC_NAMESPACE=__llvm_libc_common_utils",
+        "_LIBCPP_BUILDING_LIBRARY",
+        "_LIBCPP_REMOVE_TRANSITIVE_INCLUDES",
+        "LIBCXX_BUILDING_LIBCXXABI",
+        "_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER",
+    ],
+    textual_hdrs = glob([
+        "src/**/*.h",
+        "src/**/*.ipp",
+    ]) + [
+        "@libcxxabi//:textual_hdrs",
+    ],
 )
 
 cc_runtime_stage0_static_library(
     name = "libcxx.static",
+    visibility = ["//visibility:public"],
     deps = [
         ":libcxx",
     ],
-    visibility = ["//visibility:public"],
 )
 
 cc_runtime_stage1_shared_library(
     name = "libcxx.shared",
-    deps = [
-        ":libcxx",
-    ],
+    shared_lib_name = "libc++.so.1",
     user_link_flags = [
         "-Wl,-soname,libc++.so.1",
     ],
-    shared_lib_name = "libc++.so.1",
     visibility = ["//visibility:public"],
+    deps = [
+        ":libcxx",
+    ],
 )

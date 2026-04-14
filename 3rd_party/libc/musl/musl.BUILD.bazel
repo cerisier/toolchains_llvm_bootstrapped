@@ -2,19 +2,26 @@ load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
 load("@llvm//:sh_script.bzl", "sh_script")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
-MUSL_SUPPORTED_ARCHS = ["x86_64", "aarch64", "riscv64"]
+MUSL_SUPPORTED_ARCHS = [
+    "x86_64",
+    "aarch64",
+    "riscv64",
+]
 
 filegroup(
     name = "compile_srcs",
-    srcs = glob([
-        "src/**/*.c",
-        "src/**/*.S",
-        "src/**/*.s",
-    ], exclude = glob([
-        # As of this commit, oldmalloc and mallocng are the only subdir that are
-        # not an <arch>
-        "src/malloc/oldmalloc/**",  # only mallocng
-    ])),
+    srcs = glob(
+        [
+            "src/**/*.c",
+            "src/**/*.S",
+            "src/**/*.s",
+        ],
+        exclude = glob([
+            # As of this commit, oldmalloc and mallocng are the only subdir that are
+            # not an <arch>
+            "src/malloc/oldmalloc/**",  # only mallocng
+        ]),
+    ),
     visibility = ["//visibility:public"],
 )
 
@@ -40,25 +47,16 @@ sh_script(
     name = "version_h",
     srcs = ["VERSION"],
     outs = ["obj/src/internal/version.h"],
-    cmd = """printf '#define VERSION \"%s\"\\n' "$(cat $1)" > $2""",
     args = [
         "$(location VERSION)",
         "$(location obj/src/internal/version.h)",
     ],
+    cmd = """printf '#define VERSION \"%s\"\\n' "$(cat $1)" > $2""",
 )
 
 [
     cc_library(
         name = "musl_internal_headers_{arch}".format(arch = arch),
-        includes = [
-            "arch/{arch}".format(arch = arch),
-            "arch/generic",
-            "src/include",
-            "src/internal",
-            "obj/src/internal",  # version_h
-            "ldso",
-            "include",
-        ],
         hdrs = glob([
             "arch/{arch}/**".format(arch = arch),
             "arch/generic/**",
@@ -67,6 +65,15 @@ sh_script(
             "ldso/**",
             "include/**",
         ]) + [":version_h"],
+        includes = [
+            "arch/{arch}".format(arch = arch),
+            "arch/generic",
+            "include",
+            "ldso",
+            "obj/src/internal",  # version_h
+            "src/include",
+            "src/internal",
+        ],
         textual_hdrs = glob([
             "ldso/**",
         ]),
@@ -117,13 +124,13 @@ filegroup(
             "tools/mkalltypes.sed",
         ],
         outs = ["obj/{arch}/include/bits/alltypes.h".format(arch = arch)],
-        cmd = "sed -f $1 $2 $3 > $4",
         args = [
             "$(location tools/mkalltypes.sed)",
             "$(location arch/{arch}/bits/alltypes.h.in)".format(arch = arch),
             "$(location include/alltypes.h.in)",
             "$(location obj/{arch}/include/bits/alltypes.h)".format(arch = arch),
         ],
+        cmd = "sed -f $1 $2 $3 > $4",
         visibility = ["//visibility:public"],
     )
     for arch in MUSL_SUPPORTED_ARCHS
@@ -136,11 +143,11 @@ filegroup(
             "arch/{arch}/bits/syscall.h.in".format(arch = arch),
         ],
         outs = ["obj/{arch}/include/bits/syscall.h".format(arch = arch)],
-        cmd = "cat $1 > $2 && sed -n -e 's/__NR_/SYS_/p' $1 >> $2",
         args = [
             "$(location arch/{arch}/bits/syscall.h.in)".format(arch = arch),
             "$(location obj/{arch}/include/bits/syscall.h)".format(arch = arch),
         ],
+        cmd = "cat $1 > $2 && sed -n -e 's/__NR_/SYS_/p' $1 >> $2",
         visibility = ["//visibility:public"],
     )
     for arch in MUSL_SUPPORTED_ARCHS
@@ -166,6 +173,8 @@ filegroup(
         srcs = [
             ":headers_{arch}".format(arch = arch),
         ],
+        out = "generated/{arch}/includes".format(arch = arch),
+        allow_overwrites = True,
         root_paths = [
             "include",
             "arch/generic",
@@ -173,8 +182,6 @@ filegroup(
             "obj/{arch}/include".format(arch = arch),
             "obj/src/internal",
         ],
-        allow_overwrites = True,
-        out = "generated/{arch}/includes".format(arch = arch),
         visibility = ["//visibility:public"],
     )
     for arch in MUSL_SUPPORTED_ARCHS
@@ -184,6 +191,9 @@ filegroup(
 [
     cc_library(
         name = "musl_libc_headers_{arch}".format(arch = arch),
+        hdrs = [":headers_{arch}".format(arch = arch)],
+        # user code should always get musl headers as -isystem
+        features = ["system_include_paths"],
         includes = [
             "obj/src/internal",
             "obj/{arch}/include".format(arch = arch),
@@ -191,9 +201,6 @@ filegroup(
             "arch/generic",
             "include",
         ],
-        # user code should always get musl headers as -isystem
-        features = ["system_include_paths"],
-        hdrs = [":headers_{arch}".format(arch = arch)],
         visibility = ["//visibility:public"],
     )
     for arch in MUSL_SUPPORTED_ARCHS
@@ -208,6 +215,7 @@ filegroup(
 [
     cc_library(
         name = "musl_libc_headers_{arch}_for_musl".format(arch = arch),
+        hdrs = [":headers_{arch}".format(arch = arch)],
         includes = [
             "obj/src/internal",
             "obj/{arch}/include".format(arch = arch),
@@ -215,7 +223,6 @@ filegroup(
             "arch/generic",
             "include",
         ],
-        hdrs = [":headers_{arch}".format(arch = arch)],
         visibility = ["//visibility:public"],
     )
     for arch in MUSL_SUPPORTED_ARCHS

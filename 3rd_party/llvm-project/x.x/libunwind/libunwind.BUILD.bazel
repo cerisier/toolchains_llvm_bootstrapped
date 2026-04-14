@@ -13,6 +13,31 @@ selects.config_setting_group(
 
 cc_library(
     name = "libunwind",
+    # textual_hdrs = glob([
+    #     "src/*.h"
+    # ]),
+    srcs = [
+        "src/libunwind.cpp",
+        "src/Unwind-EHABI.cpp",
+        "src/Unwind-seh.cpp",
+        "src/UnwindLevel1.c",
+        "src/UnwindLevel1-gcc-ext.c",
+        "src/Unwind-sjlj.c",
+        "src/Unwind-wasm.c",
+        "src/UnwindRegistersRestore.S",
+        "src/UnwindRegistersSave.S",
+
+        # "src/Unwind_AIXExtras.cpp",
+    ],
+    hdrs = glob([
+        "include/**",
+        "src/*.h",
+        "src/*.hpp",
+    ]),
+    conlyopts = [
+        "-std=c99",
+        "-fexceptions",
+    ],
     copts = [
         "-Wa,--noexecstack",
     ] + select({
@@ -38,13 +63,33 @@ cc_library(
     }) + [
         "-funwind-tables",
     ],
-    conlyopts = [
-        "-std=c99",
-        "-fexceptions",
-    ],
     cxxopts = [
         "-fno-exceptions",
         "-fno-rtti",
+    ],
+    implementation_deps = select({
+        "@platforms//os:macos": [],
+        "@platforms//os:windows": [],
+        "@platforms//os:linux": [
+            # TODO(cerisier): Provide only a subset of linux UAPI headers for musl.
+            # https://github.com/cerisier/toolchains_llvm_bootstrapped/issues/146
+            "@kernel_headers",
+        ],
+    }) + select({
+        "@llvm//platforms/config:musl": [
+            "@musl_libc//:musl_libc_headers",
+        ],
+        "@llvm//platforms/config:gnu": [
+            "@glibc//:gnu_libc_headers",
+        ],
+        "@platforms//os:windows": [
+            "@mingw//:mingw_headers",
+        ],
+        "@platforms//os:macos": [],
+    }),
+    includes = [
+        "include",
+        "src",
     ],
     linkopts = [
         "--unwindlib=none",
@@ -64,72 +109,27 @@ cc_library(
         ],
         "//conditions:default": [],
     }),
-    hdrs = glob([
-        "include/**",
-        "src/*.h",
-        "src/*.hpp",
-    ]),
-    includes = [
-        "include",
-        "src",
-    ],
-    # textual_hdrs = glob([
-    #     "src/*.h"
-    # ]),
-    srcs = [
-        "src/libunwind.cpp",
-        "src/Unwind-EHABI.cpp",
-        "src/Unwind-seh.cpp",
-        "src/UnwindLevel1.c",
-        "src/UnwindLevel1-gcc-ext.c",
-        "src/Unwind-sjlj.c",
-        "src/Unwind-wasm.c",
-        "src/UnwindRegistersRestore.S",
-        "src/UnwindRegistersSave.S",
-
-        # "src/Unwind_AIXExtras.cpp",
-    ],
-    implementation_deps = select({
-        "@platforms//os:macos": [],
-        "@platforms//os:windows": [],
-        "@platforms//os:linux": [
-            # TODO(cerisier): Provide only a subset of linux UAPI headers for musl.
-            # https://github.com/cerisier/toolchains_llvm_bootstrapped/issues/146
-            "@kernel_headers//:kernel_headers",
-        ],
-    }) + select({
-        "@llvm//platforms/config:musl": [
-            "@musl_libc//:musl_libc_headers",
-        ],
-        "@llvm//platforms/config:gnu": [
-            "@glibc//:gnu_libc_headers",
-        ],
-        "@platforms//os:windows": [
-            "@mingw//:mingw_headers",
-        ],
-        "@platforms//os:macos": [],
-    }),
-    deps = ["@compiler-rt//:sanitizers_interface_headers"],
     visibility = ["//visibility:public"],
+    deps = ["@compiler-rt//:sanitizers_interface_headers"],
 )
 
 cc_runtime_stage0_static_library(
     name = "libunwind.static",
+    visibility = ["//visibility:public"],
     deps = [
         ":libunwind",
     ],
-    visibility = ["//visibility:public"],
 )
 
 # Stage1 because libunwind.so must have CRTs
 cc_runtime_stage1_shared_library(
     name = "libunwind.shared",
-    deps = [
-        ":libunwind",
-    ],
+    shared_lib_name = "libunwind.so.1",
     user_link_flags = [
         "-Wl,-soname,libunwind.so.1",
     ],
-    shared_lib_name = "libunwind.so.1",
     visibility = ["//visibility:public"],
+    deps = [
+        ":libunwind",
+    ],
 )
