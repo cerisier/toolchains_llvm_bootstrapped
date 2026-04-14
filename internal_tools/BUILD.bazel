@@ -3,6 +3,7 @@ load("@buildifier_prebuilt//:rules.bzl", "buildifier", "buildifier_test")
 
 buildifier(
     name = "buildifier.fix",
+    add_tables = "//:.buildifier.json",
     diff_command = "diff",
     exclude_patterns = ["./.git/*"],
     lint_mode = "fix",
@@ -12,6 +13,7 @@ buildifier(
 buildifier_test(
     name = "buildifier.check",
     size = "small",
+    add_tables = "//:.buildifier.json",
     diff_command = "diff",
     exclude_patterns = ["./.git/*"],
     lint_mode = "warn",
