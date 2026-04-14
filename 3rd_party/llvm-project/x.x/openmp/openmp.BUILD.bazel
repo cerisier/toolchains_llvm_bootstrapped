@@ -217,8 +217,8 @@ cc_runtime_stage0_library(
             "@musl_libc//:musl_libc_headers",
         ],
         "@llvm//platforms/config:gnu": [
-            "@glibc//:gnu_libc_headers",
             "@libcxx//:headers",
+            "@glibc//:gnu_libc_headers",
         ],
         "@platforms//os:macos": [],
         "@platforms//os:windows": [],

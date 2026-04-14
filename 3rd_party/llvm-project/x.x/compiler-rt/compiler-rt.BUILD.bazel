@@ -1279,9 +1279,9 @@ cc_library(
     ],
     copts = UBSAN_CFLAGS,
     implementation_deps = [
-        ":interception_impl_headers",
         ":libcxx_headers",
         ":sanitizer_impl_headers",
+        ":interception_impl_headers",
     ],
     includes = ["lib"],
     textual_hdrs = [
@@ -1316,9 +1316,9 @@ cc_library(
     ],
     copts = UBSAN_CFLAGS,
     implementation_deps = [
-        ":interception_impl_headers",
         ":libcxx_headers",
         ":sanitizer_impl_headers",
+        ":interception_impl_headers",
     ],
 )
 
@@ -1330,9 +1330,9 @@ cc_library(
         ":ubsan_standalone_sources",
     ],
     implementation_deps = [
-        ":interception_impl_headers",
         ":libcxx_headers",
         ":sanitizer_impl_headers",
+        ":interception_impl_headers",
     ],
     includes = ["lib"],
     textual_hdrs = [
@@ -1402,9 +1402,9 @@ cc_library(
     ],
     copts = CFI_CFLAGS,
     implementation_deps = [
-        ":interception_impl_headers",
         ":libcxx_headers",
         ":sanitizer_impl_headers",
+        ":interception_impl_headers",
     ],
     includes = ["lib"],
 )
@@ -1417,9 +1417,9 @@ cc_library(
     ],
     copts = CFI_CFLAGS + CFI_DIAG_CFLAGS,
     implementation_deps = [
-        ":interception_impl_headers",
         ":libcxx_headers",
         ":sanitizer_impl_headers",
+        ":interception_impl_headers",
     ],
     includes = ["lib"],
 )
@@ -1515,9 +1515,9 @@ cc_library(
     ],
     copts = MSAN_RTL_CFLAGS,
     implementation_deps = [
-        ":interception_impl_headers",
         ":libcxx_headers",
         ":sanitizer_impl_headers",
+        ":interception_impl_headers",
     ],
     includes = ["lib"],
     textual_hdrs = [
@@ -1534,9 +1534,9 @@ cc_library(
     ],
     copts = MSAN_RTL_CFLAGS,
     implementation_deps = [
-        ":interception_impl_headers",
         ":libcxx_headers",
         ":sanitizer_impl_headers",
+        ":interception_impl_headers",
     ],
     includes = ["lib"],
     textual_hdrs = [
@@ -1619,9 +1619,9 @@ cc_library(
     ],
     copts = DFSAN_RTL_CFLAGS,
     implementation_deps = [
-        ":interception_impl_headers",
         ":libcxx_headers",
         ":sanitizer_impl_headers",
+        ":interception_impl_headers",
     ],
     includes = ["lib"],
     textual_hdrs = [
@@ -1718,9 +1718,9 @@ cc_library(
     ],
     copts = NSAN_CFLAGS,
     implementation_deps = [
-        ":interception_impl_headers",
         ":libcxx_headers",
         ":sanitizer_impl_headers",
+        ":interception_impl_headers",
     ],
     includes = ["lib"],
     textual_hdrs = [
@@ -1736,9 +1736,9 @@ cc_library(
     ],
     copts = NSAN_CFLAGS,
     implementation_deps = [
-        ":interception_impl_headers",
         ":libcxx_headers",
         ":sanitizer_impl_headers",
+        ":interception_impl_headers",
     ],
     includes = ["lib"],
 )
@@ -1792,9 +1792,9 @@ cc_library(
     ],
     copts = SAFESTACK_CFLAGS,
     implementation_deps = [
-        ":interception_impl_headers",
         ":libcxx_headers",
         ":sanitizer_impl_headers",
+        ":interception_impl_headers",
     ],
     includes = ["lib"],
 )
@@ -1873,9 +1873,9 @@ cc_library(
     ],
     copts = RTSAN_CFLAGS,
     implementation_deps = [
-        ":interception_impl_headers",
         ":libcxx_headers",
         ":sanitizer_impl_headers",
+        ":interception_impl_headers",
     ],
     includes = ["lib"],
     textual_hdrs = [
@@ -1940,9 +1940,9 @@ cc_library(
     ],
     copts = TYSAN_CFLAGS,
     implementation_deps = [
-        ":interception_impl_headers",
         ":libcxx_headers",
         ":sanitizer_impl_headers",
+        ":interception_impl_headers",
     ],
     includes = ["lib"],
     textual_hdrs = [
@@ -2091,9 +2091,9 @@ cc_library(
     ],
     copts = TSAN_RTL_CFLAGS,
     implementation_deps = [
-        ":interception_impl_headers",
         ":libcxx_headers",
         ":sanitizer_impl_headers",
+        ":interception_impl_headers",
     ],
     includes = ["lib"],
     textual_hdrs = [
@@ -2111,9 +2111,9 @@ cc_library(
     ],
     copts = TSAN_RTL_CFLAGS,
     implementation_deps = [
-        ":interception_impl_headers",
         ":libcxx_headers",
         ":sanitizer_impl_headers",
+        ":interception_impl_headers",
     ],
     includes = ["lib"],
     textual_hdrs = [
@@ -2242,9 +2242,9 @@ cc_library(
     ],
     copts = LSAN_CFLAGS,
     implementation_deps = [
-        ":interception_impl_headers",
         ":libcxx_headers",
         ":sanitizer_impl_headers",
+        ":interception_impl_headers",
     ],
     includes = ["lib"],
     textual_hdrs = [
@@ -2467,10 +2467,10 @@ cc_library(
         ],
     }),
     implementation_deps = [
-        ":interception_impl_headers",
         ":libcxx_headers",
-        ":lsan_common_headers",
         ":sanitizer_impl_headers",
+        ":interception_impl_headers",
+        ":lsan_common_headers",
     ],
     includes = ["lib"],
     textual_hdrs = [
