@@ -66,6 +66,7 @@ sh_script(
             "include/**",
         ]) + [":version_h"],
         includes = [
+            # do not sort: order matters for include resolution
             "arch/{arch}".format(arch = arch),
             "arch/generic",
             "src/include",
