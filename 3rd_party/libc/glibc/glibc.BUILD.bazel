@@ -125,8 +125,8 @@ cc_runtime_stage0_library(
         "$(location include/libc-symbols.h)",
     ],
     implementation_deps = [
-        ":kernel_headers",
         ":gnu_libc_headers",
+        ":kernel_headers",
     ],
     includes = select({
         "@platforms//cpu:x86_64": glibc_includes("x86_64"),
@@ -148,9 +148,9 @@ cc_runtime_stage0_library(
     name = "glibc_Scrt1",
     visibility = ["//visibility:public"],
     deps = [
-        ":glibc_start",
-        ":glibc_init",
         ":glibc_abi_note",
+        ":glibc_init",
+        ":glibc_start",
     ],
 )
 
@@ -278,8 +278,8 @@ cc_runtime_stage0_library(
         "-O2",
     ],
     implementation_deps = [
-        ":kernel_headers",
         ":gnu_libc_headers",
+        ":kernel_headers",
     ],
     includes = [
         "csu",
