@@ -691,9 +691,9 @@ cc_library(
     deps = select({
         "@platforms//os:macos": [],
         "@platforms//os:linux": [
-            ":linux_libc_headers",
             "@libcxx//:headers",
             "@libcxxabi//:headers",
+            ":linux_libc_headers",
         ],
     }),
 )
@@ -1302,9 +1302,9 @@ cc_library(
     ],
     copts = UBSAN_CXXFLAGS,
     deps = [
-        ":interception_impl_headers",
         ":libcxx_headers",
         ":sanitizer_impl_headers",
+        ":interception_impl_headers",
     ],
 )
 
@@ -1442,8 +1442,8 @@ cc_runtime_stage0_static_library(
         ":cfi_diag",
         ":interception",
         ":sanitizer_common",
-        ":sanitizer_common_coverage",
         ":sanitizer_common_libc",
+        ":sanitizer_common_coverage",
         ":sanitizer_common_symbolizer",
         ":sanitizer_common_symbolizer_internal",
         ":ubsan_no_standalone",
@@ -1548,11 +1548,11 @@ cc_runtime_stage0_static_library(
     name = "msan.static",
     visibility = ["//visibility:public"],
     deps = [
-        ":interception",
         ":msan",
+        ":interception",
         ":sanitizer_common",
-        ":sanitizer_common_coverage",
         ":sanitizer_common_libc",
+        ":sanitizer_common_coverage",
         ":sanitizer_common_symbolizer",
         ":sanitizer_common_symbolizer_internal",
         ":ubsan_no_standalone",
@@ -1747,12 +1747,12 @@ cc_runtime_stage0_static_library(
     name = "nsan.static",
     visibility = ["//visibility:public"],
     deps = [
-        ":interception",
-        ":nsan",
         ":nsan_preinit",
+        ":nsan",
+        ":interception",
         ":sanitizer_common",
-        ":sanitizer_common_coverage",
         ":sanitizer_common_libc",
+        ":sanitizer_common_coverage",
         ":sanitizer_common_symbolizer",
         ":sanitizer_common_symbolizer_internal",
         ":ubsan_no_standalone",
@@ -1803,8 +1803,8 @@ cc_runtime_stage0_static_library(
     name = "safestack.static",
     visibility = ["//visibility:public"],
     deps = [
-        ":interception",
         ":safestack",
+        ":interception",
     ],
 )
 
@@ -1888,11 +1888,11 @@ cc_runtime_stage0_static_library(
     name = "rtsan.static",
     visibility = ["//visibility:public"],
     deps = [
-        ":interception",
         ":rtsan",
+        ":interception",
         ":sanitizer_common",
-        ":sanitizer_common_coverage",
         ":sanitizer_common_libc",
+        ":sanitizer_common_coverage",
         ":sanitizer_common_symbolizer",
         ":sanitizer_common_symbolizer_internal",
     ],
@@ -1954,11 +1954,11 @@ cc_runtime_stage0_static_library(
     name = "tysan.static",
     visibility = ["//visibility:public"],
     deps = [
+        ":tysan",
         ":interception",
         ":sanitizer_common",
         ":sanitizer_common_libc",
         ":sanitizer_common_symbolizer",
-        ":tysan",
     ],
 )
 
@@ -2126,13 +2126,13 @@ cc_runtime_stage0_static_library(
     name = "tsan.static",
     visibility = ["//visibility:public"],
     deps = [
+        ":tsan",
         ":interception",
         ":sanitizer_common",
-        ":sanitizer_common_coverage",
         ":sanitizer_common_libc",
+        ":sanitizer_common_coverage",
         ":sanitizer_common_symbolizer",
         ":sanitizer_common_symbolizer_internal",
-        ":tsan",
         ":ubsan_no_standalone",
     ],
 )
@@ -2226,8 +2226,8 @@ cc_library(
     ],
     deps = [
         ":sanitizer_common",
-        ":sanitizer_common_coverage",
         ":sanitizer_common_libc",
+        ":sanitizer_common_coverage",
         ":sanitizer_common_symbolizer",
         ":sanitizer_common_symbolizer_internal",
     ],
@@ -2256,14 +2256,14 @@ cc_runtime_stage0_static_library(
     name = "lsan.static",
     visibility = ["//visibility:public"],
     deps = [
-        ":interception",
         ":lsan",
-        ":lsan_common",
+        ":interception",
         ":sanitizer_common",
-        ":sanitizer_common_coverage",
         ":sanitizer_common_libc",
+        ":sanitizer_common_coverage",
         ":sanitizer_common_symbolizer",
         ":sanitizer_common_symbolizer_internal",
+        ":lsan_common",
     ],
 )
 
@@ -2395,12 +2395,12 @@ cc_library(
     copts = ASAN_CFLAGS,
     deps = [
         ":interception",
-        ":lsan_common",
         ":sanitizer_common",
-        ":sanitizer_common_coverage",
         ":sanitizer_common_libc",
+        ":sanitizer_common_coverage",
         ":sanitizer_common_symbolizer",
         ":sanitizer_common_symbolizer_internal",
+        ":lsan_common",
         ":ubsan_no_standalone",
     ],
 )
@@ -2416,8 +2416,8 @@ cc_library(
         ":libcxx_headers",
     ],
     deps = [
-        ":interception_impl_headers",
         ":sanitizer_impl_headers",
+        ":interception_impl_headers",
     ],
 )
 
@@ -2429,8 +2429,8 @@ cc_library(
     ],
     copts = ASAN_CFLAGS,
     deps = [
-        ":interception_impl_headers",
         ":sanitizer_impl_headers",
+        ":interception_impl_headers",
     ],
 )
 
@@ -2442,8 +2442,8 @@ cc_library(
     ],
     copts = ASAN_CFLAGS,
     deps = [
-        ":interception_impl_headers",
         ":sanitizer_impl_headers",
+        ":interception_impl_headers",
     ],
 )
 
@@ -2481,12 +2481,12 @@ cc_library(
     ],
     deps = [
         ":interception",
-        ":lsan_common",
         ":sanitizer_common",
-        ":sanitizer_common_coverage",
         ":sanitizer_common_libc",
+        ":sanitizer_common_coverage",
         ":sanitizer_common_symbolizer",
         ":sanitizer_common_symbolizer_internal",
+        ":lsan_common",
     ],
 )
 
@@ -2504,9 +2504,9 @@ cc_runtime_stage0_static_library(
     name = "asan.static",
     visibility = ["//visibility:public"],
     deps = [
+        ":asan_preinit",
         ":asan",
         ":asan_common_runtime",
-        ":asan_preinit",
     ],
 )
 

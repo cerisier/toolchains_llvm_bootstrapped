@@ -148,9 +148,9 @@ cc_runtime_stage0_library(
     name = "glibc_Scrt1",
     visibility = ["//visibility:public"],
     deps = [
-        ":glibc_abi_note",
-        ":glibc_init",
         ":glibc_start",
+        ":glibc_init",
+        ":glibc_abi_note",
     ],
 )
 
