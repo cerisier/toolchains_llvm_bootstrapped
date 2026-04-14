@@ -135,6 +135,7 @@ cc_runtime_stage0_library(
     # but it seems mingw itself includes as <...>
     features = ["system_include_paths"],
     includes = [
+        # do not sort: winpthreads/include must come before mingw-w64-headers/include
         "mingw-w64-libraries/winpthreads/include",
         "mingw-w64-headers/include",
         "mingw-w64-headers/crt",
