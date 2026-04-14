@@ -113,23 +113,23 @@ expand_template(
 
 copy_file(
     name = "ompx_h",
-    out = "runtime/src/include/ompx.h",
     src = "runtime/src/include/ompx.h.var",
+    out = "runtime/src/include/ompx.h",
 )
 
 copy_file(
     name = "omp_tools_h",
-    out = "runtime/src/include/omp-tools.h",
     src = "runtime/src/include/omp-tools.h.var",
+    out = "runtime/src/include/omp-tools.h",
 )
 
 py_binary(
     name = "message_converter",
-    imports = ["runtime/tools"],
     srcs = [
-        "runtime/tools/message-converter.py",
         "runtime/tools/libomputils.py",
+        "runtime/tools/message-converter.py",
     ],
+    imports = ["runtime/tools"],
     main = "runtime/tools/message-converter.py",
 )
 
@@ -167,13 +167,13 @@ cc_runtime_stage0_library(
     name = "libomp",
     srcs = LIBOMP_COMMON_SOURCES + select({
         "@platforms//os:windows": [
-            "runtime/src/z_Windows_NT_util.cpp",
             "runtime/src/z_Windows_NT-586_util.cpp",
+            "runtime/src/z_Windows_NT_util.cpp",
         ],
         "//conditions:default": [
             "runtime/src/kmp_gsupport.cpp",
-            "runtime/src/z_Linux_util.cpp",
             "runtime/src/z_Linux_asm.S",
+            "runtime/src/z_Linux_util.cpp",
         ],
     }),
     hdrs = glob(["runtime/src/**/*.h"]) + [
@@ -199,6 +199,29 @@ cc_runtime_stage0_library(
         "@platforms//cpu:x86_32": ["-mrtm"],
         "@platforms//cpu:x86_64": ["-mrtm"],
         "//conditions:default": [],
+    }),
+    implementation_deps = select({
+        "@platforms//os:linux": [
+            # TODO(cerisier): Provide only a subset of linux UAPI headers for musl.
+            # https://github.com/cerisier/toolchains_llvm_bootstrapped/issues/146
+            "@kernel_headers",
+        ],
+        "@platforms//os:windows": [
+            "@mingw//:mingw_headers",
+        ],
+        "@platforms//os:macos": [],
+        "//conditions:default": [],
+    }) + select({
+        "@llvm//platforms/config:musl": [
+            "@libcxx//:headers",
+            "@musl_libc//:musl_libc_headers",
+        ],
+        "@llvm//platforms/config:gnu": [
+            "@glibc//:gnu_libc_headers",
+            "@libcxx//:headers",
+        ],
+        "@platforms//os:macos": [],
+        "@platforms//os:windows": [],
     }),
     includes = [
         "runtime/src",
@@ -236,29 +259,6 @@ cc_runtime_stage0_library(
             "LIBOMP_HAVE_RTM_INTRINSICS=1",
         ],
         "//conditions:default": [],
-    }),
-    implementation_deps = select({
-        "@platforms//os:linux": [
-            # TODO(cerisier): Provide only a subset of linux UAPI headers for musl.
-            # https://github.com/cerisier/toolchains_llvm_bootstrapped/issues/146
-            "@kernel_headers//:kernel_headers",
-        ],
-        "@platforms//os:windows": [
-            "@mingw//:mingw_headers",
-        ],
-        "@platforms//os:macos": [],
-        "//conditions:default": [],
-    }) + select({
-        "@llvm//platforms/config:musl": [
-            "@libcxx//:headers",
-            "@musl_libc//:musl_libc_headers",
-        ],
-        "@llvm//platforms/config:gnu": [
-            "@libcxx//:headers",
-            "@glibc//:gnu_libc_headers",
-        ],
-        "@platforms//os:macos": [],
-        "@platforms//os:windows": [],
     }),
     target_compatible_with = select({
         "@platforms//os:linux": [],
