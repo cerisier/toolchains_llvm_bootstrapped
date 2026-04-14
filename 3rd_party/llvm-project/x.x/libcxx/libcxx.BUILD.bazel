@@ -142,9 +142,9 @@ cc_library(
         ":libcxx_headers_files",
     ],
     includes = [
-        "src",
-        "include",
         "generated_headers",
+        "include",
+        "src",
     ],
     visibility = ["//visibility:public"],
 )
