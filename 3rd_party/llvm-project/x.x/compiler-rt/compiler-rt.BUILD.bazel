@@ -231,16 +231,16 @@ filegroup(
     name = "builtins_x86_80_bit_sources",
     srcs = [
         "lib/builtins/divxc3.c",
-        "lib/builtins/extendxftf2.c",
+        "lib/builtins/fixxfdi.c",
+        "lib/builtins/fixxfti.c",
         "lib/builtins/fixunsxfdi.c",
         "lib/builtins/fixunsxfsi.c",
         "lib/builtins/fixunsxfti.c",
-        "lib/builtins/fixxfdi.c",
-        "lib/builtins/fixxfti.c",
         "lib/builtins/floatdixf.c",  # if not android
         "lib/builtins/floattixf.c",
         "lib/builtins/floatundixf.c",
         "lib/builtins/floatuntixf.c",
+        "lib/builtins/extendxftf2.c",
         "lib/builtins/mulxc3.c",
         "lib/builtins/powixf2.c",
         "lib/builtins/trunctfxf2.c",
@@ -250,13 +250,13 @@ filegroup(
 filter_builtin_sources(
     name = "builtins_x86_64_sources",
     srcs = [
+        ":builtins_generic_srcs",
+        ":builtins_generic_tf_sources",
+        ":builtins_x86_arch_sources",
+        ":builtins_x86_80_bit_sources",
         "lib/builtins/x86_64/floatdidf.c",
         "lib/builtins/x86_64/floatdisf.c",
         "lib/builtins/x86_64/floatdixf.c",  # if not ANDROID
-        ":builtins_generic_srcs",
-        ":builtins_generic_tf_sources",
-        ":builtins_x86_80_bit_sources",
-        ":builtins_x86_arch_sources",
     ] + select({
         "@platforms//os:windows": [
             "lib/builtins/x86_64/chkstk.S",
@@ -272,17 +272,17 @@ filter_builtin_sources(
 filegroup(
     name = "builtins_aarch64_arch_sources",
     srcs = [
-        "lib/builtins/aarch64/fp_mode.c",
         "lib/builtins/cpu_model/aarch64.c",
+        "lib/builtins/aarch64/fp_mode.c",
     ],
 )
 
 filter_builtin_sources(
     name = "builtins_aarch64_sources",
     srcs = [
-        ":builtins_aarch64_arch_sources",
         ":builtins_generic_srcs",
         ":builtins_generic_tf_sources",
+        ":builtins_aarch64_arch_sources",
     ] + select({
         "@platforms//os:windows": [
             "lib/builtins/aarch64/chkstk.S",  # if MINGW
@@ -294,13 +294,13 @@ filter_builtin_sources(
 filter_builtin_sources(
     name = "builtins_riscv64_sources",
     srcs = [
-        "lib/builtins/cpu_model/riscv.c",
-        "lib/builtins/riscv/fp_mode.c",
-        "lib/builtins/riscv/muldi3.S",
-        "lib/builtins/riscv/restore.S",
-        "lib/builtins/riscv/save.S",
         ":builtins_generic_srcs",
         ":builtins_generic_tf_sources",
+        "lib/builtins/cpu_model/riscv.c",
+        "lib/builtins/riscv/fp_mode.c",
+        "lib/builtins/riscv/save.S",
+        "lib/builtins/riscv/restore.S",
+        "lib/builtins/riscv/muldi3.S",
     ],
 )
 
@@ -323,32 +323,13 @@ filter_builtin_sources(
 builtins_aarch64_atomic_deps = [
     atomic_helper_cc_library(
         name = "builtins_atomic_helper_{}_{}_{}".format(pat, size, model),
+        pat = pat,
         size = size,
         model = model,
-        pat = pat,
     )
-    for pat in [
-        "cas",
-        "swp",
-        "ldadd",
-        "ldclr",
-        "ldeor",
-        "ldset",
-    ]
-    for size in [
-        1,
-        2,
-        4,
-        8,
-        16,
-    ]
-    for model in [
-        1,
-        2,
-        3,
-        4,
-        5,
-    ]
+    for pat in ["cas", "swp", "ldadd", "ldclr", "ldeor", "ldset"]
+    for size in [1, 2, 4, 8, 16]
+    for model in [1, 2, 3, 4, 5]
     if pat == "cas" or size != 16
 ]
 
@@ -359,20 +340,18 @@ cc_library(
 
 cc_library(
     name = "builtins",
-    srcs = select(
-        {
-            "@platforms//cpu:x86_64": [":builtins_x86_64_sources"],
-            "@platforms//cpu:aarch64": [":builtins_aarch64_sources"],
-            "@platforms//cpu:riscv64": [":builtins_riscv64_sources"],
-            "@platforms//cpu:wasm32": [":builtins_wasm32_sources"],
-            "@platforms//cpu:wasm64": [":builtins_wasm64_sources"],
-        },
-        no_match_error = """
+    includes = ["lib/builtins"],
+    srcs = select({
+        "@platforms//cpu:x86_64": [":builtins_x86_64_sources"],
+        "@platforms//cpu:aarch64": [":builtins_aarch64_sources"],
+        "@platforms//cpu:riscv64": [":builtins_riscv64_sources"],
+        "@platforms//cpu:wasm32": [":builtins_wasm32_sources"],
+        "@platforms//cpu:wasm64": [":builtins_wasm64_sources"],
+    }, no_match_error = """
         Architecture not supported for compiler-rt.builtins.
         It is likely that we are just missing the filegroups for that platform.
         Please file an issue.
-    """,
-    ) + [
+    """) + [
         "lib/builtins/assembly.h",
         "lib/builtins/fp_extend.h",
         "lib/builtins/fp_lib.h",
@@ -425,32 +404,6 @@ cc_library(
         ],
         "//conditions:default": [],
     }),
-    implementation_deps = select({
-        "@platforms//os:macos": [],
-        "@platforms//os:linux": [
-            # TODO(cerisier): Provide only a subset of linux UAPI headers for musl.
-            # https://github.com/cerisier/toolchains_llvm_bootstrapped/issues/146
-            "@kernel_headers",
-        ],
-        "@platforms//os:windows": [],
-        "@platforms//os:none": [],
-    }) + select({
-        "@llvm//platforms/config:musl": [
-            "@musl_libc//:musl_libc_headers",
-        ],
-        "@llvm//platforms/config:gnu": [
-            "@glibc//:gnu_libc_headers",
-        ],
-        "@platforms//os:macos": [
-            # on macOS we implicitly use SDK provided headers
-        ],
-        "@platforms//os:windows": [
-            "@mingw//:mingw_headers",
-        ],
-        "@platforms//os:none": [],
-    }),
-    includes = ["lib/builtins"],
-    linkstatic = True,
     local_defines = selects.with_or({
         (
             # The following additional architectures support float16:
@@ -517,20 +470,45 @@ cc_library(
         ],
         "//conditions:default": [],
     }),
+    linkstatic = True,
     deps = select({
         "@platforms//cpu:aarch64": [
             ":builtins_aarch64_atomic",
         ],
         "//conditions:default": [],
     }),
+    implementation_deps = select({
+        "@platforms//os:macos": [],
+        "@platforms//os:linux": [
+            # TODO(cerisier): Provide only a subset of linux UAPI headers for musl.
+            # https://github.com/cerisier/toolchains_llvm_bootstrapped/issues/146
+            "@kernel_headers//:kernel_headers",
+        ],
+        "@platforms//os:windows": [],
+        "@platforms//os:none": [],
+    }) + select({
+        "@llvm//platforms/config:musl": [
+            "@musl_libc//:musl_libc_headers",
+        ],
+        "@llvm//platforms/config:gnu": [
+            "@glibc//:gnu_libc_headers",
+        ],
+        "@platforms//os:macos": [
+            # on macOS we implicitly use SDK provided headers
+        ],
+        "@platforms//os:windows": [
+            "@mingw//:mingw_headers",
+        ],
+        "@platforms//os:none": [],
+    }),
 )
 
 cc_runtime_stage0_static_library(
     name = "clang_rt.builtins.static",
-    visibility = ["//visibility:public"],
     deps = [
         ":builtins",
     ],
+    visibility = ["//visibility:public"],
 )
 
 CRT_CFLAGS = [
@@ -559,14 +537,14 @@ cc_stage0_object(
     srcs = [
         ":clang_rt.crtbegin",
     ],
+    copts = [
+        "-target",
+    ] + LLVM_TARGET_TRIPLE,
     #TODO(cerisier): Rename to clang_rt.crtbegin.o and expose this with -L.
     #
     # This is because clang driver looks for this instead of crtbegin<ST>.o
     # when --rtlib=compiler-rt is used.
     out = "crtbegin.o",
-    copts = [
-        "-target",
-    ] + LLVM_TARGET_TRIPLE,
     visibility = ["//visibility:public"],
 )
 
@@ -588,10 +566,10 @@ copy_file(
 
 cc_runtime_stage0_static_library(
     name = "clang_rt.crtbegin.static",
-    visibility = ["//visibility:public"],
     deps = [
         ":clang_rt.crtbegin",
     ],
+    visibility = ["//visibility:public"],
 )
 
 cc_library(
@@ -609,14 +587,14 @@ cc_stage0_object(
     srcs = [
         ":clang_rt.crtend",
     ],
+    copts = [
+        "-target",
+    ] + LLVM_TARGET_TRIPLE,
     #TODO(cerisier): Rename to clang_rt.crtend.o and expose this with -L.
     #
     # This is because clang driver looks for this instead of crtend<ST>.o
     # when --rtlib=compiler-rt is used.
     out = "crtend.o",
-    copts = [
-        "-target",
-    ] + LLVM_TARGET_TRIPLE,
     visibility = ["//visibility:public"],
 )
 
@@ -630,10 +608,10 @@ copy_file(
 
 cc_runtime_stage0_static_library(
     name = "clang_rt.crtend.static",
-    visibility = ["//visibility:public"],
     deps = [
         ":clang_rt.crtend",
     ],
+    visibility = ["//visibility:public"],
 )
 
 ##### Sanitizers #######
@@ -674,7 +652,7 @@ cc_library(
         # linux UAPI headers are needed even for musl here because sanitizers include <sys/vt.h>
         # TODO(cerisier): Provide only a subset of linux UAPI headers for musl.
         # https://github.com/cerisier/toolchains_llvm_bootstrapped/issues/146
-        "@kernel_headers",
+        "@kernel_headers//:kernel_headers",
         # Order matter. Search path should have C++ headers before any lib C headers.
     ] + select({
         "@llvm//platforms/config:musl": [
@@ -691,9 +669,9 @@ cc_library(
     deps = select({
         "@platforms//os:macos": [],
         "@platforms//os:linux": [
-            ":linux_libc_headers",
             "@libcxx//:headers",
             "@libcxxabi//:headers",
+            ":linux_libc_headers",
         ],
     }),
 )
@@ -1041,19 +1019,11 @@ SANITIZER_COMMON_DEFINITIONS = [
 
 cc_library(
     name = "sanitizer_common",
-    srcs = [
-        ":interception_impl_headers_sources",
-        ":sanitizer_impl_headers_sources",
-        ":sanitizer_sources",
-    ],
     copts = SANITIZER_CFLAGS,
-    implementation_deps = [
-        ":libcxx_headers",
-        ":sanitizers_interface_headers",
-    ],
-    includes = [
-        "include",
-        "lib",
+    srcs = [
+        ":sanitizer_sources",
+        ":sanitizer_impl_headers_sources",
+        ":interception_impl_headers_sources",
     ],
     textual_hdrs = [
         "lib/builtins/assembly.h",
@@ -1063,87 +1033,95 @@ cc_library(
         "lib/sanitizer_common/sanitizer_syscall_generic.inc",
         ":sanitizer_common_interceptors_vfork_sources",
     ],
+    includes = [
+        "lib",
+        "include",
+    ],
     alwayslink = True,
+    implementation_deps = [
+        ":libcxx_headers",
+        ":sanitizers_interface_headers",
+    ],
 )
 
 cc_library(
     name = "sanitizer_common_libc",
-    srcs = [
-        ":sanitizer_impl_headers_sources",
-        ":sanitizer_libcdep_sources",
-    ],
     copts = SANITIZER_CFLAGS,
+    srcs = [
+        ":sanitizer_libcdep_sources",
+        ":sanitizer_impl_headers_sources",
+    ],
+    includes = [
+        "lib",
+        "include",
+    ],
+    alwayslink = True,
     implementation_deps = [
         ":libcxx_headers",
         ":sanitizers_interface_headers",
     ],
-    includes = [
-        "include",
-        "lib",
-    ],
-    alwayslink = True,
 )
 
 cc_library(
     name = "sanitizer_common_coverage",
+    copts = SANITIZER_CFLAGS,
     srcs = [
         ":sanitizer_coverage_sources",
         ":sanitizer_impl_headers_sources",
     ],
-    copts = SANITIZER_CFLAGS,
+    includes = [
+        "lib",
+        "include",
+    ],
+    alwayslink = True,
     implementation_deps = [
         ":libcxx_headers",
         ":sanitizers_interface_headers",
     ],
-    includes = [
-        "include",
-        "lib",
-    ],
-    alwayslink = True,
 )
 
 cc_library(
     name = "sanitizer_common_symbolizer",
-    srcs = [
-        ":sanitizer_impl_headers_sources",
-        ":sanitizer_symbolizer_sources",
-    ],
     copts = SANITIZER_CFLAGS,
+    srcs = [
+        ":sanitizer_symbolizer_sources",
+        ":sanitizer_impl_headers_sources",
+    ],
+    includes = [
+        "lib",
+        "include",
+    ],
+    alwayslink = True,
     implementation_deps = [
         ":libcxx_headers",
         ":sanitizers_interface_headers",
     ],
-    includes = [
-        "include",
-        "lib",
-    ],
-    alwayslink = True,
 )
 
 cc_library(
     name = "sanitizer_common_symbolizer_internal",
-    srcs = [
-        "lib/sanitizer_common/symbolizer/sanitizer_symbolize.cpp",
-        ":sanitizer_impl_headers_sources",
-    ],
     copts = SANITIZER_CFLAGS + [
         # The standalone build of the internal symbolizer strips the __cxa_atexit
         # shim via internalize; do the same explicitly to avoid duplicate symbols
         # when statically linking against libc implementations that provide it.
         "-DSANITIZER_SKIP_CXA_ATEXIT_OVERRIDE",
     ],
-    implementation_deps = [
-        ":libcxx_headers",
-        ":sanitizers_interface_headers",
-    ],
-    includes = [
-        "include",
-        "lib",
+    srcs = [
+        "lib/sanitizer_common/symbolizer/sanitizer_symbolize.cpp",
+        ":sanitizer_impl_headers_sources",
     ],
     deps = [
         ":llvm_Symbolize",
     ],
+    includes = [
+        "lib",
+        "include",
+    ],
     alwayslink = True,
+    implementation_deps = [
+        ":libcxx_headers",
+        ":sanitizers_interface_headers",
+    ],
 )
 
 ###
@@ -1180,17 +1158,17 @@ INTERCEPTION_FLAGS = SANITIZER_COMMON_CFLAGS + [
 
 cc_library(
     name = "interception",
-    srcs = [
-        ":interception_headers",
-        ":interception_sources",
-        ":sanitizer_impl_headers_sources",
-    ],
     copts = INTERCEPTION_FLAGS,
-    implementation_deps = [
-        ":libcxx_headers",
+    srcs = [
+        ":interception_sources",
+        ":interception_headers",
+        ":sanitizer_impl_headers_sources",
     ],
     includes = ["lib"],
     alwayslink = True,
+    implementation_deps = [
+        ":libcxx_headers",
+    ],
 )
 
 ###
@@ -1273,22 +1251,22 @@ UBSAN_CXXFLAGS = SANITIZER_COMMON_CFLAGS + [
 # avoid duplicate interceptor symbols.
 cc_library(
     name = "ubsan_no_standalone",
-    srcs = [
-        ":ubsan_headers",
-        ":ubsan_sources",
-    ],
     copts = UBSAN_CFLAGS,
-    implementation_deps = [
-        ":interception_impl_headers",
-        ":libcxx_headers",
-        ":sanitizer_impl_headers",
+    srcs = [
+        ":ubsan_sources",
+        ":ubsan_headers",
     ],
-    includes = ["lib"],
     textual_hdrs = [
         "lib/ubsan/ubsan_checks.inc",
         "lib/ubsan/ubsan_flags.inc",
     ],
     alwayslink = True,
+    includes = ["lib"],
+    implementation_deps = [
+        ":libcxx_headers",
+        ":sanitizer_impl_headers",
+        ":interception_impl_headers",
+    ],
 )
 
 UBSAN_CXX_SOURCES = [
@@ -1297,54 +1275,53 @@ UBSAN_CXX_SOURCES = [
 
 cc_library(
     name = "ubsan_cxx",
+    copts = UBSAN_CXXFLAGS,
     srcs = UBSAN_CXX_SOURCES + [
         ":ubsan_headers",
     ],
-    copts = UBSAN_CXXFLAGS,
     deps = [
-        ":interception_impl_headers",
         ":libcxx_headers",
         ":sanitizer_impl_headers",
+        ":interception_impl_headers",
     ],
 )
 
 cc_library(
     name = "ubsan_preinit",
+    copts = UBSAN_CFLAGS,
     srcs = [
         "lib/ubsan/ubsan_init_standalone_preinit.cpp",
         ":ubsan_headers",
     ],
-    copts = UBSAN_CFLAGS,
     implementation_deps = [
-        ":interception_impl_headers",
         ":libcxx_headers",
         ":sanitizer_impl_headers",
+        ":interception_impl_headers",
     ],
 )
 
 cc_library(
     name = "ubsan_standalone",
     srcs = [
-        ":ubsan_headers",
         ":ubsan_sources",
         ":ubsan_standalone_sources",
+        ":ubsan_headers",
     ],
-    implementation_deps = [
-        ":interception_impl_headers",
-        ":libcxx_headers",
-        ":sanitizer_impl_headers",
-    ],
-    includes = ["lib"],
     textual_hdrs = [
         "lib/ubsan/ubsan_checks.inc",
         "lib/ubsan/ubsan_flags.inc",
     ],
     alwayslink = True,
+    includes = ["lib"],
+    implementation_deps = [
+        ":libcxx_headers",
+        ":sanitizer_impl_headers",
+        ":interception_impl_headers",
+    ],
 )
 
 cc_runtime_stage0_static_library(
     name = "ubsan_standalone.static",
-    visibility = ["//visibility:public"],
     deps = [
         ":ubsan_preinit",
         ":ubsan_standalone",
@@ -1357,14 +1334,15 @@ cc_runtime_stage0_static_library(
         # if COMPILER_RT_ENABLE_INTERNAL_SYMBOLIZER
         ":llvm_Symbolize",
     ],
+    visibility = ["//visibility:public"],
 )
 
 cc_runtime_stage0_static_library(
     name = "ubsan_standalone_cxx.static",
-    visibility = ["//visibility:public"],
     deps = [
         ":ubsan_cxx",
     ],
+    visibility = ["//visibility:public"],
 )
 
 ###
@@ -1396,58 +1374,58 @@ CFI_DIAG_CFLAGS = [
 
 cc_library(
     name = "cfi",
+    copts = CFI_CFLAGS,
     srcs = [
         ":cfi_sources",
         ":ubsan_headers",
     ],
-    copts = CFI_CFLAGS,
+    includes = ["lib"],
     implementation_deps = [
-        ":interception_impl_headers",
         ":libcxx_headers",
         ":sanitizer_impl_headers",
+        ":interception_impl_headers",
     ],
-    includes = ["lib"],
 )
 
 cc_library(
     name = "cfi_diag",
+    copts = CFI_CFLAGS + CFI_DIAG_CFLAGS,
     srcs = [
         ":cfi_sources",
         ":ubsan_headers",
     ],
-    copts = CFI_CFLAGS + CFI_DIAG_CFLAGS,
+    includes = ["lib"],
     implementation_deps = [
-        ":interception_impl_headers",
         ":libcxx_headers",
         ":sanitizer_impl_headers",
+        ":interception_impl_headers",
     ],
-    includes = ["lib"],
 )
 
 cc_runtime_stage0_static_library(
     name = "cfi.static",
-    visibility = ["//visibility:public"],
     deps = [
         ":cfi",
         ":interception",
         ":sanitizer_common",
         ":sanitizer_common_libc",
     ],
+    visibility = ["//visibility:public"],
 )
 
 cc_runtime_stage0_static_library(
     name = "cfi_diag.static",
-    visibility = ["//visibility:public"],
     deps = [
         ":cfi_diag",
         ":interception",
         ":sanitizer_common",
-        ":sanitizer_common_coverage",
         ":sanitizer_common_libc",
+        ":sanitizer_common_coverage",
         ":sanitizer_common_symbolizer",
         ":sanitizer_common_symbolizer_internal",
         ":ubsan_no_standalone",
     ],
+    visibility = ["//visibility:public"],
 )
 
 ###
@@ -1508,63 +1486,63 @@ MSAN_RTL_CFLAGS = SANITIZER_COMMON_CFLAGS + [
 
 cc_library(
     name = "msan",
+    copts = MSAN_RTL_CFLAGS,
     srcs = [
-        ":msan_rtl_headers",
         ":msan_rtl_sources",
+        ":msan_rtl_headers",
         ":ubsan_headers",
     ],
-    copts = MSAN_RTL_CFLAGS,
-    implementation_deps = [
-        ":interception_impl_headers",
-        ":libcxx_headers",
-        ":sanitizer_impl_headers",
-    ],
-    includes = ["lib"],
     textual_hdrs = [
         "lib/msan/msan_flags.inc",
+    ],
+    includes = ["lib"],
+    implementation_deps = [
+        ":libcxx_headers",
+        ":sanitizer_impl_headers",
+        ":interception_impl_headers",
     ],
 )
 
 cc_library(
     name = "msan_cxx",
+    copts = MSAN_RTL_CFLAGS,
     srcs = [
         ":msan_rtl_cxx_sources",
         ":msan_rtl_headers",
         ":ubsan_headers",
     ],
-    copts = MSAN_RTL_CFLAGS,
-    implementation_deps = [
-        ":interception_impl_headers",
-        ":libcxx_headers",
-        ":sanitizer_impl_headers",
-    ],
-    includes = ["lib"],
     textual_hdrs = [
         "lib/msan/msan_flags.inc",
+    ],
+    includes = ["lib"],
+    implementation_deps = [
+        ":libcxx_headers",
+        ":sanitizer_impl_headers",
+        ":interception_impl_headers",
     ],
 )
 
 cc_runtime_stage0_static_library(
     name = "msan.static",
-    visibility = ["//visibility:public"],
     deps = [
-        ":interception",
         ":msan",
+        ":interception",
         ":sanitizer_common",
-        ":sanitizer_common_coverage",
         ":sanitizer_common_libc",
+        ":sanitizer_common_coverage",
         ":sanitizer_common_symbolizer",
         ":sanitizer_common_symbolizer_internal",
         ":ubsan_no_standalone",
     ],
+    visibility = ["//visibility:public"],
 )
 
 cc_runtime_stage0_static_library(
     name = "msan_cxx.static",
-    visibility = ["//visibility:public"],
     deps = [
         ":msan_cxx",
     ],
+    visibility = ["//visibility:public"],
 )
 
 ###
@@ -1613,25 +1591,24 @@ DFSAN_RTL_CFLAGS = SANITIZER_COMMON_CFLAGS + [
 
 cc_library(
     name = "dfsan",
-    srcs = [
-        ":dfsan_rtl_headers",
-        ":dfsan_rtl_sources",
-    ],
     copts = DFSAN_RTL_CFLAGS,
-    implementation_deps = [
-        ":interception_impl_headers",
-        ":libcxx_headers",
-        ":sanitizer_impl_headers",
+    srcs = [
+        ":dfsan_rtl_sources",
+        ":dfsan_rtl_headers",
     ],
-    includes = ["lib"],
     textual_hdrs = [
         "lib/dfsan/dfsan_flags.inc",
+    ],
+    includes = ["lib"],
+    implementation_deps = [
+        ":libcxx_headers",
+        ":sanitizer_impl_headers",
+        ":interception_impl_headers",
     ],
 )
 
 cc_runtime_stage0_static_library(
     name = "dfsan.static",
-    visibility = ["//visibility:public"],
     deps = [
         ":dfsan",
         ":interception",
@@ -1640,6 +1617,7 @@ cc_runtime_stage0_static_library(
         ":sanitizer_common_symbolizer",
         ":sanitizer_common_symbolizer_internal",
     ],
+    visibility = ["//visibility:public"],
 )
 
 sh_script(
@@ -1649,12 +1627,12 @@ sh_script(
         "lib/dfsan/libc_ubuntu1404_abilist.txt",
     ],
     outs = ["share/dfsan_abilist.txt"],
+    cmd = "cat $1 $2 > $3",
     args = [
         "$(location lib/dfsan/done_abilist.txt)",
         "$(location lib/dfsan/libc_ubuntu1404_abilist.txt)",
         "$(location share/dfsan_abilist.txt)",
     ],
-    cmd = "cat $1 $2 > $3",
     visibility = ["//visibility:public"],
 )
 
@@ -1712,51 +1690,51 @@ NSAN_CFLAGS = SANITIZER_COMMON_CFLAGS + [
 
 cc_library(
     name = "nsan",
-    srcs = [
-        ":nsan_headers",
-        ":nsan_sources",
-    ],
     copts = NSAN_CFLAGS,
-    implementation_deps = [
-        ":interception_impl_headers",
-        ":libcxx_headers",
-        ":sanitizer_impl_headers",
+    srcs = [
+        ":nsan_sources",
+        ":nsan_headers",
     ],
-    includes = ["lib"],
     textual_hdrs = [
         "lib/nsan/nsan_flags.inc",
+    ],
+    includes = ["lib"],
+    implementation_deps = [
+        ":libcxx_headers",
+        ":sanitizer_impl_headers",
+        ":interception_impl_headers",
     ],
 )
 
 cc_library(
     name = "nsan_preinit",
-    srcs = [
-        ":nsan_headers",
-        ":nsan_preinit_sources",
-    ],
     copts = NSAN_CFLAGS,
-    implementation_deps = [
-        ":interception_impl_headers",
-        ":libcxx_headers",
-        ":sanitizer_impl_headers",
+    srcs = [
+        ":nsan_preinit_sources",
+        ":nsan_headers",
     ],
     includes = ["lib"],
+    implementation_deps = [
+        ":libcxx_headers",
+        ":sanitizer_impl_headers",
+        ":interception_impl_headers",
+    ],
 )
 
 cc_runtime_stage0_static_library(
     name = "nsan.static",
-    visibility = ["//visibility:public"],
     deps = [
-        ":interception",
-        ":nsan",
         ":nsan_preinit",
+        ":nsan",
+        ":interception",
         ":sanitizer_common",
-        ":sanitizer_common_coverage",
         ":sanitizer_common_libc",
+        ":sanitizer_common_coverage",
         ":sanitizer_common_symbolizer",
         ":sanitizer_common_symbolizer_internal",
         ":ubsan_no_standalone",
     ],
+    visibility = ["//visibility:public"],
 )
 
 ###
@@ -1786,26 +1764,26 @@ SAFESTACK_CFLAGS = SANITIZER_COMMON_CFLAGS
 
 cc_library(
     name = "safestack",
-    srcs = [
-        ":safestack_headers",
-        ":safestack_sources",
-    ],
     copts = SAFESTACK_CFLAGS,
-    implementation_deps = [
-        ":interception_impl_headers",
-        ":libcxx_headers",
-        ":sanitizer_impl_headers",
+    srcs = [
+        ":safestack_sources",
+        ":safestack_headers",
     ],
     includes = ["lib"],
+    implementation_deps = [
+        ":libcxx_headers",
+        ":sanitizer_impl_headers",
+        ":interception_impl_headers",
+    ],
 )
 
 cc_runtime_stage0_static_library(
     name = "safestack.static",
-    visibility = ["//visibility:public"],
     deps = [
-        ":interception",
         ":safestack",
+        ":interception",
     ],
+    visibility = ["//visibility:public"],
 )
 
 ###
@@ -1866,36 +1844,36 @@ RTSAN_CFLAGS = [
 
 cc_library(
     name = "rtsan",
+    copts = RTSAN_CFLAGS,
     srcs = [
-        ":rtsan_headers",
         ":rtsan_preinit_sources",
         ":rtsan_sources",
+        ":rtsan_headers",
     ],
-    copts = RTSAN_CFLAGS,
-    implementation_deps = [
-        ":interception_impl_headers",
-        ":libcxx_headers",
-        ":sanitizer_impl_headers",
-    ],
-    includes = ["lib"],
     textual_hdrs = [
         "lib/rtsan/rtsan_checks.inc",
         "lib/rtsan/rtsan_flags.inc",
+    ],
+    includes = ["lib"],
+    implementation_deps = [
+        ":libcxx_headers",
+        ":sanitizer_impl_headers",
+        ":interception_impl_headers",
     ],
 )
 
 cc_runtime_stage0_static_library(
     name = "rtsan.static",
-    visibility = ["//visibility:public"],
     deps = [
-        ":interception",
         ":rtsan",
+        ":interception",
         ":sanitizer_common",
-        ":sanitizer_common_coverage",
         ":sanitizer_common_libc",
+        ":sanitizer_common_coverage",
         ":sanitizer_common_symbolizer",
         ":sanitizer_common_symbolizer_internal",
     ],
+    visibility = ["//visibility:public"],
 )
 
 ###
@@ -1934,32 +1912,32 @@ TYSAN_CFLAGS = SANITIZER_COMMON_CFLAGS + [
 
 cc_library(
     name = "tysan",
-    srcs = [
-        ":tysan_headers",
-        ":tysan_sources",
-    ],
     copts = TYSAN_CFLAGS,
-    implementation_deps = [
-        ":interception_impl_headers",
-        ":libcxx_headers",
-        ":sanitizer_impl_headers",
+    srcs = [
+        ":tysan_sources",
+        ":tysan_headers",
     ],
-    includes = ["lib"],
     textual_hdrs = [
         "lib/tysan/tysan_flags.inc",
+    ],
+    includes = ["lib"],
+    implementation_deps = [
+        ":libcxx_headers",
+        ":sanitizer_impl_headers",
+        ":interception_impl_headers",
     ],
 )
 
 cc_runtime_stage0_static_library(
     name = "tysan.static",
-    visibility = ["//visibility:public"],
     deps = [
+        ":tysan",
         ":interception",
         ":sanitizer_common",
         ":sanitizer_common_libc",
         ":sanitizer_common_symbolizer",
-        ":tysan",
     ],
+    visibility = ["//visibility:public"],
 )
 
 ###
@@ -2082,67 +2060,67 @@ TSAN_RTL_CFLAGS = SANITIZER_COMMON_CFLAGS + [
 
 cc_library(
     name = "tsan",
+    copts = TSAN_RTL_CFLAGS,
     srcs = [
-        "lib/builtins/assembly.h",
+        ":tsan_rtl_sources",
         ":tsan_preinit_sources",
         ":tsan_rtl_headers",
-        ":tsan_rtl_sources",
         ":ubsan_headers",
+        "lib/builtins/assembly.h",
     ],
-    copts = TSAN_RTL_CFLAGS,
-    implementation_deps = [
-        ":interception_impl_headers",
-        ":libcxx_headers",
-        ":sanitizer_impl_headers",
-    ],
-    includes = ["lib"],
     textual_hdrs = [
         "lib/tsan/rtl/tsan_flags.inc",
         "lib/tsan/rtl/tsan_interface.inc",
+    ],
+    includes = ["lib"],
+    implementation_deps = [
+        ":libcxx_headers",
+        ":sanitizer_impl_headers",
+        ":interception_impl_headers",
     ],
 )
 
 cc_library(
     name = "tsan_cxx",
+    copts = TSAN_RTL_CFLAGS,
     srcs = [
         ":tsan_rtl_cxx_sources",
         ":tsan_rtl_headers",
         ":ubsan_headers",
     ],
-    copts = TSAN_RTL_CFLAGS,
-    implementation_deps = [
-        ":interception_impl_headers",
-        ":libcxx_headers",
-        ":sanitizer_impl_headers",
-    ],
-    includes = ["lib"],
     textual_hdrs = [
         "lib/tsan/rtl/tsan_flags.inc",
         "lib/tsan/rtl/tsan_interface.inc",
+    ],
+    includes = ["lib"],
+    implementation_deps = [
+        ":libcxx_headers",
+        ":sanitizer_impl_headers",
+        ":interception_impl_headers",
     ],
 )
 
 cc_runtime_stage0_static_library(
     name = "tsan.static",
-    visibility = ["//visibility:public"],
     deps = [
+        ":tsan",
         ":interception",
         ":sanitizer_common",
-        ":sanitizer_common_coverage",
         ":sanitizer_common_libc",
+        ":sanitizer_common_coverage",
         ":sanitizer_common_symbolizer",
         ":sanitizer_common_symbolizer_internal",
-        ":tsan",
         ":ubsan_no_standalone",
     ],
+    visibility = ["//visibility:public"],
 )
 
 cc_runtime_stage0_static_library(
     name = "tsan_cxx.static",
-    visibility = ["//visibility:public"],
     deps = [
         ":tsan_cxx",
     ],
+    visibility = ["//visibility:public"],
 )
 
 ###
@@ -2212,59 +2190,59 @@ LSAN_CFLAGS = SANITIZER_COMMON_CFLAGS + [
 # itself is not enabled.
 cc_library(
     name = "lsan_common",
+    copts = LSAN_CFLAGS,
     srcs = [
         ":lsan_common_sources",
         ":lsan_headers",
     ],
-    copts = LSAN_CFLAGS,
-    implementation_deps = [
-        ":libcxx_headers",
-    ],
-    includes = ["lib"],
     textual_hdrs = [
         "lib/lsan/lsan_flags.inc",
     ],
+    includes = ["lib"],
+    alwayslink = True,
     deps = [
         ":sanitizer_common",
-        ":sanitizer_common_coverage",
         ":sanitizer_common_libc",
+        ":sanitizer_common_coverage",
         ":sanitizer_common_symbolizer",
         ":sanitizer_common_symbolizer_internal",
     ],
-    alwayslink = True,
+    implementation_deps = [
+        ":libcxx_headers",
+    ],
 )
 
 cc_library(
     name = "lsan",
-    srcs = [
-        ":lsan_headers",
-        ":lsan_sources",
-    ],
     copts = LSAN_CFLAGS,
-    implementation_deps = [
-        ":interception_impl_headers",
-        ":libcxx_headers",
-        ":sanitizer_impl_headers",
+    srcs = [
+        ":lsan_sources",
+        ":lsan_headers",
     ],
-    includes = ["lib"],
     textual_hdrs = [
         "lib/lsan/lsan_flags.inc",
+    ],
+    includes = ["lib"],
+    implementation_deps = [
+        ":libcxx_headers",
+        ":sanitizer_impl_headers",
+        ":interception_impl_headers",
     ],
 )
 
 cc_runtime_stage0_static_library(
     name = "lsan.static",
-    visibility = ["//visibility:public"],
     deps = [
-        ":interception",
         ":lsan",
-        ":lsan_common",
+        ":interception",
         ":sanitizer_common",
-        ":sanitizer_common_coverage",
         ":sanitizer_common_libc",
+        ":sanitizer_common_coverage",
         ":sanitizer_common_symbolizer",
         ":sanitizer_common_symbolizer_internal",
+        ":lsan_common",
     ],
+    visibility = ["//visibility:public"],
 )
 
 ###
@@ -2395,63 +2373,63 @@ cc_library(
     copts = ASAN_CFLAGS,
     deps = [
         ":interception",
-        ":lsan_common",
         ":sanitizer_common",
-        ":sanitizer_common_coverage",
         ":sanitizer_common_libc",
+        ":sanitizer_common_coverage",
         ":sanitizer_common_symbolizer",
         ":sanitizer_common_symbolizer_internal",
+        ":lsan_common",
         ":ubsan_no_standalone",
     ],
 )
 
 cc_library(
     name = "asan_cxx",
+    copts = ASAN_CFLAGS,
     srcs = [
         ":asan_cxx_sources",
         ":asan_headers",
     ],
-    copts = ASAN_CFLAGS,
+    deps = [
+        ":sanitizer_impl_headers",
+        ":interception_impl_headers",
+    ],
     implementation_deps = [
         ":libcxx_headers",
-    ],
-    deps = [
-        ":interception_impl_headers",
-        ":sanitizer_impl_headers",
     ],
 )
 
 cc_library(
     name = "asan_preinit",
-    srcs = [
-        ":asan_headers",
-        ":asan_preinit_sources",
-    ],
     copts = ASAN_CFLAGS,
+    srcs = [
+        ":asan_preinit_sources",
+        ":asan_headers",
+    ],
     deps = [
-        ":interception_impl_headers",
         ":sanitizer_impl_headers",
+        ":interception_impl_headers",
     ],
 )
 
 cc_library(
     name = "asan_static",
-    srcs = [
-        ":asan_headers",
-        ":asan_static_sources",
-    ],
     copts = ASAN_CFLAGS,
+    srcs = [
+        ":asan_static_sources",
+        ":asan_headers",
+    ],
     deps = [
-        ":interception_impl_headers",
         ":sanitizer_impl_headers",
+        ":interception_impl_headers",
     ],
 )
 
 cc_library(
     name = "asan",
     srcs = [
-        ":asan_headers",
         ":asan_sources",
+        ":asan_headers",
         ":ubsan_headers",
     ],
     copts = [
@@ -2466,27 +2444,27 @@ cc_library(
             "-fvisibility-inlines-hidden",
         ],
     }),
-    implementation_deps = [
-        ":interception_impl_headers",
-        ":libcxx_headers",
-        ":lsan_common_headers",
-        ":sanitizer_impl_headers",
-    ],
-    includes = ["lib"],
     textual_hdrs = [
         "lib/asan/asan_activation_flags.inc",
         "lib/asan/asan_flags.inc",
         "lib/asan/asan_interface.inc",
         ":sanitizer_common_interceptors_vfork_sources",
     ],
+    includes = ["lib"],
+    implementation_deps = [
+        ":libcxx_headers",
+        ":sanitizer_impl_headers",
+        ":interception_impl_headers",
+        ":lsan_common_headers",
+    ],
     deps = [
         ":interception",
-        ":lsan_common",
         ":sanitizer_common",
-        ":sanitizer_common_coverage",
         ":sanitizer_common_libc",
+        ":sanitizer_common_coverage",
         ":sanitizer_common_symbolizer",
         ":sanitizer_common_symbolizer_internal",
+        ":lsan_common",
     ],
 )
 
@@ -2502,41 +2480,45 @@ cc_library(
 
 cc_runtime_stage0_static_library(
     name = "asan.static",
-    visibility = ["//visibility:public"],
     deps = [
+        ":asan_preinit",
         ":asan",
         ":asan_common_runtime",
-        ":asan_preinit",
     ],
+    visibility = ["//visibility:public"],
 )
 
 cc_runtime_stage0_static_library(
     name = "asan_cxx.static",
-    visibility = ["//visibility:public"],
     deps = [
         ":asan_cxx",
     ],
+    visibility = ["//visibility:public"],
 )
 
 # asan_static.static
 cc_runtime_stage0_static_library(
     name = "asan_static.static",
-    visibility = ["//visibility:public"],
     deps = [
         ":asan_static",
     ],
+    visibility = ["//visibility:public"],
 )
 
 cc_runtime_stage0_static_library(
     name = "asan_preinit.static",
-    visibility = ["//visibility:public"],
     deps = [
         ":asan_preinit",
     ],
+    visibility = ["//visibility:public"],
 )
 
 cc_runtime_stage0_shared_library(
     name = "asan.shared",
+    deps = [
+        ":asan_common_runtime",
+        ":asan_dynamic",
+    ],
     additional_linker_inputs = select({
         "@llvm//platforms/config:gnu": [
             "@llvm//runtimes/glibc:glibc_library_search_directory",
@@ -2546,7 +2528,6 @@ cc_runtime_stage0_shared_library(
         ],
         "//conditions:default": [],
     }),
-    shared_lib_name = "libasan.shared.so",
     user_link_flags = select({
         "@llvm//platforms/config:gnu": [
             "-L$(location @llvm//runtimes/glibc:glibc_library_search_directory)",
@@ -2558,9 +2539,6 @@ cc_runtime_stage0_shared_library(
         ],
         "//conditions:default": [],
     }),
+    shared_lib_name = "libasan.shared.so",
     visibility = ["//visibility:public"],
-    deps = [
-        ":asan_common_runtime",
-        ":asan_dynamic",
-    ],
 )
