@@ -1,4 +1,16 @@
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load(
+    ":linker_contracts.bzl",
+    "LINUX_AARCH64_CONSTRAINTS",
+    "LINUX_AARCH64_LINKER_CONTRACT_DIRECTIVES",
+    "LINUX_X86_64_CONSTRAINTS",
+    "LINUX_X86_64_LINKER_CONTRACT_DIRECTIVES",
+    "MACOS_AARCH64_CONSTRAINTS",
+    "MACOS_AARCH64_LINKER_CONTRACT_DIRECTIVES",
+    "linker_contract_genrule",
+    "linker_wrapper_config_genrule",
+)
 
 cc_binary(
     name = "header-parser",
@@ -9,5 +21,83 @@ cc_binary(
 cc_binary(
     name = "static-library-validator",
     srcs = ["static_library_validator.cc"],
+    visibility = ["//visibility:public"],
+)
+
+linker_contract_genrule(
+    name = "linker_contract_macos_aarch64",
+    out = "linker_contract_macos_aarch64.txt",
+    directives = MACOS_AARCH64_LINKER_CONTRACT_DIRECTIVES,
+    target_compatible_with = MACOS_AARCH64_CONSTRAINTS,
+)
+
+linker_contract_genrule(
+    name = "linker_contract_linux_x86_64",
+    out = "linker_contract_linux_x86_64.txt",
+    directives = LINUX_X86_64_LINKER_CONTRACT_DIRECTIVES,
+    target_compatible_with = LINUX_X86_64_CONSTRAINTS,
+)
+
+linker_contract_genrule(
+    name = "linker_contract_linux_aarch64",
+    out = "linker_contract_linux_aarch64.txt",
+    directives = LINUX_AARCH64_LINKER_CONTRACT_DIRECTIVES,
+    target_compatible_with = LINUX_AARCH64_CONSTRAINTS,
+)
+
+linker_wrapper_config_genrule(
+    name = "linker_wrapper_config",
+    out = "linker_wrapper_config.cc",
+    contract_label = ":linker-contract",
+)
+
+filegroup(
+    name = "linker-contract",
+    srcs = select({
+        "//platforms/config:macos_aarch64": [":linker_contract_macos_aarch64"],
+        "//platforms/config:linux_x86_64": [":linker_contract_linux_x86_64"],
+        "//platforms/config:linux_aarch64": [":linker_contract_linux_aarch64"],
+    }),
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "linker_wrapper_config_header",
+    hdrs = ["linker_wrapper_config.h"],
+    visibility = ["//visibility:private"],
+)
+
+cc_binary(
+    name = "linker-wrapper",
+    srcs = [
+        "linker_wrapper.cc",
+        ":linker_wrapper_config",
+    ],
+    data = [
+        "//tools:clang++",
+    ] + select({
+        "//platforms/config:macos_aarch64": [
+            "//runtimes/compiler-rt:clang_rt.builtins.static",
+            "//runtimes:resource_directory",
+            "@macos_sdk//sysroot",
+            ":linker_contract_macos_aarch64",
+        ],
+        "//platforms/config:linux_x86_64": [
+            "//runtimes:crt_objects_directory",
+            "//runtimes/glibc:glibc_library_search_directory",
+            "//runtimes:resource_directory",
+            ":linker_contract_linux_x86_64",
+        ],
+        "//platforms/config:linux_aarch64": [
+            "//runtimes:crt_objects_directory",
+            "//runtimes/glibc:glibc_library_search_directory",
+            "//runtimes:resource_directory",
+            ":linker_contract_linux_aarch64",
+        ],
+    }),
+    deps = [
+        ":linker_wrapper_config_header",
+        "@bazel_tools//tools/cpp/runfiles",
+    ],
     visibility = ["//visibility:public"],
 )
