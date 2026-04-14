@@ -7,7 +7,7 @@
 # Bazel-LLVM Ecosystem
 
 1. **Hermetic cross-compiling `cc_toolchain`**
-   We assemble LLVM with Bazeled runtimes/libc stacks to provide a zero-sysroot, hermetic C/C++ cross toolchain for many exec/target combinations (Linux glibc/musl, Windows MinGW, macOS, wasm; more coming).
+   We assemble LLVM with Bazeled runtimes/libc stacks to provide a zero-sysroot, hermetic C/C++ cross tool  chain for many exec/target combinations (Linux glibc/musl, Windows MinGW, macOS, wasm; more coming).
 2. **Bazeled LLVM targets**
    We expose Bazel targets for LLVM binaries and libraries. Some come from the upstream `@llvm-project` Bazel overlay, and we also provide missing coverage with our own BUILD files, including `compiler-rt`, `libc++`, `libc++abi`, `libunwind`, and sanitizer runtimes.
 3. **WIP crossenv package targets for outside-Bazel use**
