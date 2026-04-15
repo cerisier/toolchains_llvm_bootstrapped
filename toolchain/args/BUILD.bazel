@@ -90,6 +90,7 @@ cc_args(
         "-Wno-module-import-in-extern-c",
         # This warning would mean we had an error configuring the toolchain or modulemap
         "-Werror=incomplete-umbrella",
+        "-Wno-modules-import-nested-redundant",
     ],
 )
 
