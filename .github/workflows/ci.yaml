@@ -119,6 +119,7 @@ jobs:
           fi
 
           bazel \
+            --bisect=9.0.1..9.1.0rc1 \
             --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc \
             --bazelrc=.bazelrc \
             --experimental_remote_repo_contents_cache \
