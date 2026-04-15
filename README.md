@@ -1,6 +1,6 @@
 # A Bazel-friendly fully hermetic LLVM cross-compilation toolchain
 
-[![CI](https://github.com/cerisier/toolchains_llvm_bootstrapped/actions/workflows/ci.yaml/badge.svg)](https://github.com/cerisier/toolchains_llvm_bootstrapped/actions/workflows/ci.yaml)
+[![CI](https://github.com/hermeticbuild/hermetic-llvm/actions/workflows/ci.yaml/badge.svg)](https://github.com/hermeticbuild/hermetic-llvm/actions/workflows/ci.yaml)
 
 > ⚠️ **Warning:** While this project is being used in production across numerous companies/projects, we are still building out some components and its behavior may change, especially around some of the configuration options (sanitizers, PIE and other link modes, etc.)
 
@@ -25,7 +25,7 @@ bazel_dep(name = "llvm", version = "0.6.0")
 register_toolchains("@llvm//toolchain:all")
 ```
 
-See https://github.com/cerisier/toolchains_llvm_bootstrapped/releases/latest
+See https://github.com/hermeticbuild/hermetic-llvm/releases/latest
 
 This registers all toolchains declared by this module for all supported targets.
 
@@ -244,7 +244,7 @@ These targets are what release workflows use to produce `.tar.zst` artifacts tod
 
 ## Roadmap
 
-See https://github.com/cerisier/toolchains_llvm_bootstrapped/milestone/1
+See https://github.com/hermeticbuild/hermetic-llvm/milestone/1
 
 ## Users
 - [OpenAI](https://github.com/openai/codex)

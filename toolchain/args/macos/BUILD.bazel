@@ -24,7 +24,7 @@ cc_sysroot(
 )
 
 #TODO(cerisier): Fix with new cc_args BuildSettingInfo formatter once it is ready.
-#                See https://github.com/cerisier/toolchains_llvm_bootstrapped/issues/302
+#                See https://github.com/hermeticbuild/hermetic-llvm/issues/302
 macos_minimum_os_flag(
     name = "macos_minimum_os_flag",
 )

@@ -124,7 +124,7 @@ cc_library(
         "@platforms//os:windows": [],
         "@platforms//os:linux": [
             # TODO(cerisier): Provide only a subset of linux UAPI headers for musl.
-            # https://github.com/cerisier/toolchains_llvm_bootstrapped/issues/146
+            # https://github.com/hermeticbuild/hermetic-llvm/issues/146
             "@kernel_headers",
         ],
     }) + [

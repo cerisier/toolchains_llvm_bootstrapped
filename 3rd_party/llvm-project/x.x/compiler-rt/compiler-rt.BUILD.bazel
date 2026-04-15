@@ -429,7 +429,7 @@ cc_library(
         "@platforms//os:macos": [],
         "@platforms//os:linux": [
             # TODO(cerisier): Provide only a subset of linux UAPI headers for musl.
-            # https://github.com/cerisier/toolchains_llvm_bootstrapped/issues/146
+            # https://github.com/hermeticbuild/hermetic-llvm/issues/146
             "@kernel_headers",
         ],
         "@platforms//os:windows": [],
@@ -673,7 +673,7 @@ cc_library(
     deps = [
         # linux UAPI headers are needed even for musl here because sanitizers include <sys/vt.h>
         # TODO(cerisier): Provide only a subset of linux UAPI headers for musl.
-        # https://github.com/cerisier/toolchains_llvm_bootstrapped/issues/146
+        # https://github.com/hermeticbuild/hermetic-llvm/issues/146
         "@kernel_headers",
         # Order matter. Search path should have C++ headers before any lib C headers.
     ] + select({
