@@ -86,7 +86,7 @@ jobs:
       matrix:
         # Add windows-11-arm when bazel supports it better.
         os: [windows-latest]
-        bazel_version: [latest]
+        bazel_version: [last_rc]
         folder:
           - "e2e/rules_cc"
           # - "e2e/rules_foreign_cc" TODO: Current tests only support linux
@@ -121,7 +121,6 @@ jobs:
           bazel \
             --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc \
             --bazelrc=.bazelrc \
-            --experimental_remote_repo_contents_cache \
             test \
             --repository_cache= \
             --repo_contents_cache= \
