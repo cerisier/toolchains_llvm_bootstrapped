@@ -9,8 +9,8 @@ VERSION=${TAG:1}
 # The prefix is chosen to match what GitHub generates for source archives
 # This guarantees that users can easily switch from a released artifact to a source archive
 # with minimal differences in their code (e.g. strip_prefix remains the same)
-PREFIX="toolchains_llvm_bootstrapped-$VERSION"
-ARCHIVE="toolchains_llvm_bootstrapped-$TAG.tar.gz"
+PREFIX="hermetic-llvm-$VERSION"
+ARCHIVE="hermetic-llvm-$TAG.tar.gz"
 
 # NB: configuration for 'git archive' is in /.gitattributes
 git archive --format=tar --prefix=${PREFIX}/ ${TAG} | gzip > $ARCHIVE

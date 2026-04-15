@@ -32,7 +32,7 @@ jobs:
       bazel_test_command: true
       prerelease: false
       release_files: |
-        toolchains_llvm_bootstrapped-*.tar.gz
+        hermetic-llvm-*.tar.gz
       tag_name: ${{ inputs.tag_name || github.ref_name }}
   publish:
     # Skip BCR publish for prebuilts tags like llvm-* or prebuilts-extras-*.
