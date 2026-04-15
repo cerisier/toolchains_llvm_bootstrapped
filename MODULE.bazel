@@ -1,7 +1,7 @@
 module(
     name = "llvm",
     version = "0.0.0",
-    bazel_compatibility = [">=8.3.0"],
+    bazel_compatibility = [">=8.5.0"],
     compatibility_level = 0,
 )
 
