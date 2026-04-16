@@ -66,8 +66,12 @@ cc_args(
     allowlist_include_directories = [
         "//sanitizers:sanitizers_headers_include_search_directory",
     ],
+    # Make sure these sanitizer paths come after any user supplied paths, which
+    # might also include another version of llvm's sanitizer headers.
     args = [
-        "-isystem",
+        "-Xclang",
+        "-internal-isystem",
+        "-Xclang",
         "{sanitizer_headers_include_search_paths}",
     ],
     data = [
