@@ -244,7 +244,7 @@ cc_args_list(
         ],
         "//conditions:default": [],
     }) + [
-        "//toolchain/args/linux:sanitizer_headers_include_search_paths",
+        # "//toolchain/args/linux:sanitizer_headers_include_search_paths",
     ],
 )
 
