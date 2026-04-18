@@ -6,6 +6,7 @@ load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@rules_cc//cc:cc_static_library.bzl", "cc_static_library")
 load("@rules_cc//cc:cc_test.bzl", "cc_test")
 load("@rules_cc//cc:objc_library.bzl", "objc_library")
+load("@rules_python//python:defs.bzl", "py_test")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load(
     "//:defs.bzl",
@@ -16,6 +17,7 @@ load(
     "msan_cc_binary",
     "nsan_cc_binary",
     "opt_binary",
+    "profile_cc_binary",
     "rtsan_cc_binary",
     "safestack_cc_binary",
     "tsan_cc_binary",
@@ -532,3 +534,32 @@ sh_test(
 )
 
 #######################################################
+
+profile_cc_binary(
+    name = "profile_main",
+    srcs = ["profile_main.cc"],
+    target_compatible_with = select({
+        "@platforms//os:macos": [],
+        "@platforms//os:linux": [],
+        "@platforms//os:windows": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+)
+
+py_test(
+    name = "profile_output_test",
+    srcs = ["profile_output_test.py"],
+    data = [":profile_main"],
+    env = {
+        "BINARY": "$(rootpath :profile_main)",
+    },
+    exec_compatible_with = HOST_CONSTRAINTS,
+    main = "profile_output_test.py",
+    tags = ["no-remote"],
+    target_compatible_with = select({
+        "@platforms//os:macos": [],
+        "@platforms//os:linux": [],
+        "@platforms//os:windows": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+)

@@ -89,6 +89,14 @@ lsan_cc_binary, _lsan_cc_binary_internal = with_cfg(cc_binary).set(
     True,
 ).build()
 
+profile_cc_binary, _profile_cc_binary_internal = with_cfg(cc_binary).set(
+    Label("@llvm//config:profile"),
+    True,
+).set(
+    Label("@llvm//config:host_profile"),
+    True,
+).build()
+
 opt_binary, _opt_binary_internal = with_cfg(cc_binary).set(
     "compilation_mode",
     "opt",
