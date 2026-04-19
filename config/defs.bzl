@@ -18,6 +18,7 @@ SANITIZERS = [
     "tsan",
     "asan",
     "lsan",
+    "fuzzer",
 ]
 
 def _is_exec_configuration(ctx):
