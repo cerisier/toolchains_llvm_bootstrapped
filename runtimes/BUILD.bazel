@@ -218,6 +218,10 @@ copy_to_resource_directory(
         "//config:lsan_enabled": {
             "//runtimes/compiler-rt:clang_rt.lsan.static": "libclang_rt.lsan",
         },
+        "//config:xray_enabled": {
+            "//runtimes/compiler-rt:clang_rt.xray.static": "libclang_rt.xray",
+            "//runtimes/compiler-rt:clang_rt.xray_basic.static": "libclang_rt.xray-basic",
+        },
         "//conditions:default": {},
     }),
     visibility = ["//visibility:public"],

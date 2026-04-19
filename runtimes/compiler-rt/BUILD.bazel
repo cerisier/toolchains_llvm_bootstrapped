@@ -125,6 +125,18 @@ alias(
 )
 
 alias(
+    name = "clang_rt.xray.static",
+    actual = "@compiler-rt//:clang_rt.xray.static",
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "clang_rt.xray_basic.static",
+    actual = "@compiler-rt//:clang_rt.xray_basic.static",
+    visibility = ["//visibility:public"],
+)
+
+alias(
     name = "clang_rt.crtbegin",
     actual = "@compiler-rt//:clang_rt.crtbegin.static",
     visibility = ["//visibility:public"],
