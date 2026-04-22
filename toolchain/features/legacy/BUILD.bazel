@@ -156,7 +156,6 @@ cc_feature_set(
         "@rules_cc//cc/toolchains/args/linker_param_file:feature",
         "@rules_cc//cc/toolchains/args/preprocessor_defines:feature",
         "@rules_cc//cc/toolchains/args/random_seed:feature",
-        "@rules_cc//cc/toolchains/args/runtime_library_search_directories:feature",
         "@rules_cc//cc/toolchains/args/shared_flag:feature",
         "@rules_cc//cc/toolchains/args/strip_debug_symbols:feature",
         "@rules_cc//cc/toolchains/args/strip_flags:feature",
@@ -186,6 +185,11 @@ cc_feature_set(
         ],
         "//conditions:default": [
             "@rules_cc//cc/toolchains/args/archiver_flags:feature",
+        ],
+    }) + select({
+        "@llvm//constraints/abi:msvc": [],
+        "//conditions:default": [
+            "@rules_cc//cc/toolchains/args/runtime_library_search_directories:feature",
         ],
     }) + select({
         "@platforms//os:windows": [],

@@ -8,10 +8,19 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = []):
             "@rules_cc//cc/toolchains/args/layering_check:layering_check",
             "@rules_cc//cc/toolchains/args/layering_check:use_module_maps",
             "@llvm//toolchain/features:static_link_cpp_runtimes",
-            "@llvm//toolchain/features/runtime_library_search_directories:feature",
             "@llvm//toolchain/features:archive_param_file",
             "@llvm//toolchain/features:parse_headers",
         ] + select({
+            "@llvm//constraints/abi:msvc": [
+                "@llvm//toolchain/features:targets_windows",
+                "@llvm//toolchain/features:supports_interface_shared_libraries",
+                "@llvm//toolchain/features:has_configured_linker_path",
+                "@llvm//toolchain/features:msvc_implib_flags",
+            ],
+            "//conditions:default": [
+                "@llvm//toolchain/features/runtime_library_search_directories:feature",
+            ],
+        }) + select({
             "@platforms//os:linux": [
                 "@rules_cc//cc/toolchains/args/thin_lto:feature",
             ],
@@ -56,9 +65,16 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = []):
             "@platforms//os:macos": [],
             "@platforms//os:windows": [
                 "@llvm//toolchain/features:static_link_cpp_runtimes",
-                "@llvm//toolchain/features/runtime_library_search_directories:feature",
             ],
             "@platforms//os:none": [],
+        }) + select({
+            "//platforms/config:abi_gnu": [
+                "@llvm//toolchain/features/runtime_library_search_directories:feature",
+            ],
+            "//platforms/config:abi_gnullvm": [
+                "@llvm//toolchain/features/runtime_library_search_directories:feature",
+            ],
+            "//conditions:default": [],
         }) + [
             "@rules_cc//cc/toolchains/args/layering_check:module_maps",
             # These are "enabled" but they only _actually_ get enabled when the underlying compilation mode is set.
@@ -72,6 +88,10 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = []):
             "@llvm//toolchain/features/legacy:experimental_replace_legacy_action_config_features",
         ] + select({
             "@llvm//constraints/abi:msvc": [
+                "@llvm//toolchain/features:targets_windows",
+                "@llvm//toolchain/features:supports_interface_shared_libraries",
+                "@llvm//toolchain/features:has_configured_linker_path",
+                "@llvm//toolchain/features:msvc_implib_flags",
                 "@rules_cc//cc/toolchains/args/windows:parse_showincludes_feature",
             ],
             "//conditions:default": [],
@@ -115,6 +135,8 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = []):
             ],
             "@platforms//os:windows": [
                 "@llvm//toolchain:windows_executable_pattern",
+                "@llvm//toolchain:windows_dynamic_library_pattern",
+                "@llvm//toolchain:windows_interface_library_pattern",
             ],
             "//conditions:default": [],
         }),

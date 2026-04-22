@@ -145,6 +145,37 @@ cc_feature(
 )
 
 cc_feature(
+    name = "targets_windows",
+    feature_name = "targets_windows",
+)
+
+cc_feature(
+    name = "supports_interface_shared_libraries",
+    feature_name = "supports_interface_shared_libraries",
+)
+
+cc_feature(
+    name = "has_configured_linker_path",
+    feature_name = "has_configured_linker_path",
+)
+
+cc_args(
+    name = "msvc_implib_flags_args",
+    actions = ["@rules_cc//cc/toolchains/actions:dynamic_library_link_actions"],
+    args = ["/IMPLIB:{interface_library_output_path}"],
+    format = {
+        "interface_library_output_path": "@rules_cc//cc/toolchains/variables:interface_library_output_path",
+    },
+    requires_not_none = "@rules_cc//cc/toolchains/variables:interface_library_output_path",
+)
+
+cc_feature(
+    name = "msvc_implib_flags",
+    args = [":msvc_implib_flags_args"],
+    feature_name = "msvc_implib_flags",
+)
+
+cc_feature(
     name = "parse_headers_wrapper",
     args = [
         "//toolchain/args:parse_header_args",

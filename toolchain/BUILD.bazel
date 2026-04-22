@@ -371,6 +371,22 @@ cc_artifact_name_pattern(
 )
 
 cc_artifact_name_pattern(
+    name = "windows_dynamic_library_pattern",
+    category = "@rules_cc//cc/toolchains/artifacts:dynamic_library",
+    extension = ".dll",
+    prefix = "",
+    visibility = ["//visibility:public"],
+)
+
+cc_artifact_name_pattern(
+    name = "windows_interface_library_pattern",
+    category = "@rules_cc//cc/toolchains/artifacts:interface_library",
+    extension = ".if.lib",
+    prefix = "",
+    visibility = ["//visibility:public"],
+)
+
+cc_artifact_name_pattern(
     name = "macos_dynamic_library_pattern",
     category = "@rules_cc//cc/toolchains/artifacts:dynamic_library",
     extension = ".dylib",
