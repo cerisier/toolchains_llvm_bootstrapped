@@ -693,21 +693,10 @@ cc_args(
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
-    # The main toolchain does not add -resource-dir on macOS, so XRay needs
-    # it explicitly to find the runtime under the hermetic resource dir.
-    # Passing the same resource dir twice on other platforms is harmless.
     args = [
-        "-resource-dir",
-        "{resource_dir}",
         "-fxray-instrument",
         "-fxray-modes=xray-basic",
     ],
-    data = [
-        "//runtimes:resource_directory",
-    ],
-    format = {
-        "resource_dir": "//runtimes:resource_directory",
-    },
 )
 
 cc_args_list(
