@@ -523,8 +523,8 @@ sh_test(
         "duplicate_symbol_a.cc",
         "duplicate_symbol_b.cc",
     ],
-    tags = ["local"],
     env_inherit = ["PATH"],
+    tags = ["local"],
     target_compatible_with = select({
         "@platforms//os:windows": ["@platforms//:incompatible"],
         "//conditions:default": [],
