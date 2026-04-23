@@ -3,6 +3,7 @@ load("@rules_cc//cc/toolchains:tool.bzl", "cc_tool")
 load("@rules_cc//cc/toolchains:tool_map.bzl", "cc_tool_map")
 load("//platforms:common.bzl", "SUPPORTED_TARGETS")
 load("//toolchain:cc_toolchain.bzl", "cc_toolchain")
+load("//toolchain/cuda:cc_toolchain.bzl", cuda_cc_toolchain = "cc_toolchain")
 load(":bootstrap_binary.bzl", "bootstrap_binary", "bootstrap_directory")
 
 def declare_tool_map(exec_os, exec_cpu):
