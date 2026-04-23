@@ -30,3 +30,8 @@ LIBC_SUPPORTED_TARGETS = [
     ("linux", "aarch64"),
     ("linux", "riscv64"),
 ]
+
+ABI_SUPPORTED_TARGETS = [
+    ("windows", "x86_64"),
+    ("windows", "aarch64"),
+]

@@ -72,7 +72,7 @@ cc_library(
         "@platforms//os:windows": [],
         "@platforms//os:linux": [
             # TODO(cerisier): Provide only a subset of linux UAPI headers for musl.
-            # https://github.com/hermeticbuild/hermetic-llvm/issues/146
+            # https://github.com/cerisier/toolchains_llvm_bootstrapped/issues/146
             "@kernel_headers",
         ],
     }) + select({
@@ -82,9 +82,13 @@ cc_library(
         "@llvm//platforms/config:gnu": [
             "@glibc//:gnu_libc_headers",
         ],
-        "@platforms//os:windows": [
+        "@llvm//constraints/abi:gnu": [
             "@mingw//:mingw_headers",
         ],
+        "@llvm//constraints/abi:gnullvm": [
+            "@mingw//:mingw_headers",
+        ],
+        "@llvm//constraints/abi:msvc": [],
         "@platforms//os:macos": [],
     }),
     includes = [

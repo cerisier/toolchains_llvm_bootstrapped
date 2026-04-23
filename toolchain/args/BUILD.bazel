@@ -36,6 +36,15 @@ cc_args(
     name = "target_flags",
     actions = [
         "@rules_cc//cc/toolchains/actions:compile_actions",
+    ],
+    args = [
+        "-target",
+    ] + LLVM_TARGET_TRIPLE,
+)
+
+cc_args(
+    name = "llvm_target_for_platform_link",
+    actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
     args = [
@@ -687,11 +696,16 @@ cc_args(
         "@rules_cc//cc/toolchains/actions:objc_compile",
         "@rules_cc//cc/toolchains/actions:objcpp_compile",
     ],
-    args = [
-        # We want to disable everything except builtin headers since they are
-        # provided as part of the compiler toolchain repository.
-        "-nostdlibinc",
-    ],
+    # We want to disable everything except builtin headers since they are
+    # provided as part of the compiler toolchain repository.
+    args = select({
+        "@llvm//constraints/abi:msvc": [
+            "/clang:-nostdlibinc",
+        ],
+        "//conditions:default": [
+            "-nostdlibinc",
+        ],
+    }),
 )
 
 config_setting(
