@@ -6,11 +6,13 @@ load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@rules_cc//cc:cc_static_library.bzl", "cc_static_library")
 load("@rules_cc//cc:cc_test.bzl", "cc_test")
 load("@rules_cc//cc:objc_library.bzl", "objc_library")
+load("@rules_python//python:defs.bzl", "py_test")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load(
     "//:defs.bzl",
     "asan_cc_binary",
     "cfi_cc_binary",
+    "coverage_cc_binary",
     "dfsan_cc_binary",
     "lsan_cc_binary",
     "msan_cc_binary",
@@ -531,3 +533,30 @@ sh_test(
 )
 
 #######################################################
+
+coverage_cc_binary(
+    name = "coverage_main",
+    srcs = ["profile_main.cc"],
+    target_compatible_with = select({
+        "@platforms//os:linux": [],
+        "@platforms//os:windows": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+)
+
+py_test(
+    name = "coverage_output_test",
+    srcs = ["profile_output_test.py"],
+    data = [":coverage_main"],
+    env = {
+        "BINARY": "$(rootpath :coverage_main)",
+    },
+    exec_compatible_with = HOST_CONSTRAINTS,
+    main = "profile_output_test.py",
+    tags = ["no-remote"],
+    target_compatible_with = select({
+        "@platforms//os:linux": [],
+        "@platforms//os:windows": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+)
