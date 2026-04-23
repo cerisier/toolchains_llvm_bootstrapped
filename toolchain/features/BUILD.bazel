@@ -233,9 +233,10 @@ cc_feature_set(
         ":dbg_stub",
         ":static_link_cpp_runtimes",
         ":parse_headers",
-        ":coverage_stub",
-        ":llvm_coverage_map_format",
-        ":gcc_coverage_map_format",
+        # TODO: Re-enable once coverage is supported
+        # ":coverage_stub",
+        # ":llvm_coverage_map_format",
+        # ":gcc_coverage_map_format",
         ":fully_static_link",
     ],
     visibility = ["//visibility:public"],
