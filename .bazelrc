@@ -58,6 +58,9 @@ common:remote --remote_executor=grpcs://remote.buildbuddy.io
 common:remote --jobs=800
 common:remote --extra_execution_platforms=@llvm//:rbe_platform
 
+common --per_file_copt=external/.*llvm-project.*@-Wno-thread-safety-analysis
+common --host_per_file_copt=external/.*llvm-project.*@-Wno-thread-safety-analysis
+
 # Load any settings specific to the current user.
 # .bazelrc.user should appear in .gitignore so that settings are not shared with team members
 # This needs to be last statement in this
