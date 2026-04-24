@@ -14,15 +14,15 @@ package(default_visibility = ["//visibility:public"])
     for tool in TOOLCHAIN_BINARIES
 ]
 
-bzl_library(
-    name = "defs",
-    srcs = ["defs.bzl"],
-)
-
 py_binary(
     name = "update_osx_sdk",
     srcs = ["update_osx_sdk.py"],
     main = "update_osx_sdk.py",
     python_version = "PY3",
     tags = ["manual"],
+)
+
+bzl_library(
+    name = "defs",
+    srcs = ["defs.bzl"],
 )
