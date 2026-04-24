@@ -1,3 +1,5 @@
+load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
+load("@bazel_lib//lib:run_binary.bzl", "run_binary")
 load("@llvm//:directory.bzl", "headers_directory")
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 
@@ -38,6 +40,40 @@ filegroup(
     srcs = [],
 )
 
+run_binary(
+    name = "c",
+    outs = ["libc.a"],
+    args = [
+        "rc",
+        "$@",
+    ] + select({
+        "@platforms//os:macos": ["--format=darwin"],
+        "//conditions:default": ["--format=gnu"],
+    }),
+    tool = "@llvm//tools:llvm-ar",
+)
+
+run_binary(
+    name = "m",
+    outs = ["libm.a"],
+    args = [
+        "rc",
+        "$@",
+    ] + select({
+        "@platforms//os:macos": ["--format=darwin"],
+        "//conditions:default": ["--format=gnu"],
+    }),
+    tool = "@llvm//tools:llvm-ar",
+)
+
+copy_to_directory(
+    name = "darwin_stub_library_search_directory",
+    srcs = [
+        ":c",
+        ":m",
+    ],
+)
+
 cc_args(
     name = "sysroot_flags",
     actions = [
@@ -70,9 +106,18 @@ cc_args(
 cc_args(
     name = "darwin_library_search_paths",
     actions = ["@rules_cc//cc/toolchains/actions:link_actions"],
-    args = ["-L{sysroot}/darwin/."],
-    data = [":sysroot"],
-    format = {"sysroot": ":sysroot"},
+    args = [
+        "-L{sysroot}/darwin/.",
+        "-L{darwin_stub_library_search_directory}",
+    ],
+    data = [
+        ":darwin_stub_library_search_directory",
+        ":sysroot",
+    ],
+    format = {
+        "darwin_stub_library_search_directory": ":darwin_stub_library_search_directory",
+        "sysroot": ":sysroot",
+    },
 )
 
 cc_args(
