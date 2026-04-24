@@ -8,6 +8,44 @@ headers_directory(
     path = ".",
 )
 
+filegroup(
+    name = "libcxx_headers_include_search_directory",
+    srcs = [],
+)
+
+filegroup(
+    name = "libcxxabi_headers_include_search_directory",
+    srcs = [],
+)
+
+filegroup(
+    name = "static_runtime_lib",
+    srcs = [],
+)
+
+filegroup(
+    name = "dynamic_runtime_lib",
+    srcs = [],
+)
+
+cc_args(
+    name = "libcxx_headers_include_search_paths",
+    actions = ["@rules_cc//cc/toolchains/actions:compile_actions"],
+    args = [],
+)
+
+cc_args(
+    name = "libcxx_library_search_paths",
+    actions = ["@rules_cc//cc/toolchains/actions:link_actions"],
+    args = [],
+)
+
+cc_args(
+    name = "libcxx_runtime_link_flags",
+    actions = ["@rules_cc//cc/toolchains/actions:link_actions"],
+    args = [],
+)
+
 cc_args(
     name = "sysroot_flags",
     actions = [

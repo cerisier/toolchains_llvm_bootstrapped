@@ -8,6 +8,36 @@ headers_directory(
     path = ".",
 )
 
+alias(
+    name = "libcxx_headers_include_search_directory",
+    actual = "@llvm//runtimes/libcxx:libcxx_headers_include_search_directory",
+)
+
+alias(
+    name = "libcxxabi_headers_include_search_directory",
+    actual = "@llvm//runtimes/libcxx:libcxxabi_headers_include_search_directory",
+)
+
+alias(
+    name = "libcxx_headers_include_search_paths",
+    actual = "@llvm//toolchain/args:libcxx_headers_include_search_paths",
+)
+
+alias(
+    name = "libcxx_library_search_paths",
+    actual = "@llvm//toolchain/args:libcxx_library_search_paths",
+)
+
+filegroup(
+    name = "static_runtime_lib",
+    srcs = [],
+)
+
+filegroup(
+    name = "dynamic_runtime_lib",
+    srcs = [],
+)
+
 cc_args(
     name = "sysroot_flags",
     actions = [
@@ -40,9 +70,26 @@ cc_args(
 cc_args(
     name = "darwin_library_search_paths",
     actions = ["@rules_cc//cc/toolchains/actions:link_actions"],
-    args = ["-L{sysroot}/darwin"],
+    args = ["-L{sysroot}/darwin/."],
     data = [":sysroot"],
     format = {"sysroot": ":sysroot"},
+)
+
+cc_args(
+    name = "libcxx_runtime_link_flags",
+    actions = ["@rules_cc//cc/toolchains/actions:link_actions"],
+    args = [
+        "{libcxx}",
+        "{libcxxabi}",
+    ],
+    data = [
+        "@llvm//runtimes/libcxx:libcxx.stage0",
+        "@llvm//runtimes/libcxx:libcxxabi.stage0",
+    ],
+    format = {
+        "libcxx": "@llvm//runtimes/libcxx:libcxx.stage0",
+        "libcxxabi": "@llvm//runtimes/libcxx:libcxxabi.stage0",
+    },
 )
 
 cc_args(
