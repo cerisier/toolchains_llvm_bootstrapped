@@ -16,10 +16,7 @@ cc_feature_set(
 
 cc_feature(
     name = "pic_feature",
-    args = [
-        ":pic_flags",
-        ":no_pic_flags",
-    ],
+    args = [":pic_flags"],
     overrides = "@rules_cc//cc/toolchains/features/legacy:pic",
 )
 
@@ -28,18 +25,6 @@ cc_args(
     actions = ["@rules_cc//cc/toolchains/actions:compile_actions"],
     args = ["-fPIC"],
     requires_not_none = "@rules_cc//cc/toolchains/variables:pic",
-)
-
-cc_args(
-    name = "no_pic_flags",
-    actions = ["@rules_cc//cc/toolchains/actions:compile_actions"],
-    args = select({
-        # By default if nothing is passed clang defaults to -fPIC based on
-        # CLANG_DEFAULT_PIE_ON_LINUX
-        "@platforms//os:linux": ["-fno-PIC"],
-        "//conditions:default": [],
-    }),
-    requires_none = "@rules_cc//cc/toolchains/variables:pic",
 )
 
 cc_feature(
