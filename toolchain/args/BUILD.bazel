@@ -678,6 +678,45 @@ cc_args_list(
 #######
 
 cc_args(
+    name = "xray_compiler_flags",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:compile_actions",
+    ],
+    args = [
+        "-fxray-instrument",
+        "-fxray-modes=xray-basic",
+    ],
+)
+
+cc_args(
+    name = "xray_linker_flags",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = [
+        "-fxray-instrument",
+        "-fxray-modes=xray-basic",
+    ],
+)
+
+cc_args_list(
+    name = "xray_flags",
+    args = select({
+        "//config:xray_enabled": [
+            ":xray_compiler_flags",
+            ":xray_linker_flags",
+        ],
+        "//config:host_xray_enabled": [
+            ":xray_compiler_flags",
+            ":xray_linker_flags",
+        ],
+        "//conditions:default": [],
+    }),
+)
+
+#######
+
+cc_args(
     name = "hermetic_compile_flags",
     actions = [
         "@rules_cc//cc/toolchains/actions:cpp_compile_actions",

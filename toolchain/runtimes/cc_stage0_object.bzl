@@ -19,6 +19,7 @@ bootstrap_transition = transition(
         "//config:ubsan": False,
         "//config:cfi": False,
         "//config:lsan": False,
+        "//config:xray": False,
         "//config:host_asan": False,
         "//config:host_msan": False,
         "//config:host_dfsan": False,
@@ -30,6 +31,7 @@ bootstrap_transition = transition(
         "//config:host_ubsan": False,
         "//config:host_cfi": False,
         "//config:host_lsan": False,
+        "//config:host_xray": False,
     },
     inputs = [],
     outputs = [
@@ -45,6 +47,7 @@ bootstrap_transition = transition(
         "//config:ubsan",
         "//config:cfi",
         "//config:lsan",
+        "//config:xray",
         "//config:host_asan",
         "//config:host_msan",
         "//config:host_dfsan",
@@ -56,6 +59,7 @@ bootstrap_transition = transition(
         "//config:host_ubsan",
         "//config:host_cfi",
         "//config:host_lsan",
+        "//config:host_xray",
     ],
 )
 

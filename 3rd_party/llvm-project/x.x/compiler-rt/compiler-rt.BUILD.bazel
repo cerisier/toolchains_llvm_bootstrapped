@@ -1048,10 +1048,12 @@ cc_library(
         ":sanitizer_sources",
     ],
     copts = SANITIZER_CFLAGS,
-    implementation_deps = [
-        ":libcxx_headers",
-        ":sanitizers_interface_headers",
-    ],
+    implementation_deps = select({
+        "@llvm//toolchain:runtimes_none": [
+            ":linux_libc_headers",
+        ],
+        "//conditions:default": [],
+    }),
     includes = [
         "include",
         "lib",
@@ -1074,10 +1076,12 @@ cc_library(
         ":sanitizer_libcdep_sources",
     ],
     copts = SANITIZER_CFLAGS,
-    implementation_deps = [
-        ":libcxx_headers",
-        ":sanitizers_interface_headers",
-    ],
+    implementation_deps = select({
+        "@llvm//toolchain:runtimes_none": [
+            ":linux_libc_headers",
+        ],
+        "//conditions:default": [],
+    }),
     includes = [
         "include",
         "lib",
@@ -2265,6 +2269,179 @@ cc_runtime_stage0_static_library(
         ":sanitizer_common_libc",
         ":sanitizer_common_symbolizer",
         ":sanitizer_common_symbolizer_internal",
+    ],
+)
+
+###
+### compiler-rt/lib/xray/CMakeLists.txt.
+###
+
+XRAY_SOURCES = [
+    "xray_buffer_queue.cpp",
+    "xray_init.cpp",
+    "xray_flags.cpp",
+    "xray_interface.cpp",
+    "xray_log_interface.cpp",
+    "xray_utils.cpp",
+]
+
+filegroup(
+    name = "xray_sources",
+    srcs = ["lib/xray/" + f for f in XRAY_SOURCES],
+)
+
+XRAY_BASIC_MODE_SOURCES = [
+    "xray_basic_flags.cpp",
+    "xray_basic_logging.cpp",
+]
+
+filegroup(
+    name = "xray_basic_mode_sources",
+    srcs = ["lib/xray/" + f for f in XRAY_BASIC_MODE_SOURCES],
+)
+
+filegroup(
+    name = "xray_arch_sources",
+    srcs = select({
+        "@platforms//cpu:x86_64": [
+            "lib/xray/xray_trampoline_x86_64.S",
+            "lib/xray/xray_x86_64.cpp",
+        ],
+        "@platforms//cpu:aarch64": [
+            "lib/xray/xray_AArch64.cpp",
+            "lib/xray/xray_trampoline_AArch64.S",
+        ],
+        "//conditions:default": [],
+    }),
+)
+
+XRAY_IMPL_HEADERS = [
+    "xray_allocator.h",
+    "xray_basic_flags.h",
+    "xray_basic_flags.inc",
+    "xray_basic_logging.h",
+    "xray_buffer_queue.h",
+    "xray_defs.h",
+    "xray_fdr_controller.h",
+    "xray_fdr_flags.h",
+    "xray_fdr_flags.inc",
+    "xray_fdr_log_records.h",
+    "xray_fdr_log_writer.h",
+    "xray_fdr_logging.h",
+    "xray_flags.h",
+    "xray_flags.inc",
+    "xray_function_call_trie.h",
+    "xray_interface_internal.h",
+    "xray_powerpc64.inc",
+    "xray_profile_collector.h",
+    "xray_profiling_flags.h",
+    "xray_profiling_flags.inc",
+    "xray_recursion_guard.h",
+    "xray_segmented_array.h",
+    "xray_tsc.h",
+    "xray_utils.h",
+    "xray_x86_64.inc",
+]
+
+filegroup(
+    name = "xray_headers",
+    srcs = ["lib/xray/" + f for f in XRAY_IMPL_HEADERS],
+)
+
+filegroup(
+    name = "xray_interface_headers",
+    srcs = [
+        "include/xray/xray_interface.h",
+        "include/xray/xray_log_interface.h",
+        "include/xray/xray_records.h",
+    ],
+)
+
+XRAY_CFLAGS = SANITIZER_COMMON_CFLAGS + [
+    "-Wno-format",
+    "-fno-rtti",
+]
+
+XRAY_DEFINES = [
+    "SANITIZER_COMMON_NO_REDEFINE_BUILTINS",
+    "XRAY_HAS_EXCEPTIONS=1",
+    "XRAY_SUPPORTED=1",
+]
+
+cc_library(
+    name = "xray",
+    srcs = [
+        ":xray_arch_sources",
+        ":xray_headers",
+        ":xray_sources",
+    ],
+    hdrs = select({
+        "@llvm//toolchain:runtimes_none": [":xray_interface_headers"],
+        "//conditions:default": [],
+    }),
+    copts = XRAY_CFLAGS,
+    implementation_deps = select({
+        "@llvm//toolchain:runtimes_none": [
+            ":libcxx_headers",
+            ":linux_libc_headers",
+        ],
+        "//conditions:default": [],
+    }) + [
+        ":sanitizer_impl_headers",
+    ],
+    includes = [
+        "include",
+        "lib",
+    ],
+    local_defines = XRAY_DEFINES,
+    deps = [
+        ":sanitizer_common",
+        ":sanitizer_common_libc",
+    ],
+    alwayslink = True,
+)
+
+cc_library(
+    name = "xray_basic",
+    srcs = [
+        ":xray_basic_mode_sources",
+        ":xray_headers",
+    ],
+    hdrs = select({
+        "@llvm//toolchain:runtimes_none": [":xray_interface_headers"],
+        "//conditions:default": [],
+    }),
+    copts = XRAY_CFLAGS,
+    implementation_deps = select({
+        "@llvm//toolchain:runtimes_none": [
+            ":libcxx_headers",
+            ":linux_libc_headers",
+        ],
+        "//conditions:default": [],
+    }) + [
+        ":sanitizer_impl_headers",
+    ],
+    includes = [
+        "include",
+        "lib",
+    ],
+    local_defines = XRAY_DEFINES,
+    alwayslink = True,
+)
+
+cc_runtime_stage0_static_library(
+    name = "clang_rt.xray.static",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":xray",
+    ],
+)
+
+cc_runtime_stage0_static_library(
+    name = "clang_rt.xray_basic.static",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":xray_basic",
     ],
 )
 
