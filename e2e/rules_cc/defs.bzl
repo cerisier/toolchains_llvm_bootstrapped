@@ -93,3 +93,8 @@ opt_binary, _opt_binary_internal = with_cfg(cc_binary).set(
     "compilation_mode",
     "opt",
 ).build()
+
+coverage_cc_binary, _coverage_cc_binary_internal = with_cfg(cc_binary).set(
+    "collect_code_coverage",
+    True,
+).build()
