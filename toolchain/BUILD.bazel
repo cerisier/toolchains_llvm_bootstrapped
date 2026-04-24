@@ -166,7 +166,9 @@ cc_args_list(
     name = "sysroot_flags",
     args = select({
         "@platforms//os:macos": [
-            "//toolchain/args/macos:macos_sdk_sysroot",
+            "@macos_sdk//sysroot:sysroot_flags",
+            "@macos_sdk//sysroot:darwin_headers_include_search_paths",
+            "@macos_sdk//sysroot:darwin_library_search_paths",
         ],
         "//conditions:default": [
             "//toolchain/args:empty_sysroot_flags",
@@ -187,7 +189,9 @@ cc_args_list(
 cc_args_list(
     name = "stdlib",
     args = select({
-        "@platforms//os:macos": [],
+        "@platforms//os:macos": [
+            "@macos_sdk//sysroot:stdlib_flags",
+        ],
         "//conditions:default": [
             "//toolchain/args:stdlib",
         ],
@@ -216,7 +220,7 @@ cc_args_list(
     name = "macos_toolchain_args",
     args = [
         "//toolchain/args/macos:macos_minimum_os_flags",
-        "//toolchain/args/macos:macos_default_framework_flags",
+        "@macos_sdk//sysroot:default_framework_flags",
     ],
 )
 

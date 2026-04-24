@@ -26,25 +26,33 @@ cc_args(
 cc_args(
     name = "darwin_headers_include_search_paths",
     actions = ["@rules_cc//cc/toolchains/actions:compile_actions"],
-    args = [],
+    allowlist_include_directories = [":sysroot"],
+    args = [
+        "-Xclang",
+        "-internal-isystem",
+        "-Xclang",
+        "{sysroot}/include/any-darwin-any",
+    ],
+    data = [":sysroot"],
+    format = {"sysroot": ":sysroot"},
 )
 
 cc_args(
     name = "darwin_library_search_paths",
     actions = ["@rules_cc//cc/toolchains/actions:link_actions"],
-    args = [],
+    args = ["-L{sysroot}/darwin"],
+    data = [":sysroot"],
+    format = {"sysroot": ":sysroot"},
 )
 
 cc_args(
     name = "default_framework_flags",
     actions = ["@rules_cc//cc/toolchains/actions:link_actions"],
-    args = [
-        "-Wl,-framework,Foundation",
-    ],
+    args = [],
 )
 
 cc_args(
     name = "stdlib_flags",
     actions = ["@rules_cc//cc/toolchains/actions:link_actions"],
-    args = [],
+    args = ["-nostdlib++"],
 )
