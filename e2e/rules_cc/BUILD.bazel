@@ -6,7 +6,6 @@ load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@rules_cc//cc:cc_static_library.bzl", "cc_static_library")
 load("@rules_cc//cc:cc_test.bzl", "cc_test")
 load("@rules_cc//cc:objc_library.bzl", "objc_library")
-load("@rules_python//python:defs.bzl", "py_test")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load(
     "//:defs.bzl",
@@ -545,15 +544,14 @@ fuzzer_cc_binary(
     }),
 )
 
-py_test(
+exec_test(
     name = "fuzzer_output_test",
-    srcs = ["fuzzer_output_test.py"],
+    srcs = ["fuzzer_output_test.sh"],
     data = [":fuzzer_main"],
     env = {
         "BINARY": "$(rootpath :fuzzer_main)",
     },
-    exec_compatible_with = HOST_CONSTRAINTS,
-    main = "fuzzer_output_test.py",
+    rule = sh_test,
     tags = ["no-remote"],
     target_compatible_with = select({
         "@platforms//os:linux": [],
@@ -570,18 +568,17 @@ fuzzer_asan_cc_binary(
     }),
 )
 
-py_test(
+exec_test(
     name = "fuzzer_asan_output_test",
-    srcs = ["fuzzer_sanitizer_output_test.py"],
+    srcs = ["fuzzer_sanitizer_output_test.sh"],
     data = [":fuzzer_asan_main"],
     env = {
         "BINARY": "$(rootpath :fuzzer_asan_main)",
-        "EXPECTED_SUBSTRING": "ERROR: AddressSanitizer: heap-use-after-free",
+        "EXPECTED_OUTPUT": "ERROR: AddressSanitizer: heap-use-after-free",
         "EXPECT_NONZERO": "1",
         "INPUT_TEXT": "ASAN",
     },
-    exec_compatible_with = HOST_CONSTRAINTS,
-    main = "fuzzer_sanitizer_output_test.py",
+    rule = sh_test,
     tags = ["no-remote"],
     target_compatible_with = select({
         "@platforms//os:linux": [],
@@ -598,18 +595,17 @@ fuzzer_ubsan_cc_binary(
     }),
 )
 
-py_test(
+exec_test(
     name = "fuzzer_ubsan_output_test",
-    srcs = ["fuzzer_sanitizer_output_test.py"],
+    srcs = ["fuzzer_sanitizer_output_test.sh"],
     data = [":fuzzer_ubsan_main"],
     env = {
         "BINARY": "$(rootpath :fuzzer_ubsan_main)",
-        "EXPECTED_SUBSTRING": "runtime error: signed integer overflow",
+        "EXPECTED_OUTPUT": "runtime error: signed integer overflow",
         "EXPECT_NONZERO": "0",
         "INPUT_TEXT": "UBSAN",
     },
-    exec_compatible_with = HOST_CONSTRAINTS,
-    main = "fuzzer_sanitizer_output_test.py",
+    rule = sh_test,
     tags = ["no-remote"],
     target_compatible_with = select({
         "@platforms//os:linux": [],
