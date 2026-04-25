@@ -1,3 +1,4 @@
+load("@bazel_features//:features.bzl", "bazel_features")
 load("@llvm_config//:version.bzl", "LLVM_VERSION_MAJOR")
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains:tool.bzl", "cc_tool")
@@ -5,6 +6,14 @@ load("@rules_cc//cc/toolchains:tool_map.bzl", "cc_tool_map")
 load("//platforms:common.bzl", "SUPPORTED_TARGETS")
 load("//toolchain:cc_toolchain.bzl", "cc_toolchain")
 load(":bootstrap_binary.bzl", "bootstrap_binary", "bootstrap_directory")
+
+def _validate_static_library_tool(prefix):
+    if not bazel_features.cc.supports_starlarkified_toolchains:
+        return {}
+
+    return {
+        "@rules_cc//cc/toolchains/actions:validate_static_library": prefix + "/static-library-validator",
+    }
 
 def declare_tool_map(exec_os, exec_cpu):
     prefix = exec_os + "_" + exec_cpu
@@ -19,8 +28,7 @@ def declare_tool_map(exec_os, exec_cpu):
         "@rules_cc//cc/toolchains/actions:link_actions": prefix + "/lld",
         "@rules_cc//cc/toolchains/actions:objcopy_embed_data": prefix + "/llvm-objcopy",
         "@rules_cc//cc/toolchains/actions:strip": prefix + "/llvm-strip",
-        "@rules_cc//cc/toolchains/actions:validate_static_library": prefix + "/static-library-validator",
-    }
+    } | _validate_static_library_tool(prefix)
 
     cc_tool_map(
         name = prefix + "/default_tools",

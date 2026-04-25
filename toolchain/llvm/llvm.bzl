@@ -1,9 +1,14 @@
+load("@bazel_features//:features.bzl", "bazel_features")
 load("@llvm//runtimes:module_map.bzl", "include_path", "module_map")
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains:tool.bzl", "cc_tool")
 load("@rules_cc//cc/toolchains:tool_map.bzl", "cc_tool_map")
 load("//:directory.bzl", "headers_directory")
 load("//toolchain:selects.bzl", "platform_extra_binary", "platform_extra_binary_files")
+
+_VALIDATE_STATIC_LIBRARY_TOOL = {
+    "@rules_cc//cc/toolchains/actions:validate_static_library": ":static_library_validator",
+} if bazel_features.cc.supports_starlarkified_toolchains else {}
 
 def declare_llvm_targets(*, suffix = ""):
     headers_directory(
@@ -123,8 +128,7 @@ def declare_llvm_targets(*, suffix = ""):
         "@rules_cc//cc/toolchains/actions:objcopy_embed_data": ":llvm-objcopy",
         "@rules_cc//cc/toolchains/actions:dwp": ":llvm-dwp",
         "@rules_cc//cc/toolchains/actions:strip": ":llvm-strip",
-        "@rules_cc//cc/toolchains/actions:validate_static_library": ":static_library_validator",
-    }
+    } | _VALIDATE_STATIC_LIBRARY_TOOL
 
     cc_tool_map(
         name = "default_tools",

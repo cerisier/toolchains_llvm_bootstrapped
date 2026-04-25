@@ -1,12 +1,9 @@
-load("@bazel_features_version//:version.bzl", "version")
+load("@bazel_features//:features.bzl", "bazel_features")
 
 def validate_static_library_compatible():
-    if not version:
-        return []
-    if int(version.split(".", 1)[0]) >= 9:
+    if bazel_features.cc.supports_starlarkified_toolchains:
         return []
 
-    # Bazel 8 drops `cc_args(env = ...)` on the validate_static_library action.
-    # Keep this validator integration coverage on Bazel 9+, where the tool env
-    # is propagated correctly.
+    # Bazel 8 drops `cc_args(env = ...)` on validate_static_library. Keep this
+    # validator integration coverage on Bazel 9+, where the tool env is propagated.
     return ["@platforms//:incompatible"]
