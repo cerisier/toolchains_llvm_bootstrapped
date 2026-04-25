@@ -1,4 +1,5 @@
 load("@llvm_config//:version.bzl", "LLVM_VERSION_MAJOR")
+load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains:tool.bzl", "cc_tool")
 load("@rules_cc//cc/toolchains:tool_map.bzl", "cc_tool_map")
 load("//platforms:common.bzl", "SUPPORTED_TARGETS")
@@ -91,6 +92,22 @@ def declare_tool_map(exec_os, exec_cpu):
         actual = "@llvm//tools/internal:header-parser",
     )
 
+    cc_args(
+        name = prefix + "/header-parser-args",
+        actions = [
+            "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
+        ],
+        data = [
+            prefix + "/bin/clang++",
+        ],
+        env = {
+            "LLVM_CLANGXX": "{clangxx}",
+        },
+        format = {
+            "clangxx": prefix + "/bin/clang++",
+        },
+    )
+
     cc_tool(
         name = prefix + "/header-parser",
         src = prefix + "/bin/header-parser",
@@ -116,6 +133,25 @@ def declare_tool_map(exec_os, exec_cpu):
         name = prefix + "/bin/c++filt",
         platform = prefix + "_platform",
         actual = "@llvm-project//llvm:llvm.stripped",
+    )
+
+    cc_args(
+        name = prefix + "/static-library-validator-args",
+        actions = [
+            "@rules_cc//cc/toolchains/actions:validate_static_library",
+        ],
+        data = [
+            prefix + "/bin/c++filt",
+            prefix + "/bin/llvm-nm",
+        ],
+        env = {
+            "LLVM_CXXFILT": "{cxxfilt}",
+            "LLVM_NM": "{llvm_nm}",
+        },
+        format = {
+            "cxxfilt": prefix + "/bin/c++filt",
+            "llvm_nm": prefix + "/bin/llvm-nm",
+        },
     )
 
     cc_tool(
@@ -215,6 +251,16 @@ def declare_tool_map(exec_os, exec_cpu):
     cc_tool(
         name = prefix + "/llvm-strip",
         src = prefix + "/bin/llvm-strip",
+        # TODO: Remove this once rules_cc includes validate_static_library in
+        # all_files, or cc_static_library uses the validate action's files
+        # directly. This hangs validator files off strip because strip is an
+        # exec-configured tool already included in rules_cc 0.2.18's legacy
+        # file groups.
+        data = [
+            prefix + "/bin/static-library-validator",
+            prefix + "/bin/c++filt",
+            prefix + "/bin/llvm-nm",
+        ],
     )
 
 def declare_toolchains(*, execs = None, targets = SUPPORTED_TARGETS):
@@ -248,6 +294,10 @@ def declare_toolchains(*, execs = None, targets = SUPPORTED_TARGETS):
                 "@rules_cc//cc/toolchains/args/archiver_flags:use_libtool_on_macos_setting": ":{}_{}/tools_with_libtool".format(exec_os, exec_cpu),
                 "//conditions:default": ":{}_{}/default_tools".format(exec_os, exec_cpu),
             }),
+            extra_args = [
+                ":{}_{}/header-parser-args".format(exec_os, exec_cpu),
+                ":{}_{}/static-library-validator-args".format(exec_os, exec_cpu),
+            ],
         )
 
         for (target_os, target_cpu) in targets:

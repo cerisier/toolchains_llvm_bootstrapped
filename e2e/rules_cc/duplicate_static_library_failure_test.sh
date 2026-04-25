@@ -12,6 +12,7 @@ export HOME="${TEST_TMPDIR}"
 if "${BAZEL_BIN}" \
     --bazelrc=.bazelrc \
     build \
+    --@llvm//toolchain:source=bootstrapped \
     --color=yes \
     --curses=yes \
     //:duplicate_symbol_lib 2>&1 | tee "${LOG}"; then

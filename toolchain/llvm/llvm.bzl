@@ -1,10 +1,9 @@
-load("@bazel_skylib//rules:native_binary.bzl", "native_binary")
 load("@llvm//runtimes:module_map.bzl", "include_path", "module_map")
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains:tool.bzl", "cc_tool")
 load("@rules_cc//cc/toolchains:tool_map.bzl", "cc_tool_map")
 load("//:directory.bzl", "headers_directory")
-load("//toolchain:selects.bzl", "platform_extra_binary")
+load("//toolchain:selects.bzl", "platform_extra_binary", "platform_extra_binary_files")
 
 def declare_llvm_targets(*, suffix = ""):
     headers_directory(
@@ -17,24 +16,34 @@ def declare_llvm_targets(*, suffix = ""):
     # Convenient exports
     native.exports_files(native.glob(["bin/*"]))
 
-    native_binary(
-        name = "header-parser",
-        src = platform_extra_binary("bin/header-parser"),
-        out = "prebuilts/bin/header-parser" + suffix,
+    native.filegroup(
+        name = "clangxx_file",
+        srcs = ["bin/clang++" + suffix],
     )
 
-    native_binary(
-        name = "prebuilt-clang++",
-        src = "bin/clang++" + suffix,
-        out = "prebuilts/bin/clang++" + suffix,
+    cc_args(
+        name = "header_parser_args",
+        actions = [
+            "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
+        ],
+        data = [
+            ":clangxx_file",
+        ],
+        env = {
+            "LLVM_CLANGXX": "{clangxx}",
+        },
+        format = {
+            "clangxx": ":clangxx_file",
+        },
+        visibility = ["//visibility:public"],
     )
 
     cc_tool(
         name = "header_parser",
-        src = ":header-parser",
+        src = platform_extra_binary("bin/header-parser"),
         data = [
             ":builtin_resource_dir",
-            ":prebuilt-clang++",
+            ":clangxx_file",
         ],
         allowlist_include_directories = [":builtin_resource_dir"],
     )
@@ -65,31 +74,42 @@ def declare_llvm_targets(*, suffix = ""):
         visibility = ["//visibility:public"],
     )
 
-    # TODO(zbarsky): If we could specify the paths to these via env vars, we wouldn't need to copy things around.
-    native_binary(
-        name = "static-library-validator",
-        src = platform_extra_binary("bin/static-library-validator"),
-        out = "prebuilts/bin/static-library-validator" + suffix,
+    native.filegroup(
+        name = "cxxfilt_file",
+        srcs = ["bin/c++filt" + suffix],
     )
 
-    native_binary(
-        name = "llvm-nm",
-        src = "bin/llvm-nm" + suffix,
-        out = "prebuilts/bin/llvm-nm" + suffix,
+    native.filegroup(
+        name = "llvm_nm_file",
+        srcs = ["bin/llvm-nm" + suffix],
     )
 
-    native_binary(
-        name = "c++filt",
-        src = "bin/c++filt" + suffix,
-        out = "prebuilts/bin/c++filt" + suffix,
+    cc_args(
+        name = "static_library_validator_args",
+        actions = [
+            "@rules_cc//cc/toolchains/actions:validate_static_library",
+        ],
+        data = [
+            ":cxxfilt_file",
+            ":llvm_nm_file",
+        ],
+        env = {
+            "LLVM_CXXFILT": "{cxxfilt}",
+            "LLVM_NM": "{llvm_nm}",
+        },
+        format = {
+            "cxxfilt": ":cxxfilt_file",
+            "llvm_nm": ":llvm_nm_file",
+        },
+        visibility = ["//visibility:public"],
     )
 
     cc_tool(
         name = "static_library_validator",
-        src = ":static-library-validator",
+        src = platform_extra_binary("bin/static-library-validator"),
         data = [
-            ":c++filt",
-            ":llvm-nm",
+            ":cxxfilt_file",
+            ":llvm_nm_file",
         ],
     )
 
@@ -176,6 +196,15 @@ def declare_llvm_targets(*, suffix = ""):
     cc_tool(
         name = "llvm-strip",
         src = "bin/llvm-strip" + suffix,
+        # TODO: Remove this once rules_cc includes validate_static_library in
+        # all_files, or cc_static_library uses the validate action's files
+        # directly. This hangs validator files off strip because strip is an
+        # exec-configured tool already included in rules_cc 0.2.18's legacy
+        # file groups.
+        data = platform_extra_binary_files("bin/static-library-validator") + [
+            ":cxxfilt_file",
+            ":llvm_nm_file",
+        ],
     )
 
     include_path(
