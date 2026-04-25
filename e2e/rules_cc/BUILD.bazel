@@ -22,6 +22,9 @@ load(
     "tysan_cc_binary",
     "ubsan_cc_binary",
 )
+load(":bazel_version.bzl", "validate_static_library_compatible")
+
+_VALIDATE_STATIC_LIBRARY_COMPATIBLE = validate_static_library_compatible()
 
 cc_library(
     name = "objc_c_lib",
@@ -494,6 +497,7 @@ cc_library(
 cc_static_library(
     name = "duplicate_symbol_lib",
     tags = ["manual"],
+    target_compatible_with = _VALIDATE_STATIC_LIBRARY_COMPATIBLE,
     deps = [
         ":duplicate_symbol_a",
         ":duplicate_symbol_b",
@@ -511,6 +515,7 @@ cc_library(
 
 cc_static_library(
     name = "comm_symbol_static_lib",
+    target_compatible_with = _VALIDATE_STATIC_LIBRARY_COMPATIBLE,
     deps = [":comm_symbol_defs"],
 )
 
@@ -525,7 +530,7 @@ sh_test(
     ],
     env_inherit = ["PATH"],
     tags = ["local"],
-    target_compatible_with = select({
+    target_compatible_with = _VALIDATE_STATIC_LIBRARY_COMPATIBLE + select({
         "@platforms//os:windows": ["@platforms//:incompatible"],
         "//conditions:default": [],
     }),
