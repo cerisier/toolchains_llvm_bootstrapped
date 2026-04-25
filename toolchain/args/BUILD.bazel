@@ -683,7 +683,7 @@ cc_args(
         "@rules_cc//cc/toolchains/actions:compile_actions",
     ],
     args = [
-        "-fsanitize=fuzzer-no-link",
+        "-fsanitize=fuzzer",
     ],
 )
 
@@ -692,22 +692,9 @@ cc_args(
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
-    args = select({
-        "@platforms//os:macos": [
-            "-Wl,-force_load,{libclang_rt.fuzzer}",
-        ],
-        "//conditions:default": [
-            "-Wl,--whole-archive",
-            "{libclang_rt.fuzzer}",
-            "-Wl,--no-whole-archive",
-        ],
-    }),
-    data = [
-        "//runtimes/compiler-rt:clang_rt.fuzzer.static",
+    args = [
+        "-fsanitize=fuzzer",
     ],
-    format = {
-        "libclang_rt.fuzzer": "//runtimes/compiler-rt:clang_rt.fuzzer.static",
-    },
 )
 
 cc_args_list(

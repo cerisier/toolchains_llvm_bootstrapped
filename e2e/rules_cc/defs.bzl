@@ -93,7 +93,13 @@ fuzzer_cc_binary, _fuzzer_cc_binary_internal = with_cfg(cc_binary).set(
     Label("@llvm//config:fuzzer"),
     True,
 ).set(
+    Label("@llvm//config:ubsan"),
+    True,
+).set(
     Label("@llvm//config:host_fuzzer"),
+    True,
+).set(
+    Label("@llvm//config:host_ubsan"),
     True,
 ).build()
 
