@@ -17,6 +17,11 @@
 #include <unistd.h>
 #endif
 
+static int error(const char *message) {
+    fprintf(stderr, "link-wrapper: %s\n", message);
+    return 127;
+}
+
 static int run_process(char *const args[]) {
 #ifdef _WIN32
     int status = _spawnv(_P_WAIT, args[0], (const char *const *)args);
@@ -130,6 +135,11 @@ static const char *required_env(const char *name) {
         exit(127);
     }
     return value;
+}
+
+static int env_enabled(const char *name) {
+    const char *value = getenv(name);
+    return value != NULL && value[0] != '\0';
 }
 
 static int copy_file(const char *source_path, const char *destination_path) {
@@ -260,14 +270,21 @@ static int generate_interface_library(const char *format, const char *input_path
 }
 
 int main(int argc, char **argv) {
-    (void)argc;
-
     const char *clangxx = required_env("LLVM_CLANGXX");
-    const char *strip_debug_symbols = getenv("LLVM_STRIP_DEBUG_SYMBOLS");
-    int should_strip_debug_symbols = strip_debug_symbols != NULL && strip_debug_symbols[0] != '\0';
 
-    argv[0] = (char *)clangxx;
-    int status = run_process(argv);
+    char **clang_args = (char **)malloc(((size_t)argc + 1) * sizeof(char *));
+    if (clang_args == NULL) {
+        return error("failed to allocate clang argv");
+    }
+
+    clang_args[0] = (char *)clangxx;
+    for (int i = 1; i < argc; ++i) {
+        clang_args[i] = argv[i];
+    }
+    clang_args[argc] = NULL;
+
+    int status = run_process(clang_args);
+    free(clang_args);
     if (status != 0) {
         return status;
     }
@@ -290,7 +307,7 @@ int main(int argc, char **argv) {
             return status;
         }
 
-        if (should_strip_debug_symbols) {
+        if (env_enabled("LLVM_STRIP_DEBUG_SYMBOLS")) {
             const char *strip = required_env("LLVM_STRIP");
             char *strip_args[] = {
                 (char *)strip,
