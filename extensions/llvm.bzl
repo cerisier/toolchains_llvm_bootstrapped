@@ -138,6 +138,35 @@ def _create_support_archives():
             urls = params.urls,
         )
 
+def _llvm_version_repository_impl(rctx):
+    rctx.file("BUILD.bazel", """\
+load("@bazel_lib//:bzl_library.bzl", "bzl_library")
+
+bzl_library(
+    name = "version",
+    srcs = ["version.bzl"],
+    visibility = ["//visibility:public"],
+)
+""")
+    rctx.file(
+        "version.bzl",
+        "LLVM_VERSION = {}\n".format(repr(rctx.attr.llvm_version)),
+    )
+    return rctx.repo_metadata(reproducible = True)
+
+_llvm_version_repository = repository_rule(
+    implementation = _llvm_version_repository_impl,
+    attrs = {
+        "llvm_version": attr.string(mandatory = True),
+    },
+)
+
+def _root_direct_deps(mctx):
+    for module in mctx.modules:
+        if module.is_root and module.name == "llvm":
+            return ["llvm-project", "llvm_version"]
+    return ["llvm-project"]
+
 def _get_llvm_version(mctx):
     module_selected_version = None
 
@@ -178,12 +207,16 @@ def _llvm_impl(mctx):
     llvm_version_index = _get_llvm_version_index(mctx)
     source_archive = _source_archive_for_version(llvm_version, llvm_version_index)
 
+    _llvm_version_repository(
+        name = "llvm_version",
+        llvm_version = llvm_version,
+    )
     _create_llvm_project_repository(mctx, source_archive, _get_llvm_targets(mctx))
     _create_support_archives()
 
     return mctx.extension_metadata(
         reproducible = True,
-        root_module_direct_deps = ["llvm-project"],
+        root_module_direct_deps = _root_direct_deps(mctx),
         root_module_direct_dev_deps = [],
     )
 
