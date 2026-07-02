@@ -18,7 +18,6 @@ load("@llvm//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
 load("@llvm//toolchain/runtimes:cc_runtime_shared_library.bzl", "cc_runtime_stage0_shared_library")
 load("@llvm//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
 load("@llvm//toolchain/runtimes:cc_stage0_object.bzl", "cc_stage0_object")
-load("@llvm//toolchain/runtimes:cc_unsanitized_library.bzl", "cc_unsanitized_library")
 load("@llvm-project//:vars.bzl", "LLVM_VERSION_MAJOR")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
@@ -780,22 +779,6 @@ cc_runtime_stage0_static_library(
 
 ##### Sanitizers #######
 
-# We want to reset the sanitizer configuration because LLVM builds c++ tools
-# and linking those will lead to errors, as the sanitizer libs is not an linker input.
-# Making it a linker input would result in cycles, and we probably don't want to rebuild
-# a bunch of LLVM code for each different sanitizer configuration anyway.
-
-# Ideally there would be a way to avoid this flag propagating to the exec configuration,
-# but for now this is good enough for now.
-cc_unsanitized_library(
-    name = "llvm_Symbolize",
-    # This is not as terrible as it looks - with the remote repo contents cache, Bazel will be able
-    # to pull down a single ActionResult containing the description of the repo contents, which is enough
-    # to compute AC keys and hopefully get a CAS hit on these deps. So once they're built once, they won't
-    # trigger expensive fetches of llvm-project.
-    dep = "@llvm-project//llvm:Symbolize",
-)
-
 cc_library(
     name = "sanitizers_interface_headers",
     hdrs = glob(["include/sanitizer/*.h"]),
@@ -1266,45 +1249,6 @@ cc_library(
     alwayslink = True,
 )
 
-cc_library(
-    name = "sanitizer_common_symbolizer_internal",
-    srcs = [
-        "lib/sanitizer_common/symbolizer/sanitizer_symbolize.cpp",
-        ":sanitizer_impl_headers_sources",
-    ],
-    copts = SANITIZER_CFLAGS + [
-        # The standalone build of the internal symbolizer strips the __cxa_atexit
-        # shim via internalize; do the same explicitly to avoid duplicate symbols
-        # when statically linking against libc implementations that provide it.
-        "-DSANITIZER_SKIP_CXA_ATEXIT_OVERRIDE",
-    ],
-    implementation_deps = [
-        ":libcxx_headers",
-        ":sanitizers_interface_headers",
-    ] + select({
-        # sanitizer_symbolize.cpp compiles against LLVM's public headers
-        # (DIPrinter.h ...) and the generated Config/*.h. On macOS the overlay
-        # exposes LLVM's include dirs only through the private llvm_copts, which
-        # does not propagate to dependents, so depend on :config (which carries
-        # includes = ["include"] plus the generated config headers). Other
-        # platforms already find these headers via the existing llvm deps.
-        #
-        # Keep this macOS-only: adding it everywhere fed the generated Config
-        # headers into the path-mapped compile and crashed Bazel 9 (last_rc)
-        # under --experimental_output_paths=strip on this target.
-        "@platforms//os:macos": ["@llvm-project//llvm:config"],
-        "//conditions:default": [],
-    }),
-    includes = [
-        "include",
-        "lib",
-    ],
-    deps = [
-        ":llvm_Symbolize",
-    ],
-    alwayslink = True,
-)
-
 ###
 ### compiler-rt/lib/interception/CMakeLists.txt.
 ###
@@ -1511,10 +1455,7 @@ cc_runtime_stage0_static_library(
         ":sanitizer_common_libc",
         ":sanitizer_common_coverage",
         ":sanitizer_common_symbolizer",
-        ":sanitizer_common_symbolizer_internal",
         ":interception",
-        # if COMPILER_RT_ENABLE_INTERNAL_SYMBOLIZER
-        ":llvm_Symbolize",
     ],
 )
 
@@ -1604,7 +1545,6 @@ cc_runtime_stage0_static_library(
         ":sanitizer_common_coverage",
         ":sanitizer_common_libc",
         ":sanitizer_common_symbolizer",
-        ":sanitizer_common_symbolizer_internal",
         ":ubsan_no_standalone",
     ],
 )
@@ -1713,7 +1653,6 @@ cc_runtime_stage0_static_library(
         ":sanitizer_common_coverage",
         ":sanitizer_common_libc",
         ":sanitizer_common_symbolizer",
-        ":sanitizer_common_symbolizer_internal",
         ":ubsan_no_standalone",
     ],
 )
@@ -1797,7 +1736,6 @@ cc_runtime_stage0_static_library(
         ":sanitizer_common",
         ":sanitizer_common_libc",
         ":sanitizer_common_symbolizer",
-        ":sanitizer_common_symbolizer_internal",
     ],
 )
 
@@ -1913,7 +1851,6 @@ cc_runtime_stage0_static_library(
         ":sanitizer_common_coverage",
         ":sanitizer_common_libc",
         ":sanitizer_common_symbolizer",
-        ":sanitizer_common_symbolizer_internal",
         ":ubsan_no_standalone",
     ],
 )
@@ -2053,7 +1990,6 @@ cc_runtime_stage0_static_library(
         ":sanitizer_common_coverage",
         ":sanitizer_common_libc",
         ":sanitizer_common_symbolizer",
-        ":sanitizer_common_symbolizer_internal",
     ],
 )
 
@@ -2290,7 +2226,6 @@ cc_runtime_stage0_static_library(
         ":sanitizer_common_coverage",
         ":sanitizer_common_libc",
         ":sanitizer_common_symbolizer",
-        ":sanitizer_common_symbolizer_internal",
         ":tsan",
         ":ubsan_no_standalone",
     ],
@@ -2388,7 +2323,6 @@ cc_library(
         ":sanitizer_common_coverage",
         ":sanitizer_common_libc",
         ":sanitizer_common_symbolizer",
-        ":sanitizer_common_symbolizer_internal",
     ],
     alwayslink = True,
 )
@@ -2422,7 +2356,6 @@ cc_runtime_stage0_static_library(
         ":sanitizer_common_coverage",
         ":sanitizer_common_libc",
         ":sanitizer_common_symbolizer",
-        ":sanitizer_common_symbolizer_internal",
     ],
 )
 
@@ -2983,7 +2916,6 @@ cc_library(
         ":sanitizer_common_coverage",
         ":sanitizer_common_libc",
         ":sanitizer_common_symbolizer",
-        ":sanitizer_common_symbolizer_internal",
         ":ubsan_no_standalone",
     ],
 )
@@ -3069,7 +3001,6 @@ cc_library(
         ":sanitizer_common_coverage",
         ":sanitizer_common_libc",
         ":sanitizer_common_symbolizer",
-        ":sanitizer_common_symbolizer_internal",
     ],
 )
 

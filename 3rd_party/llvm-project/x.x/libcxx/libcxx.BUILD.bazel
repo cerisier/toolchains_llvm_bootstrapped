@@ -4,8 +4,8 @@ load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@llvm//3rd_party/llvm-project/21.x/libcxx:libcxx_headers.bzl", "LIBCXX_HEADERS_FILES_21")
 load("@llvm//3rd_party/llvm-project/22.x/libcxx:libcxx_headers.bzl", "LIBCXX_HEADERS_FILES_22")
-load("@llvm//toolchain/runtimes:cc_runtime_shared_library.bzl", "cc_runtime_stage1_shared_library")
-load("@llvm//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
+load("@llvm//toolchain/runtimes:cc_runtime_shared_library.bzl", "cc_runtime_stage1_asan_shared_library")
+load("@llvm//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_asan_static_library")
 load("@llvm-project//:vars.bzl", "LLVM_VERSION_MAJOR")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
@@ -38,6 +38,14 @@ _CONFIG_SITE_MUSL_LINES = [
 
 _CONFIG_SITE_NO_MUSL_LINES = [
     "#define _LIBCPP_HAS_MUSL_LIBC 0",
+]
+
+_CONFIG_SITE_ASAN_LINES = [
+    "#define _LIBCPP_INSTRUMENTED_WITH_ASAN 1",
+]
+
+_CONFIG_SITE_NO_ASAN_LINES = [
+    "#define _LIBCPP_INSTRUMENTED_WITH_ASAN 0",
 ]
 
 _CONFIG_SITE_THREAD_API_WIN32_LINES = [
@@ -74,7 +82,6 @@ _CONFIG_SITE_GENERIC_LINES = [
     "#define _LIBCPP_HAS_STD_MODULES         0",
     "#define _LIBCPP_HAS_TIME_ZONE_DATABASE  1",
     "#define _LIBCPP_HAS_VENDOR_AVAILABILITY_ANNOTATIONS 0",
-    "#define _LIBCPP_INSTRUMENTED_WITH_ASAN  0",
     "",
     "#define _LIBCPP_PSTL_BACKEND_SERIAL",
     "// #define _LIBCPP_PSTL_BACKEND_STD_THREAD",
@@ -110,6 +117,10 @@ write_file(
               select({
                   "@platforms//os:windows": _CONFIG_SITE_THREAD_API_WIN32_LINES,
                   "//conditions:default": _CONFIG_SITE_THREAD_API_PTHREAD_LINES,
+              }) +
+              select({
+                  "@llvm//config:asan_enabled": _CONFIG_SITE_ASAN_LINES,
+                  "//conditions:default": _CONFIG_SITE_NO_ASAN_LINES,
               }),
     visibility = ["//visibility:public"],
 )
@@ -349,7 +360,7 @@ cc_library(
     ],
 )
 
-cc_runtime_stage0_static_library(
+cc_runtime_stage0_asan_static_library(
     name = "libcxx.static",
     visibility = ["//visibility:public"],
     deps = [
@@ -357,7 +368,7 @@ cc_runtime_stage0_static_library(
     ],
 )
 
-cc_runtime_stage1_shared_library(
+cc_runtime_stage1_asan_shared_library(
     name = "libcxx.shared",
     shared_lib_name = "libc++.so.1",
     user_link_flags = [

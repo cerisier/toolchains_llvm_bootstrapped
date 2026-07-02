@@ -227,9 +227,6 @@ cc_args(
     },
 )
 
-# Note that sanitizers must use `cc_unsanitized_library` on third-party deps
-# if they end up depending on an exec-configure binary, as linking that binary can fail
-# since it was compiled with sanitizer support but linked without it.
 cc_args(
     name = "ubsan_linker_flags",
     actions = [
@@ -322,9 +319,6 @@ cc_args(
     ],
 )
 
-# Note that sanitizers must use `cc_unsanitized_library` on third-party deps
-# if they end up depending on an exec-configure binary, as linking that binary can fail
-# since it was compiled with sanitizer support but linked without it.
 cc_args(
     name = "msan_linker_flags",
     actions = [
@@ -369,9 +363,6 @@ cc_args(
     },
 )
 
-# Note that sanitizers must use `cc_unsanitized_library` on third-party deps
-# if they end up depending on an exec-configure binary, as linking that binary can fail
-# since it was compiled with sanitizer support but linked without it.
 cc_args(
     name = "dfsan_linker_flags",
     actions = [
@@ -410,9 +401,6 @@ cc_args(
     ],
 )
 
-# Note that sanitizers must use `cc_unsanitized_library` on third-party deps
-# if they end up depending on an exec-configure binary, as linking that binary can fail
-# since it was compiled with sanitizer support but linked without it.
 cc_args(
     name = "nsan_linker_flags",
     actions = [
@@ -451,9 +439,6 @@ cc_args(
     ],
 )
 
-# Note that sanitizers must use `cc_unsanitized_library` on third-party deps
-# if they end up depending on an exec-configure binary, as linking that binary can fail
-# since it was compiled with sanitizer support but linked without it.
 cc_args(
     name = "safestack_linker_flags",
     actions = [
@@ -492,9 +477,6 @@ cc_args(
     ],
 )
 
-# Note that sanitizers must use `cc_unsanitized_library` on third-party deps
-# if they end up depending on an exec-configure binary, as linking that binary can fail
-# since it was compiled with sanitizer support but linked without it.
 cc_args(
     name = "rtsan_linker_flags",
     actions = [
@@ -533,9 +515,6 @@ cc_args(
     ],
 )
 
-# Note that sanitizers must use `cc_unsanitized_library` on third-party deps
-# if they end up depending on an exec-configure binary, as linking that binary can fail
-# since it was compiled with sanitizer support but linked without it.
 cc_args(
     name = "tysan_linker_flags",
     actions = [
@@ -574,9 +553,6 @@ cc_args(
     ],
 )
 
-# Note that sanitizers must use `cc_unsanitized_library` on third-party deps
-# if they end up depending on an exec-configure binary, as linking that binary can fail
-# since it was compiled with sanitizer support but linked without it.
 cc_args(
     name = "tsan_linker_flags",
     actions = [
@@ -615,9 +591,6 @@ cc_args(
     ],
 )
 
-# Note that sanitizers must use `cc_unsanitized_library` on third-party deps
-# if they end up depending on an exec-configure binary, as linking that binary can fail
-# since it was compiled with sanitizer support but linked without it.
 cc_args(
     name = "asan_linker_flags",
     actions = [
@@ -656,9 +629,6 @@ cc_args(
     ],
 )
 
-# Note that sanitizers must use `cc_unsanitized_library` on third-party deps
-# if they end up depending on an exec-configure binary, as linking that binary can fail
-# since it was compiled with sanitizer support but linked without it.
 cc_args(
     name = "lsan_linker_flags",
     actions = [

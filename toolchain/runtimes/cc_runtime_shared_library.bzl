@@ -10,5 +10,11 @@ _builder = with_cfg(
 
 cc_runtime_stage0_shared_library, _cc_stage0_shared_library_internal = configure_builder_for_runtimes(_builder.clone(), "stage0", "dynamic").build()
 cc_runtime_stage1_shared_library, _cc_stage1_shared_library_internal = configure_builder_for_runtimes(_builder.clone(), "stage1", "dynamic").build()
+cc_runtime_stage1_asan_shared_library, _cc_stage1_asan_shared_library_internal = configure_builder_for_runtimes(
+    _builder.clone(),
+    "stage1",
+    "dynamic",
+    inherit_asan = True,
+).build()
 cc_runtime_stage2_shared_library, _cc_stage2_shared_library_internal = configure_builder_for_runtimes(_builder.clone(), "stage2", "dynamic").build()
 cc_runtime_stage3_shared_library, _cc_stage3_shared_library_internal = configure_builder_for_runtimes(_builder.clone(), "stage3", "dynamic").build()

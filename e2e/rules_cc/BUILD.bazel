@@ -771,10 +771,28 @@ asan_cc_binary(
 )
 
 exec_test(
+    name = "asan_libcxx_container_overflow_test",
+    srcs = ["asan_libcxx_container_overflow.cc"],
+    copts = ["-fno-exceptions"],
+    linkopts = ["-Wl,--icf=none"],
+    rule = asan_cc_binary,
+    target_compatible_with = select({
+        "@platforms//os:linux": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+)
+
+exec_test(
     name = "asan_output_test",
     srcs = ["asan_output_test.sh"],
-    data = [":asan_fail"],
-    env = {"BINARY": "$(rootpath :asan_fail)"},
+    data = [
+        ":asan_fail",
+        "@llvm//tools:llvm-symbolizer",
+    ],
+    env = {
+        "ASAN_SYMBOLIZER_PATH": "$(rootpath @llvm//tools:llvm-symbolizer)",
+        "BINARY": "$(rootpath :asan_fail)",
+    },
     rule = sh_test,
 )
 

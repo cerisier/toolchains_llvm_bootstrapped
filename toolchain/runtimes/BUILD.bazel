@@ -1,8 +1,6 @@
 load("@bazel_lib//:bzl_library.bzl", "bzl_library")
 load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 
-# gazelle:exclude cc_unsanitized_library.bzl
-
 cc_args_list(
     name = "hermetic_link_flags",
     args = select({
@@ -252,17 +250,6 @@ bzl_library(
         "@rules_cc//cc/common",
     ],
 )
-
-# TODO: Depends on private API that isn't visible
-# bzl_library(
-#     name = "cc_unsanitized_library",
-#     srcs = ["cc_unsanitized_library.bzl"],
-#     visibility = ["//visibility:public"],
-#     deps = [
-#         "@rules_cc//cc/common",
-#         "@rules_cc//cc/private/rules_impl:core_rules",
-#     ],
-# )
 
 bzl_library(
     name = "with_cfg_runtimes_common",

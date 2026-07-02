@@ -17,7 +17,6 @@ _DEFAULT_SOURCE_PATCHES = [
     "//3rd_party/llvm-project/x.x/patches:llvm-driver-tool-order.patch",
     "//3rd_party/llvm-project/x.x/patches:llvm-driver-best-tool-match.patch",
     "//3rd_party/llvm-project/x.x/patches:llvm-dsymutil-corefoundation.patch",
-    "//3rd_party/llvm-project/x.x/patches:compiler-rt-symbolizer_skip_cxa_atexit.patch",
     "//3rd_party/llvm-project/x.x/patches:lit_test_stub.patch",
     "//3rd_party/llvm-project/x.x/patches:pfm-rules-cc-load.patch",
     "//3rd_party/llvm-project/x.x/patches:clang-hardlink-filenames.patch",

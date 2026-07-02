@@ -2,6 +2,7 @@
 set -euo pipefail
 
 EXPECTED_OUTPUT="ERROR: AddressSanitizer: heap-use-after-free on address"
+EXPECTED_SYMBOLIZED_FRAME="in main"
 
 BIN="$BINARY"
 if [[ ! -x "$BIN" && -n "${RUNFILES_DIR:-}" ]]; then
@@ -26,13 +27,14 @@ trim() {
   echo "$1" | sed 's/[[:space:]]*$//'
 }
 
-if [[ "$(trim "$OUTPUT")" == *"$(trim "$EXPECTED_OUTPUT")"* ]]; then
-  echo "✅ Asan output contains expected string."
+if [[ "$(trim "$OUTPUT")" == *"$(trim "$EXPECTED_OUTPUT")"* && "$OUTPUT" == *"$EXPECTED_SYMBOLIZED_FRAME"* ]]; then
+  echo "✅ ASan output contains the expected error and symbolized frame."
 else
-  echo "❌ Asan output does not contain expected string."
+  echo "❌ ASan output does not contain the expected error and symbolized frame."
   echo
   echo "---- Expected ----"
   printf '%s\n' "$EXPECTED_OUTPUT"
+  printf '%s\n' "$EXPECTED_SYMBOLIZED_FRAME"
   echo "---- Got ----"
   printf '%s\n' "$OUTPUT"
   echo "------------------"
