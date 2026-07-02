@@ -143,6 +143,7 @@ bazel_dep(name = "gazelle", version = "0.47.0", dev_dependency = True)
 bazel_dep(name = "bazel_skylib_gazelle_plugin", version = "1.9.0", dev_dependency = True)
 bazel_dep(name = "buildifier_prebuilt", version = "8.5.1.2", dev_dependency = True)
 bazel_dep(name = "rules_go", version = "0.61.1", dev_dependency = True)
+bazel_dep(name = "rules_platform", version = "0.1.0", dev_dependency = True)
 
 go_sdk = use_extension("@rules_go//go:extensions.bzl", "go_sdk", dev_dependency = True)
 go_sdk.download(version = "1.25.0")
@@ -197,6 +198,10 @@ single_version_override(
     patches = ["//3rd_party/rules_swift:0001-allow-disabling-autoconfiguration.patch"],
     version = "3.4.2",
 )
+
+go_deps = use_extension("@gazelle//:extensions.bzl", "go_deps", dev_dependency = True)
+go_deps.from_file(go_mod = "//tests/wasm:go.mod")
+use_repo(go_deps, "com_github_tetratelabs_wazero")
 
 ## OVERRIDES PORTS FROM DEPENDENCIES
 

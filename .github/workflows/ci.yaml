@@ -28,7 +28,6 @@ jobs:
           - "e2e/rules_rust"
           - "e2e/rules_rs"
           - "e2e/cross_compilation"
-          - "e2e/wasm"
           - "examples/custom_targets"
         include:
           # Path mapping requires Bazel 9+.
@@ -88,7 +87,6 @@ jobs:
           # - "e2e/rules_foreign_cc" TODO: Current tests only support linux
           # - "e2e/rules_rust" - Need a bazel nightly with https://github.com/bazelbuild/bazel/pull/28038
           - "e2e/cross_compilation"
-          # - "e2e/wasm"
     runs-on: ${{ matrix.os }}
 
     # Configure a human readable name for each job
@@ -133,7 +131,6 @@ jobs:
           # - "e2e/rules_foreign_cc" TODO: Current tests only support linux
           # - "e2e/rules_rust" - Need a bazel nightly with https://github.com/bazelbuild/bazel/pull/28038
           # - "e2e/cross_compilation"
-          # - "e2e/wasm"
     runs-on: ${{ matrix.os }}
 
     # Configure a human readable name for each job
