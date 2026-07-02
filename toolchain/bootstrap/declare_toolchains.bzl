@@ -74,6 +74,14 @@ def declare_tool_map(exec_os, exec_cpu, prefix = None, fdo_profile = None, fdo_i
         "@rules_cc//cc/toolchains/actions:cpp_header_parsing": prefix + "/header-parser",
     } | _validate_static_library_tool(prefix)
 
+    MSVC_TOOLS = {
+        "@rules_cc//cc/toolchains/actions:assembly_actions": prefix + "/clang-cl",
+        "@rules_cc//cc/toolchains/actions:c_compile": prefix + "/clang-cl",
+        "@rules_cc//cc/toolchains/actions:objc_compile": prefix + "/clang-cl",
+        "@llvm//toolchain:cpp_compile_actions_without_header_parsing": prefix + "/clang-cl",
+        "@rules_cc//cc/toolchains/actions:link_actions": prefix + "/lld-link",
+    }
+
     cc_tool_map(
         name = prefix + "/default_tools",
         tools = BASE_TOOLS | COMPLETE_ONLY_TOOLS | {
@@ -106,25 +114,15 @@ def declare_tool_map(exec_os, exec_cpu, prefix = None, fdo_profile = None, fdo_i
 
     cc_tool_map(
         name = prefix + "/tools_for_msvc",
-        tools = BASE_TOOLS | COMPLETE_ONLY_TOOLS | {
-            "@rules_cc//cc/toolchains/actions:assembly_actions": prefix + "/clang-cl",
-            "@rules_cc//cc/toolchains/actions:c_compile": prefix + "/clang-cl",
-            "@rules_cc//cc/toolchains/actions:objc_compile": prefix + "/clang-cl",
-            "@llvm//toolchain:cpp_compile_actions_without_header_parsing": prefix + "/clang-cl",
+        tools = BASE_TOOLS | COMPLETE_ONLY_TOOLS | MSVC_TOOLS | {
             "@rules_cc//cc/toolchains/actions:ar_actions": prefix + "/llvm-ar",
-            "@rules_cc//cc/toolchains/actions:link_actions": prefix + "/lld-link",
         },
     )
 
     cc_tool_map(
         name = prefix + "/staged_tools_for_msvc",
-        tools = BASE_TOOLS | {
-            "@rules_cc//cc/toolchains/actions:assembly_actions": prefix + "/clang-cl",
-            "@rules_cc//cc/toolchains/actions:c_compile": prefix + "/clang-cl",
-            "@rules_cc//cc/toolchains/actions:objc_compile": prefix + "/clang-cl",
-            "@llvm//toolchain:cpp_compile_actions_without_header_parsing": prefix + "/clang-cl",
+        tools = BASE_TOOLS | MSVC_TOOLS | {
             "@rules_cc//cc/toolchains/actions:ar_actions": prefix + "/llvm-ar",
-            "@rules_cc//cc/toolchains/actions:link_actions": prefix + "/lld-link",
         },
     )
 
