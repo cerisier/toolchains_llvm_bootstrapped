@@ -250,8 +250,8 @@ def declare_llvm_targets(*, suffix = ""):
             "bin/ld.lld" + suffix,
             "bin/ld64.lld" + suffix,
             "bin/lld" + suffix,
-            "bin/wasm-ld" + suffix,
             "bin/lld-link" + suffix,
+            "bin/wasm-ld" + suffix,
         ],
     )
 

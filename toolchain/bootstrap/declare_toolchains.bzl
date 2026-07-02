@@ -314,8 +314,8 @@ def declare_tool_map(exec_os, exec_cpu, prefix = None, fdo_profile = None, fdo_i
             prefix + "/bin/ld.lld",
             prefix + "/bin/ld64.lld",
             prefix + "/bin/lld",
-            prefix + "/bin/wasm-ld",
             prefix + "/bin/lld-link",
+            prefix + "/bin/wasm-ld",
         ],
     )
 
