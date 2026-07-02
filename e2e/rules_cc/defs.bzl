@@ -1,5 +1,46 @@
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
 load("@with_cfg.bzl", "with_cfg")
+
+_EXTERNAL_INCLUDE_PATHS_GLIBC_PLATFORM = select({
+    "@platforms//cpu:aarch64": [Label("@llvm//platforms:linux_aarch64_gnu.2.34")],
+    "@platforms//cpu:x86_64": [Label("@llvm//platforms:linux_x86_64_gnu.2.34")],
+    "//conditions:default": [],
+})
+
+def _external_include_paths_glibc_headers_test_impl(ctx):
+    for header in ctx.attr.glibc_start[CcInfo].compilation_context.direct_headers:
+        if header.owner.name == "bits/errno.h":
+            fail("{} declares bits/errno.h in hdrs".format(ctx.attr.glibc_start.label))
+
+    executable = ctx.actions.declare_file(ctx.label.name + ".sh")
+    ctx.actions.write(executable, "#!/usr/bin/env bash\n", is_executable = True)
+    return [DefaultInfo(executable = executable)]
+
+external_include_paths_glibc_headers_test = rule(
+    implementation = _external_include_paths_glibc_headers_test_impl,
+    attrs = {
+        "glibc_start": attr.label(
+            mandatory = True,
+            providers = [CcInfo],
+        ),
+    },
+    test = True,
+)
+
+external_include_paths_glibc_alias, _external_include_paths_glibc_alias_internal = with_cfg(
+    native.alias,
+    extra_providers = [CcInfo],
+).set(
+    "platforms",
+    _EXTERNAL_INCLUDE_PATHS_GLIBC_PLATFORM,
+).extend(
+    "features",
+    ["external_include_paths"],
+).extend(
+    "host_features",
+    ["external_include_paths"],
+).build()
 
 ubsan_cc_binary, _ubsan_cc_binary_internal = with_cfg(cc_binary).set(
     Label("@llvm//config:ubsan"),

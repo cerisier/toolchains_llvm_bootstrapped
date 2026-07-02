@@ -2,4 +2,4 @@
 
 set -euo pipefail
 
-test -x "${1:?external_include_paths_test binary path required}"
+test -x "${1:?error_header_binary path required}"
