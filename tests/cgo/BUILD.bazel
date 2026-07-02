@@ -1,6 +1,7 @@
 load("@bazel_lib//lib:transitions.bzl", "platform_transition_binary")
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
 load("@rules_go//go:def.bzl", "go_binary")
+load(":defs.bzl", "force_pic_go_binary")
 
 go_binary(
     name = "hello_cgo",
@@ -22,6 +23,34 @@ platform_transition_binary(
 build_test(
     name = "hello_cgo_x86_64_musl_test",
     targets = [":hello_cgo_x86_64_musl"],
+)
+
+force_pic_go_binary(
+    name = "hello_cgo_force_pic",
+    srcs = ["hello.go"],
+    cgo = True,
+)
+
+platform_transition_binary(
+    name = "hello_cgo_force_pic_x86_64_gnu",
+    binary = ":hello_cgo_force_pic",
+    target_platform = "@llvm//platforms:linux_x86_64",
+)
+
+build_test(
+    name = "hello_cgo_force_pic_x86_64_gnu_test",
+    targets = [":hello_cgo_force_pic_x86_64_gnu"],
+)
+
+platform_transition_binary(
+    name = "hello_cgo_force_pic_x86_64_musl",
+    binary = ":hello_cgo_force_pic",
+    target_platform = "@llvm//platforms:linux_x86_64_musl",
+)
+
+build_test(
+    name = "hello_cgo_force_pic_x86_64_musl_test",
+    targets = [":hello_cgo_force_pic_x86_64_musl"],
 )
 
 # Build the cgo binary in the exec configuration
