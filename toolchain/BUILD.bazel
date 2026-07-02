@@ -348,7 +348,6 @@ cc_args_list(
 
         # TODO(cerisier): Explode this into specific args instead
         ":platform_specific_args",
-
         "//toolchain/args:sanitizer_flags",
 
         # Common default link flags.
@@ -439,8 +438,6 @@ cc_action_type_set(
         "@rules_cc//cc/toolchains/actions:cpp_compile",
         "@rules_cc//cc/toolchains/actions:cpp_module_compile",
         "@rules_cc//cc/toolchains/actions:cpp_module_codegen",
-        "@rules_cc//cc/toolchains/actions:cpp20_module_compile",
-        "@rules_cc//cc/toolchains/actions:cpp20_module_codegen",
         "@rules_cc//cc/toolchains/actions:lto_backend",
         "@rules_cc//cc/toolchains/actions:clif_match",
         "@rules_cc//cc/toolchains/actions:objcpp_compile",
