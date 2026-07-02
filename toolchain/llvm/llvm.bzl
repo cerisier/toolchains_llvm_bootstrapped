@@ -239,7 +239,7 @@ def declare_llvm_targets(*, suffix = ""):
         data = [
             ":builtin_resource_dir",
         ],
-        capabilities = [],  # no pic support when targetting MSVC
+        capabilities = [],  # no pic support when targeting MSVC
         allowlist_include_directories = [":builtin_resource_dir"],
     )
 
