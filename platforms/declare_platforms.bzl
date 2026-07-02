@@ -33,7 +33,7 @@ def declare_platforms():
             #
             # Users can still create their own platforms without an abi
             # constraint if they want to.
-            constraints.append("//constraints/windows/abi:{}".format(WINDOWS_DEFAULT_ABI))
+            constraints.append("//constraints/windows/abi:" + WINDOWS_DEFAULT_ABI)
 
         native.platform(
             name = "{}_{}".format(target_os, target_cpu),
@@ -83,9 +83,9 @@ def declare_platforms_windows_abi_aware():
             native.platform(
                 name = "{}_{}_{}".format(target_os, target_cpu, abi),
                 constraint_values = [
-                    "@platforms//cpu:{}".format(target_cpu),
-                    "@platforms//os:{}".format(target_os),
-                    "//constraints/windows/abi:{}".format(abi),
+                    "@platforms//cpu:" + target_cpu,
+                    "@platforms//os:" + target_os,
+                    "//constraints/windows/abi:" + abi,
                 ],
                 visibility = ["//visibility:public"],
             )
@@ -94,9 +94,9 @@ def declare_platforms_windows_abi_aware():
                 native.platform(
                     name = "{}_{}_{}".format(target_os, alias, abi),
                     constraint_values = [
-                        "@platforms//cpu:{}".format(target_cpu),
-                        "@platforms//os:{}".format(target_os),
-                        "//constraints/windows/abi:{}".format(abi),
+                        "@platforms//cpu:" + target_cpu,
+                        "@platforms//os:" + target_os,
+                        "//constraints/windows/abi:" + abi,
                     ],
                     visibility = ["//visibility:public"],
                 )

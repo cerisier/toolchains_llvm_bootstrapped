@@ -80,9 +80,9 @@ def declare_config_settings_windows_abi_aware():
             native.config_setting(
                 name = "{}_{}_{}".format(target_os, target_cpu, abi),
                 constraint_values = [
-                    "@platforms//cpu:{}".format(target_cpu),
-                    "@platforms//os:{}".format(target_os),
-                    "//constraints/windows/abi:{}".format(abi),
+                    "@platforms//cpu:" + target_cpu,
+                    "@platforms//os:" + target_os,
+                    "//constraints/windows/abi:" + abi,
                 ],
                 visibility = ["//visibility:public"],
             )
