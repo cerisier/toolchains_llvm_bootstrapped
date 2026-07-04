@@ -109,6 +109,11 @@ def _cc_internal_symbolizer_object_impl(ctx):
     bitcode = ctx.actions.declare_file(ctx.label.name + ".bc")
     api_list = ",".join(ctx.attr.global_symbols)
     target_triple = ctx.attr.target_triple[0]
+
+    # Match build_symbolizer.sh:
+    # https://github.com/llvm/llvm-project/blob/main/compiler-rt/lib/sanitizer_common/symbolizer/scripts/build_symbolizer.sh
+    # Link LLVM IR, internalize every definition except ctx.attr.global_symbols,
+    # then compile ctx.outputs.out.
     link_args = ctx.actions.args()
     link_args.add_all([
         "-target",
