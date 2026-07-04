@@ -302,9 +302,14 @@ cc_args_list(
             "//toolchain/args:static_link_executable",
         ],
         "//conditions:default": [],
-    }) + [
-        "//toolchain/args/linux:sanitizer_headers_include_search_paths",
-    ],
+    }) + select({
+        # Only expose the sanitizer interface headers when compiling user
+        # programs (runtime_stage=complete), not when building the compiler-rt
+        # runtimes themselves. Those already include compiler-rt/include
+        # directly, and adding it again collides in the sandbox.
+        ":runtimes_all": ["//toolchain/args/linux:sanitizer_headers_include_search_paths"],
+        "//conditions:default": [],
+    }),
 )
 
 # TODO(cerisier): extract those into proper semantic args list.
