@@ -154,3 +154,14 @@ def config_settings():
             build_setting_default = False,
         )
         _declare_sanitizer_config_setting(sanitizer)
+
+    bool_flag(
+        name = "libcxxabi_internal_symbolizer",
+        build_setting_default = False,
+    )
+    native.config_setting(
+        name = "libcxxabi_internal_symbolizer_enabled",
+        flag_values = {
+            ":libcxxabi_internal_symbolizer": "true",
+        },
+    )

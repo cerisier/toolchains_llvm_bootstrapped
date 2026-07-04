@@ -24,6 +24,7 @@ _DEFAULT_SOURCE_PATCHES = [
     "//3rd_party/llvm-project/x.x/patches:lld-macho-thinlto-obj-path.patch",
     "//3rd_party/llvm-project/x.x/patches:thinlto-roundtrip-before-codegen.patch",
     "//3rd_party/llvm-project/x.x/patches:llvm-abi-breaking-checks.patch",
+    "//3rd_party/llvm-project/x.x/patches:llvm-config-thread-override.patch",
 ]
 
 _LLVM_21_SOURCE_PATCHES = [

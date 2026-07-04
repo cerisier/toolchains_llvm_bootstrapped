@@ -785,14 +785,17 @@ exec_test(
 exec_test(
     name = "asan_output_test",
     srcs = ["asan_output_test.sh"],
-    data = [
-        ":asan_fail",
-        "@llvm//tools:llvm-symbolizer",
-    ],
-    env = {
-        "ASAN_SYMBOLIZER_PATH": "$(rootpath @llvm//tools:llvm-symbolizer)",
-        "BINARY": "$(rootpath :asan_fail)",
-    },
+    data = [":asan_fail"] + select({
+        "@platforms//os:macos": ["@llvm//tools:llvm-symbolizer"],
+        "//conditions:default": [],
+    }),
+    env = select({
+        "@platforms//os:macos": {
+            "ASAN_SYMBOLIZER_PATH": "$(rootpath @llvm//tools:llvm-symbolizer)",
+            "BINARY": "$(rootpath :asan_fail)",
+        },
+        "//conditions:default": {"BINARY": "$(rootpath :asan_fail)"},
+    }),
     rule = sh_test,
 )
 

@@ -78,12 +78,15 @@ cc_library(
     ] + [
         # LIBCXXABI_ENABLE_NEW_DELETE_DEFINITIONS
         "src/stdlib_new_delete.cpp",
-    ] + [
-        # LIBCXXABI_ENABLE_EXCEPTIONS
-        "src/cxa_exception.cpp",
-        "src/cxa_personality.cpp",
-        # src/cxa_noexception.cpp
-    ] + [
+    ] + select({
+        "@llvm//config:libcxxabi_internal_symbolizer_enabled": [
+            "src/cxa_noexception.cpp",
+        ],
+        "//conditions:default": [
+            "src/cxa_exception.cpp",
+            "src/cxa_personality.cpp",
+        ],
+    }) + [
         # LIBCXXABI_ENABLE_THREADS
         "src/cxa_thread_atexit.cpp",
     ],
@@ -93,9 +96,11 @@ cc_library(
     copts = [
         "-std=c++23",
         "-fstrict-aliasing",
-        "-funwind-tables",  # if exceptions
-        # "-fno-exceptions", # if no exceptions
+        "-funwind-tables",
     ] + select({
+        "@llvm//config:libcxxabi_internal_symbolizer_enabled": ["-frtti"],
+        "//conditions:default": [],
+    }) + select({
         "@platforms//os:windows": [
             "-Wno-pragma-pack",
             "-Wno-unused-value",
@@ -158,6 +163,7 @@ cc_library(
         "src/**/*.h",
         "src/**/*.def",
     ]),
+    visibility = ["//compiler-rt:__pkg__"],
 )
 
 cc_runtime_stage0_static_library(

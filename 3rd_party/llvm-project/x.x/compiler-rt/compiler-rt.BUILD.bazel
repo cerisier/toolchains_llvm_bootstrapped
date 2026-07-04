@@ -15,6 +15,7 @@ load(
     "weak_symbols_in_sync_tests",
 )
 load("@llvm//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
+load("@llvm//toolchain/runtimes:cc_internal_symbolizer_object.bzl", "cc_internal_symbolizer_object")
 load("@llvm//toolchain/runtimes:cc_runtime_shared_library.bzl", "cc_runtime_stage0_shared_library")
 load("@llvm//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
 load("@llvm//toolchain/runtimes:cc_stage0_object.bzl", "cc_stage0_object")
@@ -1249,6 +1250,63 @@ cc_library(
     alwayslink = True,
 )
 
+_INTERNAL_SYMBOLIZER_API = [
+    "__sanitizer_symbolize_code",
+    "__sanitizer_symbolize_data",
+    "__sanitizer_symbolize_frame",
+    "__sanitizer_symbolize_flush",
+    "__sanitizer_symbolize_demangle",
+    "__sanitizer_symbolize_set_demangle",
+    "__sanitizer_symbolize_set_inline_frames",
+]
+
+cc_library(
+    name = "sanitizer_common_symbolizer_internal_impl",
+    srcs = [
+        "lib/sanitizer_common/symbolizer/sanitizer_symbolize.cpp",
+        "lib/sanitizer_common/symbolizer/sanitizer_wrappers.cpp",
+        ":sanitizer_impl_headers_sources",
+    ],
+    copts = [
+        "-include",
+        "compiler-rt/lib/sanitizer_common/sanitizer_redefine_builtins.h",
+        "-DSANITIZER_COMMON_REDEFINE_BUILTINS_IN_STD",
+    ],
+    implementation_deps = [":sanitizers_interface_headers"],
+    includes = [
+        "include",
+        "lib",
+    ],
+    deps = [
+        "@llvm-project//llvm:Demangle",
+        "@llvm-project//llvm:Symbolize",
+    ],
+    alwayslink = True,
+)
+
+cc_internal_symbolizer_object(
+    name = "sanitizer_common_symbolizer_internal_object",
+    global_symbols = _INTERNAL_SYMBOLIZER_API,
+    libcxx = "@llvm-project//libcxx:libcxx",
+    libcxxabi = "@llvm-project//libcxxabi:libcxxabi",
+    out = "sanitizer_common_symbolizer_internal.o",
+    symbolizer = ":sanitizer_common_symbolizer_internal_impl",
+    target_compatible_with = select({
+        "@platforms//os:linux": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+    target_triple = LLVM_TARGET_TRIPLE,
+)
+
+cc_library(
+    name = "sanitizer_common_symbolizer_internal",
+    srcs = select({
+        "@platforms//os:linux": [":sanitizer_common_symbolizer_internal_object"],
+        "//conditions:default": [],
+    }),
+    alwayslink = True,
+)
+
 ###
 ### compiler-rt/lib/interception/CMakeLists.txt.
 ###
@@ -1455,6 +1513,7 @@ cc_runtime_stage0_static_library(
         ":sanitizer_common_libc",
         ":sanitizer_common_coverage",
         ":sanitizer_common_symbolizer",
+        ":sanitizer_common_symbolizer_internal",
         ":interception",
     ],
 )
@@ -1545,6 +1604,7 @@ cc_runtime_stage0_static_library(
         ":sanitizer_common_coverage",
         ":sanitizer_common_libc",
         ":sanitizer_common_symbolizer",
+        ":sanitizer_common_symbolizer_internal",
         ":ubsan_no_standalone",
     ],
 )
@@ -1653,6 +1713,7 @@ cc_runtime_stage0_static_library(
         ":sanitizer_common_coverage",
         ":sanitizer_common_libc",
         ":sanitizer_common_symbolizer",
+        ":sanitizer_common_symbolizer_internal",
         ":ubsan_no_standalone",
     ],
 )
@@ -1736,6 +1797,7 @@ cc_runtime_stage0_static_library(
         ":sanitizer_common",
         ":sanitizer_common_libc",
         ":sanitizer_common_symbolizer",
+        ":sanitizer_common_symbolizer_internal",
     ],
 )
 
@@ -1851,6 +1913,7 @@ cc_runtime_stage0_static_library(
         ":sanitizer_common_coverage",
         ":sanitizer_common_libc",
         ":sanitizer_common_symbolizer",
+        ":sanitizer_common_symbolizer_internal",
         ":ubsan_no_standalone",
     ],
 )
@@ -1990,6 +2053,7 @@ cc_runtime_stage0_static_library(
         ":sanitizer_common_coverage",
         ":sanitizer_common_libc",
         ":sanitizer_common_symbolizer",
+        ":sanitizer_common_symbolizer_internal",
     ],
 )
 
@@ -2226,6 +2290,7 @@ cc_runtime_stage0_static_library(
         ":sanitizer_common_coverage",
         ":sanitizer_common_libc",
         ":sanitizer_common_symbolizer",
+        ":sanitizer_common_symbolizer_internal",
         ":tsan",
         ":ubsan_no_standalone",
     ],
@@ -2323,6 +2388,7 @@ cc_library(
         ":sanitizer_common_coverage",
         ":sanitizer_common_libc",
         ":sanitizer_common_symbolizer",
+        ":sanitizer_common_symbolizer_internal",
     ],
     alwayslink = True,
 )
@@ -2356,6 +2422,7 @@ cc_runtime_stage0_static_library(
         ":sanitizer_common_coverage",
         ":sanitizer_common_libc",
         ":sanitizer_common_symbolizer",
+        ":sanitizer_common_symbolizer_internal",
     ],
 )
 
@@ -2916,6 +2983,7 @@ cc_library(
         ":sanitizer_common_coverage",
         ":sanitizer_common_libc",
         ":sanitizer_common_symbolizer",
+        ":sanitizer_common_symbolizer_internal",
         ":ubsan_no_standalone",
     ],
 )
@@ -3001,6 +3069,7 @@ cc_library(
         ":sanitizer_common_coverage",
         ":sanitizer_common_libc",
         ":sanitizer_common_symbolizer",
+        ":sanitizer_common_symbolizer_internal",
     ],
 )
 

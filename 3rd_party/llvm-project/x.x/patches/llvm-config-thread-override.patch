@@ -1,0 +1,8 @@
+diff --git a/utils/bazel/llvm-project-overlay/llvm/include/llvm/Config/llvm-config.h b/utils/bazel/llvm-project-overlay/llvm/include/llvm/Config/llvm-config.h
+--- a/utils/bazel/llvm-project-overlay/llvm/include/llvm/Config/llvm-config.h
++++ b/utils/bazel/llvm-project-overlay/llvm/include/llvm/Config/llvm-config.h
+@@ -32,1 +32,3 @@
+-#define LLVM_ENABLE_THREADS 1
++#ifndef LLVM_ENABLE_THREADS
++#define LLVM_ENABLE_THREADS 1
++#endif

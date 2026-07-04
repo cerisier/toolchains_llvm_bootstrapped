@@ -64,7 +64,9 @@ _CONFIG_SITE_LIBCPP_VISIBILITY_LINES = [
 
 _CONFIG_SITE_GENERIC_LINES = [
     "#define _LIBCPP_ABI_VERSION             1",
+    "#ifndef _LIBCPP_ABI_NAMESPACE",
     "#define _LIBCPP_ABI_NAMESPACE           __1",
+    "#endif",
     "#define _LIBCPP_ABI_FORCE_ITANIUM       0",
     "#define _LIBCPP_ABI_FORCE_MICROSOFT     0",
     "#define _LIBCPP_HAS_THREADS             1 // TODO: Handle no threads",
@@ -358,6 +360,7 @@ cc_library(
     ]) + [
         "@llvm-project//libcxxabi:textual_hdrs",
     ],
+    visibility = ["//compiler-rt:__pkg__"],
 )
 
 cc_runtime_stage0_asan_static_library(

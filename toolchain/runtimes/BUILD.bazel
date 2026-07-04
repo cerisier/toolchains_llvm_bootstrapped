@@ -252,6 +252,18 @@ bzl_library(
 )
 
 bzl_library(
+    name = "cc_internal_symbolizer_object",
+    srcs = ["cc_internal_symbolizer_object.bzl"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//toolchain/bootstrap:transition_settings",
+        "@rules_cc//cc:action_names_bzl",
+        "@rules_cc//cc:find_cc_toolchain_bzl",
+        "@rules_cc//cc/common",
+    ],
+)
+
+bzl_library(
     name = "with_cfg_runtimes_common",
     srcs = ["with_cfg_runtimes_common.bzl"],
     visibility = ["//visibility:public"],
