@@ -22,6 +22,7 @@ selects.config_setting_group(
     name = "libstdcxx_linux",
     match_all = [
         "//constraints/cxxstdlib:libstdcxx",
+        "//config:internal_symbolizer_disabled",
         "@platforms//os:linux",
     ],
 )

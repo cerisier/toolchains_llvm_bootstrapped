@@ -1286,10 +1286,10 @@ cc_library(
 
 cc_internal_symbolizer_object(
     name = "sanitizer_common_symbolizer_internal_object",
+    out = "sanitizer_common_symbolizer_internal.o",
     global_symbols = _INTERNAL_SYMBOLIZER_API,
     libcxx = "@llvm-project//libcxx:libcxx",
     libcxxabi = "@llvm-project//libcxxabi:libcxxabi",
-    out = "sanitizer_common_symbolizer_internal.o",
     symbolizer = ":sanitizer_common_symbolizer_internal_impl",
     target_compatible_with = select({
         "@platforms//os:linux": [],
@@ -1507,14 +1507,14 @@ cc_runtime_stage0_static_library(
     name = "ubsan_standalone.static",
     visibility = ["//visibility:public"],
     deps = [
-        ":ubsan_preinit",
-        ":ubsan_standalone",
+        ":interception",
         ":sanitizer_common",
-        ":sanitizer_common_libc",
         ":sanitizer_common_coverage",
+        ":sanitizer_common_libc",
         ":sanitizer_common_symbolizer",
         ":sanitizer_common_symbolizer_internal",
-        ":interception",
+        ":ubsan_preinit",
+        ":ubsan_standalone",
     ],
 )
 

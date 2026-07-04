@@ -24,6 +24,11 @@ cc_args_list(
 cc_args_list(
     name = "linux_hosted_c_toolchain_args",
     args = select({
+        "//config:internal_symbolizer_enabled": [
+            "//toolchain/args:cxxstdlib_headers_include_search_paths",
+        ],
+        "//conditions:default": [],
+    }) + select({
         "//platforms/config:musl": [
             "//toolchain/args/linux:kernel_headers_include_search_paths",
             "//toolchain/args/linux:musl_libc_headers_include_search_paths",

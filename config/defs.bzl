@@ -156,6 +156,23 @@ def config_settings():
         _declare_sanitizer_config_setting(sanitizer)
 
     bool_flag(
+        name = "internal_symbolizer",
+        build_setting_default = False,
+    )
+    native.config_setting(
+        name = "internal_symbolizer_disabled",
+        flag_values = {
+            ":internal_symbolizer": "false",
+        },
+    )
+    native.config_setting(
+        name = "internal_symbolizer_enabled",
+        flag_values = {
+            ":internal_symbolizer": "true",
+        },
+    )
+
+    bool_flag(
         name = "libcxxabi_internal_symbolizer",
         build_setting_default = False,
     )

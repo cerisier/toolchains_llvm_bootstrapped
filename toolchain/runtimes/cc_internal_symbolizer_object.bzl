@@ -33,6 +33,7 @@ def _transition_settings(runtime_stage, configure_libcxxabi):
     result = {
         "//command_line_option:copt": _COMMON_COPTS,
         "//command_line_option:cxxopt": _CXXOPTS,
+        "//config:internal_symbolizer": True,
         "//config:libcxxabi_internal_symbolizer": configure_libcxxabi,
         "//toolchain:runtime_stage": runtime_stage,
         "@llvm-project//third-party:llvm_enable_zstd": False,
@@ -50,6 +51,7 @@ def _libcxx_transition_impl(_settings, _attr):
 _TRANSITION_OUTPUTS = [
     "//command_line_option:copt",
     "//command_line_option:cxxopt",
+    "//config:internal_symbolizer",
     "//config:libcxxabi_internal_symbolizer",
     "//toolchain:runtime_stage",
     "@llvm-project//third-party:llvm_enable_zstd",
