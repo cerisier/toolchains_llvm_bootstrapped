@@ -46,7 +46,10 @@ cc_args(
     ],
     args = [
         # "__GLIBC_MINOR__={d}", version.minor
-        "-isystem",
+        # Match clang/lib/Driver/ToolChains/Linux.cpp's addExternCSystemInclude.
+        "-Xclang",
+        "-internal-externc-isystem",
+        "-Xclang",
         "{libc_headers_include_search_path}",
     ],
     data = [
@@ -117,7 +120,10 @@ cc_args(
         "@rules_cc//cc/toolchains/actions:source_compile_actions",
     ],
     args = [
-        "-isystem",
+        # Match clang/lib/Driver/ToolChains/Linux.cpp's addExternCSystemInclude.
+        "-Xclang",
+        "-internal-externc-isystem",
+        "-Xclang",
         "{libc_headers_include_search_path}",
     ],
     data = [
