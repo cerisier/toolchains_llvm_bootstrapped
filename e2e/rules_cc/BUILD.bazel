@@ -59,6 +59,13 @@ _FISSION_TEST_COMPATIBLE = select({
     "//conditions:default": ["@platforms//:incompatible"],
 }) if bazel_features.cc.supports_starlarkified_toolchains else ["@platforms//:incompatible"]
 
+_ASAN_INTERNAL_SYMBOLIZER_SUPPORTED = bazel_features.cc.supports_starlarkified_toolchains
+
+_ASAN_LIBCXX_CONTAINER_OVERFLOW_TEST_COMPATIBLE = select({
+    "@platforms//os:linux": [],
+    "//conditions:default": ["@platforms//:incompatible"],
+}) if _ASAN_INTERNAL_SYMBOLIZER_SUPPORTED else ["@platforms//:incompatible"]
+
 _EXTERNAL_INCLUDE_PATHS_TEST_COMPATIBLE = (
     select({
         "@platforms//os:linux": [],
@@ -776,10 +783,7 @@ exec_test(
     copts = ["-fno-exceptions"],
     linkopts = ["-Wl,--icf=none"],
     rule = asan_cc_binary,
-    target_compatible_with = select({
-        "@platforms//os:linux": [],
-        "//conditions:default": ["@platforms//:incompatible"],
-    }),
+    target_compatible_with = _ASAN_LIBCXX_CONTAINER_OVERFLOW_TEST_COMPATIBLE,
 )
 
 exec_test(
@@ -787,10 +791,17 @@ exec_test(
     srcs = ["asan_output_test.sh"],
     data = [":asan_fail"] + select({
         "@platforms//os:macos": ["@llvm//tools:llvm-symbolizer"],
+        "@platforms//os:linux": [] if _ASAN_INTERNAL_SYMBOLIZER_SUPPORTED else ["@llvm//tools:llvm-symbolizer"],
         "//conditions:default": [],
     }),
     env = select({
         "@platforms//os:macos": {
+            "ASAN_SYMBOLIZER_PATH": "$(rootpath @llvm//tools:llvm-symbolizer)",
+            "BINARY": "$(rootpath :asan_fail)",
+        },
+        "@platforms//os:linux": {
+            "BINARY": "$(rootpath :asan_fail)",
+        } if _ASAN_INTERNAL_SYMBOLIZER_SUPPORTED else {
             "ASAN_SYMBOLIZER_PATH": "$(rootpath @llvm//tools:llvm-symbolizer)",
             "BINARY": "$(rootpath :asan_fail)",
         },

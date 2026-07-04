@@ -1,3 +1,4 @@
+load("@bazel_features//:features.bzl", "bazel_features")
 load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
 load("@llvm//:directory.bzl", "headers_directory")
@@ -1260,6 +1261,8 @@ _INTERNAL_SYMBOLIZER_API = [
     "__sanitizer_symbolize_set_inline_frames",
 ]
 
+_INTERNAL_SYMBOLIZER_SUPPORTED = bazel_features.cc.supports_starlarkified_toolchains
+
 cc_library(
     name = "sanitizer_common_symbolizer_internal_impl",
     srcs = [
@@ -1303,7 +1306,7 @@ cc_library(
     srcs = select({
         "@platforms//os:linux": [":sanitizer_common_symbolizer_internal_object"],
         "//conditions:default": [],
-    }),
+    }) if _INTERNAL_SYMBOLIZER_SUPPORTED else [],
     alwayslink = True,
 )
 
