@@ -40,9 +40,13 @@ cc_args_list(
             "//toolchain/args:static_link_executable",
         ],
         "//conditions:default": [],
-    }) + [
-        "//toolchain/args/linux:sanitizer_headers_include_search_paths",
-    ],
+    }) + select({
+        # Runtime builds already include compiler-rt/include directly. Adding
+        # the sanitizer header directory again declares the same tree twice and
+        # makes Bazel's copy-based sandbox fail with "File exists".
+        "//toolchain:runtimes_all": ["//toolchain/args/linux:sanitizer_headers_include_search_paths"],
+        "//conditions:default": [],
+    }),
     visibility = ["//toolchain:__subpackages__"],
 )
 
