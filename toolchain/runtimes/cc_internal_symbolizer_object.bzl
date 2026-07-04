@@ -29,11 +29,11 @@ _CXXOPTS = [
     "-Wno-global-constructors",
 ]
 
-def _transition_settings(runtime_stage, configure_libcxxabi):
+def _transition_settings(runtime_stage, configure_libcxxabi, force_libcxx_headers):
     result = {
         "//command_line_option:copt": _COMMON_COPTS,
         "//command_line_option:cxxopt": _CXXOPTS,
-        "//config:internal_symbolizer": True,
+        "//config:internal_symbolizer": force_libcxx_headers,
         "//config:libcxxabi_internal_symbolizer": configure_libcxxabi,
         "//toolchain:runtime_stage": runtime_stage,
         "@llvm-project//third-party:llvm_enable_zstd": False,
@@ -43,10 +43,10 @@ def _transition_settings(runtime_stage, configure_libcxxabi):
     return result
 
 def _symbolizer_transition_impl(_settings, _attr):
-    return _transition_settings("complete", False)
+    return _transition_settings("complete", False, True)
 
 def _libcxx_transition_impl(_settings, _attr):
-    return _transition_settings("stage1_hosted", True)
+    return _transition_settings("stage1_hosted", True, False)
 
 _TRANSITION_OUTPUTS = [
     "//command_line_option:copt",
