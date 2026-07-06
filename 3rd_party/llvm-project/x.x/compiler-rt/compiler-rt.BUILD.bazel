@@ -1528,7 +1528,8 @@ cc_runtime_stage0_static_library(
 
 # On Darwin, standalone UBSan ships as a dylib (libclang_rt.ubsan_osx_dynamic.dylib)
 # with no static standalone runtime; the C++ABI parts (ubsan_cxx) are folded into
-# the dylib. See lib/ubsan/CMakeLists.txt (APPLE branch).
+# the dylib.
+# See https://github.com/llvm/llvm-project/blob/main/compiler-rt/lib/ubsan/CMakeLists.txt (APPLE branch).
 cc_runtime_stage0_shared_library(
     name = "ubsan_standalone.shared",
     additional_linker_inputs = select({
@@ -1546,11 +1547,11 @@ cc_runtime_stage0_shared_library(
     }),
     user_link_flags = select({
         "@llvm//platforms/config:gnu": [
-            "-L$(location @llvm//runtimes/glibc:glibc_library_search_directory)",
+            "-L$(execpath @llvm//runtimes/glibc:glibc_library_search_directory)",
             "-lc",
         ],
         "@llvm//platforms/config:musl": [
-            "-L$(location @llvm//runtimes/musl:musl_library_search_directory)",
+            "-L$(execpath @llvm//runtimes/musl:musl_library_search_directory)",
             "-lc",
         ],
         "//conditions:default": [],
@@ -2383,11 +2384,11 @@ cc_runtime_stage0_shared_library(
     }),
     user_link_flags = select({
         "@llvm//platforms/config:gnu": [
-            "-L$(location @llvm//runtimes/glibc:glibc_library_search_directory)",
+            "-L$(execpath @llvm//runtimes/glibc:glibc_library_search_directory)",
             "-lc",
         ],
         "@llvm//platforms/config:musl": [
-            "-L$(location @llvm//runtimes/musl:musl_library_search_directory)",
+            "-L$(execpath @llvm//runtimes/musl:musl_library_search_directory)",
             "-lc",
         ],
         "//conditions:default": [],
@@ -2559,11 +2560,11 @@ cc_runtime_stage0_shared_library(
     }),
     user_link_flags = select({
         "@llvm//platforms/config:gnu": [
-            "-L$(location @llvm//runtimes/glibc:glibc_library_search_directory)",
+            "-L$(execpath @llvm//runtimes/glibc:glibc_library_search_directory)",
             "-lc",
         ],
         "@llvm//platforms/config:musl": [
-            "-L$(location @llvm//runtimes/musl:musl_library_search_directory)",
+            "-L$(execpath @llvm//runtimes/musl:musl_library_search_directory)",
             "-lc",
         ],
         "//conditions:default": [],
@@ -3302,11 +3303,11 @@ cc_runtime_stage0_shared_library(
     }),
     user_link_flags = select({
         "@llvm//platforms/config:gnu": [
-            "-L$(location @llvm//runtimes/glibc:glibc_library_search_directory)",
+            "-L$(execpath @llvm//runtimes/glibc:glibc_library_search_directory)",
             "-lc",
         ],
         "@llvm//platforms/config:musl": [
-            "-L$(location @llvm//runtimes/musl:musl_library_search_directory)",
+            "-L$(execpath @llvm//runtimes/musl:musl_library_search_directory)",
             "-lc",
         ],
         "//conditions:default": [],
