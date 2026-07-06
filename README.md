@@ -349,6 +349,8 @@ See https://github.com/hermeticbuild/hermetic-llvm/milestone/1
 - [formatjs](https://github.com/formatjs/formatjs)
 - [Etsy](https://etsy.com)
 - [Patagia](https://patagia.se)
+- [OpenROAD](https://github.com/The-OpenROAD-Project/OpenROAD)
+- [kepler-formal](https://github.com/keplertech/kepler-formal)
 
 ## Prior art
 
