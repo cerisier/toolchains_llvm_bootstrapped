@@ -1,13 +1,79 @@
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
 load("@with_cfg.bzl", "with_cfg")
 
-ubsan_cc_binary, _ubsan_cc_binary_internal = with_cfg(cc_binary).set(
+_EXTERNAL_INCLUDE_PATHS_GLIBC_PLATFORM = select({
+    "@platforms//cpu:aarch64": [Label("@llvm//platforms:linux_aarch64_gnu.2.34")],
+    "@platforms//cpu:x86_64": [Label("@llvm//platforms:linux_x86_64_gnu.2.34")],
+    "//conditions:default": [],
+})
+
+def _external_include_paths_glibc_headers_test_impl(ctx):
+    for header in ctx.attr.glibc_start[CcInfo].compilation_context.direct_headers:
+        if header.owner.name == "bits/errno.h":
+            fail("{} declares bits/errno.h in hdrs".format(ctx.attr.glibc_start.label))
+
+    executable = ctx.actions.declare_file(ctx.label.name + ".sh")
+    ctx.actions.write(executable, "#!/usr/bin/env bash\n", is_executable = True)
+    return [DefaultInfo(executable = executable)]
+
+external_include_paths_glibc_headers_test = rule(
+    implementation = _external_include_paths_glibc_headers_test_impl,
+    attrs = {
+        "glibc_start": attr.label(
+            mandatory = True,
+            providers = [CcInfo],
+        ),
+    },
+    test = True,
+)
+
+external_include_paths_glibc_alias, _external_include_paths_glibc_alias_internal = with_cfg(
+    native.alias,
+    extra_providers = [CcInfo],
+).set(
+    "platforms",
+    _EXTERNAL_INCLUDE_PATHS_GLIBC_PLATFORM,
+).extend(
+    "features",
+    ["external_include_paths"],
+).extend(
+    "host_features",
+    ["external_include_paths"],
+).build()
+
+# Wrap a with_cfg sanitizer cc_binary so it pulls in its macOS runtime
+# automatically. On macOS the sanitizer runtime is a dylib and must be a
+# dynamic_dep so it lands in runfiles with an @loader_path rpath and loads at
+# run time; Linux links the static runtime, so nothing is added there. Callers
+# never repeat the dynamic_dep per target.
+def _with_macos_sanitizer_runtime(inner_binary, macos_runtime):
+    def _macro(name, dynamic_deps = None, **kwargs):
+        inner_binary(
+            name = name,
+            dynamic_deps = (dynamic_deps or []) + select({
+                "@platforms//os:macos": [macos_runtime],
+                "//conditions:default": [],
+            }),
+            **kwargs
+        )
+
+    return _macro
+
+# buildifier: disable=unused-variable
+_ubsan_cc_binary, _ubsan_cc_binary_internal = with_cfg(cc_binary).set(
     Label("@llvm//config:ubsan"),
     True,
 ).set(
     Label("@llvm//config:host_ubsan"),
     True,
 ).build()
+
+ubsan_cc_binary = _with_macos_sanitizer_runtime(
+    _ubsan_cc_binary,
+    "@llvm//runtimes/compiler-rt:clang_rt.ubsan_standalone.shared",
+)
 
 cfi_cc_binary, _cfi_cc_binary_internal = with_cfg(cc_binary).set(
     Label("@llvm//config:cfi"),
@@ -73,7 +139,8 @@ tysan_cc_binary, _tysan_cc_binary_internal = with_cfg(cc_binary).set(
     True,
 ).build()
 
-tsan_cc_binary, _tsan_cc_binary_internal = with_cfg(cc_binary).set(
+# buildifier: disable=unused-variable
+_tsan_cc_binary, _tsan_cc_binary_internal = with_cfg(cc_binary).set(
     Label("@llvm//config:tsan"),
     True,
 ).set(
@@ -81,7 +148,13 @@ tsan_cc_binary, _tsan_cc_binary_internal = with_cfg(cc_binary).set(
     True,
 ).build()
 
-asan_cc_binary, _asan_cc_binary_internal = with_cfg(cc_binary).set(
+tsan_cc_binary = _with_macos_sanitizer_runtime(
+    _tsan_cc_binary,
+    "@llvm//runtimes/compiler-rt:clang_rt.tsan.shared",
+)
+
+# buildifier: disable=unused-variable
+_asan_cc_binary, _asan_cc_binary_internal = with_cfg(cc_binary).set(
     Label("@llvm//config:asan"),
     True,
 ).set(
@@ -89,13 +162,24 @@ asan_cc_binary, _asan_cc_binary_internal = with_cfg(cc_binary).set(
     True,
 ).build()
 
-lsan_cc_binary, _lsan_cc_binary_internal = with_cfg(cc_binary).set(
+asan_cc_binary = _with_macos_sanitizer_runtime(
+    _asan_cc_binary,
+    "@llvm//runtimes/compiler-rt:clang_rt.asan.shared",
+)
+
+# buildifier: disable=unused-variable
+_lsan_cc_binary, _lsan_cc_binary_internal = with_cfg(cc_binary).set(
     Label("@llvm//config:lsan"),
     True,
 ).set(
     Label("@llvm//config:host_lsan"),
     True,
 ).build()
+
+lsan_cc_binary = _with_macos_sanitizer_runtime(
+    _lsan_cc_binary,
+    "@llvm//runtimes/compiler-rt:clang_rt.lsan.shared",
+)
 
 xray_cc_binary, _xray_cc_binary_internal = with_cfg(cc_binary).set(
     Label("@llvm//config:xray"),
@@ -156,4 +240,32 @@ profile_cc_binary, _profile_cc_binary_internal = with_cfg(cc_binary).set(
 opt_binary, _opt_binary_internal = with_cfg(cc_binary).set(
     "compilation_mode",
     "opt",
+).build()
+
+# Sanitizer cc_test variants. cc_test links dynamically, so on macOS the
+# sanitizer runtime dylib is supplied by the toolchain (dynamic_runtime_lib +
+# the runtime_library_search_directories feature) -- no dynamic_deps needed
+# here, unlike the cc_binary macros. These only apply the sanitizer settings.
+ubsan_cc_test, _ubsan_cc_test_internal = with_cfg(cc_test).set(
+    Label("@llvm//config:ubsan"),
+    True,
+).set(
+    Label("@llvm//config:host_ubsan"),
+    True,
+).build()
+
+asan_cc_test, _asan_cc_test_internal = with_cfg(cc_test).set(
+    Label("@llvm//config:asan"),
+    True,
+).set(
+    Label("@llvm//config:host_asan"),
+    True,
+).build()
+
+lsan_cc_test, _lsan_cc_test_internal = with_cfg(cc_test).set(
+    Label("@llvm//config:lsan"),
+    True,
+).set(
+    Label("@llvm//config:host_lsan"),
+    True,
 ).build()

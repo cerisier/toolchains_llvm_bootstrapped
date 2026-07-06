@@ -40,7 +40,16 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = []):
                 "@llvm//toolchain/features:static_link_cpp_runtimes",
                 "@llvm//toolchain/features/runtime_library_search_directories:feature",
             ],
-            "@platforms//os:macos": [],
+            "@platforms//os:macos": [
+                # macOS links libc++ from the SDK, so it doesn't statically link
+                # the C++ runtimes. But it does need dynamic runtime libs (e.g.
+                # sanitizer dylibs) placed in runfiles with an @loader_path rpath,
+                # which these two features provide. static_link_cpp_runtimes is
+                # required for the toolchain to consult dynamic_runtime_lib; it is
+                # a no-op for the (empty) macOS C++ runtime libs.
+                "@llvm//toolchain/features:static_link_cpp_runtimes",
+                "@llvm//toolchain/features/runtime_library_search_directories:feature",
+            ],
             "@platforms//os:windows": [
                 "@llvm//toolchain/features:static_link_cpp_runtimes",
                 "@llvm//toolchain/features/runtime_library_search_directories:feature",
@@ -99,9 +108,18 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = []):
             "//conditions:default": [],
         }),
         known_features = select({
-            "@llvm//toolchain:runtimes_none": ["@llvm//toolchain/features:fdo_optimize"],
-            "@llvm//toolchain:runtimes_stage1": ["@llvm//toolchain/features:fdo_optimize"],
-            "@llvm//toolchain:runtimes_stage1_hosted": ["@llvm//toolchain/features:fdo_optimize"],
+            "@llvm//toolchain:runtimes_none": [
+                "@llvm//toolchain/features:external_include_paths",
+                "@llvm//toolchain/features:fdo_optimize",
+            ],
+            "@llvm//toolchain:runtimes_stage1": [
+                "@llvm//toolchain/features:external_include_paths",
+                "@llvm//toolchain/features:fdo_optimize",
+            ],
+            "@llvm//toolchain:runtimes_stage1_hosted": [
+                "@llvm//toolchain/features:external_include_paths",
+                "@llvm//toolchain/features:fdo_optimize",
+            ],
             "//conditions:default": [name + "_known_features"],
         }),
         enabled_features = select({

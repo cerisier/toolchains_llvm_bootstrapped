@@ -131,6 +131,7 @@ cc_args_list(
         ],
         "@platforms//os:linux": [
             "//toolchain/args/linux:default_link_flags",
+            "//toolchain/args/linux:non_pie_executable_link_flags",
         ],
         "@platforms//os:windows": [],
         "@platforms//os:none": [],
@@ -153,15 +154,9 @@ cc_args_list(
 
 cc_args_list(
     name = "resource_dir",
-    args = select({
-        # macOS now ships compiler-rt sanitizer runtimes (e.g. the asan dylib)
-        # in the resource directory, so the Clang driver needs -resource-dir to
-        # find them when linking (e.g. -fsanitize=address). This is a link-only
-        # arg, so it does not affect builtin-header resolution at compile time.
-        "//conditions:default": [
-            "//toolchain/args:resource_dir",
-        ],
-    }),
+    args = [
+        "//toolchain/args:resource_dir",
+    ],
 )
 
 cc_args_list(
@@ -339,6 +334,10 @@ cc_args_list(
         "//toolchain/args:module_map",
         ":sysroot_flags",
         ":hermetic_compile_flags",
+
+        # Keep external -isystem directories before the toolchain C and C++
+        # -isystem directories in :platform_specific_args.
+        "@rules_cc//cc/toolchains/args/external_include_paths:external_include_paths",
 
         # TODO(cerisier): Explode this into specific args instead
         ":platform_specific_args",
