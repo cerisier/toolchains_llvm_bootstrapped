@@ -22,6 +22,31 @@ selects.config_setting_group(
     ],
 )
 
+# ELF control-flow protection marks — see the note in
+# compiler-rt/compiler-rt.BUILD.bazel; libunwind is linked (as libgcc_eh/
+# libgcc_s substitute) into every binary the toolchain produces.
+config_setting(
+    name = "linux_x86_64",
+    constraint_values = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+)
+
+config_setting(
+    name = "linux_aarch64",
+    constraint_values = [
+        "@platforms//cpu:aarch64",
+        "@platforms//os:linux",
+    ],
+)
+
+CF_PROTECTION_COPTS = select({
+    ":linux_x86_64": ["-fcf-protection=full"],
+    ":linux_aarch64": ["-mbranch-protection=standard"],
+    "//conditions:default": [],
+})
+
 # The ld64 linker and lld-macho use the libunwind headers only for the constant
 # definitions, in order to parse and convert DWARF to the compact encoding.
 cc_library(
@@ -86,7 +111,7 @@ cc_library(
         "//conditions:default": [],
     }) + [
         "-funwind-tables",
-    ],
+    ] + CF_PROTECTION_COPTS,
     cxxopts = [
         "-fno-exceptions",
         "-fno-rtti",
