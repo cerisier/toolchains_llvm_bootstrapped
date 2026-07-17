@@ -286,6 +286,9 @@ def declare_llvm_targets(*, suffix = ""):
         }) + [
             "bin/c++filt" + suffix,
             "bin/llvm-nm" + suffix,
+            "bin/gcov" + suffix,
+            "bin/llvm-cov" + suffix,
+            "bin/llvm-profdata" + suffix,
         ],
     )
 
