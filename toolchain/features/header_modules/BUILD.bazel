@@ -17,11 +17,22 @@ package(default_visibility = ["//visibility:public"])
 #
 # Allow switching off header modules completely by specifying
 # features=["-use_header_modules"] in a rule.
+#
+# System headers are declared as textual headers in the toolchain's module
+# map and thus never require a compiled module.
+#
+# Headers that are only available as opaque source directories and are not
+# enumerated as textual headers in the toolchain's module map (e.g. the Linux
+# kernel headers and macOS frameworks) are covered by umbrella submodules,
+# which can't be included in `-fmodules` builds without a compiled module.
 
 _MODULE_CONSUMING_ACTIONS = [
     "@rules_cc//cc/toolchains/actions:cpp_compile",
     "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
     "@rules_cc//cc/toolchains/actions:cpp_module_compile",
+    # Compiling a module to an object file loads the module file, which in
+    # turn loads the module files it imports.
+    "@rules_cc//cc/toolchains/actions:cpp_module_codegen",
 ]
 
 # The args for the cpp_module_compile action itself live in
@@ -34,8 +45,34 @@ cc_feature(
     requires_any_of = [":use_header_modules"],
 )
 
+# Building modules with local submodule visibility parses each header in its
+# own submodule scope, which prevents declarations and macros from leaking
+# between the headers of a module. Clang then also expects template
+# instantiations triggered inside a module to be provided by an object file
+# compiled from the module instead of emitting them in importing translation
+# units, so the flag must only be used together with module codegen (matching
+# Google's toolchain).
+cc_args(
+    name = "local_submodule_visibility_args",
+    actions = ["@rules_cc//cc/toolchains/actions:cpp_module_compile"],
+    args = [
+        "-Xclang",
+        "-fmodules-local-submodule-visibility",
+    ],
+)
+
+# Generates one submodule per header in the target's module map, so that
+# each header is parsed in its own scope when the module is compiled with
+# local submodule visibility.
+cc_feature(
+    name = "generate_submodules",
+    feature_name = "generate_submodules",
+    requires_any_of = [":header_modules"],
+)
+
 cc_feature(
     name = "header_module_codegen",
+    args = [":local_submodule_visibility_args"],
     feature_name = "header_module_codegen",
     requires_any_of = [":header_modules"],
 )
@@ -118,6 +155,7 @@ cc_feature_set(
     name = "all_header_module_features",
     all_of = [
         ":header_modules",
+        ":generate_submodules",
         ":header_module_codegen",
         ":header_modules_codegen_functions",
         ":header_modules_codegen_debuginfo",
