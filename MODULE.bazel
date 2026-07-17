@@ -9,6 +9,17 @@ bazel_dep(name = "bazel_skylib", version = "1.9.0")
 bazel_dep(name = "bazel_features", version = "1.42.0")
 bazel_dep(name = "platforms", version = "1.1.0")
 bazel_dep(name = "rules_cc", version = "0.2.22")
+
+# Header modules require rules_cc 0.2.23, which isn't available on the Bazel
+# Central Registry yet.
+# TODO: Bump the bazel_dep and drop the override once it is.
+archive_override(
+    module_name = "rules_cc",
+    integrity = "sha256-4vtkgKp5ORlo6AKxd+m16YVug9QJTnKuIPnyzQubxro=",
+    strip_prefix = "rules_cc-0.2.23",
+    urls = ["https://github.com/bazelbuild/rules_cc/archive/refs/tags/0.2.23.tar.gz"],
+)
+
 bazel_dep(name = "rules_shell", version = "0.8.0")
 bazel_dep(name = "rules_python", version = "1.8.0")
 bazel_dep(name = "with_cfg.bzl", version = "0.12.0")
