@@ -10,6 +10,7 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = []):
             "@llvm//toolchain/features:static_link_cpp_runtimes",
             "@llvm//toolchain/features/runtime_library_search_directories:feature",
             "@llvm//toolchain/features:parse_headers",
+            "@llvm//toolchain/features/header_modules:all_header_module_features",
             "@llvm//toolchain/features:external_include_paths",
             "@llvm//toolchain/features:generate_pdb_file",
             "@llvm//toolchain/features:fdo_optimize",
@@ -95,6 +96,9 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = []):
         }) + [
             # TODO: rules_cc passes extra args to these actions, ideally these would be fixed in rules_cc.
             "@llvm//toolchain/args:ignore_unused_command_line_argument",
+            # Only affects cpp_module_compile actions, which are only created
+            # for targets with the `header_modules` feature enabled.
+            "@llvm//toolchain/args:header_module_compile",
         ] + extra_args,
         supports_header_parsing = True,
         supports_param_files = True,
