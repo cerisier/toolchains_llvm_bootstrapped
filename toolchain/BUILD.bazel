@@ -264,6 +264,7 @@ cc_args_list(
     args = [
         "//toolchain/args/macos:macos_minimum_os_flags",
         "//toolchain/args/macos:macos_default_framework_flags",
+        "//toolchain/args:macos_cxxstdlib_headers_include_search_paths",
     ] + select({
         # Only expose the sanitizer interface headers when compiling user
         # programs (runtime_stage=complete), not when building the compiler-rt
@@ -278,9 +279,10 @@ cc_args_list(
 # TODO(zbarsky): This must match llvm/toolchains/llvm.bzl
 cc_args_list(
     name = "linux_toolchain_args",
-    args = [
-        "//toolchain/args:cxxstdlib_headers_include_search_paths",
-    ] + select({
+    args = select({
+        "//runtimes/cxxstdlib:libstdcxx_linux": ["//toolchain/args:cxxstdlib_headers_include_search_paths"],
+        "//conditions:default": ["//toolchain/args:split_cxxstdlib_headers_include_search_paths"],
+    }) + select({
         "//platforms/config:musl": [
             "//toolchain/args/linux:kernel_headers_include_search_paths",
             "//toolchain/args/linux:musl_libc_headers_include_search_paths",
@@ -306,8 +308,10 @@ cc_args_list(
 # TODO(zbarsky): This must match llvm/toolchains/llvm.bzl
 cc_args_list(
     name = "windows_toolchain_args",
-    args = [
-        "//toolchain/args:cxxstdlib_headers_include_search_paths",
+    args = select({
+        "//runtimes/cxxstdlib:libstdcxx_windows": ["//toolchain/args:cxxstdlib_headers_include_search_paths"],
+        "//conditions:default": ["//toolchain/args:split_cxxstdlib_headers_include_search_paths"],
+    }) + [
         "//toolchain/args/windows:mingw_headers_include_search_paths",
     ],
 )

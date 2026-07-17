@@ -19,7 +19,16 @@ package(default_visibility = ["//visibility:public"])
 # features=["-use_header_modules"] in a rule.
 #
 # System headers are declared as textual headers in the toolchain's module
-# map and thus never require a compiled module.
+# map and thus never require a compiled module. The exception is the C++
+# standard library: targets should depend on
+# //toolchain/features/header_modules/libcxx so that its public headers are
+# compiled into a module and imported instead of being textually absorbed
+# into every module. Without the dependency, each header module textually
+# absorbs its own copy of the C++ standard library declarations, and Clang's
+# merging of these copies in importing translation units is known to fail
+# with errors like "'std::length_error::length_error' from module A is not
+# present in definition of 'std::length_error' in module B" once several
+# modules are imported together.
 #
 # Headers that are only available as opaque source directories and are not
 # enumerated as textual headers in the toolchain's module map (e.g. the Linux

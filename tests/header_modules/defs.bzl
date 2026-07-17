@@ -47,3 +47,50 @@ def header_modules_test_targets():
         srcs = ["greeter_main.cc"],
         deps = [":textual_greeter"],
     )
+
+    # With a dependency on the libcxx target, the C++ standard library headers
+    # are instead imported as a compiled module.
+
+    cc_library(
+        name = "greeter",
+        srcs = ["greeter.cc"],
+        hdrs = ["greeter.h"],
+        deps = ["@llvm//toolchain/features/header_modules/libcxx"],
+    )
+
+    cc_test(
+        name = "greeter_test",
+        srcs = ["greeter_main.cc"],
+        deps = [
+            ":greeter",
+            "@llvm//toolchain/features/header_modules/libcxx",
+        ],
+    )
+
+    # With module codegen (matching Google's toolchain), modules are built
+    # with local submodule visibility and compiled into object files that
+    # provide the template instantiations triggered inside the module, which
+    # importing translation units then no longer emit.
+
+    codegen_features = [
+        "header_module_codegen",
+        "header_modules_codegen_functions",
+    ]
+
+    cc_library(
+        name = "item_store",
+        srcs = ["item_store.cc"],
+        hdrs = ["item_store.h"],
+        features = codegen_features,
+        deps = ["@llvm//toolchain/features/header_modules/libcxx"],
+    )
+
+    cc_test(
+        name = "item_store_test",
+        srcs = ["item_store_main.cc"],
+        features = codegen_features,
+        deps = [
+            ":item_store",
+            "@llvm//toolchain/features/header_modules/libcxx",
+        ],
+    )
