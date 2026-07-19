@@ -37,6 +37,10 @@ bazel \
   --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
   --config=remote \
   --config=release \
+  --experimental_throttle_remote_action_building \
+  --discard_analysis_cache \
+  --notrack_incremental_state \
+  --jobs=100 \
   --remote_download_outputs=toplevel \
   //prebuilt/llvm:all
 
