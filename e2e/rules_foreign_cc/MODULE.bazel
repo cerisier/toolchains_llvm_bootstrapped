@@ -1,8 +1,9 @@
 bazel_dep(name = "llvm", version = "")
-bazel_dep(name = "platforms", version = "1.0.0")
-bazel_dep(name = "rules_cc", version = "0.2.16")
+bazel_dep(name = "libpfm", version = "4.13.0", repo_name = "pfm")
+bazel_dep(name = "platforms", version = "1.1.0")
+bazel_dep(name = "rules_cc", version = "0.2.20")
 bazel_dep(name = "rules_foreign_cc", version = "0.15.1")
-bazel_dep(name = "rules_python", version = "1.7.0")
+bazel_dep(name = "rules_python", version = "1.8.0")
 
 single_version_override(
     module_name = "rules_foreign_cc",
@@ -22,7 +23,7 @@ llvm = use_extension("@llvm//extensions:llvm.bzl", "llvm")
 use_repo(llvm, "llvm-project")
 
 llvm_source = use_extension("@llvm//extensions:llvm_source.bzl", "llvm_source")
-use_repo(llvm_source, "llvm-raw", "llvm_config", "llvm_zlib", "llvm_zstd")
+use_repo(llvm_source, "llvm-raw", "llvm_config")
 
 # Register toolchains through the scoped repo to ensure this codepath works.
 llvm_toolchains = use_extension("@llvm//extensions:toolchain.bzl", "toolchain")
@@ -36,8 +37,34 @@ bazel_dep(name = "zlib", version = "1.3.1.bcr.8")
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
+    name = "pfm_test",
+    build_file_content = """\
+load("@rules_foreign_cc//foreign_cc:defs.bzl", "make_variant")
+
+filegroup(
+    name = "sources",
+    srcs = glob(["**"]),
+)
+
+make_variant(
     name = "pfm",
-    build_file = "@llvm-raw//utils/bazel/third_party_build:pfm.BUILD",
+    copts = ["-w"],
+    lib_name = "libpfm",
+    lib_source = ":sources",
+    target_compatible_with = select({
+        "@platforms//os:linux": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+    toolchain = "@rules_foreign_cc//toolchains:preinstalled_autoconf_toolchain",
+    visibility = ["//visibility:private"],
+)
+
+alias(
+    name = "pfm_external",
+    actual = ":pfm_",
+    visibility = ["//visibility:public"],
+)
+""",
     sha256 = "b06071d7e528402a6504273ea700354ebfcf4b62ffe239cb6471fcdb04ae3f3d",
     strip_prefix = "libpfm4-4.13.0",
     url = "https://github.com/wcohen/libpfm4/archive/refs/tags/v4.13.0.tar.gz",

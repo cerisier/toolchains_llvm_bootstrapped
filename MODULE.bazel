@@ -5,14 +5,17 @@ module(
 )
 
 bazel_dep(name = "bazel_lib", version = "3.2.2")
-bazel_dep(name = "bazel_skylib", version = "1.8.2")
+bazel_dep(name = "bazel_skylib", version = "1.9.0")
 bazel_dep(name = "bazel_features", version = "1.42.0")
+bazel_dep(name = "libpfm", version = "4.13.0", repo_name = "pfm")
 bazel_dep(name = "platforms", version = "1.1.0")
 bazel_dep(name = "rules_cc", version = "0.2.20")
-bazel_dep(name = "rules_shell", version = "0.6.1")
-bazel_dep(name = "rules_python", version = "1.7.0")
+bazel_dep(name = "rules_shell", version = "0.8.0")
+bazel_dep(name = "rules_python", version = "1.8.0")
 bazel_dep(name = "with_cfg.bzl", version = "0.12.0")
 bazel_dep(name = "tar.bzl", version = "0.10.4")
+bazel_dep(name = "zlib-ng", version = "2.3.3", repo_name = "llvm_zlib")
+bazel_dep(name = "zstd", version = "1.5.7.bcr.1", repo_name = "llvm_zstd")
 
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
@@ -86,7 +89,7 @@ use_repo(
 
 llvm_source = use_extension("//extensions:llvm_source.bzl", "llvm_source")
 llvm_source.version(llvm_version = LLVM_VERSION)
-use_repo(llvm_source, "llvm-raw", "llvm_config", "llvm_zlib", "llvm_zstd")
+use_repo(llvm_source, "llvm-raw", "llvm_config")
 
 llvm = use_extension("//extensions:llvm.bzl", "llvm")
 llvm.configure(

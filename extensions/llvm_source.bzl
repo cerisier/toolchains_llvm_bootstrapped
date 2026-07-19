@@ -1,6 +1,5 @@
 load("@bazel_skylib//lib:structs.bzl", "structs")
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:local.bzl", "new_local_repository")
 load("//:http_bsdtar_archive.bzl", "http_bsdtar_archive")
 
@@ -56,11 +55,31 @@ _LLVM_22_SOURCE_PATCHES = [
     "//3rd_party/llvm-project/22.x/patches:llvm-bazel-blake3-windows-gnu.patch",
 ] + _DEFAULT_SOURCE_PATCHES
 
+_LLVM_23_SOURCE_PATCHES = [
+    "//3rd_party/llvm-project/22.x/patches:lld-coff-thinlto-lazy-index.patch",
+    "//3rd_party/llvm-project/23.x/patches:llvm-link-multicall.patch",
+    "//3rd_party/llvm-project/23.x/patches:llvm-profdata-multicall.patch",
+    "//3rd_party/llvm-project/23.x/patches:clang-format-multicall.patch",
+    "//3rd_party/llvm-project/23.x/patches:clang-tidy-multicall.patch",
+    "//3rd_party/llvm-project/23.x/patches:clangd-multicall.patch",
+    "//3rd_party/llvm-project/22.x/patches:bundle_resources_no_python.patch",
+    "//3rd_party/llvm-project/23.x/patches:no_rules_python.patch",
+    "//3rd_party/llvm-project/x.x/patches:clang-prepend-arg-reexec.patch",
+    "//3rd_party/llvm-project/x.x/patches:no_frontend_builtin_headers.patch",
+    "//3rd_party/llvm-project/23.x/patches:llvm-extra.patch",
+    "//3rd_party/llvm-project/23.x/patches:llvm-cov-multicall.patch",
+    "//3rd_party/llvm-project/x.x/patches:llvm-driver-best-tool-match.patch",
+    "//3rd_party/llvm-project/x.x/patches:compiler-rt-symbolizer_skip_cxa_atexit.patch",
+    "//3rd_party/llvm-project/x.x/patches:lit_test_stub.patch",
+    "//3rd_party/llvm-project/x.x/patches:lld-macho-thinlto-obj-path.patch",
+    "//3rd_party/llvm-project/23.x/patches:thinlto-roundtrip-before-codegen.patch",
+    "//3rd_party/llvm-project/23.x/patches:llvm-configure-non-reproducible.patch",
+]
+
 _LLVM_PATCHES_BY_MAJOR = {
     21: _LLVM_21_SOURCE_PATCHES,
     22: _LLVM_22_SOURCE_PATCHES,
-    # So that anyone can test with the next LLVM major easily.
-    23: _LLVM_22_SOURCE_PATCHES,
+    23: _LLVM_23_SOURCE_PATCHES,
 }
 
 _LLVM_PROJECT_OVERLAY_FILES = {
@@ -70,21 +89,6 @@ _LLVM_PROJECT_OVERLAY_FILES = {
     "utils/bazel/llvm-project-overlay/libcxxabi/BUILD.bazel": Label("//3rd_party/llvm-project/x.x/libcxxabi:libcxxabi.BUILD.bazel"),
     "utils/bazel/llvm-project-overlay/libunwind/BUILD.bazel": Label("//3rd_party/llvm-project/x.x/libunwind:libunwind.BUILD.bazel"),
     "utils/bazel/llvm-project-overlay/openmp/BUILD.bazel": Label("//3rd_party/llvm-project/x.x/openmp:openmp.BUILD.bazel"),
-}
-
-_LLVM_SUPPORT_ARCHIVES = {
-    "llvm_zlib": struct(
-        build_file = "@llvm-raw//utils/bazel/third_party_build:zlib-ng.BUILD",
-        sha256 = "e36bb346c00472a1f9ff2a0a4643e590a254be6379da7cddd9daeb9a7f296731",
-        strip_prefix = "zlib-ng-2.0.7",
-        urls = ["https://github.com/zlib-ng/zlib-ng/archive/refs/tags/2.0.7.zip"],
-    ),
-    "llvm_zstd": struct(
-        build_file = "@llvm-raw//utils/bazel/third_party_build:zstd.BUILD",
-        sha256 = "7c42d56fac126929a6a85dbc73ff1db2411d04f104fae9bdea51305663a83fd0",
-        strip_prefix = "zstd-1.5.2",
-        urls = ["https://github.com/facebook/zstd/releases/download/v1.5.2/zstd-1.5.2.tar.gz"],
-    ),
 }
 
 _LLVM_SOURCE_BSDTAR_EXTRA_ARGS = [
@@ -213,16 +217,6 @@ def _version_config_for(llvm_version, llvm_version_index):
         source_archive = _source_archive_for_version(llvm_version, source_info, _LLVM_PATCHES_BY_MAJOR.get(major, [])),
     )
 
-def _create_support_archives():
-    for name, params in _LLVM_SUPPORT_ARCHIVES.items():
-        http_archive(
-            name = name,
-            build_file = params.build_file,
-            sha256 = params.sha256,
-            strip_prefix = params.strip_prefix,
-            urls = params.urls,
-        )
-
 def _llvm_config_repository_impl(rctx):
     version = rctx.attr.llvm_version
     parts = version.split(".")
@@ -309,7 +303,6 @@ def _llvm_source_impl(mctx):
     )
 
     _create_llvm_raw_repo(mctx, version_config)
-    _create_support_archives()
 
     return mctx.extension_metadata(
         reproducible = True,

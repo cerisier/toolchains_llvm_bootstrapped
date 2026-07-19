@@ -1,0 +1,12 @@
+diff --git a/utils/bazel/configure.bzl b/utils/bazel/configure.bzl
+--- a/utils/bazel/configure.bzl
++++ b/utils/bazel/configure.bzl
+@@ -199,7 +199,7 @@ def _llvm_configure_impl(repository_ctx):
+     )
+ 
+     if hasattr(repository_ctx, "repo_metadata"):
+-        return repository_ctx.repo_metadata(reproducible = True)
++        return repository_ctx.repo_metadata(reproducible = False)
+ 
+ llvm_configure = repository_rule(
+     implementation = _llvm_configure_impl,
