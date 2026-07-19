@@ -2152,8 +2152,8 @@ cc_library(
     implementation_deps = [
         ":interception_impl_headers",
         ":libcxx_headers",
-        ":sanitizers_interface_headers",
         ":sanitizer_impl_headers",
+        ":sanitizers_interface_headers",
     ],
     includes = ["lib"],
 )
