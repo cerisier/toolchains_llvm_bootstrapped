@@ -165,5 +165,4 @@ cc_library(
     features = ["-parse_headers"],
     includes = ["."],
     visibility = ["//visibility:public"],
-    deps = [":libc_headers"],
 )
