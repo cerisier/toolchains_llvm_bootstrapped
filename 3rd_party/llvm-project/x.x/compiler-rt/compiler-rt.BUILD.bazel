@@ -854,6 +854,7 @@ cc_library(
             "@llvm-project//libcxxabi:headers",
             "@mingw//:mingw_headers",
         ],
+        "//conditions:default": [],
     }),
 )
 
