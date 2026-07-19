@@ -296,7 +296,7 @@ cc_library(
     ],
     copts = [
         "-faligned-allocation",
-        "-std=c++23",
+        "-std=c++26" if int(LLVM_VERSION_MAJOR) >= 23 else "-std=c++23",
         "-fvisibility=hidden",
         "-fvisibility-inlines-hidden",
 
