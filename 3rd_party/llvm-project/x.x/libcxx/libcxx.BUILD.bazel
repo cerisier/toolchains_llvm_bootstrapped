@@ -4,6 +4,7 @@ load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@llvm//3rd_party/llvm-project/21.x/libcxx:libcxx_headers.bzl", "LIBCXX_HEADERS_FILES_21")
 load("@llvm//3rd_party/llvm-project/22.x/libcxx:libcxx_headers.bzl", "LIBCXX_HEADERS_FILES_22")
+load("@llvm//3rd_party/llvm-project/23.x/libcxx:libcxx_headers.bzl", "LIBCXX_HEADERS_FILES_23")
 load("@llvm//toolchain/runtimes:cc_runtime_shared_library.bzl", "cc_runtime_stage1_asan_shared_library")
 load("@llvm//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_asan_static_library")
 load("@llvm-project//:vars.bzl", "LLVM_VERSION_MAJOR")
@@ -23,8 +24,16 @@ filegroup(
 )
 
 filegroup(
+    name = "libcxx_23_headers_files",
+    srcs = LIBCXX_HEADERS_FILES_23,
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
     name = "libcxx_headers_files",
     srcs = ([
+        ":libcxx_23_headers_files",
+    ] if int(LLVM_VERSION_MAJOR) >= 23 else [
         ":libcxx_22_headers_files",
     ] if int(LLVM_VERSION_MAJOR) >= 22 else [
         ":libcxx_21_headers_files",
@@ -89,6 +98,12 @@ _CONFIG_SITE_GENERIC_LINES = [
     "// \"_LIBCPP_HAS_NO_LIBRARY_ALIGNED_ALLOCATION\", # GLIBC < 2.16",
 ]
 
+_CONFIG_SITE_LLVM23_LINES = [
+    "#define _LIBCPP_LIBC_PICOLIBC 0",
+    "#define _LIBCPP_LIBC_NEWLIB 0",
+    "#define _LIBCPP_LIBC_LLVM_LIBC 0",
+]
+
 selects.config_setting_group(
     name = "windows_static",
     match_all = [
@@ -101,6 +116,7 @@ write_file(
     name = "__config_site",
     out = "include/__config_site",
     content = _CONFIG_SITE_GENERIC_LINES +
+              (_CONFIG_SITE_LLVM23_LINES if int(LLVM_VERSION_MAJOR) >= 23 else []) +
               select({
                   ":windows_static": _CONFIG_SITE_LIBCPP_VISIBILITY_LINES,
                   "//conditions:default": [],
@@ -180,7 +196,6 @@ cc_library(
         "src/filesystem/path.cpp",
         "src/functional.cpp",
         "src/hash.cpp",
-        "src/include/apple_availability.h",
         "src/include/atomic_support.h",
         "src/include/config_elast.h",
         "src/include/refstring.h",
@@ -224,7 +239,9 @@ cc_library(
         "src/variant.cpp",
         "src/vector.cpp",
         "src/verbose_abort.cpp",
-    ] + [
+    ] + ([
+        "src/include/apple_availability.h",
+    ] if int(LLVM_VERSION_MAJOR) < 23 else []) + [
         # LIBCXX_ENABLE_THREADS
         "src/atomic.cpp",
         "src/barrier.cpp",
@@ -257,7 +274,9 @@ cc_library(
         "src/ostream.cpp",
         "src/regex.cpp",
         "src/strstream.cpp",
-    ] + [
+    ] + ([
+        "src/text_encoding.cpp",
+    ] if int(LLVM_VERSION_MAJOR) >= 23 else []) + [
         # LIBCXX_ENABLE_FILESYSTEM
         "src/filesystem/directory_entry.cpp",
         "src/filesystem/directory_iterator.cpp",
