@@ -849,6 +849,11 @@ cc_library(
             "@llvm-project//libcxxabi:headers",
             ":linux_libc_headers",
         ],
+        "@platforms//os:windows": [
+            "@llvm-project//libcxx:headers",
+            "@llvm-project//libcxxabi:headers",
+            "@mingw//:mingw_headers",
+        ],
     }),
 )
 
