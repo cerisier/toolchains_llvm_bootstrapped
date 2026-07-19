@@ -231,7 +231,7 @@ def _llvm_config_repository_impl(rctx):
 
     major = int(parts[0])
     minor = int(parts[1])
-    patch = int(parts[2])
+    patch = int(parts[2].split("-")[0])
 
     rctx.file("BUILD.bazel", """\
 load("@bazel_lib//:bzl_library.bzl", "bzl_library")
