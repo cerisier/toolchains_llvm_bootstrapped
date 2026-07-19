@@ -102,8 +102,6 @@ _LLVM_SOURCE_BSDTAR_EXTRA_ARGS = [
 
 def _llvm_source_archive_excludes():
     excludes = [
-        "flang-rt",
-        "flang",
         "polly",
         "orc-rt",
         "libclc",
