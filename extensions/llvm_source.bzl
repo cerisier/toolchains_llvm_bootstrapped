@@ -57,6 +57,7 @@ _LLVM_22_SOURCE_PATCHES = [
 
 _LLVM_23_SOURCE_PATCHES = [
     "//3rd_party/llvm-project/22.x/patches:lld-coff-thinlto-lazy-index.patch",
+    "//3rd_party/llvm-project/23.x/patches:llvm-http-windows-gnu.patch",
     "//3rd_party/llvm-project/23.x/patches:llvm-link-multicall.patch",
     "//3rd_party/llvm-project/23.x/patches:llvm-profdata-multicall.patch",
     "//3rd_party/llvm-project/23.x/patches:clang-format-multicall.patch",
