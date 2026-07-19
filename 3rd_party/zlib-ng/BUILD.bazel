@@ -1,0 +1,1 @@
+exports_files(["0001-zlib-ng-windows-clang.patch"])
