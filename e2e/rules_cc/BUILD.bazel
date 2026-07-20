@@ -1116,6 +1116,22 @@ coverage_cc_binary(
     }),
 )
 
+# Library + test exercised by the `bazel coverage` integration test
+# (coverage_lcov_test.sh). Plain `bazel test //...` builds and runs the test as
+# an ordinary test; coverage_lcov_test.sh re-runs it under `bazel coverage` and
+# asserts the lcov report has real per-line data.
+cc_library(
+    name = "coverage_lib",
+    srcs = ["coverage_lib.cc"],
+    hdrs = ["coverage_lib.h"],
+)
+
+cc_test(
+    name = "coverage_lib_test",
+    srcs = ["coverage_lib_test.cc"],
+    deps = [":coverage_lib"],
+)
+
 sh_test(
     name = "coverage_output_test",
     srcs = ["coverage_output_test.sh"],

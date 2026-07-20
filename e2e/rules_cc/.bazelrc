@@ -4,3 +4,16 @@ common --config=cc
 common --process_headers_in_dependencies
 common --features=layering_check
 common --modify_execution_info=CppModuleMap=+supports-path-mapping,CppArchive=+supports-path-mapping,CppCompile=+supports-path-mapping
+
+# LLVM source-based coverage (see coverage_lcov_test.sh).
+coverage --experimental_use_llvm_covmap
+coverage --experimental_generate_llvm_lcov
+coverage --combined_report=lcov
+
+# rules_cc's collect_cc_coverage.sh leaves a dangling `gcov` symlink in the
+# per-test _coverage tree when collecting in llvm mode (init_gcov creates it but
+# only the gcov branch removes it). --experimental_fetch_all_coverage_outputs
+# (inherited from //.bazelrc) validates that raw tree and fails on the dangling
+# link. We only need the merged lcov report, so opt out of fetching the raw
+# per-test outputs for coverage.
+coverage --noexperimental_fetch_all_coverage_outputs
