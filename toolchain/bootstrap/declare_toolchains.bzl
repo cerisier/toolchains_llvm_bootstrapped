@@ -279,15 +279,16 @@ def declare_tool_map(exec_os, exec_cpu, prefix = None, fdo_profile = None, fdo_i
         ],
     )
 
+    # Preserve the `-clang++` suffix for rustc's linker-flavor inference.
     bootstrap_binary(
-        name = prefix + "/bin/link-wrapper",
+        name = prefix + "/bin/link-wrapper-clang++",
         actual = "@llvm//tools/internal:link-wrapper",
         **bootstrap_binary_kwargs
     )
 
     cc_tool(
         name = prefix + "/link-wrapper",
-        src = prefix + "/bin/link-wrapper",
+        src = prefix + "/bin/link-wrapper-clang++",
         data = [
             prefix + "/bin/clang++",
             prefix + "/bin/dsymutil",
