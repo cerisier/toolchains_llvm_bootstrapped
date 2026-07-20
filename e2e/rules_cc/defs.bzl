@@ -238,21 +238,13 @@ profile_cc_binary, _profile_cc_binary_internal = with_cfg(cc_binary).set(
 ).build()
 
 # buildifier: disable=unused-variable
-_coverage_cc_binary, _coverage_cc_binary_internal = with_cfg(cc_binary).set(
+coverage_cc_binary, _coverage_cc_binary_internal = with_cfg(cc_binary).set(
     Label("@llvm//config:profile"),
     True,
 ).set(
     Label("@llvm//config:host_profile"),
     True,
 ).build()
-
-# Builds a cc_binary with llvm source-based coverage instrumentation (-fcoverage-mapping)
-def coverage_cc_binary(name, copts = [], **kwargs):
-    _coverage_cc_binary(
-        name = name,
-        copts = copts + ["-fcoverage-mapping"],
-        **kwargs
-    )
 
 opt_binary, _opt_binary_internal = with_cfg(cc_binary).set(
     "compilation_mode",
