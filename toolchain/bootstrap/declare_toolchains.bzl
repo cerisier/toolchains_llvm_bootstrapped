@@ -56,7 +56,7 @@ def declare_tool_map(exec_os, exec_cpu, prefix = None, fdo_profile = None, fdo_i
         "visibility": ["//visibility:public"],
     }
 
-    BASE_TOOLS = {
+    TOOLS_WITHOUT_LINKER = {
         "@rules_cc//cc/toolchains/actions:assembly_actions": prefix + "/clang",
         "@rules_cc//cc/toolchains/actions:c_compile": prefix + "/clang",
         "@rules_cc//cc/toolchains/actions:gcov": prefix + "/gcov",
@@ -65,9 +65,11 @@ def declare_tool_map(exec_os, exec_cpu, prefix = None, fdo_profile = None, fdo_i
         "@rules_cc//cc/toolchains/actions:objc_compile": prefix + "/clang",
         "@llvm//toolchain:cpp_compile_actions_without_header_parsing": prefix + "/clang++",
         "@rules_cc//cc/toolchains/actions:dwp": prefix + "/llvm-dwp",
-        "@rules_cc//cc/toolchains/actions:link_actions": prefix + "/lld",
         "@rules_cc//cc/toolchains/actions:objcopy_embed_data": prefix + "/llvm-objcopy",
         "@rules_cc//cc/toolchains/actions:strip": prefix + "/llvm-strip",
+    }
+    BASE_TOOLS = TOOLS_WITHOUT_LINKER | {
+        "@rules_cc//cc/toolchains/actions:link_actions": prefix + "/lld",
     }
 
     COMPLETE_ONLY_TOOLS = {
@@ -83,8 +85,9 @@ def declare_tool_map(exec_os, exec_cpu, prefix = None, fdo_profile = None, fdo_i
 
     cc_tool_map(
         name = prefix + "/tools_with_interface_libraries",
-        tools = BASE_TOOLS | COMPLETE_ONLY_TOOLS | {
-            "@rules_cc//cc/toolchains/actions:link_actions": prefix + "/link-wrapper",
+        tools = TOOLS_WITHOUT_LINKER | COMPLETE_ONLY_TOOLS | {
+            "@rules_cc//cc/toolchains/actions:link_executable_actions": prefix + "/lld",
+            "@rules_cc//cc/toolchains/actions:dynamic_library_link_actions": prefix + "/link-wrapper",
             "@rules_cc//cc/toolchains/actions:ar_actions": prefix + "/llvm-ar",
         },
     )
