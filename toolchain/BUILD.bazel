@@ -90,6 +90,17 @@ config_setting(
 )
 
 config_setting(
+    name = "linux_complete",
+    constraint_values = [
+        "@platforms//os:linux",
+    ],
+    flag_values = {
+        ":runtime_stage": "complete",
+    },
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
     name = "macos_complete",
     constraint_values = [
         "@platforms//os:macos",
@@ -389,6 +400,14 @@ cc_artifact_name_pattern(
     name = "macos_dynamic_library_pattern",
     category = "@rules_cc//cc/toolchains/artifacts:dynamic_library",
     extension = ".dylib",
+    prefix = "lib",
+    visibility = ["//visibility:public"],
+)
+
+cc_artifact_name_pattern(
+    name = "macos_interface_library_pattern",
+    category = "@rules_cc//cc/toolchains/artifacts:interface_library",
+    extension = ".tbd",
     prefix = "lib",
     visibility = ["//visibility:public"],
 )

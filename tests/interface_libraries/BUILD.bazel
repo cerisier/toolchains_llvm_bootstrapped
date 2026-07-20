@@ -1,0 +1,24 @@
+load(":interface_library_test.bzl", "interface_library_test", "test_shared_library")
+
+test_shared_library(
+    name = "unversioned",
+    srcs = ["unversioned.c"],
+)
+
+test_shared_library(
+    name = "versioned",
+    srcs = ["versioned.c"],
+    additional_linker_inputs = ["versioned.lds"],
+    linkopts = ["-Wl,--version-script,$(execpath versioned.lds)"],
+)
+
+interface_library_test(
+    name = "unversioned_test",
+    library = ":unversioned",
+)
+
+interface_library_test(
+    name = "versioned_test",
+    library = ":versioned",
+    versioned_symbols = True,
+)

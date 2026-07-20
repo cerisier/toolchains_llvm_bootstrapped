@@ -121,6 +121,15 @@ def declare_llvm_targets(*, suffix = ""):
     )
 
     cc_tool_map(
+        name = "tools_with_interface_libraries",
+        tools = BASE_TOOLS | COMPLETE_ONLY_TOOLS | {
+            "@rules_cc//cc/toolchains/actions:link_actions": ":link-wrapper",
+            "@rules_cc//cc/toolchains/actions:ar_actions": ":llvm-ar",
+        },
+        visibility = ["//visibility:public"],
+    )
+
+    cc_tool_map(
         name = "staged_default_tools",
         tools = BASE_TOOLS | {
             "@rules_cc//cc/toolchains/actions:ar_actions": ":llvm-ar",
@@ -221,16 +230,29 @@ def declare_llvm_targets(*, suffix = ""):
             "bin/ld.lld" + suffix,
             "bin/ld64.lld" + suffix,
             "bin/lld" + suffix,
+            "bin/llvm-ifs" + suffix,
+            "bin/llvm-nm" + suffix,
+            "bin/llvm-readtapi" + suffix,
             "bin/wasm-ld" + suffix,
+        ],
+        capabilities = [
+            "@rules_cc//cc/toolchains/capabilities:has_configured_linker_path",
+            "@rules_cc//cc/toolchains/capabilities:supports_interface_shared_libraries",
         ],
         env = {
             "LLVM_CLANGXX": "{clangxx}",
             "LLVM_DSYMUTIL": "{dsymutil}",
+            "LLVM_IFS": "{llvm_ifs}",
+            "LLVM_NM": "{llvm_nm}",
+            "LLVM_READTAPI": "{llvm_readtapi}",
             "LLVM_STRIP": "{strip}",
         },
         format = {
             "clangxx": ":clangxx_file",
             "dsymutil": ":dsymutil_file",
+            "llvm_ifs": "bin/llvm-ifs" + suffix,
+            "llvm_nm": "bin/llvm-nm" + suffix,
+            "llvm_readtapi": "bin/llvm-readtapi" + suffix,
             "strip": ":strip_file",
         },
     )

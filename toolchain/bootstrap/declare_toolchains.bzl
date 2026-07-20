@@ -82,6 +82,14 @@ def declare_tool_map(exec_os, exec_cpu, prefix = None, fdo_profile = None, fdo_i
     )
 
     cc_tool_map(
+        name = prefix + "/tools_with_interface_libraries",
+        tools = BASE_TOOLS | COMPLETE_ONLY_TOOLS | {
+            "@rules_cc//cc/toolchains/actions:link_actions": prefix + "/link-wrapper",
+            "@rules_cc//cc/toolchains/actions:ar_actions": prefix + "/llvm-ar",
+        },
+    )
+
+    cc_tool_map(
         name = prefix + "/tools_with_libtool",
         tools = BASE_TOOLS | COMPLETE_ONLY_TOOLS | {
             "@rules_cc//cc/toolchains/actions:ar_actions": prefix + "/llvm-libtool-darwin",
@@ -187,11 +195,16 @@ def declare_tool_map(exec_os, exec_cpu, prefix = None, fdo_profile = None, fdo_i
         },
     )
 
-    bootstrap_binary(
-        name = prefix + "/bin/llvm-nm",
-        actual = "@llvm-project//llvm:llvm.stripped",
-        **bootstrap_binary_kwargs
-    )
+    for tool in [
+        "llvm-ifs",
+        "llvm-nm",
+        "llvm-readtapi",
+    ]:
+        bootstrap_binary(
+            name = prefix + "/bin/" + tool,
+            actual = "@llvm-project//llvm:llvm.stripped",
+            **bootstrap_binary_kwargs
+        )
 
     bootstrap_binary(
         name = prefix + "/bin/c++filt",
@@ -279,16 +292,29 @@ def declare_tool_map(exec_os, exec_cpu, prefix = None, fdo_profile = None, fdo_i
             prefix + "/bin/ld.lld",
             prefix + "/bin/ld64.lld",
             prefix + "/bin/lld",
+            prefix + "/bin/llvm-ifs",
+            prefix + "/bin/llvm-nm",
+            prefix + "/bin/llvm-readtapi",
             prefix + "/bin/wasm-ld",
+        ],
+        capabilities = [
+            "@rules_cc//cc/toolchains/capabilities:has_configured_linker_path",
+            "@rules_cc//cc/toolchains/capabilities:supports_interface_shared_libraries",
         ],
         env = {
             "LLVM_CLANGXX": "{clangxx}",
             "LLVM_DSYMUTIL": "{dsymutil}",
+            "LLVM_IFS": "{llvm_ifs}",
+            "LLVM_NM": "{llvm_nm}",
+            "LLVM_READTAPI": "{llvm_readtapi}",
             "LLVM_STRIP": "{strip}",
         },
         format = {
             "clangxx": prefix + "/bin/clang++",
             "dsymutil": prefix + "/bin/dsymutil",
+            "llvm_ifs": prefix + "/bin/llvm-ifs",
+            "llvm_nm": prefix + "/bin/llvm-nm",
+            "llvm_readtapi": prefix + "/bin/llvm-readtapi",
             "strip": prefix + "/bin/llvm-strip",
         },
     )
@@ -383,6 +409,7 @@ def declare_toolchains(*, execs = None, targets = SUPPORTED_TARGETS):
             cc_toolchain(
                 name = cc_toolchain_name,
                 tool_map = select({
+                    "@llvm//toolchain:linux_complete": ":%s/tools_with_interface_libraries" % tool_prefix,
                     "@llvm//toolchain:macos_complete_with_libtool": ":%s/tools_with_dsym_and_libtool" % tool_prefix,
                     "@llvm//toolchain:macos_complete": ":%s/tools_with_dsym" % tool_prefix,
                     "@rules_cc//cc/toolchains/args/archiver_flags:use_libtool_on_apple_setting": ":%s/tools_with_libtool_for_runtime" % tool_prefix,

@@ -19,6 +19,14 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = []):
             # "@rules_cc//cc/toolchains/args/thin_lto:feature",
             "@llvm//toolchain/features/thin_lto:feature",
         ] + select({
+            "@platforms//os:linux": [
+                "@llvm//toolchain/features/interface_libraries:feature",
+            ],
+            "@platforms//os:macos": [
+                "@llvm//toolchain/features/interface_libraries:feature",
+            ],
+            "//conditions:default": [],
+        }) + select({
             "@llvm//toolchain:macos_complete": [
                 "@llvm//toolchain/features:generate_dsym_file",
             ],
@@ -37,10 +45,12 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = []):
         name = name + "_enabled_features",
         all_of = select({
             "@platforms//os:linux": [
+                "@llvm//toolchain/features/interface_libraries:feature",
                 "@llvm//toolchain/features:static_link_cpp_runtimes",
                 "@llvm//toolchain/features/runtime_library_search_directories:feature",
             ],
             "@platforms//os:macos": [
+                "@llvm//toolchain/features/interface_libraries:feature",
                 # macOS links libc++ from the SDK, so it doesn't statically link
                 # the C++ runtimes. But it does need dynamic runtime libs (e.g.
                 # sanitizer dylibs) placed in runfiles with an @loader_path rpath,
@@ -101,6 +111,7 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = []):
         artifact_name_patterns = select({
             "@platforms//os:macos": [
                 "@llvm//toolchain:macos_dynamic_library_pattern",
+                "@llvm//toolchain:macos_interface_library_pattern",
             ],
             "@platforms//os:windows": [
                 "@llvm//toolchain:windows_executable_pattern",
