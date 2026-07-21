@@ -77,7 +77,7 @@ jobs:
             //...
 
       - name: bazel coverage e2e (lcov)
-        if: matrix.folder == 'e2e/rules_cc'
+        if: matrix.folder == 'e2e/rules_cc' && matrix.bazel_version == 'last_rc'
         env:
           USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
         working-directory: ${{ matrix.folder }}
