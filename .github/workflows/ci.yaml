@@ -184,18 +184,12 @@ jobs:
             //:tsan_fail \
             //:lsan_fail
 
-      - name: bazel test macOS coverage
+      - name: bazel coverage macOS e2e (lcov)
         env:
           USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
         working-directory: ${{ matrix.folder }}
         shell: bash
-        run: |
-          bazel \
-            --bazelrc=.bazelrc \
-            test \
-            --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
-            //:coverage_output_test
-          ./coverage_lcov_test.sh --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7
+        run: ./coverage_lcov_test.sh --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7
 
   llvm_version_analysis:
     strategy:

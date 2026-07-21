@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 # Integration test for `bazel coverage` with the hermetic LLVM toolchain.
 #
-# Unlike coverage_output_test (which only runs an instrumented binary), this
-# drives the full coverage flow: llvm source-based instrumentation, the
+# End to End test for full coverage flow: llvm source-based instrumentation, the
 # compiler-rt profile runtime, coverage-tool staging into the test sandbox
 # (gcov / llvm-cov / llvm-profdata), and lcov collection via llvm-cov export.
 # It must run as a CI step rather than a bazel test target because `bazel
