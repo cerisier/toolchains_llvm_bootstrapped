@@ -5,7 +5,7 @@ common --process_headers_in_dependencies
 common --features=layering_check
 common --modify_execution_info=CppModuleMap=+supports-path-mapping,CppArchive=+supports-path-mapping,CppCompile=+supports-path-mapping
 
-# LLVM source-based coverage (see coverage_lcov_test.sh).
+# Coverage needs Bazel 9
 coverage --experimental_use_llvm_covmap
 coverage --experimental_generate_llvm_lcov
 coverage --combined_report=lcov
