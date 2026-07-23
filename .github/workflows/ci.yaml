@@ -254,7 +254,7 @@ jobs:
           restore-keys: |
             bazel-cache-tests-${{ matrix.os }}-${{ matrix.bazel_version }}
 
-      - name: bazel test //tests/...
+      - name: bazel query kernel headers and test //tests/...
         env:
           USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -264,6 +264,14 @@ jobs:
           if [[ -n "${BUILDBUDDY_API_KEY:-}" ]]; then
             REMOTE_HEADER_ARGS=(--remote_header="x-buildbuddy-api-key=${BUILDBUDDY_API_KEY}")
           fi
+
+          bazel \
+            --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc \
+            --bazelrc=.bazelrc \
+            query \
+            "${REMOTE_HEADER_ARGS[@]}" \
+            --output=package \
+            'deps(set(@kernel_headers//:3.6_kernel_headers @kernel_headers//:3.6_kernel_headers_directory @kernel_headers//:4.14_kernel_headers @kernel_headers//:4.14_kernel_headers_directory))'
 
           bazel \
             --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc \
