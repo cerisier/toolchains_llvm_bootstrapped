@@ -63,6 +63,21 @@ def _linux_kernel_version_map_content(decoded_index):
 
     lines.append("}")
     lines.append("")
+    lines.append("LINUX_KERNEL_ARCHS_BY_VERSION = {")
+
+    for version in sorted(decoded_index.keys(), key = _version_key, reverse = True):
+        kernel_archs = sorted([
+            kernel_arch
+            for kernel_arch in decoded_index[version]
+            if kernel_arch in _SUPPORTED_ARCHS
+        ])
+        lines.append('    "{}": [{}],'.format(
+            version,
+            ", ".join(['"{}"'.format(kernel_arch) for kernel_arch in kernel_archs]),
+        ))
+
+    lines.append("}")
+    lines.append("")
 
     return "\n".join(lines)
 

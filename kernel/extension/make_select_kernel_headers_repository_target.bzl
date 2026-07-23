@@ -1,4 +1,8 @@
-load("@kernel_headers//:linux_kernel_version_map.bzl", "LINUX_KERNEL_VERSION_MAP")
+load(
+    "@kernel_headers//:linux_kernel_version_map.bzl",
+    "LINUX_KERNEL_ARCHS_BY_VERSION",
+    "LINUX_KERNEL_VERSION_MAP",
+)
 load("//constraints/kernel/linux:linux_kernel_versions.bzl", "LINUX_KERNEL_VERSIONS")
 load("//constraints/libc:libc_versions.bzl", "LIBCS")
 load("//platforms:common.bzl", "LIBC_SUPPORTED_TARGETS")
@@ -7,6 +11,9 @@ load(":libc_kernel_versions.bzl", "LIBC_KERNEL_VERSIONS")
 
 def _kernel_headers_repository_target(target_arch, kernel_version, bazel_target):
     return "@linux_kernel_headers_{}.{}//:{}".format(arch_to_kernel_arch(target_arch), kernel_version, bazel_target)
+
+def _kernel_headers_available(target_arch, kernel_version):
+    return arch_to_kernel_arch(target_arch) in LINUX_KERNEL_ARCHS_BY_VERSION.get(kernel_version, [])
 
 def _version_alias_name(kernel_version, bazel_target):
     return "{}_{}".format(kernel_version, bazel_target)
@@ -25,6 +32,8 @@ def _make_select_kernel_headers_repository_target_for_linux_kernel(kernel_versio
     selection = {}
     full_kernel_version = _linux_kernel_headers_version(kernel_version)
     for (target_os, target_arch) in LIBC_SUPPORTED_TARGETS:
+        if not _kernel_headers_available(target_arch, full_kernel_version):
+            continue
         apparent_target = _kernel_headers_repository_target(target_arch, full_kernel_version, bazel_target)
         selection["@llvm//platforms/config:{}_{}".format(target_os, target_arch)] = apparent_target
 
@@ -36,6 +45,8 @@ def _make_select_kernel_headers_repository_target_from_libc(bazel_target):
     for (target_os, target_arch) in LIBC_SUPPORTED_TARGETS:
         for libc_version in LIBCS + ["unconstrained"]:
             kernel_version = LIBC_KERNEL_VERSIONS[libc_version]
+            if not _kernel_headers_available(target_arch, kernel_version):
+                continue
             apparent_target = _kernel_headers_repository_target(target_arch, kernel_version, bazel_target)
             selection["@llvm//platforms/config:{}_{}_{}".format(target_os, target_arch, libc_version)] = apparent_target
 

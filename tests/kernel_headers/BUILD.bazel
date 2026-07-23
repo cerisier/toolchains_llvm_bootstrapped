@@ -1,0 +1,5 @@
+load(":kernel_headers_test.bzl", "linux_kernel_archs_by_version_test")
+
+linux_kernel_archs_by_version_test(
+    name = "linux_kernel_archs_by_version_test",
+)
