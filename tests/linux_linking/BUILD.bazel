@@ -13,10 +13,38 @@ cc_binary(
     srcs = ["main.c"],
 )
 
+platform(
+    name = "linux_x86_64_musl_pie_on",
+    constraint_values = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+        "//constraints/cxxstdlib:libcxx",
+        "//constraints/libc:musl",
+        "//constraints/pie:on",
+    ],
+)
+
+platform(
+    name = "linux_aarch64_musl_pie_on",
+    constraint_values = [
+        "@platforms//cpu:aarch64",
+        "@platforms//os:linux",
+        "//constraints/cxxstdlib:libcxx",
+        "//constraints/libc:musl",
+        "//constraints/pie:on",
+    ],
+)
+
 platform_transition_binary(
     name = "hello_x86_64_musl",
     binary = ":hello",
     target_platform = "@llvm//platforms:linux_x86_64_musl",
+)
+
+platform_transition_binary(
+    name = "hello_x86_64_musl_pie_on",
+    binary = ":hello",
+    target_platform = ":linux_x86_64_musl_pie_on",
 )
 
 platform_transition_binary(
@@ -32,6 +60,12 @@ platform_transition_binary(
 )
 
 platform_transition_binary(
+    name = "hello_aarch64_musl_pie_on",
+    binary = ":hello",
+    target_platform = ":linux_aarch64_musl_pie_on",
+)
+
+platform_transition_binary(
     name = "hello_aarch64_gnu",
     binary = ":hello",
     target_platform = "@llvm//platforms:linux_aarch64",
@@ -40,6 +74,19 @@ platform_transition_binary(
 sh_test(
     name = "x86_64_musl_static_pie_test",
     srcs = ["verify_static_pie.sh"],
+    args = [
+        "$(rootpath :llvm-readelf)",
+        "$(rootpath :hello_x86_64_musl_pie_on)",
+    ],
+    data = [
+        ":hello_x86_64_musl_pie_on",
+        ":llvm-readelf",
+    ],
+)
+
+sh_test(
+    name = "x86_64_musl_static_non_pie_default_test",
+    srcs = ["verify_static_non_pie.sh"],
     args = [
         "$(rootpath :llvm-readelf)",
         "$(rootpath :hello_x86_64_musl)",
@@ -66,6 +113,19 @@ sh_test(
 sh_test(
     name = "aarch64_musl_static_pie_test",
     srcs = ["verify_static_pie.sh"],
+    args = [
+        "$(rootpath :llvm-readelf)",
+        "$(rootpath :hello_aarch64_musl_pie_on)",
+    ],
+    data = [
+        ":hello_aarch64_musl_pie_on",
+        ":llvm-readelf",
+    ],
+)
+
+sh_test(
+    name = "aarch64_musl_static_non_pie_default_test",
+    srcs = ["verify_static_non_pie.sh"],
     args = [
         "$(rootpath :llvm-readelf)",
         "$(rootpath :hello_aarch64_musl)",
