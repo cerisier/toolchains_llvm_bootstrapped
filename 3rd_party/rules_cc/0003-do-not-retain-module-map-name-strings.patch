@@ -1,0 +1,205 @@
+diff --git a/cc/private/cc_info.bzl b/cc/private/cc_info.bzl
+index a51d0f4..f141c35 100644
+--- a/cc/private/cc_info.bzl
++++ b/cc/private/cc_info.bzl
+@@ -152,23 +152,76 @@ _ModuleMapInfo = provider(
+     "ModuleMapInfo",
+     fields = {
+         "file": "The module map file.",
+-        "name": "The name of the module.",
++        "name": "The name of the module or None if the module is named after the label of the target that generated the module map file (see get_module_map_name).",
+     },
+ )
+ 
+-def create_module_map(*, file, name):
++def create_module_map(*, file, name = None):
+     """
+     Creates a module map struct.
+ 
+     Args:
+         file: The module map file.
+-        name: The name of the module.
++        name: The name of the module. If None (the default), the module is
++          named after the label of the target that generated the module map
++          file. Prefer the default: it avoids retaining a name string per
++          module map as the name is derived on demand from `file.owner`.
+     Returns:
+         A module map struct.
+     """
+     check_private_api()
+     return _ModuleMapInfo(file = file, name = name)
+ 
++def get_module_map_name(module_map):
++    """
++    Returns the name of the module described by a module map struct.
++
++    Module maps generated for a target are named after the target's label,
++    rendered in its unambiguous canonical form, except that main-repository
++    labels do not carry the leading double-at prefix (for example "//pkg:lib"
++    for a main-repository target). Names of targets in external repositories
++    are thus valid label strings, while main-repository names match the
++    traditional module name format.
++
++    Args:
++        module_map: The module map struct.
++    Returns:
++        The name of the module as a string.
++    """
++    if module_map.name != None:
++        return module_map.name
++    label_string = str(module_map.file.owner)
++
++    # buildifier: disable=canonical-repository
++    if label_string.startswith("@@//"):
++        return label_string[2:]
++    return label_string
++
++def get_module_map_label(module_map):
++    """
++    Returns the label a module map struct is named after.
++
++    This is only valid for module maps whose name is (derived from) a label,
++    which is the case for all module maps generated for a target, including
++    separate module maps. It is not valid for module maps with special names
++    such as the crosstool module map.
++
++    Args:
++        module_map: The module map struct.
++    Returns:
++        The Label the module's name refers to.
++    """
++    if module_map.name == None:
++        return module_map.file.owner
++
++    # Module map names of main-repository targets lack the leading "@@" (see
++    # get_module_map_name), which has to be restored for parsing to ensure
++    # that the name is not resolved relative to this file's repository.
++    name = module_map.name
++
++    # buildifier: disable=canonical-repository
++    return Label(name if name.startswith("@") else "@@" + name)
++
+ def create_separate_module_map(module_map):
+     """
+     Creates a separate module map struct.
+@@ -178,7 +231,7 @@ def create_separate_module_map(module_map):
+     Returns:
+         A module map struct.
+     """
+-    return _ModuleMapInfo(file = module_map.file, name = module_map.name + ".sep")
++    return _ModuleMapInfo(file = module_map.file, name = get_module_map_name(module_map) + ".sep")
+ 
+ def create_linking_context(
+         *,
+diff --git a/cc/private/compile/cc_compilation_helper.bzl b/cc/private/compile/cc_compilation_helper.bzl
+index ebc24c7..5c1bfaf 100644
+--- a/cc/private/compile/cc_compilation_helper.bzl
++++ b/cc/private/compile/cc_compilation_helper.bzl
+@@ -21,7 +21,7 @@ load(
+     "repository_exec_path",
+ )
+ load("//cc/common:semantics.bzl", "STRIP_INCLUDE_PREFIX_APPLIES_TO_TEXTUAL_HEADERS", "USE_EXEC_ROOT_FOR_VIRTUAL_INCLUDES_SYMLINKS")
+-load("//cc/private:cc_info.bzl", "create_compilation_context", "create_module_map")
++load("//cc/private:cc_info.bzl", "create_compilation_context", "create_module_map", "get_module_map_name")
+ load("//cc/private:cc_internal.bzl", _cc_internal = "cc_internal")
+ 
+ _VIRTUAL_INCLUDES_DIR = "_virtual_includes"
+@@ -252,7 +252,8 @@ _ModuleMapInfo = provider(
+ def _module_map_struct_to_module_map_content(parameters, tree_expander):
+     lines = []
+     module_map = parameters.module_map
+-    lines.append("module \"%s\" {" % module_map.name)
++    module_name = get_module_map_name(module_map)
++    lines.append("module \"%s\" {" % module_name)
+     lines.append("  export *")
+ 
+     def expanded(artifacts):
+@@ -324,10 +325,10 @@ def _module_map_struct_to_module_map_content(parameters, tree_expander):
+ 
+     dependency_module_maps = parameters.dependency_module_maps.to_list()
+     for dep in dependency_module_maps:
+-        lines.append("  use \"" + dep.name + "\"")
++        lines.append("  use \"" + get_module_map_name(dep) + "\"")
+ 
+     if parameters.separate_module_headers:
+-        separate_name = module_map.name + ".sep"
++        separate_name = module_name + ".sep"
+         lines.append("  use \"" + separate_name + "\"")
+         lines.append("}")
+         lines.append("module \"" + separate_name + "\" {")
+@@ -341,14 +342,14 @@ def _module_map_struct_to_module_map_content(parameters, tree_expander):
+             added_paths.add(header.path)
+ 
+         for dep in dependency_module_maps:
+-            lines.append("  use \"" + dep.name + "\"")
++            lines.append("  use \"" + get_module_map_name(dep) + "\"")
+ 
+     lines.append("}")
+ 
+     if parameters.extern_dependencies:
+         for dep in dependency_module_maps:
+             lines.append(
+-                "extern module \"" + dep.name + "\" \"" +
++                "extern module \"" + get_module_map_name(dep) + "\" \"" +
+                 parameters.leading_periods + dep.file.path + "\"",
+             )
+ 
+@@ -561,7 +562,6 @@ def _init_cc_compilation_context(
+         if not module_map:
+             module_map = create_module_map(
+                 file = actions.declare_file(label.name + ".cppmap"),
+-                name = label.workspace_name + "//" + label.package + ":" + label.name,
+             )
+ 
+         # There are different modes for module compilation:
+diff --git a/cc/private/compile/compile.bzl b/cc/private/compile/compile.bzl
+index 3aebb85..faac9aa 100644
+--- a/cc/private/compile/compile.bzl
++++ b/cc/private/compile/compile.bzl
+@@ -36,6 +36,7 @@ load(
+     "create_cc_compilation_context_with_cpp20_modules",
+     "create_compilation_context_with_extra_header_tokens",
+     "create_separate_module_map",
++    "get_module_map_label",
+ )
+ load("//cc/private:cc_internal.bzl", _cc_internal = "cc_internal")
+ load("//cc/private/compile:cc_compilation_helper.bzl", "cc_compilation_helper", "dotd_files_enabled", "serialized_diagnostics_file_enabled")
+@@ -1153,7 +1154,7 @@ def _create_cc_compile_actions(
+ 
+     if _should_provide_header_modules(feature_configuration, private_headers, public_headers):
+         cpp_module_map = cc_compilation_context._module_map
+-        module_map_label = Label(cpp_module_map.name)
++        module_map_label = get_module_map_label(cpp_module_map)
+         modules = _create_module_action(
+             action_construction_context = action_construction_context,
+             cc_compilation_context = cc_compilation_context,
+@@ -2109,7 +2110,7 @@ def _create_module_action(
+         additional_include_scanning_roots,
+         outputs,
+         progress_message_prefix):
+-    module_map_label = Label(cpp_module_map.name)
++    module_map_label = get_module_map_label(cpp_module_map)
+     return _create_pic_nopic_compile_source_actions(
+         action_construction_context = action_construction_context,
+         cc_compilation_context = cc_compilation_context,
+diff --git a/cc/private/compile/compile_build_variables.bzl b/cc/private/compile/compile_build_variables.bzl
+index ed76c6e..caa1a26 100644
+--- a/cc/private/compile/compile_build_variables.bzl
++++ b/cc/private/compile/compile_build_variables.bzl
+@@ -16,6 +16,7 @@ All build variables we create for various `CppCompileAction`s
+ """
+ 
+ load("//cc/common:cc_helper_internal.bzl", "extensions", "get_fdo_build_stamp", "get_linkstamp_stamps", _PRIVATE_STARLARKIFICATION_ALLOWLIST = "PRIVATE_STARLARKIFICATION_ALLOWLIST")
++load("//cc/private:cc_info.bzl", "get_module_map_name")
+ load("//cc/private:cc_internal.bzl", _cc_internal = "cc_internal")
+ load("//cc/private/rules_impl:native_cc_common.bzl", _cc_common_internal = "native_cc_common")
+ 
+@@ -319,7 +320,7 @@ def get_specific_compile_build_variables(
+     result = {}
+ 
+     if feature_configuration.is_enabled("module_maps") and cpp_module_map:
+-        result[_VARS.MODULE_NAME] = cpp_module_map.name
++        result[_VARS.MODULE_NAME] = get_module_map_name(cpp_module_map)
+         result[_VARS.MODULE_MAP_FILE] = cpp_module_map.file
+         result[_VARS.DEPENDENT_MODULE_MAP_FILES] = direct_module_maps
+ 

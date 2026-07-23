@@ -1,4 +1,5 @@
 load("@bazel_features//:features.bzl", "bazel_features")
+load("@bazel_skylib//rules/directory:directory.bzl", "directory")
 load("@llvm//runtimes:module_map.bzl", "include_path", "module_map")
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains:tool.bzl", "cc_tool")
@@ -14,6 +15,18 @@ def declare_llvm_targets(*, suffix = ""):
         name = "builtin_resource_dir",
         # Grab whichever version-specific dir is there.
         path = native.glob(["lib/clang/*"], exclude_directories = 0)[0],
+        visibility = ["//visibility:public"],
+    )
+
+    # The builtin headers as an enumerated list rather than a directory. Used
+    # to declare them as `textual header`s in the toolchain's module map:
+    # umbrella submodules would require Clang to parse every header when the
+    # "crosstool" module is compiled, which fails for headers that are not
+    # standalone-parseable (e.g. the CUDA wrapper headers). Textual headers
+    # are only parsed when included and never require a compiled module.
+    directory(
+        name = "builtin_resource_headers",
+        srcs = native.glob(["lib/clang/*/include/**"]),
         visibility = ["//visibility:public"],
     )
 
@@ -320,8 +333,15 @@ def declare_llvm_targets(*, suffix = ""):
     include_path(
         name = "macos_target_headers",
         srcs = [
-            ":builtin_resource_dir",
+            ":builtin_resource_headers",
             "@macos_sdk//sysroot",
+            # Explicit textual entries win over the sysroot umbrella above, so
+            # C library headers stay textual even in `-fmodules` builds.
+            "@macos_sdk//sysroot:c_headers",
+            # The C++ standard library headers as provided via the include
+            # search paths (-nostdinc++ replaces the copies in the SDK).
+            "@llvm//runtimes/cxxstdlib:public_headers_directory",
+            "@llvm//runtimes/cxxstdlib:detail_headers_directory",
         ],
     )
 
@@ -329,22 +349,29 @@ def declare_llvm_targets(*, suffix = ""):
     include_path(
         name = "linux_target_headers",
         srcs = [
-            ":builtin_resource_dir",
+            ":builtin_resource_headers",
         ] + select({
             "@llvm//toolchain:runtimes_all": [
-                "@llvm//runtimes/cxxstdlib:headers_include_search_directory",
+                "@llvm//runtimes/cxxstdlib:public_headers_directory",
+                "@llvm//runtimes/cxxstdlib:detail_headers_directory",
                 "@llvm//runtimes/cxxstdlib:abi_headers_include_search_directory",
             ],
             "//conditions:default": [],
         }) + [
-            "@kernel_headers//:kernel_headers_directory",
+            # The enumerated variant of the kernel headers so that they are
+            # declared as textual headers rather than covered by an umbrella
+            # submodule.
+            "@kernel_headers//:kernel_headers_files",
             "@llvm//sanitizers:sanitizers_headers_include_search_directory",
         ] + select({
             "@llvm//platforms/config:musl": [
                 "@llvm//runtimes/musl:musl_headers_include_search_directory",
             ],
             "@llvm//platforms/config:gnu": [
-                "@llvm//runtimes/glibc:glibc_headers_include_search_directory",
+                # The enumerated variant of the glibc headers so that they
+                # are declared as textual headers rather than covered by an
+                # umbrella submodule.
+                "@llvm//runtimes/glibc:glibc_headers_files",
             ],
         }),
     )
@@ -353,10 +380,11 @@ def declare_llvm_targets(*, suffix = ""):
     include_path(
         name = "windows_target_headers",
         srcs = [
-            ":builtin_resource_dir",
+            ":builtin_resource_headers",
         ] + select({
             "@llvm//toolchain:runtimes_all": [
-                "@llvm//runtimes/cxxstdlib:headers_include_search_directory",
+                "@llvm//runtimes/cxxstdlib:public_headers_directory",
+                "@llvm//runtimes/cxxstdlib:detail_headers_directory",
                 "@llvm//runtimes/cxxstdlib:abi_headers_include_search_directory",
             ],
             "//conditions:default": [],
@@ -371,7 +399,7 @@ def declare_llvm_targets(*, suffix = ""):
     include_path(
         name = "wasm_target_headers",
         srcs = [
-            ":builtin_resource_dir",
+            ":builtin_resource_headers",
             # TODO(zbarsky): We'll want to add wasi libc headers here.
         ],
     )

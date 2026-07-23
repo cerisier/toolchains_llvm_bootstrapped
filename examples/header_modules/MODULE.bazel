@@ -1,0 +1,57 @@
+module(
+    name = "header_modules_example",
+    version = "0.0.0",
+)
+
+bazel_dep(name = "llvm", version = "")
+local_path_override(
+    module_name = "llvm",
+    path = "../../",
+)
+
+bazel_dep(name = "rules_cc", version = "0.2.16")
+
+# Header modules require rules_cc fixes that are not yet part of a release.
+# single_version_override only takes effect in the root module and only
+# accepts patches from the main repository, so users of the toolchain have to
+# copy its rules_cc patches (see @llvm//3rd_party/rules_cc) and apply them
+# themselves.
+single_version_override(
+    module_name = "rules_cc",
+    patch_strip = 1,
+    patches = [
+        "//patches:0001-add-imported-module-files-to-module-codegen-inputs.patch",
+        "//patches:0002-expand-tree-artifacts-in-public-textual-headers.patch",
+        "//patches:0003-do-not-retain-module-map-name-strings.patch",
+    ],
+    version = "0.2.20",
+)
+
+toolchain = use_extension("@llvm//extensions:toolchain.bzl", "toolchain")
+toolchain.exec(
+    arch = "x86_64",
+    os = "linux",
+)
+toolchain.exec(
+    arch = "aarch64",
+    os = "linux",
+)
+toolchain.exec(
+    arch = "aarch64",
+    os = "macos",
+)
+toolchain.target(
+    arch = "x86_64",
+    os = "linux",
+)
+toolchain.target(
+    arch = "aarch64",
+    os = "linux",
+)
+toolchain.target(
+    arch = "aarch64",
+    os = "macos",
+)
+use_repo(toolchain, "llvm_toolchains")
+
+register_toolchains("@llvm_toolchains//:all")

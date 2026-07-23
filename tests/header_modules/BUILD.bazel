@@ -1,0 +1,23 @@
+load("@bazel_lib//:bzl_library.bzl", "bzl_library")
+load(":defs.bzl", "header_modules_test_targets")
+
+# All targets in this package compile their headers into Clang header modules
+# (.pcm files) and import their dependencies' modules instead of parsing their
+# headers textually.
+package(features = [
+    "header_modules",
+    "use_header_modules",
+    "layering_check",
+])
+
+header_modules_test_targets()
+
+bzl_library(
+    name = "defs",
+    srcs = ["defs.bzl"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@bazel_features//:features",
+        "@rules_cc//cc:core_rules",
+    ],
+)

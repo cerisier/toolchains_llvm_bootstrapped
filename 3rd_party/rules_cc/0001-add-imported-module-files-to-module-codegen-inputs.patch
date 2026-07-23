@@ -1,0 +1,16 @@
+--- a/cc/private/compile/compile.bzl	2026-07-16 21:54:27
++++ b/cc/private/compile/compile.bzl	2026-07-16 21:54:27
+@@ -2063,6 +2063,13 @@
+     if fdo_context_has_artifacts:
+         additional_inputs = auxiliary_fdo_inputs.to_list()
+ 
++    # Compiling the module file to an object file causes Clang to load it,
++    # which in turn loads the module files it imports.
++    if use_pic:
++        additional_inputs = additional_inputs + cc_compilation_context._transitive_pic_modules.to_list()
++    else:
++        additional_inputs = additional_inputs + cc_compilation_context._transitive_modules.to_list()
++
+     _create_compile_action(
+         action_construction_context = action_construction_context,
+         cc_compilation_context = cc_compilation_context,
