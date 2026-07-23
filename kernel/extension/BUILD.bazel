@@ -24,10 +24,13 @@ bzl_library(
     deps = [
         ":kernel_helpers",
         ":libc_kernel_versions",
+        "//:directory",
         "//constraints/kernel/linux:linux_kernel_versions",
         "//constraints/libc:libc_versions",
         "//platforms:common",
+        "@bazel_skylib//rules/directory:providers",
         "@kernel_headers//:linux_kernel_version_map",
+        "@rules_cc//cc/common",
     ],
 )
 

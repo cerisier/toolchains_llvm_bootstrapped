@@ -64,6 +64,18 @@ def _linux_kernel_version_map_content(decoded_index):
     lines.append("}")
     lines.append("")
 
+    lines.append("LINUX_KERNEL_ARCHS = {")
+    for version in sorted(decoded_index.keys(), key = _version_key, reverse = True):
+        archs = sorted([
+            arch
+            for arch in decoded_index[version].keys()
+            if arch in _SUPPORTED_ARCHS
+        ])
+        lines.append('    "{}": {},'.format(version, repr(archs)))
+
+    lines.append("}")
+    lines.append("")
+
     return "\n".join(lines)
 
 def _kernel_headers_impl(module_ctx):
