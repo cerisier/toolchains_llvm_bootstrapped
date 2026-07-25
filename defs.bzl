@@ -14,6 +14,7 @@ def exec_test(*, rule, name, tags = [], args = [], env = {}, data = [], tools = 
         env = env,
         data = data,
         tools = tools,
+        target_compatible_with = kwargs.get("target_compatible_with", []),
     )
 
 def _exec_test_impl(ctx):

@@ -2,8 +2,12 @@ load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
 load("@rules_cc//cc/private:graph_node_info.bzl", "GraphNodeInfo")  # buildifier: disable=bzl-visibility
 load("@rules_cc//cc/private/rules_impl:cc_shared_library.bzl", "graph_structure_aspect")  # buildifier: disable=bzl-visibility
 
-def _reset_sanitizers_impl(_settings, _attr):
+def _reset_sanitizers_impl(settings, attr):
     return {
+        "//command_line_option:copt": settings["//command_line_option:copt"] + attr.copts,
+        "//command_line_option:cxxopt": settings["//command_line_option:cxxopt"] + attr.cxxopts,
+        "//command_line_option:platforms": str(attr.platform) if attr.platform else settings["//command_line_option:platforms"],
+        "@llvm-project//third-party:llvm_enable_zstd": False if attr.disable_zstd else settings["@llvm-project//third-party:llvm_enable_zstd"],
         "//config:ubsan": False,
         "//config:cfi": False,
         "//config:msan": False,
@@ -36,8 +40,17 @@ def _reset_sanitizers_impl(_settings, _attr):
 
 _reset_sanitizers = transition(
     implementation = _reset_sanitizers_impl,
-    inputs = [],
+    inputs = [
+        "//command_line_option:copt",
+        "//command_line_option:cxxopt",
+        "//command_line_option:platforms",
+        "@llvm-project//third-party:llvm_enable_zstd",
+    ],
     outputs = [
+        "//command_line_option:copt",
+        "//command_line_option:cxxopt",
+        "//command_line_option:platforms",
+        "@llvm-project//third-party:llvm_enable_zstd",
         "//config:ubsan",
         "//config:cfi",
         "//config:msan",
@@ -89,10 +102,14 @@ def _cc_unsanitized_library_impl(ctx):
 cc_unsanitized_library = rule(
     implementation = _cc_unsanitized_library_impl,
     attrs = {
+        "copts": attr.string_list(),
+        "cxxopts": attr.string_list(),
         "dep": attr.label(
             cfg = _reset_sanitizers,
             providers = [CcInfo],
             aspects = [graph_structure_aspect],
         ),
+        "disable_zstd": attr.bool(),
+        "platform": attr.label(),
     },
 )

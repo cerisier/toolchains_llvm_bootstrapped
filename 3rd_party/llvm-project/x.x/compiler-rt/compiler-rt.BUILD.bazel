@@ -1,3 +1,4 @@
+load("@bazel_features//:features.bzl", "bazel_features")
 load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
 load("@llvm//:directory.bzl", "headers_directory")
@@ -14,7 +15,10 @@ load(
     "weak_symbol_link_flags",
     "weak_symbols_in_sync_tests",
 )
+load("@llvm//constraints/libc:libc_versions.bzl", "LIBCS")
+load("@llvm//platforms:common.bzl", "LIBC_SUPPORTED_TARGETS")
 load("@llvm//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
+load("@llvm//toolchain/runtimes:cc_internal_symbolizer_object.bzl", "cc_internal_symbolizer_object")
 load("@llvm//toolchain/runtimes:cc_runtime_shared_library.bzl", "cc_runtime_stage0_shared_library")
 load("@llvm//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
 load("@llvm//toolchain/runtimes:cc_stage0_object.bzl", "cc_stage0_object")
@@ -808,22 +812,6 @@ cc_runtime_stage0_static_library(
 
 ##### Sanitizers #######
 
-# We want to reset the sanitizer configuration because LLVM builds c++ tools
-# and linking those will lead to errors, as the sanitizer libs is not an linker input.
-# Making it a linker input would result in cycles, and we probably don't want to rebuild
-# a bunch of LLVM code for each different sanitizer configuration anyway.
-
-# Ideally there would be a way to avoid this flag propagating to the exec configuration,
-# but for now this is good enough for now.
-cc_unsanitized_library(
-    name = "llvm_Symbolize",
-    # This is not as terrible as it looks - with the remote repo contents cache, Bazel will be able
-    # to pull down a single ActionResult containing the description of the repo contents, which is enough
-    # to compute AC keys and hopefully get a CAS hit on these deps. So once they're built once, they won't
-    # trigger expensive fetches of llvm-project.
-    dep = "@llvm-project//llvm:Symbolize",
-)
-
 cc_library(
     name = "sanitizers_interface_headers",
     hdrs = glob(["include/sanitizer/*.h"]),
@@ -1294,42 +1282,104 @@ cc_library(
     alwayslink = True,
 )
 
+_INTERNAL_SYMBOLIZER_API = [
+    "__sanitizer_symbolize_code",
+    "__sanitizer_symbolize_data",
+    "__sanitizer_symbolize_frame",
+    "__sanitizer_symbolize_flush",
+    "__sanitizer_symbolize_demangle",
+    "__sanitizer_symbolize_set_demangle",
+    "__sanitizer_symbolize_set_inline_frames",
+]
+
+_INTERNAL_SYMBOLIZER_PLATFORMS = {
+    "@llvm//platforms/config:{}_{}_{}".format(target_os, target_cpu, libc): "@llvm//platforms:{}_{}_{}".format(target_os, target_cpu, libc)
+    for target_os, target_cpu in LIBC_SUPPORTED_TARGETS
+    for libc in LIBCS
+}
+
+_INTERNAL_SYMBOLIZER_PLATFORMS.update({
+    "@llvm//platforms/config:{}_{}_unconstrained".format(target_os, target_cpu): "@llvm//platforms:{}_{}".format(target_os, target_cpu)
+    for target_os, target_cpu in LIBC_SUPPORTED_TARGETS
+})
+
+_INTERNAL_SYMBOLIZER_COPTS = [
+    "-DNDEBUG",
+    "-U_FORTIFY_SOURCE",
+    "-D_FORTIFY_SOURCE=0",
+    "-DHAVE_POSIX_MEMALIGN",
+    "-fPIC",
+    "-flto",
+    "-fno-builtin-memalign",
+    "-fno-stack-protector",
+    "-Oz",
+    "-g0",
+    "-Wno-language-extension-token",
+]
+
+_INTERNAL_SYMBOLIZER_CXXOPTS = [
+    "-D_LIBCPP_ABI_NAMESPACE=__InternalSymbolizer",
+    "-D_LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS",
+    "-D_LIBCXXABI_DISABLE_VISIBILITY_ANNOTATIONS",
+    "-Wno-global-constructors",
+]
+
 cc_library(
-    name = "sanitizer_common_symbolizer_internal",
+    name = "sanitizer_common_symbolizer_internal_impl",
     srcs = [
         "lib/sanitizer_common/symbolizer/sanitizer_symbolize.cpp",
+        "lib/sanitizer_common/symbolizer/sanitizer_wrappers.cpp",
         ":sanitizer_impl_headers_sources",
     ],
-    copts = SANITIZER_CFLAGS + [
-        # The standalone build of the internal symbolizer strips the __cxa_atexit
-        # shim via internalize; do the same explicitly to avoid duplicate symbols
-        # when statically linking against libc implementations that provide it.
-        "-DSANITIZER_SKIP_CXA_ATEXIT_OVERRIDE",
+    copts = [
+        "-include",
+        "compiler-rt/lib/sanitizer_common/sanitizer_redefine_builtins.h",
+        "-DSANITIZER_COMMON_REDEFINE_BUILTINS_IN_STD",
     ],
-    implementation_deps = [
-        ":libcxx_headers",
-        ":sanitizers_interface_headers",
-    ] + select({
-        # sanitizer_symbolize.cpp compiles against LLVM's public headers
-        # (DIPrinter.h ...) and the generated Config/*.h. On macOS the overlay
-        # exposes LLVM's include dirs only through the private llvm_copts, which
-        # does not propagate to dependents, so depend on :config (which carries
-        # includes = ["include"] plus the generated config headers). Other
-        # platforms already find these headers via the existing llvm deps.
-        #
-        # Keep this macOS-only: adding it everywhere fed the generated Config
-        # headers into the path-mapped compile and crashed Bazel 9 (last_rc)
-        # under --experimental_output_paths=strip on this target.
-        "@platforms//os:macos": ["@llvm-project//llvm:config"],
-        "//conditions:default": [],
-    }),
+    implementation_deps = [":sanitizers_interface_headers"],
     includes = [
         "include",
         "lib",
     ],
     deps = [
-        ":llvm_Symbolize",
+        "@llvm-project//llvm:Demangle",
+        "@llvm-project//llvm:Symbolize",
     ],
+    alwayslink = True,
+)
+
+cc_unsanitized_library(
+    name = "sanitizer_common_symbolizer_internal_unsanitized",
+    copts = _INTERNAL_SYMBOLIZER_COPTS,
+    cxxopts = _INTERNAL_SYMBOLIZER_CXXOPTS,
+    dep = ":sanitizer_common_symbolizer_internal_impl",
+    disable_zstd = True,
+    platform = select(_INTERNAL_SYMBOLIZER_PLATFORMS),
+)
+
+cc_internal_symbolizer_object(
+    name = "sanitizer_common_symbolizer_internal_object",
+    out = "sanitizer_common_symbolizer_internal.o",
+    copts = _INTERNAL_SYMBOLIZER_COPTS,
+    cxxopts = _INTERNAL_SYMBOLIZER_CXXOPTS,
+    global_symbols = _INTERNAL_SYMBOLIZER_API,
+    libcxx = "@llvm-project//libcxx:libcxx",
+    libcxxabi = "@llvm-project//libcxxabi:libcxxabi",
+    platform = select(_INTERNAL_SYMBOLIZER_PLATFORMS),
+    symbolizer = ":sanitizer_common_symbolizer_internal_unsanitized",
+    target_compatible_with = select({
+        "@platforms//os:linux": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+    target_triple = LLVM_TARGET_TRIPLE,
+)
+
+cc_library(
+    name = "sanitizer_common_symbolizer_internal",
+    srcs = select({
+        "@platforms//os:linux": [":sanitizer_common_symbolizer_internal_object"],
+        "//conditions:default": [],
+    }) if bazel_features.cc.supports_starlarkified_toolchains else [],
     alwayslink = True,
 )
 
@@ -1541,8 +1591,6 @@ cc_runtime_stage0_static_library(
         ":sanitizer_common_symbolizer",
         ":sanitizer_common_symbolizer_internal",
         ":interception",
-        # if COMPILER_RT_ENABLE_INTERNAL_SYMBOLIZER
-        ":llvm_Symbolize",
     ],
 )
 

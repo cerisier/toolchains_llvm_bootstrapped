@@ -253,6 +253,17 @@ bzl_library(
     ],
 )
 
+bzl_library(
+    name = "cc_internal_symbolizer_object",
+    srcs = ["cc_internal_symbolizer_object.bzl"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@rules_cc//cc:action_names_bzl",
+        "@rules_cc//cc:find_cc_toolchain_bzl",
+        "@rules_cc//cc/common",
+    ],
+)
+
 # TODO: Depends on private API that isn't visible
 # bzl_library(
 #     name = "cc_unsanitized_library",
