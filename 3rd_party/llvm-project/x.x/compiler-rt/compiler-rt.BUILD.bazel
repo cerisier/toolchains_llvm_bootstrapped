@@ -1292,8 +1292,18 @@ _INTERNAL_SYMBOLIZER_API = [
     "__sanitizer_symbolize_set_inline_frames",
 ]
 
+# Bazel 9 cannot map dotted platform names: https://github.com/bazelbuild/bazel/issues/29314
+[
+    platform(
+        name = "internal_symbolizer_{}_{}_{}".format(target_os, target_cpu, libc.replace(".", "_")),
+        parents = ["@llvm//platforms:{}_{}_{}".format(target_os, target_cpu, libc)],
+    )
+    for target_os, target_cpu in LIBC_SUPPORTED_TARGETS
+    for libc in LIBCS
+]
+
 _INTERNAL_SYMBOLIZER_PLATFORMS = {
-    "@llvm//platforms/config:{}_{}_{}".format(target_os, target_cpu, libc): "@llvm//platforms:{}_{}_{}".format(target_os, target_cpu, libc)
+    "@llvm//platforms/config:{}_{}_{}".format(target_os, target_cpu, libc): ":internal_symbolizer_{}_{}_{}".format(target_os, target_cpu, libc.replace(".", "_"))
     for target_os, target_cpu in LIBC_SUPPORTED_TARGETS
     for libc in LIBCS
 }
@@ -1583,14 +1593,14 @@ cc_runtime_stage0_static_library(
     name = "ubsan_standalone.static",
     visibility = ["//visibility:public"],
     deps = [
-        ":ubsan_preinit",
-        ":ubsan_standalone",
+        ":interception",
         ":sanitizer_common",
-        ":sanitizer_common_libc",
         ":sanitizer_common_coverage",
+        ":sanitizer_common_libc",
         ":sanitizer_common_symbolizer",
         ":sanitizer_common_symbolizer_internal",
-        ":interception",
+        ":ubsan_preinit",
+        ":ubsan_standalone",
     ],
 )
 

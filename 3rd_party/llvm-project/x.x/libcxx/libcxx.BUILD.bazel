@@ -40,14 +40,6 @@ _CONFIG_SITE_NO_MUSL_LINES = [
     "#define _LIBCPP_HAS_MUSL_LIBC 0",
 ]
 
-_CONFIG_SITE_ASAN_LINES = [
-    "#define _LIBCPP_INSTRUMENTED_WITH_ASAN 1",
-]
-
-_CONFIG_SITE_NO_ASAN_LINES = [
-    "#define _LIBCPP_INSTRUMENTED_WITH_ASAN 0",
-]
-
 _CONFIG_SITE_THREAD_API_WIN32_LINES = [
     "#define _LIBCPP_HAS_THREAD_API_PTHREAD 0",
     "#define _LIBCPP_HAS_THREAD_API_WIN32   1",
@@ -84,6 +76,7 @@ _CONFIG_SITE_GENERIC_LINES = [
     "#define _LIBCPP_HAS_STD_MODULES         0",
     "#define _LIBCPP_HAS_TIME_ZONE_DATABASE  1",
     "#define _LIBCPP_HAS_VENDOR_AVAILABILITY_ANNOTATIONS 0",
+    "#define _LIBCPP_INSTRUMENTED_WITH_ASAN  __has_feature(address_sanitizer)",
     "",
     "#define _LIBCPP_PSTL_BACKEND_SERIAL",
     "// #define _LIBCPP_PSTL_BACKEND_STD_THREAD",
@@ -119,10 +112,6 @@ write_file(
               select({
                   "@platforms//os:windows": _CONFIG_SITE_THREAD_API_WIN32_LINES,
                   "//conditions:default": _CONFIG_SITE_THREAD_API_PTHREAD_LINES,
-              }) +
-              select({
-                  "@llvm//config:asan_enabled": _CONFIG_SITE_ASAN_LINES,
-                  "//conditions:default": _CONFIG_SITE_NO_ASAN_LINES,
               }),
     visibility = ["//visibility:public"],
 )
