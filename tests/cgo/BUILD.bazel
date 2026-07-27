@@ -1,7 +1,7 @@
 load("@bazel_lib//lib:transitions.bzl", "platform_transition_binary")
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
 load("@rules_go//go:def.bzl", "go_binary")
-load(":defs.bzl", "force_pic_go_binary")
+load(":defs.bzl", "force_pic_go_binary", "macos_arm64_debug_go_binary")
 
 go_binary(
     name = "hello_cgo",
@@ -23,6 +23,17 @@ platform_transition_binary(
 build_test(
     name = "hello_cgo_x86_64_musl_test",
     targets = [":hello_cgo_x86_64_musl"],
+)
+
+macos_arm64_debug_go_binary(
+    name = "hello_cgo_macos_arm64",
+    srcs = ["hello.go"],
+    cgo = True,
+)
+
+build_test(
+    name = "hello_cgo_macos_arm64_test",
+    targets = [":hello_cgo_macos_arm64"],
 )
 
 force_pic_go_binary(
