@@ -132,6 +132,38 @@ static const char *required_env(const char *name) {
     return value;
 }
 
+// Go's external linker discovers Darwin post-link tools through the compiler driver.
+// Return the tools supplied by the cc_tool instead of falling back to the host PATH.
+static int maybe_print_hermetic_tool(int argc, char **argv) {
+    const char *tool_name = NULL;
+    for (int i = 1; i < argc; ++i) {
+        if (strcmp(argv[i], "--print-prog-name") == 0 && i + 1 < argc) {
+            tool_name = argv[i + 1];
+            break;
+        }
+
+        static const char prefix[] = "--print-prog-name=";
+        if (strncmp(argv[i], prefix, sizeof(prefix) - 1) == 0) {
+            tool_name = argv[i] + sizeof(prefix) - 1;
+            break;
+        }
+    }
+
+    const char *env_name = NULL;
+    if (tool_name != NULL) {
+        if (strcmp(tool_name, "dsymutil") == 0) {
+            env_name = "LLVM_DSYMUTIL";
+        } else if (strcmp(tool_name, "strip") == 0) {
+            env_name = "LLVM_STRIP";
+        }
+    }
+    if (env_name == NULL) {
+        return -1;
+    }
+
+    return printf("%s\n", required_env(env_name)) < 0 ? 1 : 0;
+}
+
 static int copy_file(const char *source_path, const char *destination_path) {
     FILE *source = fopen(source_path, "rb");
     if (source == NULL) {
@@ -260,7 +292,10 @@ static int generate_interface_library(const char *format, const char *input_path
 }
 
 int main(int argc, char **argv) {
-    (void)argc;
+    int print_tool_status = maybe_print_hermetic_tool(argc, argv);
+    if (print_tool_status >= 0) {
+        return print_tool_status;
+    }
 
     const char *clangxx = required_env("LLVM_CLANGXX");
     const char *strip_debug_symbols = getenv("LLVM_STRIP_DEBUG_SYMBOLS");
