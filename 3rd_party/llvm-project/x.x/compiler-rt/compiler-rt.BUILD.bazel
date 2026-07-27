@@ -1304,8 +1304,8 @@ _INTERNAL_SYMBOLIZER_CONSTRAINTS = [
             target_cpu,
             libc.replace(".", "_"),
         ),
-        parents = ["@llvm//platforms:{}_{}_{}".format(target_os, target_cpu, libc)],
         constraint_values = _INTERNAL_SYMBOLIZER_CONSTRAINTS,
+        parents = ["@llvm//platforms:{}_{}_{}".format(target_os, target_cpu, libc)],
     )
     for target_os, target_cpu in LIBC_SUPPORTED_TARGETS
     for libc in LIBCS
@@ -1317,8 +1317,8 @@ _INTERNAL_SYMBOLIZER_CONSTRAINTS = [
             target_os,
             target_cpu,
         ),
-        parents = ["@llvm//platforms:{}_{}".format(target_os, target_cpu)],
         constraint_values = _INTERNAL_SYMBOLIZER_CONSTRAINTS,
+        parents = ["@llvm//platforms:{}_{}".format(target_os, target_cpu)],
     )
     for target_os, target_cpu in LIBC_SUPPORTED_TARGETS
 ]
