@@ -1292,6 +1292,10 @@ _INTERNAL_SYMBOLIZER_API = [
     "__sanitizer_symbolize_set_inline_frames",
 ]
 
+_INTERNAL_SYMBOLIZER_CONSTRAINTS = [
+    "@llvm//constraints/cxxstdlib:libcxx",
+]
+
 # Bazel 9 cannot map dotted platform names: https://github.com/bazelbuild/bazel/issues/29314
 [
     platform(
@@ -1301,9 +1305,22 @@ _INTERNAL_SYMBOLIZER_API = [
             libc.replace(".", "_"),
         ),
         parents = ["@llvm//platforms:{}_{}_{}".format(target_os, target_cpu, libc)],
+        constraint_values = _INTERNAL_SYMBOLIZER_CONSTRAINTS,
     )
     for target_os, target_cpu in LIBC_SUPPORTED_TARGETS
     for libc in LIBCS
+]
+
+[
+    platform(
+        name = "internal_symbolizer_{}_{}".format(
+            target_os,
+            target_cpu,
+        ),
+        parents = ["@llvm//platforms:{}_{}".format(target_os, target_cpu)],
+        constraint_values = _INTERNAL_SYMBOLIZER_CONSTRAINTS,
+    )
+    for target_os, target_cpu in LIBC_SUPPORTED_TARGETS
 ]
 
 _INTERNAL_SYMBOLIZER_PLATFORMS = {
@@ -1317,7 +1334,7 @@ _INTERNAL_SYMBOLIZER_PLATFORMS = {
 }
 
 _INTERNAL_SYMBOLIZER_PLATFORMS.update({
-    "@llvm//platforms/config:{}_{}_unconstrained".format(target_os, target_cpu): "@llvm//platforms:{}_{}".format(target_os, target_cpu)
+    "@llvm//platforms/config:{}_{}_unconstrained".format(target_os, target_cpu): ":internal_symbolizer_{}_{}".format(target_os, target_cpu)
     for target_os, target_cpu in LIBC_SUPPORTED_TARGETS
 })
 
