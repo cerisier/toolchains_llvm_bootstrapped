@@ -1371,7 +1371,6 @@ cc_library(
         "compiler-rt/lib/sanitizer_common/sanitizer_redefine_builtins.h",
         "-DSANITIZER_COMMON_REDEFINE_BUILTINS_IN_STD",
     ],
-    implementation_deps = [":sanitizers_interface_headers"],
     includes = [
         "include",
         "lib",
