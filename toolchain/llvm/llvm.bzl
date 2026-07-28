@@ -21,6 +21,11 @@ def declare_llvm_targets(*, suffix = ""):
     native.exports_files(native.glob(["bin/*"]))
 
     native.filegroup(
+        name = "llvm_bin_directory",
+        srcs = ["bin"],
+    )
+
+    native.filegroup(
         name = "clangxx_file",
         srcs = ["bin/clang++" + suffix],
     )
@@ -243,6 +248,7 @@ def declare_llvm_targets(*, suffix = ""):
             "@rules_cc//cc/toolchains/capabilities:supports_interface_shared_libraries",
         ],
         env = {
+            "COMPILER_PATH": "{llvm_bin}/llvm-",
             "LLVM_CLANGXX": "{clangxx}",
             "LLVM_DSYMUTIL": "{dsymutil}",
             "LLVM_IFS": "{llvm_ifs}",
@@ -253,6 +259,7 @@ def declare_llvm_targets(*, suffix = ""):
         format = {
             "clangxx": ":clangxx_file",
             "dsymutil": ":dsymutil_file",
+            "llvm_bin": ":llvm_bin_directory",
             "llvm_ifs": "bin/llvm-ifs" + suffix,
             "llvm_nm": "bin/llvm-nm" + suffix,
             "llvm_readtapi": "bin/llvm-readtapi" + suffix,

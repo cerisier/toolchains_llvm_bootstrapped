@@ -199,6 +199,7 @@ def declare_tool_map(exec_os, exec_cpu, prefix = None, fdo_profile = None, fdo_i
     )
 
     for tool in [
+        "llvm",
         "llvm-ifs",
         "llvm-nm",
         "llvm-readtapi",
@@ -306,6 +307,7 @@ def declare_tool_map(exec_os, exec_cpu, prefix = None, fdo_profile = None, fdo_i
             "@rules_cc//cc/toolchains/capabilities:supports_interface_shared_libraries",
         ],
         env = {
+            "COMPILER_PATH": "{llvm}-",
             "LLVM_CLANGXX": "{clangxx}",
             "LLVM_DSYMUTIL": "{dsymutil}",
             "LLVM_IFS": "{llvm_ifs}",
@@ -316,6 +318,7 @@ def declare_tool_map(exec_os, exec_cpu, prefix = None, fdo_profile = None, fdo_i
         format = {
             "clangxx": prefix + "/bin/clang++",
             "dsymutil": prefix + "/bin/dsymutil",
+            "llvm": prefix + "/bin/llvm",
             "llvm_ifs": prefix + "/bin/llvm-ifs",
             "llvm_nm": prefix + "/bin/llvm-nm",
             "llvm_readtapi": prefix + "/bin/llvm-readtapi",
