@@ -278,6 +278,7 @@ def declare_tool_map(exec_os, exec_cpu, prefix = None, fdo_profile = None, fdo_i
             prefix + "/bin/lld",
             prefix + "/bin/wasm-ld",
         ],
+        capabilities = ["@rules_cc//cc/toolchains/capabilities:supports_start_end_lib"],
     )
 
     # Preserve the `-clang++` suffix for rustc's linker-flavor inference.
@@ -305,6 +306,7 @@ def declare_tool_map(exec_os, exec_cpu, prefix = None, fdo_profile = None, fdo_i
         capabilities = [
             "@rules_cc//cc/toolchains/capabilities:has_configured_linker_path",
             "@rules_cc//cc/toolchains/capabilities:supports_interface_shared_libraries",
+            "@rules_cc//cc/toolchains/capabilities:supports_start_end_lib",
         ],
         env = {
             "COMPILER_PATH": "{llvm}-",

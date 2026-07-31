@@ -226,6 +226,7 @@ def declare_llvm_targets(*, suffix = ""):
             "bin/lld" + suffix,
             "bin/wasm-ld" + suffix,
         ],
+        capabilities = ["@rules_cc//cc/toolchains/capabilities:supports_start_end_lib"],
     )
 
     cc_tool(
@@ -246,6 +247,7 @@ def declare_llvm_targets(*, suffix = ""):
         capabilities = [
             "@rules_cc//cc/toolchains/capabilities:has_configured_linker_path",
             "@rules_cc//cc/toolchains/capabilities:supports_interface_shared_libraries",
+            "@rules_cc//cc/toolchains/capabilities:supports_start_end_lib",
         ],
         env = {
             "COMPILER_PATH": "{llvm_bin}/llvm-",
