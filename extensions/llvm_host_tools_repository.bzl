@@ -71,6 +71,11 @@ def _llvm_host_tools_repository_impl(rctx):
         "release": release,
     }
     rctx.file("llvm-host-tools.json", json.encode_indent(identity, indent = "  ") + "\n")
+    rctx.file(
+        "host-platform.txt",
+        "{}/{}\n".format(rctx.os.name, rctx.os.arch),
+        executable = False,
+    )
     rctx.file("resource-dir.txt", resource_dir + "\n")
     rctx.file(
         "BUILD.bazel",
@@ -78,6 +83,7 @@ def _llvm_host_tools_repository_impl(rctx):
 package(default_visibility = ["//visibility:public"])
 
 exports_files({root_files} + [
+    "host-platform.txt",
     "llvm-host-tools.json",
     "resource-dir.txt",
 ])

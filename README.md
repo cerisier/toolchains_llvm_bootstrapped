@@ -62,6 +62,7 @@ toolchain.exec(arch = "x86_64", os = "linux")
 toolchain.exec(arch = "aarch64", os = "linux")
 toolchain.target(arch = "x86_64", os = "linux")
 toolchain.target(arch = "aarch64", os = "linux")
+toolchain.target(arch = "ppc64le", os = "linux")
 toolchain.target(arch = "riscv64", os = "linux")
 
 use_repo(toolchain, "llvm_toolchains")
@@ -71,11 +72,38 @@ register_toolchains("@llvm_toolchains//:all")
 
 This registers the cross-product of the specified exec and target platforms.
 
+The PPC64LE target is freestanding: it provides the compiler, assembler,
+linker, and builtin headers without selecting a libc, CRT, C++ runtime, or
+hosted compiler runtime. This is suitable for kernels and other freestanding
+programs, but not hosted Linux applications.
+
 If you need finer control, register individual toolchain targets. You can list them with:
 
 ```sh
 bazel query 'kind(toolchain, @llvm//toolchain:all)'
 ```
+
+### Repository-time LLVM host tools
+
+Repository rules that need a host-native `clang` and `ld.lld` can instantiate
+the integrity-pinned minimal-tools repository:
+
+```starlark
+llvm_host_tools_repository = use_repo_rule(
+    "@llvm//:host_tools_repository.bzl",
+    "llvm_host_tools_repository",
+)
+
+llvm_host_tools_repository(
+    name = "llvm_host_tools",
+    llvm_version = "22.1.8",
+)
+```
+
+The repository exports stable `:clang.exe` and `:ld.lld.exe` probe labels on
+every host, compatibility labels `:clang` and `:ld.lld`, and the
+`host-platform.txt`, `llvm-host-tools.json`, and `resource-dir.txt` metadata
+files.
 
 ### Cgo compatibility
 To make the vanilla Go compiler work with a fully hermetic toolchain, we had to send some patches upstream. Only versions of Go >= 1.27 are supported out of the box.
@@ -119,6 +147,7 @@ If you wish to setup things manually, you will likely require a few flags:
 | **aarch64-linux-gnu ¹**  | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **x86_64-linux-gnu ¹**   | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **riscv64-linux-gnu ¹**   | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **powerpc64le-linux-gnu ³** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **s390x-linux-gnu ¹**     | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **armv7-linux-gnueabihf ¹** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **aarch64-linux-musl**   | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -136,6 +165,9 @@ If you wish to setup things manually, you will likely require a few flags:
 ¹ See "GNU C Library" section for glibc version selection.
 
 ² See "Windows" section.
+
+³ Freestanding compiler, assembler, linker, and builtin headers only; no libc,
+CRT, C++ runtime, or hosted compiler runtime.
 
 ### musl
 
@@ -237,6 +269,13 @@ We use a cross-platform reimplementation of `pkgutil` to unpack SDK packages, wh
 For now, RISC-V support is limited to Linux and currently hard-wired to the
 rv64gc ISA and lp64d ABI while we work out a clean way to configure freestanding
 targets and ISA matrices.
+
+### PowerPC64LE
+
+Linux PPC64LE is currently freestanding. A platform containing only
+`@platforms//os:linux` and `@platforms//cpu:ppc64le` selects the
+`powerpc64le-linux-gnu` compiler and linker surface without hosted runtime
+dependencies.
 
 ### Other platforms
 
