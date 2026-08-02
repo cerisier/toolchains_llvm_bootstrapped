@@ -9,6 +9,13 @@ exports_files([
     ".buildifier.json",
 ])
 
+bzl_library(
+    name = "host_tools_repository",
+    srcs = ["host_tools_repository.bzl"],
+    visibility = ["//visibility:public"],
+    deps = ["//extensions:llvm_host_tools_repository"],
+)
+
 alias(
     name = "rbe_platform",
     actual = "@rbe_platform//:rbe_platform",

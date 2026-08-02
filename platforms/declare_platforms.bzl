@@ -1,6 +1,6 @@
 load("//constraints/cxxstdlib:cxxstdlib_versions.bzl", "DEFAULT_CXXSTDLIB")
 load("//constraints/libc:libc_versions.bzl", "LIBCS", "default_libc")
-load("//platforms:common.bzl", "ARCH_ALIASES", "LIBC_SUPPORTED_TARGETS", "SUPPORTED_TARGETS")
+load("//platforms:common.bzl", "ARCH_ALIASES", "FREESTANDING_TARGETS", "LIBC_SUPPORTED_TARGETS", "SUPPORTED_TARGETS")
 
 def declare_platforms():
     for (target_os, target_cpu) in SUPPORTED_TARGETS:
@@ -9,10 +9,12 @@ def declare_platforms():
             "@platforms//os:{}".format(target_os),
         ]
 
-        if target_os != "none":
+        if (target_os, target_cpu) in FREESTANDING_TARGETS:
+            constraints.append("//constraints/cxxstdlib:none")
+        elif target_os != "none":
             constraints.append("//constraints/cxxstdlib:{}".format(DEFAULT_CXXSTDLIB))
 
-        if target_os == "linux":
+        if target_os == "linux" and (target_os, target_cpu) not in FREESTANDING_TARGETS:
             # We add a default glibc constraint for linux platforms.
             #
             # This is needed because some toolchains require a libc constraint

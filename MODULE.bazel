@@ -94,6 +94,7 @@ llvm.configure(
         "ARM",
         "BPF",
         "NVPTX",
+        "PowerPC",
         "RISCV",
         "SystemZ",
         "WebAssembly",

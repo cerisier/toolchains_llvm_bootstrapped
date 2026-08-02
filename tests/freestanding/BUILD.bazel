@@ -1,0 +1,18 @@
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
+package(default_visibility = ["//visibility:public"])
+
+# Deliberately contains no llvm-specific libc, C++ runtime, or runtime-stage
+# constraints. CPU+OS alone must select the freestanding toolchain behavior.
+platform(
+    name = "linux_ppc64le",
+    constraint_values = [
+        "@platforms//cpu:ppc64le",
+        "@platforms//os:linux",
+    ],
+)
+
+cc_library(
+    name = "ppc64le_object",
+    srcs = ["probe.c"],
+)

@@ -89,6 +89,29 @@ config_setting(
     visibility = ["//visibility:public"],
 )
 
+# ppc64le currently provides a freestanding toolchain only. These settings are
+# deliberately more specific than the general runtime-stage settings, so a
+# custom platform containing only linux+ppc64le cannot select hosted inputs.
+[
+    config_setting(
+        name = "linux_ppc64le_freestanding_{}".format(runtime_stage),
+        constraint_values = [
+            "@platforms//cpu:ppc64le",
+            "@platforms//os:linux",
+        ],
+        flag_values = {
+            ":runtime_stage": runtime_stage,
+        },
+        visibility = ["//visibility:public"],
+    )
+    for runtime_stage in [
+        "stage0",
+        "stage1",
+        "stage1_hosted",
+        "complete",
+    ]
+]
+
 config_setting(
     name = "linux_complete",
     constraint_values = [

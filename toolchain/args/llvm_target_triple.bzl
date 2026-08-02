@@ -5,6 +5,9 @@ LLVM_TARGET_TRIPLE = select({
     "@llvm//platforms/config:linux_riscv64_gnu": ["riscv64-linux-gnu"],
     "@llvm//platforms/config:linux_s390x_gnu": ["s390x-linux-gnu"],
     "@llvm//platforms/config:linux_armv7_gnu": ["armv7-linux-gnueabihf"],
+    # The ppc64le target is freestanding. Its unconstrained libc setting is
+    # matched explicitly so the triple does not imply hosted runtime support.
+    "@llvm//platforms/config:linux_ppc64le": ["powerpc64le-linux-gnu"],
     "@llvm//platforms/config:linux_x86_64_musl": ["x86_64-linux-musl"],
     "@llvm//platforms/config:linux_aarch64_musl": ["aarch64-linux-musl"],
     "@llvm//platforms/config:linux_riscv64_musl": ["riscv64-linux-musl"],

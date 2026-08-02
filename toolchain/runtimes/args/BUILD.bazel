@@ -205,6 +205,18 @@ cc_args(
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
     args = select({
+        "//toolchain:linux_ppc64le_freestanding_stage0": [
+            "-nostdlib",
+        ],
+        "//toolchain:linux_ppc64le_freestanding_stage1": [
+            "-nostdlib",
+        ],
+        "//toolchain:linux_ppc64le_freestanding_stage1_hosted": [
+            "-nostdlib",
+        ],
+        "//toolchain:linux_ppc64le_freestanding_complete": [
+            "-nostdlib",
+        ],
         "//toolchain:runtimes_all": [],
         "//toolchain:runtimes_stage1": [
             "-nostdlib++",

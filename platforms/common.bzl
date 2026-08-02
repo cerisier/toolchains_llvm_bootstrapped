@@ -4,7 +4,14 @@ ARCH_ALIASES = {
     "riscv64": [],
     "s390x": [],
     "armv7": [],
+    "ppc64le": [],
 }
+
+# These targets intentionally provide only a compiler, assembler, and linker.
+# They do not imply a hosted C or C++ runtime.
+FREESTANDING_TARGETS = [
+    ("linux", "ppc64le"),
+]
 
 SUPPORTED_TARGETS = [
     ("macos", "x86_64"),
@@ -14,6 +21,7 @@ SUPPORTED_TARGETS = [
     ("linux", "riscv64"),
     ("linux", "s390x"),
     ("linux", "armv7"),
+    ("linux", "ppc64le"),
     ("windows", "x86_64"),
     ("windows", "aarch64"),
     ("none", "bpfeb"),

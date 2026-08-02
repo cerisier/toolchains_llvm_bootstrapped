@@ -33,6 +33,12 @@ bzl_library(
 )
 
 bzl_library(
+    name = "llvm_host_tools_repository",
+    srcs = ["llvm_host_tools_repository.bzl"],
+    visibility = ["//visibility:public"],
+)
+
+bzl_library(
     name = "osx",
     srcs = ["osx.bzl"],
     visibility = ["//visibility:public"],

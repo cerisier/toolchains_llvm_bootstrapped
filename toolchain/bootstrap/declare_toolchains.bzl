@@ -418,6 +418,7 @@ def declare_toolchains(*, execs = None, targets = SUPPORTED_TARGETS):
             cc_toolchain(
                 name = cc_toolchain_name,
                 tool_map = select({
+                    "@llvm//toolchain:linux_ppc64le_freestanding_complete": ":%s/staged_default_tools" % tool_prefix,
                     "@llvm//toolchain:linux_complete": ":%s/tools_with_interface_libraries" % tool_prefix,
                     "@llvm//toolchain:macos_complete_with_libtool": ":%s/tools_with_dsym_and_libtool" % tool_prefix,
                     "@llvm//toolchain:macos_complete": ":%s/tools_with_dsym" % tool_prefix,
