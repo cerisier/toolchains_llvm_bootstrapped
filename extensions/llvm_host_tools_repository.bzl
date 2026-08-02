@@ -1,34 +1,15 @@
 """Repository rule for integrity-pinned LLVM tools used during repository evaluation."""
 
-load(":llvm_host_tools_paths.bzl", "llvm_host_tools_layout")
+load(
+    ":llvm_host_tools_paths.bzl",
+    "llvm_host_tools_archive_target",
+    "llvm_host_tools_layout",
+)
 
 DEFAULT_LLVM_TOOLCHAIN_MINIMAL_INDEX_FILE = "//extensions:llvm_toolchain_minimal_index.json"
 
-_HOST_ARCHES = {
-    "aarch64": "arm64",
-    "amd64": "amd64",
-    "arm64": "arm64",
-    "x86_64": "amd64",
-}
-
-_HOST_OSES = {
-    "linux": "linux",
-    "mac os x": "darwin",
-    "macos": "darwin",
-    "windows": "windows",
-}
-
 def _host_archive_target(rctx):
-    host_os = _HOST_OSES.get(rctx.os.name.lower())
-    host_arch = _HOST_ARCHES.get(rctx.os.arch.lower())
-    if host_os == None or host_arch == None:
-        fail("Unsupported LLVM host platform: os='{}', arch='{}'".format(
-            rctx.os.name,
-            rctx.os.arch,
-        ))
-
-    suffix = "-musl" if host_os == "linux" else ""
-    return "{}-{}{}".format(host_os, host_arch, suffix)
+    return llvm_host_tools_archive_target(rctx.os.name, rctx.os.arch)
 
 def _release_key(index, llvm_version, requested_release):
     if requested_release:
