@@ -1,5 +1,7 @@
 """Repository rule for integrity-pinned LLVM tools used during repository evaluation."""
 
+load(":llvm_host_tools_paths.bzl", "llvm_host_tools_layout")
+
 DEFAULT_LLVM_TOOLCHAIN_MINIMAL_INDEX_FILE = "//extensions:llvm_toolchain_minimal_index.json"
 
 _HOST_ARCHES = {
@@ -57,9 +59,9 @@ def _llvm_host_tools_repository_impl(rctx):
         sha256 = archive["sha256"],
     )
 
-    executable_suffix = ".exe" if archive_target.startswith("windows-") else ""
-    clang = "bin/clang" + executable_suffix
-    ld_lld = "bin/ld.lld" + executable_suffix
+    layout = llvm_host_tools_layout(archive_target)
+    clang = layout.archive_paths["clang"]
+    ld_lld = layout.archive_paths["ld_lld"]
     resource_dir = "lib/clang/{}".format(rctx.attr.llvm_version.partition(".")[0])
 
     for tool in [clang, ld_lld]:
@@ -68,10 +70,12 @@ def _llvm_host_tools_repository_impl(rctx):
     if not rctx.path(resource_dir).exists:
         fail("Minimal LLVM archive '{}' is missing {}".format(release, resource_dir))
 
-    # Stable root labels let downstream repository rules use repository_ctx.path
-    # without reproducing host-specific executable suffix logic.
-    rctx.symlink(clang, "clang")
-    rctx.symlink(ld_lld, "ld.lld")
+    # Keep the original root labels for compatibility, and expose suffix-bearing
+    # paths for repository rules that pass absolute tool paths to native process
+    # launchers. The latter must end in .exe on Windows; making them available on
+    # every host gives consumers one portable pair of labels.
+    for root_path in sorted(layout.root_symlinks):
+        rctx.symlink(layout.root_symlinks[root_path], root_path)
 
     identity = {
         "archive_sha256": archive["sha256"],
@@ -82,6 +86,7 @@ def _llvm_host_tools_repository_impl(rctx):
             "ld_lld": ld_lld,
             "resource_dir": resource_dir,
         },
+        "probe_paths": layout.probe_paths,
         "release": release,
     }
     rctx.file("llvm-host-tools.json", json.encode_indent(identity, indent = "  ") + "\n")
@@ -91,9 +96,7 @@ def _llvm_host_tools_repository_impl(rctx):
         """\
 package(default_visibility = ["//visibility:public"])
 
-exports_files([
-    "clang",
-    "ld.lld",
+exports_files({root_files} + [
     "llvm-host-tools.json",
     "resource-dir.txt",
 ])
@@ -109,6 +112,7 @@ filegroup(
 )
 """.format(
             resource_glob = repr(resource_dir + "/**"),
+            root_files = repr(sorted(layout.root_symlinks.keys())),
         ),
     )
 
