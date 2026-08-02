@@ -73,13 +73,15 @@ grep -q 'Machine:.*PowerPC64' <<<"${elf_header}"
 for target in "${executable_targets[@]}"; do
   target_name=${target##*:}
   action_commands=$(
-    bazel "$@" aquery "mnemonic('CppCompile|CppLink', deps(${target}))" \
+    bazel "$@" aquery \
+      "outputs('.*${target_name}_/${target_name}(/.*)?', mnemonic('CppCompile|CppLink', deps(${target})))" \
       "${command_args[@]}" \
       --color=no \
+      --include_commandline \
+      --noinclude_artifacts \
       --platforms="${platform}" \
       --@llvm//toolchain:bootstrap_stage="${bootstrap_stage}" \
-      --output=commands |
-      grep -F "${target_name}_/${target_name}" || true
+      --output=text
   )
   if [[ -z "${action_commands}" ]]; then
     echo "Could not locate compile and link actions for ${target}" >&2
