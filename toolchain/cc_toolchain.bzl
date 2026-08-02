@@ -1,13 +1,6 @@
 load("@rules_cc//cc/toolchains:feature_set.bzl", "cc_feature_set")
 load("@rules_cc//cc/toolchains:toolchain.bzl", _cc_toolchain = "cc_toolchain")
-
-_FREESTANDING_PPC64LE_SETTINGS = [
-    "@llvm//toolchain:linux_ppc64le_freestanding_{}".format(runtime_stage)
-    for runtime_stage in ["stage0", "stage1", "stage1_hosted", "complete"]
-]
-
-def _freestanding_ppc64le_select(value):
-    return {setting: value for setting in _FREESTANDING_PPC64LE_SETTINGS}
+load("//toolchain:freestanding.bzl", "ppc64le_freestanding_select")
 
 def cc_toolchain(name, tool_map, module_map = None, extra_args = []):
     cc_feature_set(
@@ -101,7 +94,7 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = []):
 
     _cc_toolchain(
         name = name,
-        args = select(_freestanding_ppc64le_select(["@llvm//toolchain/runtimes:toolchain_args"]) | {
+        args = select(ppc64le_freestanding_select(["@llvm//toolchain/runtimes:toolchain_args"]) | {
             "@llvm//toolchain:runtimes_none": ["@llvm//toolchain/runtimes:toolchain_args"],
             "@llvm//toolchain:runtimes_stage1": ["@llvm//toolchain/runtimes:toolchain_args"],
             "@llvm//toolchain:runtimes_stage1_hosted": ["@llvm//toolchain/runtimes:toolchain_args"],
@@ -122,7 +115,7 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = []):
             ],
             "//conditions:default": [],
         }),
-        known_features = select(_freestanding_ppc64le_select([
+        known_features = select(ppc64le_freestanding_select([
             "@llvm//toolchain/features:external_include_paths",
             "@llvm//toolchain/features:fdo_optimize",
         ]) | {
@@ -140,7 +133,7 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = []):
             ],
             "//conditions:default": [name + "_known_features"],
         }),
-        enabled_features = select(_freestanding_ppc64le_select([name + "_runtimes_only_enabled_features"]) | {
+        enabled_features = select(ppc64le_freestanding_select([name + "_runtimes_only_enabled_features"]) | {
             "@llvm//toolchain:runtimes_none": [name + "_runtimes_only_enabled_features"],
             "@llvm//toolchain:runtimes_stage1": [name + "_runtimes_only_enabled_features"],
             "@llvm//toolchain:runtimes_stage1_hosted": [name + "_runtimes_only_enabled_features"],
@@ -148,13 +141,13 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = []):
         }),
         tool_map = tool_map,
         module_map = module_map,
-        static_runtime_lib = select(_freestanding_ppc64le_select("@llvm//runtimes:none") | {
+        static_runtime_lib = select(ppc64le_freestanding_select("@llvm//runtimes:none") | {
             "@llvm//toolchain:runtimes_none": "@llvm//runtimes:none",
             "@llvm//toolchain:runtimes_stage1": "@llvm//runtimes:none",
             "@llvm//toolchain:runtimes_stage1_hosted": "@llvm//runtimes:none",
             "//conditions:default": "@llvm//runtimes:static_runtime_lib",
         }),
-        dynamic_runtime_lib = select(_freestanding_ppc64le_select("@llvm//runtimes:none") | {
+        dynamic_runtime_lib = select(ppc64le_freestanding_select("@llvm//runtimes:none") | {
             "@llvm//toolchain:runtimes_none": "@llvm//runtimes:none",
             "@llvm//toolchain:runtimes_stage1": "@llvm//runtimes:none",
             "@llvm//toolchain:runtimes_stage1_hosted": "@llvm//runtimes:none",

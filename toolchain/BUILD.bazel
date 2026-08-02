@@ -6,6 +6,7 @@ load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 load("//toolchain/bootstrap:declare_toolchains.bzl", declare_bootstrap_toolchains = "declare_toolchains")
 load(":bootstrap_stages.bzl", "BOOTSTRAP_STAGES")
 load(":declare_toolchains.bzl", "declare_toolchains")
+load(":freestanding.bzl", "PPC64LE_FREESTANDING_RUNTIME_STAGES")
 
 package(default_visibility = ["//toolchain:__subpackages__"])
 
@@ -104,12 +105,7 @@ config_setting(
         },
         visibility = ["//visibility:public"],
     )
-    for runtime_stage in [
-        "stage0",
-        "stage1",
-        "stage1_hosted",
-        "complete",
-    ]
+    for runtime_stage in PPC64LE_FREESTANDING_RUNTIME_STAGES
 ]
 
 config_setting(
@@ -458,8 +454,14 @@ bzl_library(
     name = "cc_toolchain",
     srcs = ["cc_toolchain.bzl"],
     deps = [
+        ":freestanding",
         "@rules_cc//cc/toolchains:toolchain_rules",
     ],
+)
+
+bzl_library(
+    name = "freestanding",
+    srcs = ["freestanding.bzl"],
 )
 
 bzl_library(

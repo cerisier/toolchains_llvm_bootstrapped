@@ -7,6 +7,12 @@ def llvm_host_tools_layout(archive_target):
     paths deliberately retain a `.exe` suffix on every host: Unix can execute
     those symlinks directly, while Windows process launchers require the suffix
     when they receive an absolute path.
+
+    Args:
+        archive_target: The release archive target identifier.
+
+    Returns:
+        A struct containing archive, compatibility, probe, and symlink paths.
     """
     archive_suffix = ".exe" if archive_target.startswith("windows-") else ""
     archive_paths = {
