@@ -1,5 +1,7 @@
 # Partly from https://github.com/cerisier/glibc-headers/blob/main/glibc_kernel_versions.txt
 
+load("//constraints/libc:libc_versions.bzl", "resolve_libc")
+
 LIBC_KERNEL_VERSIONS = {
     "gnu.2.17": "3.9.11",
     "gnu.2.18": "3.12.74",
@@ -32,4 +34,5 @@ LIBC_KERNEL_VERSIONS = {
     "musl": "6.16.12",  # Latest for musl always
 }
 
-LIBC_KERNEL_VERSIONS["unconstrained"] = LIBC_KERNEL_VERSIONS["gnu.2.28"]
+def libc_kernel_version(target_os, target_cpu, libc):
+    return LIBC_KERNEL_VERSIONS[resolve_libc(target_os, target_cpu, libc)]

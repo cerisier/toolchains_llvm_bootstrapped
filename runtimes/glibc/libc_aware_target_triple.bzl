@@ -1,4 +1,4 @@
-load("//constraints/libc:libc_versions.bzl", "DEFAULT_LIBC", "LIBCS")
+load("//constraints/libc:libc_versions.bzl", "LIBCS", "resolve_libc")
 load("//platforms:common.bzl", "LIBC_SUPPORTED_TARGETS")
 
 # Per-cpu remaps for zig target triples. Zig uses generic arch names with an
@@ -25,7 +25,7 @@ def libc_aware_target_triple():
     target = {}
     for (target_os, target_cpu) in LIBC_SUPPORTED_TARGETS:
         for libc_version in LIBCS + ["unconstrained"]:
-            target_libc_suffix = libc_version if libc_version != "unconstrained" else DEFAULT_LIBC
+            target_libc_suffix = resolve_libc(target_os, target_cpu, libc_version)
             target["//platforms/config:{}_{}_{}".format(target_os, target_cpu, libc_version)] = _zig_triple(target_os, target_cpu, target_libc_suffix)
 
     return select(target)

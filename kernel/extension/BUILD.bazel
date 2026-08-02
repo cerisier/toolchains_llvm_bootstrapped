@@ -41,4 +41,5 @@ bzl_library(
     name = "libc_kernel_versions",
     srcs = ["libc_kernel_versions.bzl"],
     visibility = ["//visibility:public"],
+    deps = ["//constraints/libc:libc_versions"],
 )

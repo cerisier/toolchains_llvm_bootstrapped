@@ -6,4 +6,8 @@ bzl_library(
     name = "helpers",
     srcs = ["helpers.bzl"],
     visibility = ["//visibility:public"],
+    deps = [
+        "//constraints/libc:libc_versions",
+        "//platforms:common",
+    ],
 )

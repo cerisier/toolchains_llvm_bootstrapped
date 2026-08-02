@@ -1,3 +1,17 @@
+load("//constraints/libc:libc_versions.bzl", "resolve_libc")
+load("//platforms:common.bzl", "LIBC_SUPPORTED_TARGETS")
+
+def glibc_version_config_settings(glibc_versions):
+    """Returns config settings whose effective glibc is in glibc_versions."""
+    return tuple([
+        "@llvm//constraints/libc:{}".format(glibc_version)
+        for glibc_version in glibc_versions
+    ] + [
+        "@llvm//platforms/config:{}_{}_unconstrained".format(target_os, target_cpu)
+        for (target_os, target_cpu) in LIBC_SUPPORTED_TARGETS
+        if resolve_libc(target_os, target_cpu, "unconstrained") in glibc_versions
+    ])
+
 # A good starting point for this is https://codeberg.org/ziglang/zig/src/branch/master/src/libs/glibc.zig add_include_dirs function
 def glibc_includes(cpu):
     os_abi_variant = []

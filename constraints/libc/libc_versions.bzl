@@ -32,3 +32,10 @@ DEFAULT_LIBCS = {
 
 def default_libc(target_os, target_cpu):
     return DEFAULT_LIBCS.get((target_os, target_cpu), DEFAULT_LIBC)
+
+def resolve_libc(target_os, target_cpu, libc):
+    """Resolves the libc constraint value for a target platform."""
+    if libc == "unconstrained":
+        return default_libc(target_os, target_cpu)
+
+    return libc
