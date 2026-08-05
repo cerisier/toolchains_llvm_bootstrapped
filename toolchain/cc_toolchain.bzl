@@ -65,6 +65,7 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = []):
             "@platforms//os:none": [],
         }) + [
             "@llvm//toolchain/features:prefer_pic_for_opt_binaries",
+            "@llvm//toolchain/features:sanitize_pwd",
             "@rules_cc//cc/toolchains/args/layering_check:module_maps",
             "@llvm//toolchain/features:module_map_home_cwd",
             # These are "enabled" but they only _actually_ get enabled when the underlying compilation mode is set.
@@ -83,6 +84,7 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = []):
         name = name + "_runtimes_only_enabled_features",
         all_of = [
             "@llvm//toolchain/features:prefer_pic_for_opt_binaries",
+            "@llvm//toolchain/features:sanitize_pwd",
             "@rules_cc//cc/toolchains/args/layering_check:module_maps",
             "@llvm//toolchain/features:module_map_home_cwd",
             "@llvm//toolchain/features:archive_param_file",

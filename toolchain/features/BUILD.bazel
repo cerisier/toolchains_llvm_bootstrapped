@@ -69,6 +69,12 @@ cc_feature(
     feature_name = "no_windows_export_all_symbols",
 )
 
+cc_feature(
+    name = "sanitize_pwd",
+    feature_name = "sanitize_pwd",
+    visibility = ["//toolchain:__pkg__"],
+)
+
 # --icf=safe is LLD/ELF-only: sanitizer runtimes forbid ICF, wasm and Windows
 # don't support it, and macOS links with ld64 (which rejects the flag). Grouped
 # via match_any so overlapping conditions (e.g. macOS + a sanitizer) don't
