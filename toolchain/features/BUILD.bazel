@@ -72,7 +72,6 @@ cc_feature(
 cc_feature(
     name = "sanitize_pwd",
     feature_name = "sanitize_pwd",
-    visibility = ["//toolchain:__pkg__"],
 )
 
 # --icf=safe is LLD/ELF-only: sanitizer runtimes forbid ICF, wasm and Windows
