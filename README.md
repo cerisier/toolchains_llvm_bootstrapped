@@ -345,6 +345,8 @@ See https://github.com/hermeticbuild/hermetic-llvm/milestone/1
 - [kepler-formal](https://github.com/keplertech/kepler-formal)
 - [Xybrid](https://github.com/xybrid-ai/xybrid)
 - [Google XLS](https://github.com/google/xls)
+- [Drake](https://github.com/RobotLocomotion/drake)
+- [Internet Computer](https://github.com/dfinity/ic)
 
 ## Prior art
 
