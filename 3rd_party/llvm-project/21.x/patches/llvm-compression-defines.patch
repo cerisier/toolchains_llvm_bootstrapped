@@ -1,43 +1,17 @@
-diff --git a/utils/bazel/llvm-project-overlay/llvm/BUILD.bazel b/utils/bazel/llvm-project-overlay/llvm/BUILD.bazel
---- a/utils/bazel/llvm-project-overlay/llvm/BUILD.bazel
-+++ b/utils/bazel/llvm-project-overlay/llvm/BUILD.bazel
-@@ -313,6 +313,21 @@ BLAKE3_x86_64_ASM_SOURCE_PATTERNS = [
-     "lib/Support/BLAKE3/blake3_sse41_x86-64_%s.S",
- ]
- 
-+cc_library(
-+    name = "zlib_bcr",
-+    defines = ["LLVM_ENABLE_ZLIB=1"],
-+    deps = ["@llvm_zlib//:zlib"],
-+)
-+
-+cc_library(
-+    name = "zstd_bcr",
-+    defines = [
+diff --git a/llvm/BUILD.bazel b/llvm/BUILD.bazel
+--- a/llvm/BUILD.bazel
++++ b/llvm/BUILD.bazel
+@@ -386,8 +386,12 @@ cc_library(
+             "BLAKE3_NO_AVX512",
+             "BLAKE3_NO_SSE2",
+             "BLAKE3_NO_SSE41",
+         ],
+-    }),
++    }) + [
++        "LLVM_ENABLE_ZLIB=1",
 +        "LLVM_ENABLE_ZSTD=1",
 +        "ZSTD_MULTITHREAD",
 +    ],
-+    deps = ["@llvm_zstd//:zstd"],
-+)
-+
- cc_library(
-     name = "Support",
-     srcs = glob([
-@@ -372,13 +387,7 @@ cc_library(
--        ":config",
-         ":Demangle",
-+        ":config",
--        "//third-party/siphash",
--        # We unconditionally depend on the custom LLVM zlib wrapper. This will
--        # be an empty library unless zlib is enabled, in which case it will
--        # both provide the necessary dependencies and configuration defines.
--        "@llvm_zlib//:zlib",
--        # We unconditionally depend on the custom LLVM zstd wrapper. This will
--        # be an empty library unless zstd is enabled, in which case it will
--        # both provide the necessary dependencies and configuration defines.
--        "@llvm_zstd//:zstd",
-+        ":zlib_bcr",
-+        ":zstd_bcr",
-+        "//third-party/siphash",
-     ],
- )
+     includes = ["include"],
+     linkopts = select({
+         ":is_windows_clang_mingw": [

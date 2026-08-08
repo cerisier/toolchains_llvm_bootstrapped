@@ -1544,10 +1544,10 @@ index a50f427d3269ca5dc5a3a84c591028ee74064a5b..dea22dede9c7062794bdd06425c4d874
 +         << " --help for usage.\n";
    return 1;
  }
-diff --git a/utils/bazel/llvm-project-overlay/llvm/BUILD.bazel b/utils/bazel/llvm-project-overlay/llvm/BUILD.bazel
+diff --git a/llvm/BUILD.bazel b/llvm/BUILD.bazel
 index 8b023804fed90f0b61e127e4540a11c26897c911..ad307c397210ed3f93ef689d909db1866090fd93 100644
---- a/utils/bazel/llvm-project-overlay/llvm/BUILD.bazel
-+++ b/utils/bazel/llvm-project-overlay/llvm/BUILD.bazel
+--- a/llvm/BUILD.bazel
++++ b/llvm/BUILD.bazel
 @@ -6118,12 +6118,23 @@ cc_library(
          ":Debuginfod",
          ":HTTP",
@@ -1573,10 +1573,10 @@ index 8b023804fed90f0b61e127e4540a11c26897c911..ad307c397210ed3f93ef689d909db186
      name = "llvm-profdata",
      stamp = 0,
      deps = [":llvm-profdata-lib"],
-diff --git a/utils/bazel/llvm-project-overlay/llvm/driver.bzl b/utils/bazel/llvm-project-overlay/llvm/driver.bzl
+diff --git a/llvm/driver.bzl b/llvm/driver.bzl
 index 3b72f1068ae9e5438329aee444c356a228ab9656..34996d2e08b42288fbd543e52a334a094a57abe9 100644
---- a/utils/bazel/llvm-project-overlay/llvm/driver.bzl
-+++ b/utils/bazel/llvm-project-overlay/llvm/driver.bzl
+--- a/llvm/driver.bzl
++++ b/llvm/driver.bzl
 @@ -29,6 +29,7 @@ _TOOLS = {
      "llvm-nm": "//llvm:llvm-nm-lib",
      "llvm-objcopy": "//llvm:llvm-objcopy-lib",

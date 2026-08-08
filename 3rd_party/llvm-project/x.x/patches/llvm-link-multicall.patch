@@ -554,10 +554,10 @@ index e49082f2d7bfbe553d768f92c745914ff9e34c26..d0d19fa55a953ef6de098665a33d0734
      WriteBitcodeToFile(*Composite, Out.os(),
                         /* ShouldPreserveUseListOrder */ true);
    }
-diff --git a/utils/bazel/llvm-project-overlay/llvm/BUILD.bazel b/utils/bazel/llvm-project-overlay/llvm/BUILD.bazel
+diff --git a/llvm/BUILD.bazel b/llvm/BUILD.bazel
 index c693169d5b35c7fd6e81f9d46cadd8167ebab86b..8b023804fed90f0b61e127e4540a11c26897c911 100644
---- a/utils/bazel/llvm-project-overlay/llvm/BUILD.bazel
-+++ b/utils/bazel/llvm-project-overlay/llvm/BUILD.bazel
+--- a/llvm/BUILD.bazel
++++ b/llvm/BUILD.bazel
 @@ -5575,13 +5575,19 @@ llvm_driver_cc_binary(
      deps = [":llvm-libtool-darwin-lib"],
  )
@@ -607,10 +607,10 @@ index c693169d5b35c7fd6e81f9d46cadd8167ebab86b..8b023804fed90f0b61e127e4540a11c2
  gentbl_cc_library(
      name = "LipoOptsTableGen",
      strip_include_prefix = "tools/llvm-lipo",
-diff --git a/utils/bazel/llvm-project-overlay/llvm/driver.bzl b/utils/bazel/llvm-project-overlay/llvm/driver.bzl
+diff --git a/llvm/driver.bzl b/llvm/driver.bzl
 index 3cbff1b1de5cf076b8babdb2e76ed9e0217a8e19..3b72f1068ae9e5438329aee444c356a228ab9656 100644
---- a/utils/bazel/llvm-project-overlay/llvm/driver.bzl
-+++ b/utils/bazel/llvm-project-overlay/llvm/driver.bzl
+--- a/llvm/driver.bzl
++++ b/llvm/driver.bzl
 @@ -22,6 +22,7 @@ _TOOLS = {
      "llvm-gsymutil": "//llvm:llvm-gsymutil-lib",
      "llvm-ifs": "//llvm:llvm-ifs-lib",

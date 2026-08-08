@@ -5,8 +5,6 @@ load("@llvm//toolchain/runtimes:cc_runtime_library.bzl", "cc_runtime_stage0_libr
 load("@llvm-project//:vars.bzl", "LLVM_VERSION_MAJOR")
 load("@rules_python//python:defs.bzl", "py_binary")
 
-EMPTY_STRING_LIST = [""][:0]  # empty list[string]
-
 LIBOMP_COMMON_SOURCES = [
     "runtime/src/kmp_affinity.cpp",
     "runtime/src/kmp_alloc.cpp",
@@ -40,7 +38,7 @@ LIBOMP_COMMON_SOURCES = [
     [
         "runtime/src/kmp_adt.cpp",
         "runtime/src/kmp_invoke_microtask.cpp",
-    ] if int(LLVM_VERSION_MAJOR) >= 23 else EMPTY_STRING_LIST
+    ] if int(LLVM_VERSION_MAJOR) >= 23 else []
 )
 
 _KMP_CONFIG_H_SUBSTITUTIONS = {

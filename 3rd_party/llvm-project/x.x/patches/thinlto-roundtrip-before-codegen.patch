@@ -1,13 +1,11 @@
 diff --git a/llvm/lib/LTO/LTOBackend.cpp b/llvm/lib/LTO/LTOBackend.cpp
-index d4980278b906..b41848906f40 100644
 --- a/llvm/lib/LTO/LTOBackend.cpp
 +++ b/llvm/lib/LTO/LTOBackend.cpp
-@@ -661,2 +661,23 @@ Error lto::thinBackend(const Config &Conf, unsigned Task, AddStreamFn AddStream,
+@@ -703,7 +703,24 @@ Error lto::thinBackend(const Config &Conf, unsigned Task, AddStreamFn AddStream,
+         if (IRAddStream)
+           cgdata::saveModuleForTwoRounds(Mod, Task, IRAddStream);
+ 
 -        codegen(Conf, TM, AddStream, Task, Mod, CombinedIndex);
-+        // The in-process ThinLTO backend can carry imported metadata in the
-+        // backend context all the way to codegen. Normalize the optimized
-+        // module through bitcode before instruction selection so the codegen
-+        // pipeline only sees metadata owned by its own LLVMContext.
 +        SmallString<0> BC;
 +        raw_svector_ostream BCOS(BC);
 +        WriteBitcodeToFile(Mod, BCOS);
@@ -27,3 +25,5 @@ index d4980278b906..b41848906f40 100644
 +        codegen(Conf, CodeGenTM.get(), AddStream, Task, *CodeGenMod,
 +                CombinedIndex);
          return finalizeOptimizationRemarks(std::move(DiagnosticOutputFile));
+       };
+ 
