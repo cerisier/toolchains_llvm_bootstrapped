@@ -22,7 +22,6 @@ _BEFORE_23_SOURCE_PATCHES = [
     "//3rd_party/llvm-project/before23.x/patches:llvm-install-name-tool-output.patch",
     "//3rd_party/llvm-project/before23.x/patches:llvm-driver-tool-order.patch",
     "//3rd_party/llvm-project/before23.x/patches:llvm-dsymutil-corefoundation.patch",
-    "//3rd_party/llvm-project/before23.x/patches:pfm-rules-cc-load.patch",
     "//3rd_party/llvm-project/before23.x/patches:clang-hardlink-filenames.patch",
     "//3rd_party/llvm-project/before23.x/patches:thinlto-roundtrip-before-codegen.patch",
     "//3rd_party/llvm-project/before23.x/patches:llvm-abi-breaking-checks.patch",
