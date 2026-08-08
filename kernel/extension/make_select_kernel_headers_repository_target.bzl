@@ -7,7 +7,7 @@ load("//constraints/kernel/linux:linux_kernel_versions.bzl", "LINUX_KERNEL_VERSI
 load("//constraints/libc:libc_versions.bzl", "LIBCS")
 load("//platforms:common.bzl", "LIBC_SUPPORTED_TARGETS")
 load(":kernel_helpers.bzl", "arch_to_kernel_arch")
-load(":libc_kernel_versions.bzl", "LIBC_KERNEL_VERSIONS")
+load(":libc_kernel_versions.bzl", "libc_kernel_version")
 
 def _kernel_headers_repository_target(target_arch, kernel_version, bazel_target):
     return "@linux_kernel_headers_{}.{}//:{}".format(arch_to_kernel_arch(target_arch), kernel_version, bazel_target)
@@ -44,7 +44,7 @@ def _make_select_kernel_headers_repository_target_from_libc(bazel_target):
     selection = {}
     for (target_os, target_arch) in LIBC_SUPPORTED_TARGETS:
         for libc_version in LIBCS + ["unconstrained"]:
-            kernel_version = LIBC_KERNEL_VERSIONS[libc_version]
+            kernel_version = libc_kernel_version(target_os, target_arch, libc_version)
             if not _kernel_headers_available(target_arch, kernel_version):
                 continue
             apparent_target = _kernel_headers_repository_target(target_arch, kernel_version, bazel_target)

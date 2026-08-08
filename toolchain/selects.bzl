@@ -40,7 +40,11 @@ def platform_extra_binary(binary):
     })
 
 def platform_module_map(exec_os, exec_cpu):
-    return Label(_tool_repo(exec_os, exec_cpu) + ":module_map")
+    tool_repo = _tool_repo(exec_os, exec_cpu)
+    return select({
+        "@llvm//platforms/config:linux_ppc64le": Label(tool_repo + ":freestanding_module_map"),
+        "//conditions:default": Label(tool_repo + ":module_map"),
+    })
 
 def resource_dir_arg(exec_os, exec_cpu):
     return Label(_tool_repo(exec_os, exec_cpu) + ":compile_resource_dir")
@@ -53,6 +57,7 @@ def platform_cc_tool_map(exec_os, exec_cpu):
     # point at further aliases that use `select`, those will resolve according to the exec platform.
     # See https://github.com/bazelbuild/bazel/issues/27623#issuecomment-3529439585 for more details.
     return select({
+        "@llvm//toolchain:linux_ppc64le_freestanding_complete": Label(tool_repo + ":staged_default_tools"),
         "@llvm//toolchain:linux_complete": Label(tool_repo + ":tools_with_interface_libraries"),
         "@llvm//toolchain:macos_complete_with_libtool": Label(tool_repo + ":tools_with_dsym_and_libtool"),
         "@llvm//toolchain:macos_complete": Label(tool_repo + ":tools_with_dsym"),

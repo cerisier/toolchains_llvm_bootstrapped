@@ -9,6 +9,11 @@ constraint_setting(
     default_constraint_value = DEFAULT_CXXSTDLIB,
 )
 
+constraint_value(
+    name = "none",
+    constraint_setting = "variant",
+)
+
 [
     constraint_value(
         name = cxxstdlib,

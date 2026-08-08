@@ -1,0 +1,44 @@
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load(":defs.bzl", "ppc64le_stage1_binary", "ppc64le_stage1_hosted_binary")
+
+package(default_visibility = ["//visibility:public"])
+
+_PPC64LE_TARGET_COMPATIBLE_WITH = [
+    "@platforms//cpu:ppc64le",
+    "@platforms//os:linux",
+]
+
+# Deliberately contains no llvm-specific libc, C++ runtime, or runtime-stage
+# constraints. CPU+OS alone must select the freestanding toolchain behavior.
+platform(
+    name = "linux_ppc64le",
+    constraint_values = [
+        "@platforms//cpu:ppc64le",
+        "@platforms//os:linux",
+    ],
+)
+
+cc_library(
+    name = "ppc64le_object",
+    srcs = ["probe.c"],
+)
+
+ppc64le_stage1_binary(
+    name = "ppc64le_stage1_executable",
+    srcs = ["start.c"],
+    linkopts = [
+        "-Wl,--entry=_start",
+        "-Wl,--no-pie",
+    ],
+    target_compatible_with = _PPC64LE_TARGET_COMPATIBLE_WITH,
+)
+
+ppc64le_stage1_hosted_binary(
+    name = "ppc64le_stage1_hosted_executable",
+    srcs = ["start.c"],
+    linkopts = [
+        "-Wl,--entry=_start",
+        "-Wl,--no-pie",
+    ],
+    target_compatible_with = _PPC64LE_TARGET_COMPATIBLE_WITH,
+)

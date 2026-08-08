@@ -32,13 +32,14 @@ bzl_library(
 )
 
 bzl_library(
-    name = "kernel_helpers",
-    srcs = ["kernel_helpers.bzl"],
+    name = "libc_kernel_versions",
+    srcs = ["libc_kernel_versions.bzl"],
     visibility = ["//visibility:public"],
+    deps = ["//constraints/libc:libc_versions"],
 )
 
 bzl_library(
-    name = "libc_kernel_versions",
-    srcs = ["libc_kernel_versions.bzl"],
+    name = "kernel_helpers",
+    srcs = ["kernel_helpers.bzl"],
     visibility = ["//visibility:public"],
 )

@@ -1,6 +1,6 @@
 load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
-load("@llvm//3rd_party/libc/glibc:helpers.bzl", "glibc_includes")
+load("@llvm//3rd_party/libc/glibc:helpers.bzl", "glibc_includes", "glibc_version_config_settings")
 load("@llvm//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
 load("@llvm//toolchain/runtimes:cc_runtime_library.bzl", "cc_runtime_stage0_library")
 load("@llvm//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
@@ -220,18 +220,14 @@ cc_runtime_stage0_library(
         # From debug/Makefile
         "debug/stack_chk_fail_local.c",
     ] + selects.with_or({
-        (
-            # For now the minimum version of all supported platforms is glibc 2.28
-            #
-            # unconstrained defaults to 2.28
+        glibc_version_config_settings([
             # TODO(cerisier): Make a is_at_least_gnu_version macro helper.
-            "@llvm//constraints/libc:unconstrained",
-            "@llvm//constraints/libc:gnu.2.28",
-            "@llvm//constraints/libc:gnu.2.29",
-            "@llvm//constraints/libc:gnu.2.30",
-            "@llvm//constraints/libc:gnu.2.31",
-            "@llvm//constraints/libc:gnu.2.32",
-        ): [
+            "gnu.2.28",
+            "gnu.2.29",
+            "gnu.2.30",
+            "gnu.2.31",
+            "gnu.2.32",
+        ]): [
             # libc_nonshared.a redirected stat functions to xstat until glibc 2.33,
             # when they were finally versioned like other symbols.
 
@@ -251,7 +247,7 @@ cc_runtime_stage0_library(
             # From csu/Makefile
             "@llvm//3rd_party/libc/glibc/csu:elf-init-2.31.c",
         ],
-        "@llvm//constraints/libc:gnu.2.33": [
+        glibc_version_config_settings(["gnu.2.33"]): [
             # if libc <= 2.32 but also <= 2.33
             # __libc_start_main used to require statically linked init/fini callbacks
             # until glibc 2.34 when they were assimilated into the shared library.

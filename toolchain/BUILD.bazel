@@ -6,6 +6,7 @@ load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 load("//toolchain/bootstrap:declare_toolchains.bzl", declare_bootstrap_toolchains = "declare_toolchains")
 load(":bootstrap_stages.bzl", "BOOTSTRAP_STAGES")
 load(":declare_toolchains.bzl", "declare_toolchains")
+load(":freestanding.bzl", "PPC64LE_FREESTANDING_RUNTIME_STAGES")
 
 package(default_visibility = ["//toolchain:__subpackages__"])
 
@@ -88,6 +89,24 @@ config_setting(
     },
     visibility = ["//visibility:public"],
 )
+
+# ppc64le currently provides a freestanding toolchain only. These settings are
+# deliberately more specific than the general runtime-stage settings, so a
+# custom platform containing only linux+ppc64le cannot select hosted inputs.
+[
+    config_setting(
+        name = "linux_ppc64le_freestanding_{}".format(runtime_stage),
+        constraint_values = [
+            "@platforms//cpu:ppc64le",
+            "@platforms//os:linux",
+        ],
+        flag_values = {
+            ":runtime_stage": runtime_stage,
+        },
+        visibility = ["//visibility:public"],
+    )
+    for runtime_stage in PPC64LE_FREESTANDING_RUNTIME_STAGES
+]
 
 config_setting(
     name = "linux_complete",
@@ -435,6 +454,7 @@ bzl_library(
     name = "cc_toolchain",
     srcs = ["cc_toolchain.bzl"],
     deps = [
+        ":freestanding",
         "@rules_cc//cc/toolchains:toolchain_rules",
     ],
 )
@@ -460,4 +480,9 @@ bzl_library(
     name = "bootstrap_stages",
     srcs = ["bootstrap_stages.bzl"],
     visibility = ["//visibility:public"],
+)
+
+bzl_library(
+    name = "freestanding",
+    srcs = ["freestanding.bzl"],
 )

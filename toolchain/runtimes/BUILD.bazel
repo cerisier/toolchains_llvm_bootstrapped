@@ -1,5 +1,6 @@
 load("@bazel_lib//:bzl_library.bzl", "bzl_library")
 load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
+load("//toolchain:freestanding.bzl", "ppc64le_freestanding_select")
 
 # gazelle:exclude cc_unsanitized_library.bzl
 
@@ -88,7 +89,7 @@ cc_args_list(
 
 cc_args_list(
     name = "staged_platform_specific_args",
-    args = select({
+    args = select(ppc64le_freestanding_select([]) | {
         "//toolchain:runtimes_stage1_hosted": [
             ":stage1_hosted_platform_specific_args",
         ],
@@ -150,7 +151,7 @@ cc_args_list(
 
 cc_args_list(
     name = "resource_dir",
-    args = select({
+    args = select(ppc64le_freestanding_select([]) | {
         "//toolchain:runtimes_all": [],
         "//toolchain:runtimes_stage1": ["//toolchain:resource_dir"],
         "//toolchain:runtimes_stage1_hosted": ["//toolchain:resource_dir"],
@@ -160,7 +161,7 @@ cc_args_list(
 
 cc_args_list(
     name = "default_startfiles",
-    args = select({
+    args = select(ppc64le_freestanding_select([]) | {
         "//toolchain:runtimes_all": [],
         "//toolchain:runtimes_stage1": ["//toolchain:default_startfiles"],
         "//toolchain:runtimes_stage1_hosted": ["//toolchain:default_startfiles"],
@@ -170,7 +171,7 @@ cc_args_list(
 
 cc_args_list(
     name = "rtlib",
-    args = select({
+    args = select(ppc64le_freestanding_select([]) | {
         "//toolchain:runtimes_all": [],
         "//toolchain:runtimes_stage1": [
             "//toolchain:rtlib",
@@ -185,7 +186,7 @@ cc_args_list(
 #TODO(cerisier): Need a level of indirection to handle OS differences between stages.
 cc_args_list(
     name = "default_libs",
-    args = select({
+    args = select(ppc64le_freestanding_select([]) | {
         "//toolchain:runtimes_all": [],
         "//toolchain:runtimes_stage1": [
             "//toolchain:default_libs",

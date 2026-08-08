@@ -95,6 +95,7 @@ _target_platform_tag = tag_class(
                 "riscv64",
                 "s390x",
                 "armv7",
+                "ppc64le",
                 "bpfeb",
                 "bpfel",
                 "wasm32",

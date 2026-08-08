@@ -3,7 +3,7 @@
     "21.1.8": "llvm-21.1.8-10",
     "22.1.6": "llvm-22.1.6-1",
     "22.1.7": "llvm-22.1.7-2",
-    "22.1.8": "llvm-22.1.8-1"
+    "22.1.8": "llvm-22.1.8-2-adaptive"
   },
   "releases": {
     "llvm-21.1.8-10": {
@@ -134,6 +134,32 @@
       "windows-arm64": {
         "url": "https://github.com/hermeticbuild/hermetic-llvm/releases/download/llvm-22.1.8-1/llvm-toolchain-minimal-22.1.8-windows-arm64.tar.zst",
         "sha256": "b65f380f32cec910a761b5107a2fe25f8322c7e8a6561bfe40077e8360a2a647"
+      }
+    },
+    "llvm-22.1.8-2-adaptive": {
+      "darwin-amd64": {
+        "url": "https://github.com/fionera/hermetic-llvm/releases/download/llvm-22.1.8-2-adaptive/llvm-toolchain-minimal-22.1.8-darwin-amd64.tar.zst",
+        "sha256": "57049cd87d7d8b3ceea64dc65149315df2cd4d357ba35c058ed446bc86818337"
+      },
+      "darwin-arm64": {
+        "url": "https://github.com/fionera/hermetic-llvm/releases/download/llvm-22.1.8-2-adaptive/llvm-toolchain-minimal-22.1.8-darwin-arm64.tar.zst",
+        "sha256": "d477cb114def39d7e5f7ca3141ef81e19ef8685c36c0ceaf6137861e69ddae2d"
+      },
+      "linux-amd64-musl": {
+        "url": "https://github.com/fionera/hermetic-llvm/releases/download/llvm-22.1.8-2-adaptive/llvm-toolchain-minimal-22.1.8-linux-amd64-musl.tar.zst",
+        "sha256": "9451f615542fadfa2bd085951b2789a1dc79d8d7c03dbd36219645799cc89a43"
+      },
+      "linux-arm64-musl": {
+        "url": "https://github.com/fionera/hermetic-llvm/releases/download/llvm-22.1.8-2-adaptive/llvm-toolchain-minimal-22.1.8-linux-arm64-musl.tar.zst",
+        "sha256": "63eacbef4bc5015db649148592d399a946f496b742b8aa7e9b341d69328f4f84"
+      },
+      "windows-amd64": {
+        "url": "https://github.com/fionera/hermetic-llvm/releases/download/llvm-22.1.8-2-adaptive/llvm-toolchain-minimal-22.1.8-windows-amd64.tar.zst",
+        "sha256": "9ab8040892bb915c04c6016a9c4d8d9f88d7f2c8355848732fd2f058705d62fa"
+      },
+      "windows-arm64": {
+        "url": "https://github.com/fionera/hermetic-llvm/releases/download/llvm-22.1.8-2-adaptive/llvm-toolchain-minimal-22.1.8-windows-arm64.tar.zst",
+        "sha256": "ccc9ff3ca616c28fe92f352edd1e3bd6eac50421b8f79f7c197eb80d16507429"
       }
     }
   }

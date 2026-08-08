@@ -1,5 +1,6 @@
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
+load("//toolchain:freestanding.bzl", "ppc64le_freestanding_select")
 
 package(default_visibility = ["//toolchain/runtimes:__subpackages__"])
 
@@ -204,7 +205,10 @@ cc_args(
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
-    args = select({
+    args = select(ppc64le_freestanding_select([
+        "-nostdlib",
+        "-static",
+    ]) | {
         "//toolchain:runtimes_all": [],
         "//toolchain:runtimes_stage1": [
             "-nostdlib++",

@@ -358,6 +358,13 @@ def declare_llvm_targets(*, suffix = ""):
         }),
     )
 
+    include_path(
+        name = "freestanding_target_headers",
+        srcs = [
+            ":builtin_resource_dir",
+        ],
+    )
+
     # this must match //toolchain:windows_toolchain_args
     include_path(
         name = "windows_target_headers",
@@ -393,5 +400,11 @@ def declare_llvm_targets(*, suffix = ""):
             "@platforms//os:windows": ":windows_target_headers",
             "@platforms//os:none": ":wasm_target_headers",
         }),
+        visibility = ["//visibility:public"],
+    )
+
+    module_map(
+        name = "freestanding_module_map",
+        include_path = ":freestanding_target_headers",
         visibility = ["//visibility:public"],
     )

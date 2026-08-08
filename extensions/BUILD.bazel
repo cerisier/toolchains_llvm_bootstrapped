@@ -33,6 +33,22 @@ bzl_library(
 )
 
 bzl_library(
+    name = "llvm_host_tools_repository",
+    srcs = ["llvm_host_tools_repository.bzl"],
+    visibility = ["//visibility:public"],
+    deps = [":llvm_host_tools_paths"],
+)
+
+bzl_library(
+    name = "llvm_host_tools_paths",
+    srcs = ["llvm_host_tools_paths.bzl"],
+    visibility = [
+        "//extensions:__pkg__",
+        "//tests/host_tools:__pkg__",
+    ],
+)
+
+bzl_library(
     name = "osx",
     srcs = ["osx.bzl"],
     visibility = ["//visibility:public"],

@@ -274,6 +274,11 @@ jobs:
             --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
             //tests/...
 
+          BAZEL_REMOTE_HEADER=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
+            bash tests/check_linux_architecture_contracts.sh \
+            --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc \
+            --bazelrc=.bazelrc
+
   docs:
     runs-on: macos-15-intel
     name: Verify public docs generation

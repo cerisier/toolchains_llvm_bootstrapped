@@ -1,0 +1,5 @@
+load(":host_tools_paths_test.bzl", "host_tools_paths_test")
+
+host_tools_paths_test(
+    name = "host_tools_paths_test",
+)
