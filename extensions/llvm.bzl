@@ -80,7 +80,7 @@ _LLVM_PATCHES_BY_MAJOR = {
     24: _LLVM_23_SOURCE_PATCHES,
 }
 
-def _create_llvm_project_repository(mctx, source_archive, targets):
+def _create_llvm_project_repository(mctx, llvm_version, llvm_version_index, targets):
     had_override = False
 
     for module in mctx.modules:
@@ -103,6 +103,7 @@ def _create_llvm_project_repository(mctx, source_archive, targets):
             llvm_project_archive(name = "llvm-project", targets = targets, **structs.to_dict(tag))
 
     if not had_override:
+        source_archive = _source_archive_for_version(llvm_version, llvm_version_index)
         llvm_project_archive(name = "llvm-project", targets = targets, **structs.to_dict(source_archive))
 
 def _parse_llvm_major(llvm_version):
@@ -199,13 +200,12 @@ def _get_llvm_targets(mctx):
 def _llvm_impl(mctx):
     llvm_version = _get_llvm_version(mctx)
     llvm_version_index = _get_llvm_version_index(mctx)
-    source_archive = _source_archive_for_version(llvm_version, llvm_version_index)
 
     _llvm_version_repository(
         name = "llvm_version",
         llvm_version = llvm_version,
     )
-    _create_llvm_project_repository(mctx, source_archive, _get_llvm_targets(mctx))
+    _create_llvm_project_repository(mctx, llvm_version, llvm_version_index, _get_llvm_targets(mctx))
 
     return mctx.extension_metadata(
         reproducible = True,
