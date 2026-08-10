@@ -195,9 +195,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Normal CI covers the current LLVM release. Keep one release for each
-        # supported prior LLVM major here.
-        llvm_version: ["21.1.8", "22.1.8"]
+        # Normal CI covers the default LLVM release. Keep one release for each
+        # other supported LLVM major here.
+        llvm_version: ["21.1.8", "23.1.0-rc1"]
     runs-on: ubuntu-latest
     name: Analyze LLVM ${{ matrix.llvm_version }}
 
