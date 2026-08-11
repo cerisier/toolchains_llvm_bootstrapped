@@ -1,0 +1,75 @@
+load("@bazel_lib//:bzl_library.bzl", "bzl_library")
+load("@llvm//toolchain/runtimes:cc_runtime_binary.bzl", "cc_runtime_stage1_hosted_binary")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
+exports_files([
+    "freebsd.BUILD.bazel",
+    "flex-linux.patch",
+    "rpc/types.h",
+    "rpcgen_compat.h",
+])
+
+cc_library(
+    name = "rpcgen_compat",
+    hdrs = ["rpcgen_compat.h"],
+    includes = ["."],
+    textual_hdrs = ["rpc/types.h"],
+)
+
+cc_library(
+    name = "m4_compat",
+    hdrs = ["freebsd_m4_compat.h"],
+    visibility = ["//visibility:public"],
+)
+
+cc_runtime_stage1_hosted_binary(
+    name = "rpcgen",
+    srcs = ["@freebsd_src_aarch64//:rpcgen_sources"],
+    copts = [
+        "-include",
+        "rpcgen_compat.h",
+    ],
+    visibility = ["//visibility:public"],
+    deps = ["rpcgen_compat"],
+)
+
+cc_runtime_stage1_hosted_binary(
+    name = "version_script_generator",
+    srcs = ["version_script_generator.c"],
+    visibility = ["//visibility:public"],
+)
+
+cc_runtime_stage1_hosted_binary(
+    name = "syscall_assembly_generator",
+    srcs = ["syscall_assembly_generator.c"],
+    visibility = ["//visibility:public"],
+)
+
+bzl_library(
+    name = "freebsd_actions",
+    srcs = ["freebsd_actions.bzl"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@rules_cc//cc:action_names",
+        "@rules_cc//cc:find_cc_toolchain",
+        "@rules_cc//cc/common:cc_common",
+    ],
+)
+
+bzl_library(
+    name = "freebsd_build_defs",
+    srcs = ["freebsd_build_defs.bzl"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@bazel_lib//lib:copy_file",
+        "@llvm//toolchain/args:llvm_target_triple",
+        "@llvm//toolchain/runtimes:cc_stage0_object",
+        "@rules_cc//cc:cc_library",
+    ],
+)
+
+bzl_library(
+    name = "freebsd_sources",
+    srcs = ["freebsd_sources.bzl"],
+    visibility = ["//visibility:public"],
+)

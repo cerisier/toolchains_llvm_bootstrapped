@@ -385,12 +385,26 @@ def declare_llvm_targets(*, suffix = ""):
         ],
     )
 
+    include_path(
+        name = "freebsd_target_headers",
+        srcs = [
+            "builtin_resource_dir",
+        ] + select({
+            "@llvm//toolchain:runtimes_all": [
+                "@llvm//runtimes/cxxstdlib:headers_include_search_directory",
+                "@llvm//runtimes/cxxstdlib:abi_headers_include_search_directory",
+            ],
+            "//conditions:default": [],
+        }) + ["@llvm//runtimes/freebsd:headers"],
+    )
+
     module_map(
         name = "module_map",
         include_path = select({
             "@platforms//os:macos": ":macos_target_headers",
             "@platforms//os:linux": ":linux_target_headers",
             "@platforms//os:windows": ":windows_target_headers",
+            "@platforms//os:freebsd": "freebsd_target_headers",
             "@platforms//os:none": ":wasm_target_headers",
         }),
         visibility = ["//visibility:public"],

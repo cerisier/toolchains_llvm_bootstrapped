@@ -614,6 +614,9 @@ cc_library(
             "@kernel_headers",
         ],
         "@platforms//os:windows": [],
+        "@platforms//os:freebsd": [
+            "@llvm//runtimes/freebsd:headers_for_runtime",
+        ],
         "@platforms//os:none": [],
     }) + select({
         "@llvm//platforms/config:musl": [
@@ -628,6 +631,7 @@ cc_library(
         "@platforms//os:windows": [
             "@mingw//:mingw_headers",
         ],
+        "@platforms//os:freebsd": [],
         "@platforms//os:none": [],
     }),
     includes = ["lib/builtins"],
@@ -697,11 +701,18 @@ cc_library(
         "@llvm//platforms/config:macos_aarch64": [
             "lib/builtins/cpu_model/aarch64/fmv/apple.inc",
         ],
+        "@llvm//platforms/config:freebsd_aarch64": [
+            "lib/builtins/cpu_model/aarch64/fmv/elf_aux_info.inc",
+            "lib/builtins/cpu_model/aarch64/fmv/hwcap.inc",
+            "lib/builtins/cpu_model/aarch64/lse_atomics/elf_aux_info.inc",
+        ],
+        "@llvm//platforms/config:freebsd_x86_64": [],
         "@llvm//platforms/config:windows_aarch64": [
             "lib/builtins/cpu_model/aarch64/fmv/windows.inc",
         ],
         "//conditions:default": [],
     }),
+    visibility = ["//visibility:public"],
     deps = select({
         "@platforms//cpu:aarch64": [
             ":builtins_aarch64_atomic",

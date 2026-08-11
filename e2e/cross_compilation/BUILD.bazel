@@ -1,4 +1,4 @@
-load("@bazel_lib//lib:transitions.bzl", "platform_transition_binary")
+load("@bazel_lib//lib:transitions.bzl", "platform_transition_binary", "platform_transition_filegroup")
 load("@bazel_skylib//rules:common_settings.bzl", "string_flag")
 load("@llvm//constraints/libc:libc_versions.bzl", "LIBCS")
 load("@llvm//platforms/distros/linux:constraints.bzl", "UBUNTU_20_04_CONSTRAINTS")
@@ -6,6 +6,7 @@ load("@platforms//host:constraints.bzl", "HOST_CONSTRAINTS")
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("@rules_python//python:defs.bzl", "py_test")
 load("@rules_qemu//qemu:qemu_binary.bzl", "qemu_binary")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 
@@ -41,6 +42,86 @@ cc_binary(
 cc_binary(
     name = "hello",
     srcs = ["hello.c"],
+)
+
+platform_transition_binary(
+    name = "hello_freebsd_aarch64",
+    binary = "hello",
+    tags = ["manual"],
+    target_platform = "@llvm//platforms:freebsd_aarch64",
+)
+
+platform_transition_binary(
+    name = "main_freebsd_aarch64",
+    binary = "main",
+    tags = ["manual"],
+    target_platform = "@llvm//platforms:freebsd_aarch64",
+)
+
+platform_transition_binary(
+    name = "hello_freebsd_x86_64",
+    binary = "hello",
+    tags = ["manual"],
+    target_platform = "@llvm//platforms:freebsd_x86_64",
+)
+
+platform_transition_binary(
+    name = "main_freebsd_x86_64",
+    binary = "main",
+    tags = ["manual"],
+    target_platform = "@llvm//platforms:freebsd_x86_64",
+)
+
+platform_transition_filegroup(
+    name = "hello_freebsd_aarch64_files",
+    srcs = ["hello"],
+    tags = ["manual"],
+    target_platform = "@llvm//platforms:freebsd_aarch64",
+)
+
+platform_transition_filegroup(
+    name = "main_freebsd_aarch64_files",
+    srcs = ["main"],
+    tags = ["manual"],
+    target_platform = "@llvm//platforms:freebsd_aarch64",
+)
+
+platform_transition_filegroup(
+    name = "freebsd_aarch64_source_runtime",
+    srcs = ["@llvm//runtimes/freebsd:sysroot"],
+    tags = ["manual"],
+    target_platform = "@llvm//platforms:freebsd_aarch64",
+)
+
+py_test(
+    name = "freebsd_aarch64_qemu_test",
+    size = "large",
+    timeout = "long",
+    srcs = ["test_freebsd_qemu.py"],
+    args = [
+        "--c-binary=$(rootpath hello_freebsd_aarch64_files)",
+        "--cxx-binary=$(rootpath main_freebsd_aarch64_files)",
+        "--image=$(rootpath @freebsd_15_1_aarch64_basic_ci//file)",
+        "--sysroot=$(rootpath freebsd_aarch64_source_runtime)",
+    ],
+    data = [
+        "freebsd_aarch64_source_runtime",
+        "hello_freebsd_aarch64_files",
+        "main_freebsd_aarch64_files",
+        "@freebsd_15_1_aarch64_basic_ci//file",
+    ],
+    exec_compatible_with = [
+        "@platforms//cpu:aarch64",
+        "@platforms//os:macos",
+    ],
+    main = "test_freebsd_qemu.py",
+    tags = [
+        "local",
+        "manual",
+        "no-cache",
+        "no-remote",
+        "no-sandbox",
+    ],
 )
 
 cc_test(

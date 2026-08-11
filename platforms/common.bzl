@@ -16,6 +16,8 @@ SUPPORTED_TARGETS = [
     ("linux", "armv7"),
     ("windows", "x86_64"),
     ("windows", "aarch64"),
+    ("freebsd", "x86_64"),
+    ("freebsd", "aarch64"),
     ("none", "bpfeb"),
     ("none", "bpfel"),
     ("none", "wasm32"),

@@ -1,0 +1,1160 @@
+load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load(
+    "@llvm//3rd_party/freebsd:freebsd_actions.bzl",
+    "freebsd_generate",
+    "freebsd_rpc_header",
+    "freebsd_rpc_source",
+    "freebsd_version_script",
+)
+load(
+    "@llvm//3rd_party/freebsd:freebsd_build_defs.bzl",
+    "FREEBSD_COMMON_COPTS",
+    "FREEBSD_LIBC_DEFINES",
+    "FREEBSD_LIBC_NONSHARED_SRCS",
+    "FREEBSD_LIBC_TZCODE_SRCS",
+    "FREEBSD_ROOT_HEADERS",
+    "FREEBSD_RTLD_LIBC_SRCS",
+    "freebsd_crt1_object",
+    "freebsd_crt_object",
+    "freebsd_internal_include_directories",
+    "freebsd_libc_objects",
+    "freebsd_runtime_copy",
+)
+load(
+    "@llvm//3rd_party/freebsd:freebsd_sources.bzl",
+    "FREEBSD_LIBC_SRCS",
+    "FREEBSD_LIBSYS_SRCS",
+    "FREEBSD_RTLD_C_SRCS",
+)
+load("@llvm//toolchain/runtimes:cc_runtime_binary.bzl", "cc_runtime_stage0_binary", "cc_runtime_stage1_hosted_binary")
+load("@llvm//toolchain/runtimes:cc_runtime_shared_library.bzl", "cc_runtime_stage0_shared_library")
+load("@llvm//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load(":freebsd_arch.bzl", "FREEBSD_ARCH", "FREEBSD_MACHINE_ARCH", "FREEBSD_TARGET_TRIPLE")
+
+package(default_visibility = ["//visibility:public"])
+
+_LONG_DOUBLE_DIRECTORY = "ld128" if FREEBSD_ARCH == "aarch64" else "ld80"
+
+_MSUN_ARCH = "aarch64" if FREEBSD_ARCH == "aarch64" else "x86"
+
+_GENERATED_STRING_ASSEMBLY_SRCS = ["generated_aarch64_string_assembly_sources"] if FREEBSD_ARCH == "aarch64" else []
+
+_RTLD_ASM_SRCS = [
+    "lib/csu/common/crtbrand.S",
+    "libexec/rtld-elf/{}/rtld_start.S".format(FREEBSD_ARCH),
+]
+
+_RTLD_SUPPORT_ASM_SRCS = [
+    "freebsd_rtld_syscalls",
+    "lib/libc/{}/gen/_setjmp.S".format(FREEBSD_ARCH),
+    "lib/libc/{}/gen/setjmp.S".format(FREEBSD_ARCH),
+    "lib/libc/{}/gen/sigsetjmp.S".format(FREEBSD_ARCH),
+    "lib/libsys/{}/cerror.S".format(FREEBSD_ARCH),
+]
+
+_PUBLIC_HEADER_PREFIXES = ({
+    "include": "",
+    "lib/msun/{}".format(_MSUN_ARCH): "",
+    "lib/msun/src": "",
+    "sys/amd64/include": "machine",
+    "sys/x86/include": "x86",
+    "sys": "",
+} if FREEBSD_ARCH == "amd64" else {
+    "include": "",
+    "lib/msun/{}".format(_MSUN_ARCH): "",
+    "lib/msun/src": "",
+    "sys/{}/include".format(FREEBSD_MACHINE_ARCH): "machine",
+    "sys": "",
+})
+
+alias(
+    name = "freebsd_cpp",
+    actual = select({
+        "@llvm//platforms/config:linux_aarch64": "@llvm-toolchain-minimal-linux-arm64//:bin/clang",
+        "@llvm//platforms/config:linux_x86_64": "@llvm-toolchain-minimal-linux-amd64//:bin/clang",
+        "@llvm//platforms/config:macos_aarch64": "@llvm-toolchain-minimal-darwin-arm64//:bin/clang",
+        "@llvm//platforms/config:macos_x86_64": "@llvm-toolchain-minimal-darwin-amd64//:bin/clang",
+        "@llvm//platforms/config:windows_aarch64": "@llvm-toolchain-minimal-windows-arm64//:bin/clang.exe",
+        "@llvm//platforms/config:windows_x86_64": "@llvm-toolchain-minimal-windows-amd64//:bin/clang.exe",
+    }),
+)
+
+filegroup(
+    name = "rpcgen_sources",
+    srcs = glob([
+        "usr.bin/rpcgen/*.c",
+        "usr.bin/rpcgen/*.h",
+    ]),
+)
+
+cc_runtime_stage1_hosted_binary(
+    name = "byacc",
+    srcs = [
+        "contrib/byacc/closure.c",
+        "contrib/byacc/defs.h",
+        "contrib/byacc/error.c",
+        "contrib/byacc/graph.c",
+        "contrib/byacc/lalr.c",
+        "contrib/byacc/lr0.c",
+        "contrib/byacc/main.c",
+        "contrib/byacc/mkpar.c",
+        "contrib/byacc/mstring.c",
+        "contrib/byacc/output.c",
+        "contrib/byacc/reader.c",
+        "contrib/byacc/symtab.c",
+        "contrib/byacc/verbose.c",
+        "contrib/byacc/warshall.c",
+        "contrib/byacc/yaccpar.c",
+        "usr.bin/yacc/config.h",
+    ],
+    includes = [
+        "contrib/byacc",
+        "usr.bin/yacc",
+    ],
+    local_defines = [
+        "HAVE_CONFIG_H",
+        "MAXTABLE=INT_MAX",
+        "YYPATCH=20240109",
+    ],
+)
+
+freebsd_generate(
+    name = "m4_parser",
+    srcs = ["usr.bin/m4/parser.y"],
+    outs = [
+        "parser.c",
+        "parser.h",
+    ],
+    args = [
+        "-d",
+        "-o",
+        "$(execpath parser.c)",
+        "$(location usr.bin/m4/parser.y)",
+    ],
+    tool = "byacc",
+)
+
+cc_runtime_stage1_hosted_binary(
+    name = "m4",
+    srcs = [
+        "lib/libc/stdlib/reallocarray.c",
+        "lib/libc/stdlib/strtonum.c",
+        "lib/libc/string/strlcat.c",
+        "lib/libc/string/strlcpy.c",
+        "lib/libopenbsd/ohash.c",
+        "lib/libopenbsd/ohash.h",
+        "parser.c",
+        "parser.h",
+        "tools/build/bootstrap-m4/inittokenizer.c",
+        "usr.bin/m4/eval.c",
+        "usr.bin/m4/expr.c",
+        "usr.bin/m4/extern.h",
+        "usr.bin/m4/gnum4.c",
+        "usr.bin/m4/look.c",
+        "usr.bin/m4/main.c",
+        "usr.bin/m4/mdef.h",
+        "usr.bin/m4/misc.c",
+        "usr.bin/m4/pathnames.h",
+        "usr.bin/m4/stdd.h",
+        "usr.bin/m4/trace.c",
+    ],
+    copts = [
+        "-include",
+        "3rd_party/freebsd/freebsd_m4_compat.h",
+    ],
+    includes = [
+        ".",
+        "lib/libopenbsd",
+        "usr.bin/m4",
+    ],
+    linkopts = ["-lm"],
+    local_defines = ["EXTENDED"],
+    deps = ["@llvm//3rd_party/freebsd:m4_compat"],
+)
+
+cc_runtime_stage1_hosted_binary(
+    name = "flex",
+    srcs = glob(
+        [
+            "contrib/flex/src/*.c",
+            "contrib/flex/src/*.h",
+        ],
+        exclude = [
+            "contrib/flex/src/libmain.c",
+            "contrib/flex/src/libyywrap.c",
+        ],
+    ),
+    includes = ["contrib/flex/src"],
+    local_defines = ["HAVE_CONFIG_H"],
+)
+
+freebsd_rpc_header(
+    name = "bootparam_prot_h",
+    src = "include/rpcsvc/bootparam_prot.x",
+    out = "rpcsvc/bootparam_prot.h",
+)
+
+freebsd_rpc_header(
+    name = "crypt_h",
+    src = "include/rpcsvc/crypt.x",
+    out = "rpcsvc/crypt.h",
+)
+
+freebsd_rpc_header(
+    name = "key_prot_h",
+    src = "include/rpcsvc/key_prot.x",
+    out = "rpcsvc/key_prot.h",
+)
+
+freebsd_rpc_header(
+    name = "klm_prot_h",
+    src = "include/rpcsvc/klm_prot.x",
+    out = "rpcsvc/klm_prot.h",
+)
+
+freebsd_rpc_header(
+    name = "mount_h",
+    src = "include/rpcsvc/mount.x",
+    out = "rpcsvc/mount.h",
+)
+
+freebsd_rpc_header(
+    name = "nfs_prot_h",
+    src = "include/rpcsvc/nfs_prot.x",
+    out = "rpcsvc/nfs_prot.h",
+)
+
+freebsd_rpc_header(
+    name = "nis_h",
+    src = "include/rpcsvc/nis_object.x",
+    out = "rpcsvc/nis.h",
+)
+
+freebsd_rpc_header(
+    name = "nis_cache_h",
+    src = "include/rpcsvc/nis_cache.x",
+    out = "rpcsvc/nis_cache.h",
+)
+
+freebsd_rpc_header(
+    name = "nis_callback_h",
+    src = "include/rpcsvc/nis_callback.x",
+    out = "rpcsvc/nis_callback.h",
+)
+
+freebsd_rpc_header(
+    name = "nlm_prot_h",
+    src = "include/rpcsvc/nlm_prot.x",
+    out = "rpcsvc/nlm_prot.h",
+)
+
+freebsd_rpc_header(
+    name = "rex_h",
+    src = "include/rpcsvc/rex.x",
+    out = "rpcsvc/rex.h",
+)
+
+freebsd_rpc_header(
+    name = "rnusers_h",
+    src = "include/rpcsvc/rnusers.x",
+    out = "rpcsvc/rnusers.h",
+)
+
+freebsd_rpc_header(
+    name = "rquota_h",
+    src = "include/rpcsvc/rquota.x",
+    out = "rpcsvc/rquota.h",
+)
+
+freebsd_rpc_header(
+    name = "rstat_h",
+    src = "include/rpcsvc/rstat.x",
+    out = "rpcsvc/rstat.h",
+)
+
+freebsd_rpc_header(
+    name = "rwall_h",
+    src = "include/rpcsvc/rwall.x",
+    out = "rpcsvc/rwall.h",
+)
+
+freebsd_rpc_header(
+    name = "sm_inter_h",
+    src = "include/rpcsvc/sm_inter.x",
+    out = "rpcsvc/sm_inter.h",
+)
+
+freebsd_rpc_header(
+    name = "spray_h",
+    src = "include/rpcsvc/spray.x",
+    out = "rpcsvc/spray.h",
+)
+
+freebsd_rpc_header(
+    name = "yp_h",
+    src = "include/rpcsvc/yp.x",
+    out = "rpcsvc/yp.h",
+)
+
+freebsd_rpc_header(
+    name = "yppasswd_h",
+    src = "include/rpcsvc/yppasswd.x",
+    out = "rpcsvc/yppasswd.h",
+)
+
+freebsd_rpc_header(
+    name = "ypupdate_prot_h",
+    src = "include/rpcsvc/ypupdate_prot.x",
+    out = "rpcsvc/ypupdate_prot.h",
+)
+
+freebsd_rpc_header(
+    name = "ypxfrd_h",
+    src = "include/rpcsvc/ypxfrd.x",
+    out = "rpcsvc/ypxfrd.h",
+)
+
+freebsd_rpc_source(
+    name = "crypt_clnt_c",
+    src = "include/rpcsvc/crypt.x",
+    out = "crypt_clnt.c",
+    mode = "-l",
+)
+
+freebsd_rpc_source(
+    name = "crypt_xdr_c",
+    src = "include/rpcsvc/crypt.x",
+    out = "crypt_xdr.c",
+    mode = "-c",
+)
+
+freebsd_rpc_source(
+    name = "yp_xdr_c",
+    src = "include/rpcsvc/yp.x",
+    out = "yp_xdr.c",
+    mode = "-c",
+)
+
+freebsd_generate(
+    name = "nsparser",
+    srcs = ["lib/libc/net/nsparser.y"],
+    outs = [
+        "nsparser.c",
+        "nsparser.h",
+    ],
+    args = [
+        "-p",
+        "_nsyy",
+        "-d",
+        "-o",
+        "$(execpath nsparser.c)",
+        "$(location lib/libc/net/nsparser.y)",
+    ],
+    tool = "byacc",
+)
+
+freebsd_generate(
+    name = "nslexer",
+    srcs = ["lib/libc/net/nslexer.l"],
+    outs = ["nslexer.c"],
+    args = [
+        "-P_nsyy",
+        "-o",
+        "$(execpath nslexer.c)",
+        "$(execpath lib/libc/net/nslexer.l)",
+    ],
+    env = {"M4": "$(execpath m4)"},
+    tool = "flex",
+    tools = ["m4"],
+)
+
+write_file(
+    name = "rpc_key_prot_h",
+    out = "rpc/key_prot.h",
+    content = ["#include <rpcsvc/key_prot.h>"],
+)
+
+filegroup(
+    name = "generated_c_sources",
+    srcs = [
+        "crypt_clnt_c",
+        "crypt_xdr_c",
+        "nslexer",
+        "nsparser.c",
+        "yp_xdr_c",
+    ],
+)
+
+cc_library(
+    name = "generated_headers",
+    hdrs = [
+        "bootparam_prot_h",
+        "crypt_h",
+        "key_prot_h",
+        "klm_prot_h",
+        "mount_h",
+        "nfs_prot_h",
+        "nis_cache_h",
+        "nis_callback_h",
+        "nis_h",
+        "nlm_prot_h",
+        "nsparser.h",
+        "rex_h",
+        "rnusers_h",
+        "rpc_key_prot_h",
+        "rquota_h",
+        "rstat_h",
+        "rwall_h",
+        "sm_inter_h",
+        "spray_h",
+        "yp_h",
+        "yppasswd_h",
+        "ypupdate_prot_h",
+        "ypxfrd_h",
+    ],
+    includes = [
+        ".",
+        "rpcsvc",
+    ],
+)
+
+write_file(
+    name = "aarch64_memcmp",
+    out = "aarch64_memcmp.S",
+    content = ["#define\t__memcmp_aarch64 memcmp\n#include \"aarch64/memcmp.S\""],
+)
+
+write_file(
+    name = "aarch64_memcpy-mops",
+    out = "aarch64_memcpy-mops.S",
+    content = ["#include \"aarch64/memcpy-mops.S\""],
+)
+
+write_file(
+    name = "aarch64_memmove-mops",
+    out = "aarch64_memmove-mops.S",
+    content = ["#include \"aarch64/memmove-mops.S\""],
+)
+
+write_file(
+    name = "aarch64_memrchr",
+    out = "aarch64_memrchr.S",
+    content = ["#define\t__memrchr_aarch64 memrchr\n#include \"aarch64/memrchr.S\""],
+)
+
+write_file(
+    name = "aarch64_memset-mops",
+    out = "aarch64_memset-mops.S",
+    content = ["#include \"aarch64/memset-mops.S\""],
+)
+
+write_file(
+    name = "aarch64_stpcpy",
+    out = "aarch64_stpcpy.S",
+    content = ["#define\t__stpcpy_aarch64 stpcpy\n#include \"aarch64/stpcpy.S\""],
+)
+
+write_file(
+    name = "aarch64_strchrnul",
+    out = "aarch64_strchrnul.S",
+    content = ["#define\t__strchrnul_aarch64 strchrnul\n#include \"aarch64/strchrnul.S\""],
+)
+
+write_file(
+    name = "aarch64_strcpy",
+    out = "aarch64_strcpy.S",
+    content = ["#define\t__strcpy_aarch64 strcpy\n#include \"aarch64/strcpy.S\""],
+)
+
+write_file(
+    name = "aarch64_strnlen",
+    out = "aarch64_strnlen.S",
+    content = ["#define\t__strnlen_aarch64 strnlen\n#include \"aarch64/strnlen.S\""],
+)
+
+filegroup(
+    name = "generated_aarch64_string_assembly_sources",
+    srcs = [
+        "aarch64_memcmp",
+        "aarch64_memcpy-mops",
+        "aarch64_memmove-mops",
+        "aarch64_memrchr",
+        "aarch64_memset-mops",
+        "aarch64_stpcpy",
+        "aarch64_strchrnul",
+        "aarch64_strcpy",
+        "aarch64_strnlen",
+    ],
+)
+
+freebsd_generate(
+    name = "freebsd_syscalls",
+    srcs = [
+        "lib/libsys/Makefile.sys",
+        "lib/libsys/{}/Makefile.sys".format(FREEBSD_ARCH),
+        "libexec/rtld-elf/rtld-libc/Makefile.inc",
+        "sys/sys/syscall.mk",
+    ],
+    outs = ["freebsd_syscalls.S"],
+    args = [
+        "libsys",
+        FREEBSD_ARCH,
+        "$(execpath freebsd_syscalls.S)",
+        "$(location sys/sys/syscall.mk)",
+        "$(location lib/libsys/Makefile.sys)",
+        "$(location lib/libsys/{}/Makefile.sys)".format(FREEBSD_ARCH),
+        "$(location libexec/rtld-elf/rtld-libc/Makefile.inc)",
+    ],
+    mnemonic = "FreebsdSyscalls",
+    tool = "@llvm//3rd_party/freebsd:syscall_assembly_generator",
+)
+
+freebsd_generate(
+    name = "freebsd_rtld_syscalls",
+    srcs = [
+        "lib/libsys/Makefile.sys",
+        "lib/libsys/{}/Makefile.sys".format(FREEBSD_ARCH),
+        "libexec/rtld-elf/rtld-libc/Makefile.inc",
+        "sys/sys/syscall.mk",
+    ],
+    outs = ["freebsd_rtld_syscalls.S"],
+    args = [
+        "rtld",
+        FREEBSD_ARCH,
+        "$(execpath freebsd_rtld_syscalls.S)",
+        "$(location sys/sys/syscall.mk)",
+        "$(location lib/libsys/Makefile.sys)",
+        "$(location lib/libsys/{}/Makefile.sys)".format(FREEBSD_ARCH),
+        "$(location libexec/rtld-elf/rtld-libc/Makefile.inc)",
+    ],
+    mnemonic = "FreebsdRtldSyscalls",
+    tool = "@llvm//3rd_party/freebsd:syscall_assembly_generator",
+)
+
+freebsd_version_script(
+    name = "libc_version_script",
+    defines = ["DETECT_TZ_CHANGES"],
+    generator = "@llvm//3rd_party/freebsd:version_script_generator",
+    symbol_maps = [
+        "lib/libc/{}/Symbol.map".format(FREEBSD_ARCH),
+        "lib/libc/csu/Symbol.map",
+        "lib/libc/db/Symbol.map",
+        "lib/libc/compat-43/Symbol.map",
+        "lib/libc/gdtoa/Symbol.map",
+        "lib/libc/gen/Symbol.map",
+        "lib/libc/gmon/Symbol.map",
+        "lib/libc/iconv/Symbol.map",
+        "lib/libc/inet/Symbol.map",
+        "lib/libc/locale/Symbol.map",
+        "lib/libc/nameser/Symbol.map",
+        "lib/libc/net/Symbol.map",
+        "lib/libc/nls/Symbol.map",
+        "lib/libc/posix1e/Symbol.map",
+        "lib/libc/regex/Symbol.map",
+        "lib/libc/resolv/Symbol.map",
+        "lib/libc/stdbit/Symbol.map",
+        "lib/libc/stdio/Symbol.map",
+        "lib/libc/stdlib/Symbol.map",
+        "lib/libc/stdlib/malloc/Symbol.map",
+        "lib/libc/stdtime/Symbol.map",
+        "lib/libc/string/Symbol.map",
+        "lib/libc/sys/Symbol.map",
+        "lib/libc/secure/Symbol.map",
+        "lib/libc/rpc/Symbol.map",
+        "lib/libc/uuid/Symbol.map",
+        "lib/libc/xdr/Symbol.map",
+        "lib/libc/yp/Symbol.map",
+        "lib/libc/capability/Symbol.map",
+        "lib/libsys/syscalls.map",
+        "lib/libsys/Symbol.sys.map",
+    ] + (["lib/libsys/amd64/Symbol.sys.map"] if FREEBSD_ARCH == "amd64" else []),
+    target = FREEBSD_TARGET_TRIPLE,
+    version_definition = "lib/libc/Versions.def",
+)
+
+freebsd_version_script(
+    name = "libsys_version_script",
+    generator = "@llvm//3rd_party/freebsd:version_script_generator",
+    symbol_maps = [
+        "lib/libsys/Symbol.map",
+        "lib/libsys/Symbol.thr.map",
+        "lib/libsys/syscalls.map",
+        "lib/libsys/Symbol.sys.map",
+    ] + (["lib/libsys/amd64/Symbol.sys.map"] if FREEBSD_ARCH == "amd64" else []),
+    target = FREEBSD_TARGET_TRIPLE,
+    version_definition = "lib/libc/Versions.def",
+)
+
+freebsd_version_script(
+    name = "rtld_version_script",
+    generator = "@llvm//3rd_party/freebsd:version_script_generator",
+    symbol_maps = ["libexec/rtld-elf/Symbol.map"],
+    target = FREEBSD_TARGET_TRIPLE,
+    version_definition = "lib/libc/Versions.def",
+)
+
+freebsd_version_script(
+    name = "libgcc_s_version_script",
+    generator = "@llvm//3rd_party/freebsd:version_script_generator",
+    symbol_maps = [
+        "lib/libgcc_s/Symbol.map",
+        "lib/libgcc_s/SymbolDefault.map",
+    ],
+    target = FREEBSD_TARGET_TRIPLE,
+    version_definition = "lib/libgcc_s/Versions.def",
+)
+
+write_file(
+    name = "libc_linker_script",
+    out = "libc.so",
+    content = ["GROUP ( /lib/libc.so.7 /usr/lib/libc_nonshared.a /usr/lib/libssp_nonshared.a )"],
+)
+
+cc_library(
+    name = "internal_headers",
+    hdrs = glob(
+        [
+            "include/**/*.h",
+            "machine/**/*.h",
+            "sys/**/*.h",
+            "x86/**/*.h",
+            "lib/libc/**/*.h",
+            "lib/csu/**/*.h",
+            "lib/libsys/**/*.h",
+            "lib/libutil/**/*.h",
+            "lib/msun/**/*.h",
+            "libexec/rtld-elf/**/*.h",
+            "contrib/arm-optimized-routines/**/*.h",
+            "contrib/gdtoa/**/*.h",
+            "contrib/jemalloc/**/*.h",
+            "contrib/libc-pwcache/**/*.h",
+            "contrib/libc-vis/**/*.h",
+            "contrib/tzcode/**/*.h",
+        ],
+        allow_empty = True,
+        exclude = [
+            "contrib/googletest/**",
+            "contrib/libcbor/**",
+        ],
+    ) + FREEBSD_ROOT_HEADERS,
+    includes = freebsd_internal_include_directories(FREEBSD_ARCH),
+    deps = ["generated_headers"],
+)
+
+copy_to_directory(
+    name = "headers",
+    srcs = glob(
+        [
+            "include/**/*.h",
+            "sys/**/*.h",
+        ],
+        exclude = ["sys/rpc/**/*.h"],
+    ) + FREEBSD_ROOT_HEADERS + [
+        "bootparam_prot_h",
+        "crypt_h",
+        "key_prot_h",
+        "klm_prot_h",
+        "lib/msun/{}/fenv.h".format(_MSUN_ARCH),
+        "lib/msun/src/math.h",
+        "mount_h",
+        "nfs_prot_h",
+        "nis_cache_h",
+        "nis_callback_h",
+        "nis_h",
+        "nlm_prot_h",
+        "rex_h",
+        "rnusers_h",
+        "rpc_key_prot_h",
+        "rquota_h",
+        "rstat_h",
+        "rwall_h",
+        "sm_inter_h",
+        "spray_h",
+        "yp_h",
+        "yppasswd_h",
+        "ypupdate_prot_h",
+        "ypxfrd_h",
+    ],
+    replace_prefixes = _PUBLIC_HEADER_PREFIXES,
+)
+
+cc_library(
+    name = "libsys_objects",
+    srcs = FREEBSD_LIBSYS_SRCS[FREEBSD_ARCH] + ["freebsd_syscalls"],
+    copts = FREEBSD_COMMON_COPTS,
+    local_defines = ["LIBSYS"],
+    textual_hdrs = ["lib/libc/string/bcopy.c"],
+    deps = ["internal_headers"],
+)
+
+cc_runtime_stage0_static_library(
+    name = "libsys.static",
+    deps = ["libsys_objects"],
+)
+
+cc_runtime_stage0_shared_library(
+    name = "libsys.shared",
+    additional_linker_inputs = ["libsys_version_script"],
+    shared_lib_name = "libsys.so.7",
+    user_link_flags = [
+        "-nostdlib",
+        "-Wl,-Bsymbolic",
+        "-Wl,--version-script=$(location libsys_version_script)",
+    ],
+    deps = [
+        "libsys_objects",
+        "@llvm-project//compiler-rt:builtins",
+    ],
+)
+
+freebsd_libc_objects(
+    name = "libc_static",
+    srcs = FREEBSD_LIBC_SRCS[FREEBSD_ARCH] + _GENERATED_STRING_ASSEMBLY_SRCS + [
+        "freebsd_syscalls",
+        "generated_c_sources",
+        "sys/kern/subr_acl_nfs4.c",
+    ],
+    arch = FREEBSD_ARCH,
+    common_copts = FREEBSD_COMMON_COPTS,
+    local_defines = FREEBSD_LIBC_DEFINES,
+    pic = False,
+    tzcode_srcs = FREEBSD_LIBC_TZCODE_SRCS,
+)
+
+freebsd_libc_objects(
+    name = "libc_shared",
+    srcs = FREEBSD_LIBC_SRCS[FREEBSD_ARCH] + _GENERATED_STRING_ASSEMBLY_SRCS + [
+        "freebsd_syscalls",
+        "generated_c_sources",
+        "sys/kern/subr_acl_nfs4.c",
+    ],
+    arch = FREEBSD_ARCH,
+    common_copts = FREEBSD_COMMON_COPTS,
+    local_defines = FREEBSD_LIBC_DEFINES,
+    pic = True,
+    tzcode_srcs = FREEBSD_LIBC_TZCODE_SRCS,
+)
+
+cc_runtime_stage0_static_library(
+    name = "libc.static",
+    deps = [
+        "libc_static_objects",
+        "libc_static_tzcode_objects",
+        "libsys_objects",
+    ],
+)
+
+cc_library(
+    name = "libc_nonshared_objects",
+    srcs = FREEBSD_LIBC_NONSHARED_SRCS,
+    copts = FREEBSD_COMMON_COPTS + ["-fvisibility=hidden"],
+    local_defines = ["PIC"],
+    deps = ["internal_headers"],
+)
+
+cc_runtime_stage0_static_library(
+    name = "libc_nonshared.static",
+    deps = ["libc_nonshared_objects"],
+)
+
+cc_library(
+    name = "libssp_nonshared_objects",
+    srcs = ["lib/libssp_nonshared/libssp_nonshared.c"],
+    copts = FREEBSD_COMMON_COPTS,
+    deps = ["internal_headers"],
+)
+
+cc_runtime_stage0_static_library(
+    name = "libssp_nonshared.static",
+    deps = ["libssp_nonshared_objects"],
+)
+
+cc_library(
+    name = "libm_objects",
+    srcs = glob(
+        [
+            "lib/msun/{}/*.S".format(FREEBSD_ARCH),
+            "lib/msun/{}/*.c".format(FREEBSD_ARCH),
+            "lib/msun/bsdsrc/*.c",
+            "lib/msun/{}/*.c".format(_LONG_DOUBLE_DIRECTORY),
+            "lib/msun/src/*.c",
+        ],
+        allow_empty = True,
+        exclude = [
+            "lib/msun/bsdsrc/b_exp.c",
+            "lib/msun/bsdsrc/b_log.c",
+            "lib/msun/ld80/b_expl.c",
+            "lib/msun/ld80/b_logl.c",
+            "lib/msun/src/s_fabs.c",
+            "lib/msun/src/s_modf.c",
+        ],
+    ),
+    copts = FREEBSD_COMMON_COPTS + ["-fno-math-errno"],
+    local_defines = [
+        "USE_BUILTIN_FMA",
+        "USE_BUILTIN_FMAF",
+        "USE_BUILTIN_FMAX",
+        "USE_BUILTIN_FMAXF",
+        "USE_BUILTIN_FMIN",
+        "USE_BUILTIN_FMINF",
+        "USE_BUILTIN_SQRT",
+        "USE_BUILTIN_SQRTF",
+    ],
+    textual_hdrs = glob(["lib/msun/**/*.c"]) + ([
+        "lib/msun/amd64/s_lrint.S",
+        "lib/msun/amd64/s_lrintf.S",
+    ] if FREEBSD_ARCH == "amd64" else []) + [
+        "contrib/arm-optimized-routines/math/tgamma128.c",
+    ],
+    deps = ["internal_headers"],
+)
+
+cc_runtime_stage0_static_library(
+    name = "libm.static",
+    deps = ["libm_objects"],
+)
+
+cc_runtime_stage0_shared_library(
+    name = "libgcc_s.shared",
+    additional_linker_inputs = ["libgcc_s_version_script"],
+    shared_lib_name = "libgcc_s.so.1",
+    user_link_flags = [
+        "-nostdlib",
+        "-Wl,-Bsymbolic",
+        "-Wl,--version-script=$(location libgcc_s_version_script)",
+        "-Qunused-arguments",
+    ],
+    deps = [
+        "@llvm-project//compiler-rt:builtins",
+        "@llvm-project//libunwind:libunwind",
+    ],
+)
+
+cc_runtime_stage0_shared_library(
+    name = "libc.shared",
+    additional_linker_inputs = [
+        "libsys.shared",
+        "libc_version_script",
+    ],
+    shared_lib_name = "libc.so.7",
+    user_link_flags = [
+        "-nostdlib",
+        "-Wl,--auxiliary,libsys.so.7",
+        "-Wl,--version-script=$(location libc_version_script)",
+        "$(location libsys.shared)",
+    ],
+    deps = [
+        "libc_shared_objects",
+        "libc_shared_tzcode_objects",
+        "@llvm-project//compiler-rt:builtins",
+    ],
+)
+
+cc_library(
+    name = "rtld_headers",
+    hdrs = glob(["libexec/rtld-elf/rtld-libc/*.h"]),
+    includes = ["libexec/rtld-elf/rtld-libc"],
+    deps = ["internal_headers"],
+)
+
+cc_library(
+    name = "rtld_c_objects",
+    srcs = FREEBSD_RTLD_C_SRCS[FREEBSD_ARCH],
+    copts = FREEBSD_COMMON_COPTS + ["-ffreestanding"] + ([
+        "-msoft-float",
+        "-fvisibility=hidden",
+    ] if FREEBSD_ARCH == "amd64" else []),
+    local_defines = [
+        "IN_RTLD",
+        "PIC",
+    ],
+    textual_hdrs = [
+        "lib/libc/string/bcopy.c",
+        "lib/libc/string/memset.c",
+    ],
+    deps = ["rtld_headers"],
+)
+
+cc_library(
+    name = "rtld_libc_c_objects",
+    srcs = FREEBSD_RTLD_LIBC_SRCS,
+    copts = FREEBSD_COMMON_COPTS,
+    local_defines = ["PIC"],
+    deps = ["internal_headers"],
+)
+
+cc_library(
+    name = "rtld_asm_objects",
+    srcs = _RTLD_ASM_SRCS,
+    copts = ["-fPIC"],
+    local_defines = [
+        "IN_RTLD",
+        "LOCORE",
+        "PIC",
+    ],
+    deps = ["rtld_headers"],
+)
+
+cc_library(
+    name = "rtld_support_asm_objects",
+    srcs = _RTLD_SUPPORT_ASM_SRCS,
+    copts = ["-fPIC"],
+    local_defines = [
+        "LOCORE",
+        "PIC",
+    ],
+    deps = ["internal_headers"],
+)
+
+# rtld is linked with -shared but is not a shared library: FreeBSD's
+# init_rtld() relies on ld-elf.so.1 not having DT_SONAME.
+cc_runtime_stage0_binary(
+    name = "rtld",
+    additional_linker_inputs = [
+        "rtld_version_script",
+        "@llvm//runtimes/compiler-rt:clang_rt.builtins.static",
+    ],
+    linkopts = [
+        "-shared",
+        "-nostdlib",
+        "-Wl,-Bsymbolic",
+        "-Wl,-e,.rtld_start",
+        "-Wl,--version-script=$(location rtld_version_script)",
+        "-Wl,-z,defs",
+        "$(location @llvm//runtimes/compiler-rt:clang_rt.builtins.static)",
+    ],
+    deps = [
+        "rtld_asm_objects",
+        "rtld_c_objects",
+        "rtld_libc_c_objects",
+        "rtld_support_asm_objects",
+    ],
+)
+
+cc_library(
+    name = "crt1_asm_sources",
+    srcs = [
+        "lib/csu/{}/crt1_s.S".format(FREEBSD_ARCH),
+        "lib/csu/common/crtbrand.S",
+        "lib/csu/common/feature_note.S",
+        "lib/csu/common/ignore_init_note.S",
+    ],
+    copts = ["-fno-omit-frame-pointer"],
+    local_defines = ["LOCORE"],
+    deps = ["internal_headers"],
+)
+
+freebsd_crt1_object(
+    name = "crt1",
+    arch = FREEBSD_ARCH,
+    common_copts = FREEBSD_COMMON_COPTS,
+    pic = False,
+)
+
+freebsd_crt1_object(
+    name = "Scrt1",
+    arch = FREEBSD_ARCH,
+    common_copts = FREEBSD_COMMON_COPTS,
+    pic = True,
+)
+
+freebsd_crt_object(
+    name = "crtbegin",
+    common_copts = FREEBSD_COMMON_COPTS,
+    source = "lib/csu/common/crtbegin.c",
+)
+
+freebsd_crt_object(
+    name = "crtbeginS",
+    common_copts = FREEBSD_COMMON_COPTS,
+    shared = True,
+    source = "lib/csu/common/crtbegin.c",
+)
+
+freebsd_crt_object(
+    name = "crtend",
+    common_copts = FREEBSD_COMMON_COPTS,
+    source = "lib/csu/common/crtend.c",
+)
+
+freebsd_crt_object(
+    name = "crtendS",
+    common_copts = FREEBSD_COMMON_COPTS,
+    shared = True,
+    source = "lib/csu/common/crtend.c",
+)
+
+freebsd_crt_object(
+    name = "crti",
+    common_copts = FREEBSD_COMMON_COPTS,
+    source = "lib/csu/{}/crti.S".format(FREEBSD_ARCH),
+)
+
+freebsd_crt_object(
+    name = "crtn",
+    common_copts = FREEBSD_COMMON_COPTS,
+    source = "lib/csu/{}/crtn.S".format(FREEBSD_ARCH),
+)
+
+freebsd_runtime_copy(
+    name = "runtime_libc_shared",
+    src = "libc.shared",
+    out = "lib/libc.so.7",
+)
+
+freebsd_runtime_copy(
+    name = "runtime_libc_linker_script",
+    src = "libc_linker_script",
+    out = "usr/lib/libc.so",
+)
+
+freebsd_runtime_copy(
+    name = "runtime_libc_nonshared",
+    src = "libc_nonshared.static",
+    out = "usr/lib/libc_nonshared.a",
+)
+
+freebsd_runtime_copy(
+    name = "runtime_libc_static",
+    src = "libc.static",
+    out = "usr/lib/libc.a",
+)
+
+freebsd_runtime_copy(
+    name = "runtime_libm_static",
+    src = "libm.static",
+    out = "usr/lib/libm.a",
+)
+
+freebsd_runtime_copy(
+    name = "runtime_libgcc_s_shared",
+    src = "libgcc_s.shared",
+    out = "lib/libgcc_s.so.1",
+)
+
+freebsd_runtime_copy(
+    name = "runtime_libgcc_s_linker_name",
+    src = "libgcc_s.shared",
+    out = "usr/lib/libgcc_s.so",
+)
+
+freebsd_runtime_copy(
+    name = "runtime_libsys_shared",
+    src = "libsys.shared",
+    out = "lib/libsys.so.7",
+)
+
+freebsd_runtime_copy(
+    name = "runtime_libsys_linker_name",
+    src = "libsys.shared",
+    out = "usr/lib/libsys.so",
+)
+
+freebsd_runtime_copy(
+    name = "runtime_libsys_static",
+    src = "libsys.static",
+    out = "usr/lib/libsys.a",
+)
+
+freebsd_runtime_copy(
+    name = "runtime_libssp_nonshared",
+    src = "libssp_nonshared.static",
+    out = "usr/lib/libssp_nonshared.a",
+)
+
+freebsd_runtime_copy(
+    name = "runtime_rtld",
+    src = "rtld",
+    out = "libexec/ld-elf.so.1",
+)
+
+freebsd_runtime_copy(
+    name = "runtime_libcompiler_rt",
+    src = "@llvm-project//compiler-rt:clang_rt.builtins.static",
+    out = "usr/lib/libcompiler_rt.a",
+)
+
+freebsd_runtime_copy(
+    name = "runtime_libgcc",
+    src = "@llvm-project//compiler-rt:clang_rt.builtins.static",
+    out = "usr/lib/libgcc.a",
+)
+
+freebsd_runtime_copy(
+    name = "runtime_Scrt1",
+    src = "Scrt1.object",
+    out = "usr/lib/Scrt1.o",
+)
+
+freebsd_runtime_copy(
+    name = "runtime_crt1",
+    src = "crt1.object",
+    out = "usr/lib/crt1.o",
+)
+
+freebsd_runtime_copy(
+    name = "runtime_crtbegin",
+    src = "crtbegin.object",
+    out = "usr/lib/crtbegin.o",
+)
+
+freebsd_runtime_copy(
+    name = "runtime_crtbeginS",
+    src = "crtbeginS.object",
+    out = "usr/lib/crtbeginS.o",
+)
+
+freebsd_runtime_copy(
+    name = "runtime_crtend",
+    src = "crtend.object",
+    out = "usr/lib/crtend.o",
+)
+
+freebsd_runtime_copy(
+    name = "runtime_crtendS",
+    src = "crtendS.object",
+    out = "usr/lib/crtendS.o",
+)
+
+freebsd_runtime_copy(
+    name = "runtime_crti",
+    src = "crti.object",
+    out = "usr/lib/crti.o",
+)
+
+freebsd_runtime_copy(
+    name = "runtime_crtn",
+    src = "crtn.object",
+    out = "usr/lib/crtn.o",
+)
+
+copy_to_directory(
+    name = "sysroot",
+    srcs = [
+        "runtime_Scrt1",
+        "runtime_crt1",
+        "runtime_crtbegin",
+        "runtime_crtbeginS",
+        "runtime_crtend",
+        "runtime_crtendS",
+        "runtime_crti",
+        "runtime_crtn",
+        "runtime_libc_linker_script",
+        "runtime_libc_nonshared",
+        "runtime_libc_shared",
+        "runtime_libc_static",
+        "runtime_libcompiler_rt",
+        "runtime_libgcc",
+        "runtime_libgcc_s_linker_name",
+        "runtime_libgcc_s_shared",
+        "runtime_libm_static",
+        "runtime_libssp_nonshared",
+        "runtime_libsys_linker_name",
+        "runtime_libsys_shared",
+        "runtime_libsys_static",
+        "runtime_rtld",
+    ],
+    root_paths = ["runtime"],
+)

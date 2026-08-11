@@ -1,0 +1,5 @@
+--- contrib/flex/src/config.h
++++ contrib/flex/src/config.h
+@@ -131 +131 @@
+-#define HAVE_REALLOCARRAY 1
++/* #undef HAVE_REALLOCARRAY */

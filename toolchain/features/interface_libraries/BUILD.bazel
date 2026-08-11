@@ -33,6 +33,7 @@ cc_args(
         "LLVM_GENERATE_INTERFACE_LIBRARY": "{generate_interface_library}",
     } | select({
         "@platforms//os:linux": {"LLVM_INTERFACE_LIBRARY_FORMAT": "elf"},
+        "@platforms//os:freebsd": {"LLVM_INTERFACE_LIBRARY_FORMAT": "elf"},
         "@platforms//os:macos": {"LLVM_INTERFACE_LIBRARY_FORMAT": "tbd"},
         "//conditions:default": {},
     }),
