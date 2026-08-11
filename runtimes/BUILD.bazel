@@ -357,6 +357,13 @@ copy_to_resource_directory(
             "//runtimes/compiler-rt:clang_rt.profile.static": "libclang_rt.profile_osx",
         },
         "//conditions:default": {},
+    }) | select({
+        "//config:fuzzer_enabled": {
+            "//runtimes/compiler-rt:clang_rt.fuzzer.static": "libclang_rt.fuzzer_osx",
+            "//runtimes/compiler-rt:clang_rt.fuzzer_no_main.static": "libclang_rt.fuzzer_no_main_osx",
+            "//runtimes/compiler-rt:clang_rt.fuzzer_interceptors.static": "libclang_rt.fuzzer_interceptors_osx",
+        },
+        "//conditions:default": {},
     }),
     target_compatible_with = ["@platforms//os:macos"],
     target_triple = "darwin",
