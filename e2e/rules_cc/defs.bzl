@@ -189,7 +189,8 @@ xray_cc_binary, _xray_cc_binary_internal = with_cfg(cc_binary).set(
     True,
 ).build()
 
-fuzzer_cc_binary, _fuzzer_cc_binary_internal = with_cfg(cc_binary).set(
+# buildifier: disable=unused-variable
+_fuzzer_cc_binary, _fuzzer_cc_binary_internal = with_cfg(cc_binary).set(
     Label("@llvm//config:fuzzer"),
     True,
 ).set(
@@ -203,7 +204,13 @@ fuzzer_cc_binary, _fuzzer_cc_binary_internal = with_cfg(cc_binary).set(
     True,
 ).build()
 
-fuzzer_asan_cc_binary, _fuzzer_asan_cc_binary_internal = with_cfg(cc_binary).set(
+fuzzer_cc_binary = _with_macos_sanitizer_runtime(
+    _fuzzer_cc_binary,
+    "@llvm//runtimes/compiler-rt:clang_rt.ubsan_standalone.shared",
+)
+
+# buildifier: disable=unused-variable
+_fuzzer_asan_cc_binary, _fuzzer_asan_cc_binary_internal = with_cfg(cc_binary).set(
     Label("@llvm//config:fuzzer"),
     True,
 ).set(
@@ -216,6 +223,11 @@ fuzzer_asan_cc_binary, _fuzzer_asan_cc_binary_internal = with_cfg(cc_binary).set
     Label("@llvm//config:host_asan"),
     True,
 ).build()
+
+fuzzer_asan_cc_binary = _with_macos_sanitizer_runtime(
+    _fuzzer_asan_cc_binary,
+    "@llvm//runtimes/compiler-rt:clang_rt.asan.shared",
+)
 
 profile_cc_binary, _profile_cc_binary_internal = with_cfg(cc_binary).set(
     Label("@llvm//config:profile"),

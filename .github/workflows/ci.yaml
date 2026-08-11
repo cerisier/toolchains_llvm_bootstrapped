@@ -160,8 +160,9 @@ jobs:
             --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
             //:main_default
 
-      # ASan and UBSan are fully supported on macOS: run their e2e tests (they
-      # execute locally — no remote executor is configured for macOS).
+      # ASan, UBSan and libFuzzer are fully supported on macOS: run their e2e
+      # tests (they execute locally — no remote executor is configured for
+      # macOS).
       # TSan and LSan build, link and load on macOS, but their runtime support
       # is a follow-up, so we only validate that their instrumented binaries
       # build (the runtime e2e tests stay Linux-only).
@@ -176,7 +177,10 @@ jobs:
             test \
             --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
             //:asan_output_test \
-            //:ubsan_output_test
+            //:ubsan_output_test \
+            //:fuzzer_output_test \
+            //:fuzzer_asan_output_test \
+            //:fuzzer_ubsan_output_test
           bazel \
             --bazelrc=.bazelrc \
             build \
