@@ -324,13 +324,20 @@ cc_args_list(
 )
 
 cc_args_list(
+    name = "freestanding_toolchain_args",
+    args = [
+        "//toolchain/args:cxxstdlib_headers_include_search_paths",
+    ],
+)
+
+cc_args_list(
     name = "platform_specific_args",
     args = select({
         # Platform specific flags.
         "@platforms//os:macos": [":macos_toolchain_args"],
         "@platforms//os:linux": [":linux_toolchain_args"],
         "@platforms//os:windows": [":windows_toolchain_args"],
-        "@platforms//os:none": [],
+        "@platforms//os:none": [":freestanding_toolchain_args"],
         "//conditions:default": [],
     }),
 )

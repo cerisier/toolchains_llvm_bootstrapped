@@ -651,6 +651,11 @@ cc_library(
             "COMPILER_RT_HAS_FLOAT16",
         ],
         "//conditions:default": [],
+    }) + selects.with_or({
+        (
+            "@llvm//platforms/config:none_aarch64",
+        ): ["ENABLE_BAREMETAL_AARCH64_FMV"],
+        "//conditions:default": [],
     }),
     textual_hdrs = [
         "lib/builtins/fp_add_impl.inc",
@@ -699,6 +704,9 @@ cc_library(
         ],
         "@llvm//platforms/config:windows_aarch64": [
             "lib/builtins/cpu_model/aarch64/fmv/windows.inc",
+        ],
+        "@llvm//platforms/config:none_aarch64": [
+            "lib/builtins/cpu_model/aarch64/fmv/baremetal.inc",
         ],
         "//conditions:default": [],
     }),
