@@ -1,0 +1,55 @@
+package(default_visibility = ["//visibility:public"])
+
+alias(
+    name = "headers",
+    actual = select({
+        "@platforms//cpu:aarch64": "@freebsd_src_aarch64//:headers",
+        "@platforms//cpu:x86_64": "@freebsd_src_x86_64//:headers",
+    }),
+    target_compatible_with = ["@platforms//os:freebsd"],
+)
+
+alias(
+    name = "headers_for_runtime",
+    actual = select({
+        "@platforms//cpu:aarch64": "@freebsd_src_aarch64//:internal_headers",
+        "@platforms//cpu:x86_64": "@freebsd_src_x86_64//:internal_headers",
+    }),
+    target_compatible_with = ["@platforms//os:freebsd"],
+)
+
+alias(
+    name = "sysroot",
+    actual = select({
+        "@platforms//cpu:aarch64": "@freebsd_src_aarch64//:sysroot",
+        "@platforms//cpu:x86_64": "@freebsd_src_x86_64//:sysroot",
+    }),
+    target_compatible_with = ["@platforms//os:freebsd"],
+)
+
+alias(
+    name = "dynamic_loader",
+    actual = select({
+        "@platforms//cpu:aarch64": "@freebsd_src_aarch64//:rtld",
+        "@platforms//cpu:x86_64": "@freebsd_src_x86_64//:rtld",
+    }),
+    target_compatible_with = ["@platforms//os:freebsd"],
+)
+
+alias(
+    name = "libc",
+    actual = select({
+        "@platforms//cpu:aarch64": "@freebsd_src_aarch64//:libc.shared",
+        "@platforms//cpu:x86_64": "@freebsd_src_x86_64//:libc.shared",
+    }),
+    target_compatible_with = ["@platforms//os:freebsd"],
+)
+
+alias(
+    name = "libsys",
+    actual = select({
+        "@platforms//cpu:aarch64": "@freebsd_src_aarch64//:libsys.shared",
+        "@platforms//cpu:x86_64": "@freebsd_src_x86_64//:libsys.shared",
+    }),
+    target_compatible_with = ["@platforms//os:freebsd"],
+)

@@ -18,6 +18,9 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = []):
             "@platforms//os:linux": [
                 "@llvm//toolchain/features/interface_libraries:feature",
             ],
+            "@platforms//os:freebsd": [
+                "@llvm//toolchain/features/interface_libraries:feature",
+            ],
             "@platforms//os:macos": [
                 "@llvm//toolchain/features/interface_libraries:feature",
             ],
@@ -61,6 +64,10 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = []):
                 "@llvm//toolchain/features/runtime_library_search_directories:feature",
                 "@rules_cc//cc/toolchains/args/def_file:def_file",
                 "@llvm//toolchain/features:targets_windows",
+            ],
+            "@platforms//os:freebsd": [
+                "@llvm//toolchain/features/interface_libraries:feature",
+                "@llvm//toolchain/features:static_link_cpp_runtimes",
             ],
             "@platforms//os:none": [],
         }) + [

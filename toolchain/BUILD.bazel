@@ -101,6 +101,17 @@ config_setting(
 )
 
 config_setting(
+    name = "freebsd_complete",
+    constraint_values = [
+        "@platforms//os:freebsd",
+    ],
+    flag_values = {
+        ":runtime_stage": "complete",
+    },
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
     name = "macos_complete",
     constraint_values = [
         "@platforms//os:macos",
@@ -145,6 +156,7 @@ cc_args_list(
             "//toolchain/args/linux:non_pie_executable_link_flags",
         ],
         "@platforms//os:windows": [],
+        "@platforms//os:freebsd": [],
         "@platforms//os:none": [],
     }),
 )
@@ -159,15 +171,17 @@ cc_args_list(
         "@platforms//os:windows": [
             "//toolchain/args:crt_search_directory",
         ],
+        "@platforms//os:freebsd": [],
         "@platforms//os:none": [],
     }),
 )
 
 cc_args_list(
     name = "resource_dir",
-    args = [
-        "//toolchain/args:resource_dir",
-    ],
+    args = select({
+        "@platforms//os:freebsd": [],
+        "//conditions:default": ["//toolchain/args:resource_dir"],
+    }),
 )
 
 cc_args_list(
@@ -226,6 +240,9 @@ cc_args_list(
         "@platforms//os:macos": [
             "//toolchain/args/macos:macos_sdk_sysroot",
         ],
+        "freebsd_complete": [
+            "//toolchain/args/freebsd:sysroot",
+        ],
         "//conditions:default": [
             "//toolchain/args:empty_sysroot_flags",
         ],
@@ -252,20 +269,20 @@ cc_args_list(
     }),
 )
 
-# This makes the clang driver use compiler-rt compliant filenames
-# and paths when resolving compiler runtime libraries from the resource-dir.
 cc_args_list(
     name = "rtlib",
-    args = [
-        "//toolchain/args:rtlib_compiler_rt",
-    ],
+    args = select({
+        "@platforms//os:freebsd": [],
+        "//conditions:default": ["//toolchain/args:rtlib_compiler_rt"],
+    }),
 )
 
 cc_args_list(
     name = "unwindlib",
-    args = [
-        "//toolchain/args:unwindlib_none",
-    ],
+    args = select({
+        "@platforms//os:freebsd": [],
+        "//conditions:default": ["//toolchain/args:unwindlib_none"],
+    }),
 )
 
 # TODO(cerisier): extract those into proper semantic args list.
@@ -330,6 +347,11 @@ cc_args_list(
         "@platforms//os:macos": [":macos_toolchain_args"],
         "@platforms//os:linux": [":linux_toolchain_args"],
         "@platforms//os:windows": [":windows_toolchain_args"],
+        "freebsd_complete": [
+            "//toolchain/args:cxxstdlib_headers_include_search_paths",
+            "//toolchain/args/freebsd:headers_include_search_path",
+        ],
+        "@platforms//os:freebsd": [],
         "@platforms//os:none": [],
         "//conditions:default": [],
     }),

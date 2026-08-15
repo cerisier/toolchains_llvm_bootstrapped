@@ -84,6 +84,30 @@ jobs:
         shell: bash
         run: ./coverage_lcov_test.sh --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7
 
+  freebsd:
+    runs-on: ubuntu-latest
+    name: Build FreeBSD targets
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Build FreeBSD targets
+        env:
+          USE_BAZEL_VERSION: 8.x
+        working-directory: e2e/cross_compilation
+        shell: bash
+        run: |
+          bazel \
+            --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc \
+            --bazelrc=.bazelrc \
+            build \
+            --jobs=100 \
+            --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
+            :hello_freebsd_aarch64 \
+            :main_freebsd_aarch64 \
+            :hello_freebsd_x86_64 \
+            :main_freebsd_x86_64
+
   test_windows:
     strategy:
       fail-fast: false

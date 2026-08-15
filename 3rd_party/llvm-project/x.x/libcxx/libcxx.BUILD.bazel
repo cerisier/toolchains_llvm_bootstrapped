@@ -324,6 +324,9 @@ cc_library(
     ] + select({
         "@platforms//os:macos": [],
         "@platforms//os:windows": [],
+        "@platforms//os:freebsd": [
+            "@llvm//runtimes/freebsd:headers_for_runtime",
+        ],
         "@platforms//os:linux": [
             # TODO(cerisier): Provide only a subset of linux UAPI headers for musl.
             # https://github.com/hermeticbuild/hermetic-llvm/issues/146
@@ -344,6 +347,7 @@ cc_library(
         "@platforms//os:windows": [
             "@mingw//:mingw_headers",
         ],
+        "@platforms//os:freebsd": [],
         "@platforms//os:macos": [],
     }),
     includes = [

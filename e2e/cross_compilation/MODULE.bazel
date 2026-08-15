@@ -4,10 +4,27 @@ bazel_dep(name = "bazel_skylib", version = "1.8.2")
 bazel_dep(name = "platforms", version = "1.0.0")
 bazel_dep(name = "rules_shell", version = "0.6.1")
 bazel_dep(name = "rules_qemu", version = "0.1.1")
+bazel_dep(name = "rules_python", version = "1.8.0")
 bazel_dep(name = "llvm", version = "")
 local_path_override(
     module_name = "llvm",
     path = "../../",
+)
+
+http_file = use_repo_rule(
+    "@bazel_tools//tools/build_defs/repo:http.bzl",
+    "http_file",
+)
+
+# Test-only guest image. The test chroots into the rules_cc-built runtime from
+# @freebsd_src_aarch64.
+http_file(
+    name = "freebsd_15_1_aarch64_basic_ci",
+    downloaded_file_path = "FreeBSD-15.1-RELEASE-arm64-aarch64-BASIC-CI-ufs.raw.xz",
+    sha256 = "69f5009497ea4e550910f4f71d13fd56c468e6a5df492c8117df7116c7118820",
+    urls = [
+        "https://download.freebsd.org/releases/CI-IMAGES/15.1-RELEASE/aarch64/Latest/FreeBSD-15.1-RELEASE-arm64-aarch64-BASIC-CI-ufs.raw.xz",
+    ],
 )
 
 qemu = use_extension("@rules_qemu//qemu/extension:qemu.bzl", "qemu")

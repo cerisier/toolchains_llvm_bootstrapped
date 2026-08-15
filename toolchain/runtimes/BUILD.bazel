@@ -68,6 +68,7 @@ cc_args_list(
         "@platforms//os:windows": [
             ":windows_hosted_c_toolchain_args",
         ],
+        "@platforms//os:freebsd": [],
         "@platforms//os:none": [],
     }),
     visibility = ["//toolchain:__subpackages__"],
@@ -81,6 +82,7 @@ cc_args_list(
         ],
         "@platforms//os:linux": [],
         "@platforms//os:windows": [],
+        "@platforms//os:freebsd": [],
         "@platforms//os:none": [],
     }),
     visibility = ["//toolchain:__subpackages__"],
