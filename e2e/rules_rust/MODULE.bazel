@@ -12,20 +12,12 @@ bazel_dep(name = "bazel_lib", version = "3.0.0")
 ###############################################################################
 # Bazel Dependencies # https://registry.bazel.build/
 ###############################################################################
-bazel_dep(name = "rules_rust", version = "0.68.1")
+bazel_dep(name = "rules_rust", version = "0.73.0")
 single_version_override(
     module_name = "rules_rust",
     patch_strip = 1,
-    patches = [
-        # https://github.com/bazelbuild/rules_rust/pull/3784
-        "//:rules_rust_artifact_names.patch",
-        # https://github.com/bazelbuild/rules_rust/pull/3785
-        "//:rules_rust_windows1.patch",
-        # Part of https://github.com/bazelbuild/rules_rust/pull/3794
-        "//:rules_rust_windows2.patch",
-        # Part of https://github.com/bazelbuild/rules_rust/pull/3794
-        "//:rules_rust_default_libs.patch",
-    ],
+    patches = ["//:rules_rust_gnullvm_staticlib.patch"],
+    version = "0.73.0",
 )
 
 bazel_dep(name = "platforms", version = "1.0.0")
@@ -71,7 +63,7 @@ rust.toolchain(
         "x86_64-pc-windows-gnullvm",
         "riscv64gc-unknown-linux-gnu",
     ],
-    versions = ["1.81.0"],
+    versions = ["1.97.1"],
 )
 use_repo(rust, "rust_toolchains")
 
