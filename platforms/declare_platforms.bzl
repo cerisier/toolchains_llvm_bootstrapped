@@ -1,5 +1,6 @@
 load("//constraints/cxxstdlib:cxxstdlib_versions.bzl", "DEFAULT_CXXSTDLIB")
 load("//constraints/libc:libc_versions.bzl", "LIBCS", "default_libc")
+load("//constraints/windows/abi:abis.bzl", "WINDOWS_GENERIC_PLATFORM_ABI")
 load("//platforms:common.bzl", "ARCH_ALIASES", "LIBC_SUPPORTED_TARGETS", "SUPPORTED_TARGETS")
 
 def declare_platforms():
@@ -22,6 +23,13 @@ def declare_platforms():
             # Users can still create their own platforms without a libc
             # constraint if they want to.
             constraints.append("//constraints/libc:{}".format(default_libc(target_os, target_cpu)))
+
+        if target_os == "windows":
+            # Repository-owned Windows platforms state their existing GNU ABI
+            # contract explicitly. The constraint default remains
+            # unconstrained for downstream platforms that do not know about
+            # this toolchain-specific dimension.
+            constraints.append("//constraints/windows/abi:" + WINDOWS_GENERIC_PLATFORM_ABI)
 
         native.platform(
             name = "{}_{}".format(target_os, target_cpu),

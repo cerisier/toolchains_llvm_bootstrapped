@@ -1,20 +1,22 @@
+load("@bazel_lib//:bzl_library.bzl", "bzl_library")
+load(":abis.bzl", "WINDOWS_ABIS", "WINDOWS_DEFAULT_ABI")
+
 package(default_visibility = ["//visibility:public"])
 
 constraint_setting(
     name = "abi",
+    default_constraint_value = WINDOWS_DEFAULT_ABI,
 )
 
-constraint_value(
-    name = "gnu",
-    constraint_setting = ":abi",
-)
+[
+    constraint_value(
+        name = abi,
+        constraint_setting = ":abi",
+    )
+    for abi in WINDOWS_ABIS
+]
 
-constraint_value(
-    name = "gnullvm",
-    constraint_setting = ":abi",
-)
-
-constraint_value(
-    name = "msvc",
-    constraint_setting = ":abi",
+bzl_library(
+    name = "abis",
+    srcs = ["abis.bzl"],
 )

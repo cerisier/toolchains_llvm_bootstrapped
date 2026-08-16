@@ -427,6 +427,10 @@ def declare_toolchains(*, execs = None, targets = SUPPORTED_TARGETS):
             )
 
             for (target_os, target_cpu) in targets:
+                target_settings = [target_setting]
+                if target_os == "windows":
+                    target_settings.append("@llvm//platforms/config:windows_{}_mingw_compatible".format(target_cpu))
+
                 native.toolchain(
                     name = "%s_%s_%s_to_%s_%s" % (stage_name, exec_os, exec_cpu, target_os, target_cpu),
                     exec_compatible_with = [
@@ -437,9 +441,7 @@ def declare_toolchains(*, execs = None, targets = SUPPORTED_TARGETS):
                         "@platforms//cpu:" + target_cpu,
                         "@platforms//os:" + target_os,
                     ],
-                    target_settings = [
-                        target_setting,
-                    ],
+                    target_settings = target_settings,
                     toolchain = cc_toolchain_name,
                     toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
                     visibility = ["//visibility:public"],

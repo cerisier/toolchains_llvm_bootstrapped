@@ -31,6 +31,8 @@ SUPPORTED_EXECS = [
     ("windows", "aarch64"),
 ]
 
+WINDOWS_TARGETS = [target for target in SUPPORTED_TARGETS if target[0] == "windows"]
+
 LIBC_SUPPORTED_TARGETS = [
     ("linux", "x86_64"),
     ("linux", "aarch64"),

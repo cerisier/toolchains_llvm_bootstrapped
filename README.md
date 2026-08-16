@@ -223,7 +223,15 @@ constraint to the target platform.
 
 Windows is currently supported via MinGW-w64. UCRT is used by default; MSVCRT
 can be selected by adding the `@llvm//constraints/windows/crt:msvcrt` constraint
-to the target platform. Native MSVC targets are not yet supported.
+to the target platform. This CRT constraint selects a MinGW-w64 runtime flavor;
+it does not select the MSVC target ABI.
+
+Repository-provided Windows platforms use the
+`@llvm//constraints/windows/abi:gnu` ABI. User-defined Windows platforms that
+omit this toolchain-specific constraint retain the same MinGW behavior. The
+`gnullvm` value is accepted for Rust compatibility and uses Clang's GNU Windows
+target environment. Native `@llvm//constraints/windows/abi:msvc` targets are not
+yet supported and intentionally have no compatible C/C++ toolchain.
 
 ### macOS notes
 
