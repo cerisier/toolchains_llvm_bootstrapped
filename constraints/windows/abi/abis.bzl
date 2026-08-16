@@ -21,6 +21,11 @@ WINDOWS_TARGET_TRIPLES = {
     ("aarch64", "msvc"): "aarch64-pc-windows-msvc",
 }
 
+WINDOWS_TARGET_TRIPLES_BY_CONFIG = {
+    "@llvm//platforms/config:windows_{}_{}".format(target_cpu, target_abi): target_triple
+    for (target_cpu, target_abi), target_triple in WINDOWS_TARGET_TRIPLES.items()
+}
+
 # The existing Windows C/C++ toolchain is configured with MinGW headers,
 # runtimes, GNU driver syntax, and GNU-mode LLD. Rust's gnullvm target uses the
 # same LLVM *-windows-gnu target environment, so it is compatible too.
