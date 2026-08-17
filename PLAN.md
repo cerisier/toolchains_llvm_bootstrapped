@@ -32,13 +32,14 @@ The Bazel skill shaped the plan around target/exec separation, explicit constrai
 - Link actions invoke `clang++`, with `-fuse-ld=lld`.
 - Clang internally selects LLD’s COFF driver. `lld-link` is a declared tool alias/input, not a user-facing action or argument dialect.
 - MSVC ABI does not imply MSVC STL. The target must explicitly select `//constraints/cxxstdlib:msvc`.
+- The `cxxstdlib:msvc` value is introduced early only to keep the platform semantically honest and prevent default-libc++ routing. MSVC STL headers, libraries, C++ actions, and C++ capability claims are implemented in their own final core step after the ordinary-Clang C/runtime toolchain works.
 - Windows SDK, platform import libraries, UCRT, VCRuntime, MSVC STL, compiler-rt, and redistributable DLLs remain separately modeled semantic components.
 - Both retail static and retail dynamic Microsoft runtime linkage supported through the canonical Bazel C++ feature contract:
   - `dynamic_link_msvcrt` is the default and maps to `-fms-runtime-lib=dll` (`/MD` semantics).
   - `static_link_msvcrt` is the opt-in and maps to `-fms-runtime-lib=static` (`/MT` semantics).
 - Runtime linkage is selected for the complete target configuration with `--features`, not by a platform constraint, `linkstatic`, or a per-rule `features` attribute.
 - Initial `/MD` support is hermetic through link output production, but execution requires a compatible Microsoft Visual C++ v14 Redistributable already installed on the target machine.
-- App-local redistributable DLL acquisition and Bazel runfile deployment are a second implementation phase. They must not block or distort the initial ordinary-Clang toolchain work.
+- App-local redistributable DLL acquisition and Bazel runfile deployment are the final optional extra step. Core support assumes a compatible target-architecture Microsoft Visual C++ v14 Redistributable is provided by the target machine.
 - No `clang-cl`, `cl.exe`, direct `lld-link` syntax, or clang-cl-on-non-Windows work.
 
 Clang is inherently cross-targeted through `-target`, with target headers and libraries supplied using normal include/library options. [Clang cross-compilation documentation](https://clang.llvm.org/docs/CrossCompilation.html). Clang’s `-fms-runtime-lib=static|dll` directly corresponds to `/MT|/MD`; debug forms also exist but will not be exposed. [Clang command reference](https://clang.llvm.org/docs/ClangCommandLineReference.html).
@@ -89,7 +90,7 @@ Microsoft documents UCRT, VCRuntime, CRT startup, and STL as distinct library se
 2. Exec OS/CPU only selects executable tools; target OS/CPU/ABI selects output semantics.
 3. Existing unconstrained, GNU, and GNU-LLVM Windows platforms remain MinGW-compatible.
 4. `windows/crt:msvcrt` continues to mean legacy `msvcrt.dll` selection for MinGW only.
-5. MSVC STL is selected exclusively through `cxxstdlib`.
+5. MSVC STL is selected exclusively through `cxxstdlib`; the constraint value may precede the implementation, but no C++ support is claimed until the dedicated MSVC-STL step passes.
 6. Microsoft runtime linkage is a target-configuration-wide Bazel C++ feature: default `dynamic_link_msvcrt`, opt-in `static_link_msvcrt`.
 7. `linkstatic`, `--dynamic_mode`, `static_linking_mode`, `dynamic_linking_mode`, and `static_link_cpp_runtimes` do not select `/MT` versus `/MD`; they own ordinary dependency/runtime-artifact linkage.
 8. Public usage selects static linkage through global target `--features=static_link_msvcrt`; a per-rule feature is not a supported interface because it does not propagate to compiled dependencies.
@@ -99,8 +100,8 @@ Microsoft documents UCRT, VCRuntime, CRT startup, and STL as distinct library se
 12. Project adapters limited to missing COFF-specific outputs, ordinary-Clang flag forwarding, and feature-aware VC redistributable deployment not expressible through current generic runtime attrs.
 13. No advertised capability silently disappears for MSVC targets.
 14. MinGW UCRT and legacy-MSVCRT action and artifact behavior remain regression-tested.
-15. Phase-1 `/MD` support has an explicit external deployment prerequisite; it is not described as a standalone or hermetically runnable output.
-16. Phase-2 app-local runtime deployment is additive: it must not change compiler/linker actions, runtime selection, or artifact ABI established in Phase 1.
+15. Core `/MD` support has an explicit external deployment prerequisite; it is not described as a standalone or hermetically runnable output.
+16. Final optional app-local runtime deployment is additive: it must not change compiler/linker actions, runtime selection, or artifact ABI established by the core steps.
 
 ## Component and ownership map
 
@@ -112,11 +113,11 @@ Microsoft documents UCRT, VCRuntime, CRT startup, and STL as distinct library se
 | Windows headers/platform libs | windows_support Windows SDK | Shared/UM/WinRT include and UM library components |
 | UCRT | windows_support Windows SDK | Separate include and library components |
 | VCRuntime | windows_support MSVC payload | Separate header/library semantic target |
-| MSVC STL | `cxxstdlib:msvc` + windows_support | Included only for selected C++ standard library |
+| MSVC STL | `cxxstdlib:msvc` + windows_support | Constraint value selected early to avoid false libc++ semantics; headers/libraries implemented only in the dedicated final core step |
 | MSVC CRT startup/linkage | Bazel C++ feature configuration | Canonical `dynamic_link_msvcrt`/`static_link_msvcrt` names with ordinary-Clang `-fms-runtime-lib=dll|static` arguments |
 | Ordinary dependency linkage | rules_cc `linkstatic`/`--dynamic_mode` | Remains independent from MSVC CRT linkage |
 | Generic toolchain runtime artifacts | rules_cc `static_link_cpp_runtimes` plus `static_runtime_lib`/`dynamic_runtime_lib` | Continue to follow ordinary static/dynamic linking mode; do not select `/MT`/`/MD` |
-| VC redistributables | Target-machine prerequisite in Phase 1; windows_support plus a feature-aware deployment adapter in Phase 2 | Compatible installed v14 Redistributable first; architecture-specific app-local runtime/STL DLL groups later, selected by effective MSVC CRT feature rather than ordinary link mode |
+| VC redistributables | Target-machine prerequisite for core support; windows_support plus a feature-aware deployment adapter only in the final optional step | Compatible installed v14 Redistributable for core tests; architecture-specific app-local runtime/STL DLL groups only in the final extra work, selected by effective MSVC CRT feature rather than ordinary link mode |
 | compiler-rt | hermetic-llvm source runtimes | MSVC triple and `.lib` resource-directory layout |
 | Artifact naming | hermetic-llvm cc toolchain | ABI-specific `.obj`, `.lib`, `.dll`, `.if.lib`, `.exe` |
 | rules_cc actions | upstream rules_cc 0.2.22 | Generic compile/link/ThinLTO/param/dependency features |
@@ -138,6 +139,8 @@ Provided platforms:
 - `@llvm//platforms:windows_aarch64_msvc`
 
 Existing `windows_x86_64` and `windows_aarch64` remain GNU/MinGW UCRT platforms through PR 709.
+
+`cxxstdlib:msvc` is an early semantic prerequisite, not early STL implementation. The two MSVC platforms must not inherit the default `libcxx` value while C-only support is being established. Until the dedicated MSVC-STL step, acceptance is intentionally limited to C and `.S`; no public C++ support claim is made.
 
 Do not add an MSVC-runtime constraint or static/dynamic MSVC platform aliases. The public runtime-linkage contract is:
 
@@ -163,13 +166,13 @@ The raw feature is meaningful only to an MSVC-capable toolchain. Bazel ignores u
 |---|---|---|---|---|
 | unconstrained/gnu/gnullvm | libc++ | ucrt | MSVC features unavailable/irrelevant | Existing MinGW UCRT |
 | unconstrained/gnu/gnullvm | libc++ | msvcrt | MSVC features unavailable/irrelevant | Existing legacy MinGW `msvcrt.dll` |
-| msvc | msvc | not applicable | default `dynamic_link_msvcrt` | Supported retail `/MD` equivalent; compatible target-architecture VC v14 Redistributable required at execution in Phase 1 |
+| msvc | msvc | not applicable | default `dynamic_link_msvcrt` | Supported retail `/MD` equivalent; compatible target-architecture VC v14 Redistributable required at execution for core support |
 | msvc | msvc | not applicable | `static_link_msvcrt` requested | Supported retail `/MT` equivalent; dynamic CRT arguments suppressed |
 | msvc | libc++/libstdc++ | any | any | Analysis error: incompatible C++ stdlib |
 | non-msvc | msvc | any | any | Analysis error: MSVC STL requires MSVC ABI |
 | msvc | msvc | ucrt/msvcrt | any | Analysis error: MinGW CRT selector invalid for MSVC ABI |
 | msvc | msvc | not applicable | `dbg` plus either retail mode | Supported; remains retail and never selects `/MDd` or `/MTd` |
-| msvc | msvc | not applicable | dynamic without installed VC Redistributable | Build/link succeeds; execution has a documented external prerequisite in Phase 1 |
+| msvc | msvc | not applicable | dynamic without installed VC Redistributable | Build/link succeeds; execution has a documented external prerequisite until the final optional deployment step |
 | Windows x86/ARM32/ARM64EC | any | any | any | No registered target toolchain |
 
 Combination config groups drive toolchain selection for ABI, STL, and MinGW CRT compatibility. Invalid platform combinations fail during analysis/toolchain resolution, with tests asserting the involved constraint labels. MSVC CRT linkage is selected only after toolchain resolution through the canonical feature contract.
@@ -178,7 +181,7 @@ Combination config groups drive toolchain selection for ABI, STL, and MinGW CRT 
 
 `--compilation_mode=dbg` remains valid but selects the retail CRT associated with the effective feature mode. Tests must prove no `*d.lib` directive or `*d.dll` import appears.
 
-The Phase-1 prerequisite is the Microsoft Visual C++ v14 Redistributable, not a full Visual Studio or Build Tools installation. It must match the target architecture and be at least as recent as the selected MSVC toolset. Bazel analysis cannot reliably detect whether a remote target machine satisfies this deployment prerequisite.
+The core-support prerequisite is the Microsoft Visual C++ v14 Redistributable, not a full Visual Studio or Build Tools installation. It must match the target architecture and be at least as recent as the selected MSVC toolset. Bazel analysis cannot reliably detect whether a remote target machine satisfies this deployment prerequisite.
 
 ## Current-main and PR 709 gap analysis
 
@@ -198,7 +201,7 @@ Remaining gaps:
 - No ordinary-Clang implementation of the canonical `dynamic_link_msvcrt`/`static_link_msvcrt` feature contract.
 - No MSVC-compatible toolchain registrations.
 - No SDK/UCRT/VCRuntime/MSVC STL inputs.
-- No app-local redistributable DLLs; this is a Phase-2 deployment gap, not a Phase-1 build/link blocker.
+- No app-local redistributable DLLs; this is deferred final extra work, not a core build/link blocker.
 - No MSVC compiler-rt basename/layout.
 - No ABI-specific COFF artifact patterns.
 - No declared import-library emission.
@@ -243,7 +246,7 @@ The feature names are historical: modern `/MD` composition includes UCRT and VCR
 
 The runtime-linkage feature must be requested globally in the target configuration. A feature placed only on one `cc_binary` or `cc_library` does not propagate to independently compiled dependencies and can violate Microsoft's single-runtime contract.
 
-Current generic runtime attrs cannot be assumed to deploy VC redistributable DLLs correctly: their static/dynamic choice follows ordinary linking mode, while `/MD` versus `/MT` is independent. Phase 2 therefore needs a feature-aware deployment path or a narrowly scoped upstream API, proven under both `linkstatic` values.
+Current generic runtime attrs cannot be assumed to deploy VC redistributable DLLs correctly: their static/dynamic choice follows ordinary linking mode, while `/MD` versus `/MT` is independent. The final optional step therefore needs a feature-aware deployment path or a narrowly scoped upstream API, proven under both `linkstatic` values.
 
 Likely project-owned adapters:
 
@@ -267,7 +270,7 @@ Good existing properties:
 - Reproducibility metadata.
 - Root configuration overrides dependency defaults.
 
-Current limitations relevant to Phase 2:
+Current limitations relevant only to the final optional redistributable step:
 
 - MSVC extraction preserves only `include` and `lib`.
 - `VC/Redist` is deleted.
@@ -276,20 +279,7 @@ Current limitations relevant to Phase 2:
 - No logical file targets for the retail VCRuntime and MSVC STL DLL groups.
 - SDK exposes UCRT and UM directories, but no higher-level semantic component contract.
 
-These limitations do not block truthful Phase-1 `/MD` support. The existing MSVC headers and `.lib` files are sufficient to compile and link; the public contract requires a compatible target-architecture VC v14 Redistributable at execution.
-
-Required upstream windows_support work for Phase-2 hermetic app-local deployment:
-
-1. Preserve licensed x64 and ARM64 VC redistributable payloads.
-2. Preserve the existing build-time header/library targets and additionally expose semantic targets for:
-   - VCRuntime redistributable DLLs
-   - MSVC STL/concurrency redistributable DLLs
-3. Keep target-CPU routing independent from exec CPU.
-4. Retain EULA laziness.
-5. Add extraction/layout/integrity/laziness tests.
-6. Cut a new release and pin the smallest compatible version here.
-
-Microsoft limits redistribution to licensed users and the applicable REDIST list. Phase 1 therefore documents the centrally installed redistributable prerequisite and does not redistribute DLLs. Phase 2 must carry explicit acquisition/deployment policy. [Microsoft redistribution terms](https://learn.microsoft.com/en-us/cpp/windows/redistributing-visual-cpp-files?view=msvc-170). App-local DLLs are acceptable for hermetic tests, while production documentation should continue to recommend Microsoft’s centrally serviced redistributable package.
+These limitations do not block truthful core `/MD` compile/link support. The existing MSVC headers and `.lib` files are sufficient; the core public contract requires a compatible target-architecture VC v14 Redistributable at execution. All `VC/Redist` extraction, semantic DLL targets, licensing/deployment policy, and new windows_support release work is deliberately postponed to the final optional step.
 
 ## PR 187 salvage and attribution map
 
@@ -330,7 +320,7 @@ Implementation attribution policy:
 
 ## Ordered implementation plan
 
-### Phase 1: ordinary-Clang MSVC toolchain with an installed-redist execution contract
+### Core implementation: ordinary-Clang MSVC C/runtime support, then MSVC STL
 
 ### 1. Public target contract and registrations
 
@@ -345,7 +335,8 @@ Areas:
 
 Work:
 
-- Add only `cxxstdlib:msvc`, `windows/crt:not_applicable`, and the two CPU-specific MSVC platforms.
+- Add `cxxstdlib:msvc`, `windows/crt:not_applicable`, and the two CPU-specific MSVC platforms.
+- Treat `cxxstdlib:msvc` here as a semantic prerequisite only: it prevents the MSVC platforms from inheriting the default `libcxx` value. Do not add STL headers, libraries, or a C++ support claim in this step.
 - Do not add an MSVC-runtime constraint or static/dynamic platform aliases.
 - Add MSVC registrations alongside PR 709’s MinGW-compatible registrations.
 - Preserve every existing MinGW match.
@@ -358,6 +349,7 @@ Acceptance:
 - MSVC platforms resolve for x64 and ARM64 across all six supported exec OS/CPU pairs.
 - Invalid ABI/STL/MinGW-CRT combinations fail during analysis.
 - No SDK/MSVC repository fetched for MinGW targets.
+- Interim acceptance is C-only; the selected `cxxstdlib:msvc` value resolves to an empty route that contributes no STL inputs and remains intentionally unimplemented until Step 8.
 
 Review gate: exact public labels/platform names and explicit confirmation that runtime linkage is not a target constraint.
 
@@ -373,10 +365,10 @@ Areas:
 Work:
 
 - Pin the current compatible windows_support version/integrities.
-- Wire its existing SDK, UCRT, MSVC header, and architecture-specific library targets for compilation and linking.
-- Add project-owned logical VCRuntime/MSVC-STL wrappers over the existing upstream include/library trees, and route the STL semantics only through `cxxstdlib:msvc`. Physical co-location does not imply semantic selection.
+- Wire only the existing SDK, UCRT, VCRuntime-facing MSVC headers, and architecture-specific runtime/import-library targets needed for C compilation and linking.
+- Add a project-owned logical VCRuntime boundary over the existing broad upstream include/library trees. Do not add or route an MSVC-STL semantic wrapper yet; physical co-location in the archive does not make STL part of this step.
 - Preserve EULA laziness.
-- Do not make redistributable DLL exposure an initial toolchain prerequisite.
+- Do not change windows_support extraction for `VC/Redist`; runtime DLL acquisition and deployment are final optional work.
 
 Acceptance:
 
@@ -385,6 +377,7 @@ Acceptance:
 - x64 actions receive x64 files; ARM64 actions receive ARM64 files, regardless of exec CPU.
 - Repository contents/integrities are reproducible.
 - `/MD` links successfully without app-local VC DLL artifacts in the Bazel runtime closure.
+- No MSVC-STL header path, STL default library, or STL redistributable target is added by this step.
 
 ### 3. Ordinary Clang driver and COFF toolchain
 
@@ -414,7 +407,7 @@ Acceptance:
 - Outputs use `.obj`, `.lib`, `.lo.lib`, `.exe`, `.dll`, `.if.lib`.
 - Response files work with spaces and long paths.
 
-### 4. Runtime and C++ standard-library routing
+### 4. Microsoft C runtime and compiler-runtime routing
 
 Areas:
 
@@ -425,32 +418,32 @@ Areas:
 
 Work:
 
-- Add C/SDK/UCRT/VCRuntime headers independently.
-- Add MSVC STL only under `cxxstdlib:msvc`.
+- Add C/SDK/UCRT/VCRuntime headers and libraries independently.
+- Keep the selected `cxxstdlib:msvc` route empty of STL headers/libraries until Step 8; C-only actions must not require a C++ standard library.
 - Define the canonical MSVC CRT features locally for ordinary Clang until rules_cc exposes a suitable public implementation:
   - enable `dynamic_link_msvcrt` by default and emit `-fms-runtime-lib=dll`;
   - expose `static_link_msvcrt` as the global opt-in, emit `-fms-runtime-lib=static`, and suppress dynamic CRT arguments.
+- Keep `/MD` compile/link selection in this core step. There is no dynamic-MSVC platform constraint to defer: the final optional step owns only acquisition and deployment of the DLLs required at execution.
 - Keep `linkstatic`, `--dynamic_mode`, and `static_link_cpp_runtimes` independent from MSVC CRT selection.
-- Keep runtime selection uniform across every independently compiled C/C++ dependency by testing only target-configuration-wide feature selection; do not document per-rule `features` as a runtime-selection interface.
+- Keep runtime selection uniform across every independently compiled C dependency by testing only target-configuration-wide feature selection; do not document per-rule `features` as a runtime-selection interface. Extend the same acceptance to C++ in Step 8.
 - Correct compiler-rt resource triples and `.lib` names.
 - Keep sanitizer/profile compiler-rt runtime deployment separate from the Microsoft VC Redistributable prerequisite.
 - Keep `dbg` on retail CRT.
 
 Acceptance:
 
-- C-only action gains no MSVC-STL semantic dependency or STL default-library directive; any physically shared upstream include directory is documented rather than mistaken for ABI-driven STL selection.
-- C++ action gains MSVC STL only through `cxxstdlib:msvc`.
-- Default `/MD` configuration gives every relevant C/C++ frontend action, including transitive dependency actions, `-fms-runtime-lib=dll` and no static directive.
-- Global `--features=static_link_msvcrt` gives every relevant C/C++ frontend action, including transitive dependency actions, `-fms-runtime-lib=static` and no dynamic directive.
+- C actions gain no MSVC-STL semantic dependency, STL header search path, or STL default-library directive; any physically shared upstream include directory is documented rather than mistaken for semantic STL selection.
+- Default `/MD` configuration gives every relevant C frontend action, including transitive dependency actions, `-fms-runtime-lib=dll` and no static directive.
+- Global `--features=static_link_msvcrt` gives every relevant C frontend action, including transitive dependency actions, `-fms-runtime-lib=static` and no dynamic directive.
 - Link-time default-library forwarding is added only if an object/directive and no-source link reproduction proves it necessary; compile directives and final link inputs must agree either way.
 - Both CRT modes retain their result under `linkstatic=True`, `linkstatic=False`, `--dynamic_mode=off`, and `--dynamic_mode=fully` where those ordinary link modes are otherwise valid.
 - Static PE imports no VC redist DLLs.
-- Dynamic PE imports the expected VCRuntime/MSVC STL DLLs and executes on a Windows test environment provisioned with a compatible target-architecture VC v14 Redistributable.
-- Phase-1 Bazel outputs do not claim to carry the VC Redistributable in runfiles.
+- Dynamic C PE imports the expected VCRuntime DLLs and executes on a Windows test environment whose target machine provides a compatible target-architecture VC v14 Redistributable.
+- Core Bazel outputs do not claim to carry the VC Redistributable in runfiles.
 - No debug CRT directive/import.
 - MinGW UCRT/MSVCRT actions unchanged.
 
-### 5. Complete rules_cc surface
+### 5. Complete rules_cc C surface
 
 Areas:
 
@@ -460,7 +453,7 @@ Areas:
 
 Coverage:
 
-- C and C++
+- C
 - `.S` preprocessed assembly
 - static and alwayslink libraries
 - executables
@@ -476,25 +469,27 @@ Coverage:
 
 Acceptance:
 
-- Every action builds for x64 and ARM64.
+- Every C and applicable `.S` action builds for x64 and ARM64.
 - Alwayslink-only symbol remains in final PE.
 - Import library can link a consumer.
 - Explicit/generated DEF exports match.
 - Header parser/layering catches undeclared includes on Windows.
 - Linkstamp object has the MSVC target machine.
 - PDB is declared, emitted, and referenced by the PE debug directory.
+- No C++ standard-library input is needed to satisfy any acceptance case in this step.
 
 Raw MASM `.asm` remains unsupported; `.S` through Clang is supported.
 
 Windows resources: currently no registered Bazel Windows-resource toolchain exists. `@llvm//tools:llvm-rc` remains a standalone tool and LLD can consume `.res`, but automatic resource compilation is outside this PR unless separately approved as a public toolchain addition.
 
-### 6. ThinLTO, profile, coverage, FDO, sanitizers
+### 6. C ThinLTO, profile, coverage, FDO, and sanitizers
 
 Work:
 
-- Validate upstream rule-based ThinLTO through the Clang driver.
-- Add profile generation/runtime, source coverage, profile merge, and FDO-use tests.
+- Validate upstream rule-based ThinLTO through the Clang driver using C targets first.
+- Add C profile generation/runtime, source coverage, profile merge, and FDO-use tests.
 - Add explicit sanitizer capability gates.
+- Defer libFuzzer and C++-specific CFI/sanitizer coverage to the MSVC-STL step.
 
 Required supported-and-tested set:
 
@@ -502,13 +497,11 @@ Required supported-and-tested set:
 - profile instrumentation
 - LLVM source coverage
 - FDO profile use
-- UBSan
-- ASan, including its runtime DLL
-- CFI with LTO
-- libFuzzer
-- libFuzzer + ASan
+- C UBSan
+- C ASan, including its runtime DLL
+- C-compatible CFI modes with LTO where supported by the existing project feature
 
-Both x64 and ARM64 unless an upstream LLVM runtime limitation is proven. Such a limitation becomes an explicit review blocker, not a silent exclusion.
+Both x64 and ARM64 unless an upstream LLVM runtime limitation is proven. Such a limitation becomes an explicit review blocker, not a silent exclusion. The final MSVC-STL step must extend every applicable capability to C++ and add libFuzzer/libFuzzer+ASan before the final C++ support claim.
 
 Required analysis-time unavailable set:
 
@@ -550,13 +543,52 @@ Work:
 
 Acceptance:
 
-- Stage-1-from-source Clang/LLD builds MSVC x64 and ARM64 ThinLTO binaries.
+- Stage-1-from-source Clang/LLD builds MSVC x64 and ARM64 C ThinLTO binaries without requiring MSVC STL.
 - No `clang-cl` primary bootstrap target.
 - Generated alias is a declared action input.
 - LLVM 21/default/23 analysis passes.
 - Source-built and prebuilt toolchains produce equivalent machine/import/export behavior.
 
-### 8. Regression matrix, CI, and documentation
+### 8. MSVC STL and complete C++ support
+
+This is the final core implementation step. MSVC STL is not a prerequisite for Steps 2-7: ordinary Clang can compile C for the MSVC environment and link against Windows SDK/UCRT/VCRuntime without a C++ standard library. The `cxxstdlib:msvc` value was introduced in Step 1 only to avoid falsely selecting libc++ on the interim MSVC platform.
+
+Areas:
+
+- `constraints/cxxstdlib`
+- `runtimes/cxxstdlib`
+- `toolchain/args`
+- `toolchain/llvm`
+- project-owned windows_support semantic wrappers
+- `e2e/rules_cc`
+
+Work:
+
+- Populate the existing `cxxstdlib:msvc` route with MSVC STL headers and architecture-specific libraries from windows_support.
+- Keep VCRuntime and MSVC STL as separate semantic targets even where upstream physically bundles their headers/libraries.
+- Add MSVC STL include paths only to C++/ObjC++/C++ header-parsing/module actions; C actions remain unchanged.
+- Prove and encode the MSVC STL static/dynamic default-library behavior under `dynamic_link_msvcrt` and `static_link_msvcrt`; do not add a second STL-linkage constraint.
+- Extend the complete rules_cc surface from Step 5 to C++: static/alwayslink libraries, executables, DLLs/import libraries, `.def`, response files, dependency discovery, header parsing/layering, PDBs, and linkstamps.
+- Add C++ behavioral coverage for exceptions, RTTI, allocation, iostreams, filesystem, threading, and cross-DLL object/error propagation boundaries that Microsoft supports.
+- Extend ThinLTO, profile/coverage/FDO, ASan, UBSan, and applicable CFI tests to C++.
+- Add libFuzzer and libFuzzer+ASan coverage now that the target has a coherent C++ standard library.
+- Keep `/MD` execution dependent on the target-machine-provided VC Redistributable; do not add redistributable runfiles in this step.
+
+Acceptance:
+
+- `cxxstdlib:msvc` is the only route that contributes MSVC STL headers/libraries.
+- MSVC ABI with libc++/libstdc++ and non-MSVC ABI with MSVC STL still fail during analysis.
+- C action graphs and artifacts remain action-equivalent to Step 7, except for any intentionally shared toolchain metadata proven unavoidable.
+- C++ actions use ordinary `clang++` syntax and the same target-wide CRT feature mode as all C dependencies.
+- Default `/MD` C++ binaries import the expected retail VCRuntime/MSVC STL DLLs and run when the target machine provides the compatible redistributable.
+- Global `--features=static_link_msvcrt` C++ binaries use retail static CRT/STL libraries and do not import VC runtime/STL DLLs.
+- `dbg` never selects debug CRT/STL libraries.
+- Exceptions, RTTI, allocation, iostream, filesystem, threading, DLL/import-library consumption, and alwayslink cases pass on x64 and ARM64.
+- C++ ThinLTO, profile/coverage/FDO, ASan, UBSan, applicable CFI, libFuzzer, and libFuzzer+ASan are supported and tested or blocked by a separately proven upstream LLVM limitation.
+
+Review gate: MSVC STL semantic ownership, public C++ support claim, and proof that adding STL did not alter the already-working C/runtime toolchain.
+
+### 9. Regression matrix, CI, and documentation
 
 Areas:
 
@@ -570,15 +602,15 @@ Work:
 - Add MSVC platforms and negative-analysis tests.
 - Preserve MinGW UCRT and legacy-MSVCRT tests.
 - Add action/artifact inspection scripts.
-- Document EULA, the default-dynamic/opt-in-static feature contract, global target-configuration usage, the Phase-1 installed-redist prerequisite, unsupported features, and no clang-cl support.
+- Document EULA, the default-dynamic/opt-in-static feature contract, global target-configuration usage, the target-machine-provided redistributable prerequisite, unsupported features, and no clang-cl support.
 - Document explicitly that `linkstatic`/`--dynamic_mode` choose ordinary dependency linkage and do not select `/MT`/`/MD`.
 - Regenerate public docs only after behavior is demonstrated.
 
 Review gate: README/public support contract before editing.
 
-### Phase 2: hermetic app-local `/MD` DLL runfiles
+### 10. Optional final extra: hermetic app-local `/MD` redistributable DLLs
 
-This phase begins only after Phase 1 is working and reviewed. It is additive: no changes to the established target triples, compiler dialect, canonical CRT-selection features, or linked ABI.
+This step begins only after the complete C and MSVC-STL core support is working and reviewed. It is not a prerequisite for the core support contract, which assumes the target machine provides a compatible VC Redistributable. There is no dynamic-MSVC constraint in this design: `dynamic_link_msvcrt` remains the core `/MD` compile/link feature, while this step adds only its target runtime deployment. It is strictly additive: no changes to established target triples, compiler dialect, canonical CRT-selection features, STL routing, or linked ABI.
 
 Areas:
 
@@ -590,13 +622,16 @@ Areas:
 Work:
 
 - Extend windows_support to preserve only the licensed architecture-specific retail VC redist payload required for app-local deployment.
-- Expose logical VCRuntime and MSVC STL/concurrency DLL groups without exposing debug, MFC, ATL, localized, or unrelated payloads.
-- Pin the resulting windows_support release and preserve EULA laziness.
+- Preserve existing build-time header/library targets and additionally expose separate logical VCRuntime and MSVC STL/concurrency DLL groups without exposing debug, MFC, ATL, localized, or unrelated payloads.
+- Keep target-CPU routing independent from exec CPU.
+- Retain EULA laziness and add windows_support extraction/layout/integrity/laziness tests.
+- Cut and pin the smallest compatible windows_support release only in this step.
 - Route the selected target-architecture retail DLL group into Bazel's runtime closure only when `dynamic_link_msvcrt` is effective and `static_link_msvcrt` is absent.
 - Do not key VC redistributable deployment on `linkstatic`, `--dynamic_mode`, `static_linking_mode`, `dynamic_linking_mode`, or the generic `static_link_cpp_runtimes` runtime attrs.
 - If current rules_cc cannot add toolchain-owned DLL runfiles based on the effective feature configuration, implement or upstream the smallest explicit adapter rather than overloading `dynamic_runtime_lib` with incorrect semantics.
 - Ensure DLLs are physically beside the executable, or in another demonstrated Windows loader search location; a data dependency alone is insufficient proof.
 - Keep compiler-rt sanitizer/profile DLL deployment separately owned.
+- Document Microsoft's REDIST licensing boundary. App-local DLLs are acceptable for hermetic tests; production guidance should continue to recommend Microsoft's centrally serviced redistributable package. [Microsoft redistribution terms](https://learn.microsoft.com/en-us/cpp/windows/redistributing-visual-cpp-files?view=msvc-170).
 
 Acceptance:
 
@@ -605,9 +640,11 @@ Acceptance:
 - `/MT` binaries receive no VC redistributable DLLs for either ordinary dependency-link mode.
 - PE import inspection proves every non-system VC runtime/STL import is satisfied by the application-local layout.
 - No debug or unrelated redistributable files enter the runfiles closure.
-- Static `/MT` outputs and Phase-1 compile/link actions remain byte-for-byte or action-equivalent except for intentional runtime-deployment metadata.
+- Static `/MT` outputs and all core compile/link actions remain byte-for-byte or action-equivalent except for intentional runtime-deployment metadata.
 - MinGW targets neither fetch nor receive VC redistributable payloads.
 - Licensing/EULA failure is lazy, explicit, and occurs before redistributable acquisition.
+
+Delivery policy: implement this only after a separate final review gate. If windows_support or licensing work is not ready, the core child PR remains coherent and truthful with its target-machine-provided redistributable contract; this extra can follow without redesigning the toolchain.
 
 ## Action-graph inspection plan
 
@@ -619,7 +656,8 @@ For every architecture and MSVC CRT feature mode, assert:
 - No `/c`, `/Fo`, `/showIncludes`, or clang-cl response quoting.
 - Link executable is clang++ with `-fuse-ld=lld`.
 - `lld-link` is a declared input but not the action executable.
-- SDK/UCRT/VCRuntime/STL paths are separately visible.
+- Steps 2-7 expose SDK/UCRT/VCRuntime paths and no semantic MSVC-STL path.
+- Step 8 adds MSVC-STL paths only to C++-family actions while C actions remain unchanged.
 - Default feature configuration enables `dynamic_link_msvcrt`; every compile action receives `-fms-runtime-lib=dll`.
 - Global `--features=static_link_msvcrt` enables the static feature; every compile action receives `-fms-runtime-lib=static`, and no dynamic CRT argument remains effective.
 - Transitive `cc_library`, linkstamp, and any other independently configured frontend actions use the same CRT feature mode; ThinLTO outputs retain matching COFF default-library directives even if backend actions do not expand the frontend-only flag.
@@ -644,8 +682,8 @@ Use `llvm readobj`, `llvm objdump`, `llvm ar`, and `llvm pdbutil` to verify:
 - Static vs dynamic runtime imports.
 - Absence of debug-runtime imports.
 - Compiler-rt/profile/sanitizer runtime linkage.
-- Phase-1 execution against a documented centrally installed compatible VC Redistributable.
-- Phase-2 application-local deployed DLL closure.
+- Core execution against a documented target-machine-provided compatible VC Redistributable.
+- Final optional application-local deployed DLL closure.
 - PDB existence and PE CodeView/debug-directory reference.
 - ThinLTO output sections/symbols.
 - MinGW UCRT API-set imports versus legacy `msvcrt.dll`.
@@ -672,16 +710,16 @@ Additional:
 - LLVM 21/default/23 analysis.
 - Existing complete MinGW matrix unchanged.
 - Bazel 8 and last release candidate where current CI already does both.
-- Phase 2 adds clean-machine/app-local `/MD` execution jobs that do not depend on a centrally installed VC Redistributable.
+- The final optional step adds clean-machine/app-local `/MD` execution jobs that do not depend on a centrally installed VC Redistributable.
 
 ## Risks and unresolved implementation proofs
 
-- The existing windows_support build-time contract must be sufficient for Phase 1; any missing import/header granularity discovered by action inspection may still require a narrowly scoped upstream change.
-- A windows_support redist release is a Phase-2 prerequisite only.
+- The existing windows_support build-time contract must be sufficient for the core steps; any missing import/header granularity discovered by action inspection may still require a narrowly scoped upstream change.
+- A windows_support redist release is a prerequisite only for the final optional step.
 - Exact generic rules_cc import-library output behavior still needs an implementation spike.
 - PDB output variable/declared-artifact handling must be proven.
 - ASan ARM64 source-overlay completeness must be demonstrated.
-- rules_cc's generic `dynamic_runtime_lib` follows ordinary link mode and therefore cannot be assumed to model `/MD`; Phase-2 feature-aware DLL propagation needs a focused implementation spike and may require a narrow upstream API.
+- rules_cc's generic `dynamic_runtime_lib` follows ordinary link mode and therefore cannot be assumed to model `/MD`; final optional feature-aware DLL propagation needs a focused implementation spike and may require a narrow upstream API.
 - Bazel ignores feature names unknown to the selected toolchain. The documented static feature invocation must be scoped to an MSVC platform; arbitrary use on MinGW cannot be promised to fail analysis.
 - A per-rule `features = ["static_link_msvcrt"]` does not provide target-graph consistency and remains intentionally unsupported as the public selection interface.
 - COFF distributed ThinLTO weak-alias patch may differ by LLVM version.
@@ -692,8 +730,12 @@ Additional:
 
 ## PR structure recommendation
 
-One child PR stacked directly on PR 709, as requested. No further PR stack.
+One core child PR stacked directly on PR 709, as requested. No further branch stack.
 
-Internally: two reviewable phases and small ordered commits corresponding to the implementation steps above. Phase 1 establishes complete ordinary-Clang MSVC compile/link support with the explicit installed-redist execution contract. Phase 2 adds hermetic app-local `/MD` runfiles without revisiting Phase-1 architecture. This is larger than the repository’s normal stacking threshold, but the explicit single-feature/single-replacement-PR requirement takes precedence. Each commit remains independently reviewable and receives precise Titouan attribution only where applicable.
+Core commits follow Steps 1-9: establish the target contract; integrate build-time SDK/UCRT/VCRuntime inputs; prove ordinary-Clang C/runtime support; complete the C action/capability/bootstrap surface; then add MSVC STL and the complete C++ support claim as the final core implementation commit(s). This order prevents the STL work from hiding defects in the underlying Clang/MSVC-runtime toolchain.
+
+Step 10 is deliberately outside required core acceptance. After a separate review gate, it may be appended as the absolute final commit(s) of the replacement PR or delivered as an independent follow-up PR if windows_support/licensing work is not ready. It must not cause a branch stack or redesign Steps 1-9.
+
+This is larger than the repository’s normal stacking threshold, but the explicit coherent-feature request takes precedence. Each commit remains independently reviewable and receives precise Titouan attribution only where applicable.
 
 No implementation will begin until you explicitly approve this plan, including the proposed public constraint/platform contract and canonical MSVC CRT feature contract.
