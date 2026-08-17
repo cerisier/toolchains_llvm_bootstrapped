@@ -19,10 +19,11 @@ def exec_test(*, rule, name, tags = [], args = [], env = {}, data = [], tools = 
 
 def _exec_test_impl(ctx):
     inner = ctx.attr.inner[DefaultInfo]
-    out = ctx.outputs.executable
+    inner_executable = inner.files_to_run.executable
+    out = ctx.actions.declare_file(ctx.label.name + ".exe") if inner_executable.extension == "exe" else ctx.outputs.executable
 
     ctx.actions.symlink(
-        target_file = inner.files_to_run.executable,
+        target_file = inner_executable,
         output = out,
     )
 
