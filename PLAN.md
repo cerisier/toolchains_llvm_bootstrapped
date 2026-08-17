@@ -582,8 +582,8 @@ The authoritative command/output evidence, fact/inference classification, and
 final decision for every item are recorded in
 `.agents/execplans/windows-msvc-phase0.md`; the rules_cc/provenance detail is in
 `.agents/execplans/windows-msvc-rules-cc-0.2.22.md`. Decisions are frozen; the
-native Linux/macOS/Windows x x86-64/ARM64 workflow remains the final Phase 0
-execution gate until its run IDs and results are recorded.
+native Linux/macOS/Windows x x86-64/ARM64 workflow passed in GitHub Actions run
+32047134011, attempt 2, completing the final Phase 0 execution gate.
 
 1. approved branch update and implementation base;
 2. public platform names and Microsoft-STL exposure;
@@ -1586,7 +1586,7 @@ Require:
 - [x] Four-layer dependency order defined.
 - [x] PR 187 and rules_cc PR 561 roles clarified.
 - [x] Current GitHub base and PR states reverified 2026-08-17.
-- [ ] Phase 0 branch/public API/legal/tool/protocol decisions approved.
+- [x] Phase 0 branch/public API/legal/tool/protocol decisions approved.
 - [ ] Layer 1 complete.
 - [ ] Layer 2 complete.
 - [ ] Layer 3 complete.
@@ -1627,8 +1627,10 @@ Require:
 
 ### Outcomes
 
-No product implementation yet. Phase 0 freezes the approved evidence and
-contracts; it does not mean MSVC support exists.
+Phase 0 is complete. It freezes the approved evidence and contracts, adds only
+the decision/provenance ledgers and their verification tooling, and stops
+before Layer 1. No product MSVC behavior or README changed; completion does not
+mean MSVC support exists.
 
 ## 22. Authoritative references
 
