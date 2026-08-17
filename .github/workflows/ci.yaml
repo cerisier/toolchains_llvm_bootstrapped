@@ -42,6 +42,26 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Host-local MSVC tool protocol probes
+        if: matrix.folder == 'e2e/rules_cc'
+        env:
+          USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
+        working-directory: ${{ matrix.folder }}
+        shell: bash
+        run: |
+          bazel \
+            --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc \
+            --bazelrc=.bazelrc \
+            test \
+            --config=remote \
+            --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
+            --extra_execution_platforms=@platforms//host:host \
+            --spawn_strategy=local \
+            --strategy=TestRunner=local \
+            @llvm//tools:msvc_action_assert_test \
+            @llvm//tools:msvc_artifact_assert_test \
+            @llvm//tools:msvc_tool_probe_test
+
       # Cache build and external artifacts so that the next ci build is incremental.
       # Because github action caches cannot be updated after a build, we need to
       # store the contents of each build in a unique cache key, then fall back to loading
@@ -103,6 +123,29 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Host-local MSVC tool protocol probes
+        if: matrix.folder == 'e2e/rules_cc'
+        env:
+          USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
+        working-directory: ${{ matrix.folder }}
+        shell: bash
+        run: |
+          bazel \
+            --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc \
+            --bazelrc=.bazelrc \
+            test \
+            --config=remote \
+            --noexperimental_remote_repo_contents_cache \
+            --repository_cache= \
+            --repo_contents_cache= \
+            --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
+            --extra_execution_platforms=@platforms//host:host \
+            --spawn_strategy=local \
+            --strategy=TestRunner=local \
+            @llvm//tools:msvc_action_assert_test \
+            @llvm//tools:msvc_artifact_assert_test \
+            @llvm//tools:msvc_tool_probe_test
+
       - name: bazel test //...
         id: bazel_test
         env:
@@ -146,6 +189,24 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
+
+      - name: Host-local MSVC tool protocol probes
+        env:
+          USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
+        working-directory: ${{ matrix.folder }}
+        shell: bash
+        run: |
+          bazel \
+            --bazelrc=.bazelrc \
+            test \
+            --config=remote \
+            --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
+            --extra_execution_platforms=@platforms//host:host \
+            --spawn_strategy=local \
+            --strategy=TestRunner=local \
+            @llvm//tools:msvc_action_assert_test \
+            @llvm//tools:msvc_artifact_assert_test \
+            @llvm//tools:msvc_tool_probe_test
 
       - name: bazel build //:main_default
         id: bazel_test
