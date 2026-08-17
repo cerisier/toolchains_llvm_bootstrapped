@@ -283,6 +283,17 @@ for both Windows ARM64 (`20eca760-623d-453b-a81e-99c4f2754561`) and x86-64
 `test.exe`. The unchanged macOS path and all three focused tests pass at
 invocation `8c303b3a-eee1-4dbc-b45e-a04e0018b537`.
 
+The third workflow, `32046398874`, passed all Linux and macOS probes. Windows
+x86-64 then failed while building rules_go's standard library: cgo routed its C
+compile through the repository toolchain, where clang correctly rejected the
+MinGW-only `-mthreads` argument under `-Werror`. The three tools have no cgo
+code or cgo dependencies, so their binaries and tests now declare
+`pure = "on"`; this prevents an irrelevant C toolchain from entering the Go
+standard-library build on either Windows architecture. The resulting aquery
+shows `CGO_ENABLED=0` on the Windows x86-64 execution platform at invocation
+`289ef8ef-2359-4119-8774-d02625dce964`; focused tests remain 3/3 green at
+`0050ff97-a30b-45e7-a8f5-a7af895eede8`.
+
 Final baseline after the module-visibility fix:
 
 ```text
