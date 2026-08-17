@@ -1,5 +1,7 @@
 # This file contains Bazel settings to apply on CI only.
 # It is referenced with a --bazelrc option in the call to bazel in ci.yaml
+startup --host_jvm_args=-Xmx6g
+
 common --config=ci
 
 # Enable remote execution on CI by default.
@@ -14,6 +16,8 @@ common --repo_contents_cache=~/.cache/bazel-repo/contents
 
 # docs: https://bazel.build/reference/command-line-reference#flag--remote_download_outputs
 common --remote_download_outputs=minimal
+
+build --jobs=100
 
 # Allows tests to run bazelisk-in-bazel, since this is the cache folder used
 # docs: https://bazel.build/reference/command-line-reference#flag--test_env
