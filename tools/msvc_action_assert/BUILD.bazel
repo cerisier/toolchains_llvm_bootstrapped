@@ -6,6 +6,7 @@ package(default_visibility = ["//visibility:public"])
 go_binary(
     name = "msvc_action_assert",
     srcs = ["main.go"],
+    pure = "on",
 )
 
 exec_test(
@@ -14,5 +15,6 @@ exec_test(
         "main.go",
         "main_test.go",
     ],
+    pure = "on",
     rule = go_test,
 )
