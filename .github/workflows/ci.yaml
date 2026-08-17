@@ -135,7 +135,6 @@ jobs:
             --bazelrc=.bazelrc \
             test \
             --config=remote \
-            --noexperimental_remote_repo_contents_cache \
             --repository_cache= \
             --repo_contents_cache= \
             --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
@@ -161,7 +160,6 @@ jobs:
           bazel \
             --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc \
             --bazelrc=.bazelrc \
-            --noexperimental_remote_repo_contents_cache \
             test \
             --repository_cache= \
             --repo_contents_cache= \
