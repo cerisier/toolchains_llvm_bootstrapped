@@ -270,6 +270,19 @@ that `--repo_contents_cache` remains supported and the corrected exact probe
 command passed locally at invocation
 `33578e63-a6d1-4634-91a6-4b76ba2cbd31` (3/3).
 
+The replacement workflow, `32045177588`, passed all four Linux probes and both
+macOS probes. Windows ARM64 completed 6,025 build actions, then all three tests
+failed before their code ran because the shared `exec_test` wrapper exposed an
+extensionless executable symlink; Go's Windows launcher requires the `.exe`
+path. Windows x86-64 was still building the same graph. The helper now declares
+a `.exe` wrapper whenever its exec-configured inner executable has that
+extension, while preserving the existing Unix output path. This is a shared
+helper correctness fix, not probe-specific special casing. Bazel 9.2 cquery
+for both Windows ARM64 (`20eca760-623d-453b-a81e-99c4f2754561`) and x86-64
+(`19e43687-b951-488d-b85c-7ef78c5b1ad8`) resolves the wrapper output as
+`test.exe`. The unchanged macOS path and all three focused tests pass at
+invocation `8c303b3a-eee1-4dbc-b45e-a04e0018b537`.
+
 Final baseline after the module-visibility fix:
 
 ```text
