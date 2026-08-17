@@ -3,6 +3,7 @@
 import re
 import os
 import sys
+import time
 import urllib.request
 import urllib.parse
 import dataclasses
@@ -28,6 +29,9 @@ logger = logging.getLogger(__name__)
 # https://gist.github.com/meyer/b14c87d162366f0428a99cd2ff0d0b8b
 # Updated for macOS 16
 SUCATALOG_URL = "https://swscan.apple.com/content/catalogs/others/index-26-15-14-13-12-10.16-10.15-10.14-10.13-10.12-10.11-10.10-10.9-mountainlion-lion-snowleopard-leopard.merged-1.sucatalog"
+WAYBACK_ACCEPT_HEADER = "text/html,application/xhtml+xml,application/xml"
+WAYBACK_SAVE_MAX_ATTEMPTS = 30
+WAYBACK_SAVE_DEFAULT_RETRY_SECONDS = 6
 
 # Where we put downloaded pkgs (stable across the run, easy to inspect/cache)
 TMP_ROOT = Path("/tmp/apple_sucatalog")
@@ -73,6 +77,7 @@ class MacOSSDKUpdate:
     sdk_version: str
     url: str
     sha256: str
+    archive_url: str | None = None
 
 
 ParsedSuCatalog = dict[str, dict[PackageName, SuCatalogPackage]]
@@ -267,6 +272,165 @@ def latest_nmos_sdk_update(catalog: ParsedSuCatalog) -> MacOSSDKUpdate:
     )
 
 
+def _wayback_snapshot_url(url: str, timestamp: Any, original_url: Any) -> str:
+    if not isinstance(timestamp, str) or re.fullmatch(r"\d{14}", timestamp) is None:
+        raise RuntimeError(
+            f"Invalid Wayback Machine snapshot timestamp for {url}: {timestamp!r}"
+        )
+    if original_url != url:
+        raise RuntimeError(
+            "Wayback Machine snapshot archives a different URL: "
+            f"{original_url!r} != {url!r}"
+        )
+    return f"https://web.archive.org/web/{timestamp}id_/{url}"
+
+
+def find_wayback_snapshot(url: str) -> str | None:
+    cdx_url = "https://web.archive.org/cdx/search/cdx?" + urllib.parse.urlencode(
+        {
+            "url": url,
+            "output": "json",
+            "filter": "statuscode:200",
+            "fl": "timestamp,original,statuscode",
+            "matchType": "exact",
+            "limit": "1",
+            "gzip": "false",
+        }
+    )
+    try:
+        with urllib.request.urlopen(cdx_url) as response:
+            body = response.read()
+        entries = json.loads(body) if body.strip() else []
+    except (OSError, json.JSONDecodeError, UnicodeError) as exc:
+        raise RuntimeError(
+            f"Could not query the Wayback Machine CDX index for {url}: {exc}"
+        ) from exc
+
+    if not isinstance(entries, list):
+        raise RuntimeError(f"Invalid Wayback Machine CDX response for {url}")
+    if not entries:
+        return None
+    if entries[0] != ["timestamp", "original", "statuscode"]:
+        raise RuntimeError(f"Invalid Wayback Machine CDX response header for {url}")
+    if len(entries) == 1:
+        return None
+
+    entry = entries[1]
+    if not isinstance(entry, list) or len(entry) != 3:
+        raise RuntimeError(f"Invalid Wayback Machine CDX snapshot for {url}: {entry!r}")
+
+    timestamp, original_url, status = entry
+    if str(status) != "200":
+        raise RuntimeError(
+            f"Wayback Machine CDX snapshot returned status {status!r} for {url}"
+        )
+    return _wayback_snapshot_url(url, timestamp, original_url)
+
+
+def _wait_for_wayback_capture(url: str, job_id: str) -> str:
+    request = urllib.request.Request(
+        f"https://web.archive.org/save/status/{job_id}",
+        headers={"Accept": WAYBACK_ACCEPT_HEADER},
+    )
+
+    for attempt in range(WAYBACK_SAVE_MAX_ATTEMPTS):
+        try:
+            with urllib.request.urlopen(request) as response:
+                status = json.loads(response.read())
+                retry_after = response.headers.get("Retry-After")
+        except (OSError, json.JSONDecodeError, UnicodeError) as exc:
+            raise RuntimeError(
+                f"Could not query Wayback Machine capture {job_id} for {url}: {exc}"
+            ) from exc
+
+        if not isinstance(status, dict):
+            raise RuntimeError(
+                f"Invalid Wayback Machine capture response for {url}: {status!r}"
+            )
+
+        capture_status = status.get("status")
+        if capture_status == "success":
+            return _wayback_snapshot_url(
+                url,
+                status.get("timestamp"),
+                status.get("original_url"),
+            )
+
+        if capture_status != "pending":
+            message = status.get("message", capture_status)
+            raise RuntimeError(
+                f"Wayback Machine could not capture {url}: {message}"
+            )
+
+        if attempt == WAYBACK_SAVE_MAX_ATTEMPTS - 1:
+            break
+
+        delay = WAYBACK_SAVE_DEFAULT_RETRY_SECONDS
+        if retry_after is not None:
+            try:
+                delay = min(max(int(retry_after), 1), 30)
+            except (TypeError, ValueError):
+                logger.warning(
+                    "Invalid Wayback Machine Retry-After value: %r",
+                    retry_after,
+                )
+        time.sleep(delay)
+
+    raise RuntimeError(
+        f"Wayback Machine capture {job_id} for {url} did not finish after "
+        f"{WAYBACK_SAVE_MAX_ATTEMPTS} status checks; MODULE.bazel was not updated"
+    )
+
+
+def ensure_wayback_snapshot(url: str, *, save: bool = True) -> str:
+    snapshot_url = find_wayback_snapshot(url)
+    if snapshot_url is not None:
+        return snapshot_url
+
+    if not save:
+        raise RuntimeError(
+            f"No available Wayback Machine snapshot exists for {url}; "
+            "--dry-run cannot create a snapshot"
+        )
+
+    form = urllib.parse.urlencode(
+        {
+            "url": url,
+            "force_get": "1",
+            "skip_first_archive": "1",
+        }
+    )
+    request = urllib.request.Request(
+        f"https://web.archive.org/save/?{form}",
+        data=form.encode("ascii"),
+        headers={
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Accept": WAYBACK_ACCEPT_HEADER,
+        },
+        method="POST",
+    )
+    logger.info("Requesting a Wayback Machine snapshot for %s", url)
+    try:
+        with urllib.request.urlopen(request) as response:
+            response_text = response.read(1024 * 1024).decode(
+                "utf-8",
+                errors="replace",
+            )
+    except OSError as exc:
+        raise RuntimeError(
+            f"Could not save {url} in the Wayback Machine: {exc}; "
+            "confirm that Save Page Now permits access to the Apple package"
+        ) from exc
+
+    match = re.search(r"spn2-[a-z0-9-]+", response_text)
+    if match is None:
+        raise RuntimeError(
+            f"Wayback Machine did not return a capture job ID for {url}; "
+            "MODULE.bazel was not updated"
+        )
+    return _wait_for_wayback_capture(url, match.group(0))
+
+
 def module_path_from_env() -> Path:
     workspace = os.environ.get("BUILD_WORKSPACE_DIRECTORY")
     if workspace:
@@ -282,6 +446,25 @@ def replace_single(pattern: str, replacement: str, text: str, *, field_name: str
 
 
 def update_osx_from_archive(module_text: str, update: MacOSSDKUpdate) -> str:
+    if update.archive_url is None:
+        raise RuntimeError(
+            "Cannot update osx.from_archive without a confirmed "
+            "Wayback Machine snapshot"
+        )
+    match = re.fullmatch(
+        r"https?://web\.archive\.org/web/"
+        r"(?P<timestamp>\d{14})(?:[A-Za-z]+_)?/"
+        r"(?P<original>https?://.+)",
+        update.archive_url,
+    )
+    if match is None:
+        raise RuntimeError(f"Invalid Wayback Machine snapshot URL: {update.archive_url}")
+    archive_url = _wayback_snapshot_url(
+        update.url,
+        match.group("timestamp"),
+        match.group("original"),
+    )
+
     block_pattern = re.compile(
         r"(?P<block>osx\.from_archive\(\n.*?\n\))",
         re.DOTALL,
@@ -316,6 +499,17 @@ def update_osx_from_archive(module_text: str, update: MacOSSDKUpdate) -> str:
         f'        "{update.url}",',
         block,
         field_name="url",
+    )
+    block = replace_single(
+        (
+            r'^        "https?://web\.archive\.org/web/'
+            r'\d{14}(?:[A-Za-z]+_)?/'
+            r'https://swcdn\.apple\.com/content/downloads/[^"]+/'
+            r'CLTools_macOSNMOS_SDK\.pkg",$'
+        ),
+        f'        "{archive_url}",',
+        block,
+        field_name="archive_url",
     )
 
     return module_text[: match.start("block")] + block + module_text[match.end("block") :]
@@ -356,6 +550,7 @@ def main(argv: list[str]) -> int:
 
     catalog = parse_sucatalog(args.catalog_url)
     update = latest_nmos_sdk_update(catalog)
+    update.archive_url = ensure_wayback_snapshot(update.url, save=not args.dry_run)
 
     module_path = args.module
     module_text = module_path.read_text()

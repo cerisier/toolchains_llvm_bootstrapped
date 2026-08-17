@@ -1,7 +1,7 @@
 load("@bazel_lib//:bzl_library.bzl", "bzl_library")
 load("@llvm//toolchain:selects.bzl", "platform_llvm_binary")
 load("@llvm//tools:defs.bzl", "TOOLCHAIN_BINARIES")
-load("@rules_python//python:defs.bzl", "py_binary")
+load("@rules_python//python:defs.bzl", "py_binary", "py_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -20,6 +20,17 @@ py_binary(
     main = "update_osx_sdk.py",
     python_version = "PY3",
     tags = ["manual"],
+)
+
+py_test(
+    name = "update_osx_sdk_test",
+    srcs = [
+        "update_osx_sdk.py",
+        "update_osx_sdk_test.py",
+    ],
+    imports = ["."],
+    main = "update_osx_sdk_test.py",
+    python_version = "PY3",
 )
 
 bzl_library(
