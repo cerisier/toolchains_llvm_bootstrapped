@@ -22,6 +22,36 @@ py_binary(
     tags = ["manual"],
 )
 
+alias(
+    name = "msvc_action_assert",
+    actual = "//tools/msvc_action_assert",
+)
+
+test_suite(
+    name = "msvc_action_assert_test",
+    tests = ["//tools/msvc_action_assert:test"],
+)
+
+alias(
+    name = "msvc_artifact_assert",
+    actual = "//tools/msvc_artifact_assert",
+)
+
+test_suite(
+    name = "msvc_artifact_assert_test",
+    tests = ["//tools/msvc_artifact_assert:test"],
+)
+
+alias(
+    name = "msvc_tool_probe",
+    actual = "//tools/msvc_tool_probe",
+)
+
+test_suite(
+    name = "msvc_tool_probe_test",
+    tests = ["//tools/msvc_tool_probe:test"],
+)
+
 bzl_library(
     name = "defs",
     srcs = ["defs.bzl"],

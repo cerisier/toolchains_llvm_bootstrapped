@@ -1,0 +1,35 @@
+load("@llvm//:defs.bzl", "exec_test")
+load("@rules_go//go:def.bzl", "go_binary", "go_test")
+
+package(default_visibility = ["//visibility:public"])
+
+go_binary(
+    name = "msvc_artifact_assert",
+    srcs = ["main.go"],
+)
+
+exec_test(
+    name = "test",
+    srcs = [
+        "main.go",
+        "main_test.go",
+    ],
+    env = {
+        "CLANG_CL": "$(rlocationpath //tools:clang-cl)",
+        "LLD_LINK": "$(rlocationpath //tools:lld-link)",
+        "LLVM_AR": "$(rlocationpath //tools:llvm-ar)",
+        "LLVM_NM": "$(rlocationpath //tools:llvm-nm)",
+        "LLVM_OBJDUMP": "$(rlocationpath //tools:llvm-objdump)",
+        "LLVM_READOBJ": "$(rlocationpath //tools:llvm-readobj)",
+    },
+    rule = go_test,
+    tools = [
+        "//tools:clang-cl",
+        "//tools:lld-link",
+        "//tools:llvm-ar",
+        "//tools:llvm-nm",
+        "//tools:llvm-objdump",
+        "//tools:llvm-readobj",
+    ],
+    deps = ["@rules_go//go/runfiles"],
+)
