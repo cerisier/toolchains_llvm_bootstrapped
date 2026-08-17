@@ -257,6 +257,19 @@ Current CI uses native host-local execution for Linux x86-64/ARM64, macOS
 x86-64/ARM64, and Windows x86-64/ARM64. Final workflow run IDs/results are
 recorded in **Closeout** after the branch is pushed.
 
+The first native workflow run, `32044724795`, reached the Windows probe step
+but Bazel 9.2 rejected the repository's obsolete
+`--noexperimental_remote_repo_contents_cache` option before analysis on both
+Windows architectures. The run was canceled after reproducing the same root
+cause on x86-64 and ARM64. The option was removed from both the new probe step
+and the existing Windows test command; the remaining explicit empty repository
+cache settings are preserved. macOS ARM64 and both started Linux x86-64 probe
+jobs had already passed; macOS x86-64 and Linux ARM64 were canceled before a
+result. This run is diagnostic, not a completed gate. Bazel 9.2 help confirms
+that `--repo_contents_cache` remains supported and the corrected exact probe
+command passed locally at invocation
+`33578e63-a6d1-4634-91a6-4b76ba2cbd31` (3/3).
+
 Final baseline after the module-visibility fix:
 
 ```text
