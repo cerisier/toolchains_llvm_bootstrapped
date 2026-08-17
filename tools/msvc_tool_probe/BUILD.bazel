@@ -6,6 +6,7 @@ package(default_visibility = ["//visibility:public"])
 go_binary(
     name = "msvc_tool_probe",
     srcs = ["main.go"],
+    pure = "on",
 )
 
 exec_test(
@@ -19,6 +20,7 @@ exec_test(
         "LLD_LINK": "$(rlocationpath //tools:lld-link)",
         "LLVM_AR": "$(rlocationpath //tools:llvm-ar)",
     },
+    pure = "on",
     rule = go_test,
     tools = [
         "//tools:clang-cl",
