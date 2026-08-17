@@ -633,10 +633,10 @@ this goal.
 | public semantics unapproved | clear: owner approved enumerated semantics |
 | EULA authority | clear for private fetch/build |
 | payload redistribution | clear only because redistribution is forbidden |
-| missing core tool | pending final native six-host workflow; local/RBE evidence passes |
-| dependency/response protocol | local/RBE evidence passes; native CI gate remains |
+| missing core tool | clear: all six native exec hosts passed the checked-in probes |
+| dependency/response protocol | clear: local/RBE and native CI evidence passes |
 | SDK release/API | windows_support 0.2.0 observed |
-| case model | case-sensitive APFS passed; Linux CI gate remains |
+| case model | clear: case-sensitive APFS and Linux CI passed |
 | import library/PDB | direct x86-64/ARM64 proof and representable rules_cc outputs |
 | CRT/STL conflict | explicit validation contract |
 | shared libc++ + `/MT` | stable reject |
@@ -646,4 +646,29 @@ this goal.
 
 ## Closeout
 
-To be filled after final review, commit, push, and the native six-host workflow.
+Status: complete. Work stopped before Layer 1.
+
+- Branch: `cerisier/windows-msvc-phase0`.
+- Worktree:
+  `/Users/corentinkerisit/code/github.com/hermeticbuild/hermetic-llvm-msvc-phase0`.
+- Implementation commits: `5521610cf8d2e0ead4e856441272d6fb960b88f8`,
+  `937e4f30fb1dceee6bedac8151405c35a3c69015`,
+  `dbd2e5aaee421da90cda8fd3a8eeaeb142ecce0c`, and
+  `396058720cb3f703023eb973c4d2ed1ce916c914`.
+- Final GitHub Actions run: `32047134011`, attempt 2, head
+  `396058720cb3f703023eb973c4d2ed1ce916c914`; all 38 jobs passed.
+- Required probe jobs passed: Windows ARM64 `95442248256`, Windows x86-64
+  `95442248333`, Linux x86-64 last release candidate `95442249047`, Linux
+  ARM64 Bazel 8 `95442249179`, Linux ARM64 last release candidate
+  `95442250112`, Linux x86-64 Bazel 8 `95442274780`, macOS ARM64
+  `95442279750`, and macOS x86-64 `95442293267`.
+- Attempt 1 proved all required probes and Windows full jobs, then an unrelated
+  Linux ARM64 root suite failed after repeated BuildBuddy TLS negotiation
+  disconnects crashed Bazel with exit 33. The failed-only rerun passed,
+  including root job `95442247646`.
+- Structured autoreview was clean for the complete Phase 0 patch, each
+  subsequent Windows CI correction, and the final evidence-only closeout
+  (`patch is correct`, confidence 0.90).
+- No README or product public API changed. No Microsoft payload was
+  redistributed. No permanent Python was introduced.
+- Phase 0 is not a product stack layer, so no stacked PR was submitted.
