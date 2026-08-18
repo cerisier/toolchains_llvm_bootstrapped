@@ -127,7 +127,7 @@ windows_msvc_test = rule(
     test = True,
 )
 
-def _windows_msvc_runtime_optimization_transition_impl(settings, attr):
+def _windows_msvc_runtime_optimization_transition_impl(_settings, attr):
     return {
         "//command_line_option:compilation_mode": "opt" if attr.runtime_debug else "dbg",
         "//command_line_option:platforms": str(attr.target_platform),
