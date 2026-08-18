@@ -298,5 +298,17 @@ reverified. At the owner's direction, a final redundant review pass was stopped
 after more than 20 minutes without a result; remaining test-hardening-only
 suggestions are explicitly out of scope for closeout.
 
-Pending task-owned commits, stack initialization, draft PR submission, and
-final six-host CI.
+The approved one-layer stack is registered above `main` and draft PR #711 was
+submitted with `gh stack submit --auto`. The first complete CI pass proved the
+Layer 1 jobs on Linux x86-64, Linux ARM64, and macOS Intel. It also exposed two
+cross-host infrastructure defects: macOS ARM64 exhausted host threads under the
+repository-wide `--jobs=800` remote default, and native Windows uses manifest
+runfiles rather than a symlink tree. The action-graph job now caps its own
+remote fan-out at 100 jobs, matching the repository's established macOS memory
+mitigation. The artifact verifiers now resolve transitioned outputs and host
+tools through either runfiles representation, preserving native Windows
+artifact inspection rather than skipping it. A representative four-target
+artifact/resource/MinGW suite passed after that change in BuildBuddy invocation
+`d82ca04f-4a07-4abd-96ff-6235062e2bcd`.
+
+Pending final task-owned commit, stack resubmission, and green six-host CI.
