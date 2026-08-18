@@ -338,4 +338,16 @@ DEF flows in invocations `9ecf98d9-160b-42f2-aab3-60b69b5e1f1f`,
 `736868ea-7609-45f7-ad67-78ae15fe1892`, and
 `71ace41d-e43b-4a2b-8489-62a705c32532`.
 
+CI run `32161040633` proved native Windows ARM64 execution after the DLL fix,
+then exposed an exec-personality defect in the remote action-graph phase. Two
+MSVC artifact-renaming rules had disabled Bazel Skylib's action-free symlink
+path, causing the Windows client to select Git Bash and send its absolute
+`C:\Program Files\Git\...\bash.exe` path to a Linux ARM64 worker. The
+`clang_rt.builtins.lib` and `libc++.lib` naming targets now use declared
+symlink actions, preserving their required output names without a host tool.
+The resulting ARM64 aquery contains Linux ARM64 `Symlink` actions for both
+targets and no absolute host executable in invocation
+`12587f3d-d984-4c6c-837a-9b3d9899769f`; the four representative ARM64 outputs
+then built remotely in `c814475f-62db-4c2d-920f-463c96506fd9`.
+
 Pending final task-owned commit, stack resubmission, and green six-host CI.

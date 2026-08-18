@@ -787,14 +787,14 @@ cc_runtime_stage0_static_library(
 )
 
 # MSVC's compiler-rt builtins are already one ordinary cc_library archive.
-# Copy that archive to Clang's exact resource-directory name; the transitive
+# Expose that archive under Clang's exact resource-directory name; the transitive
 # cc_static_library validator is unnecessary and currently loses its hosted
 # validator executable across the runtime transition on remote exec hosts.
 copy_file(
     name = "clang_rt.builtins.static.msvc",
     src = ":builtins",
     out = "clang_rt.builtins.lib",
-    allow_symlink = False,
+    allow_symlink = True,
 )
 
 # Toolchains may consume this archive as an embedded runtime. Force its build
