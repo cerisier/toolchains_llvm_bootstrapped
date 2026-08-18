@@ -326,4 +326,16 @@ ARM64 native matrix accepted that ordering in invocation
 native Windows, whose rules_shell launcher cannot execute that cross-target
 test.
 
+CI run `32159114719` proved the final Linux and macOS four-host set and advanced
+native Windows ARM64 through execution. C smoke plus all eight libc++ and
+`exception_ptr` `/MD`/`/MT` binaries ran successfully; only the three DLL
+consumers exited with Windows `STATUS_DLL_NOT_FOUND`. The owning transition
+test wrapper had relocated each executable below a label-specific directory
+without relocating its declared `runtime_dynamic_libraries`. It now forwards
+those output-group files beside the executable. ARM64 cqueries show the correct
+EXE/DLL pairs for ordinary `__declspec(dllexport)`, explicit DEF, and generated
+DEF flows in invocations `9ecf98d9-160b-42f2-aab3-60b69b5e1f1f`,
+`736868ea-7609-45f7-ad67-78ae15fe1892`, and
+`71ace41d-e43b-4a2b-8489-62a705c32532`.
+
 Pending final task-owned commit, stack resubmission, and green six-host CI.

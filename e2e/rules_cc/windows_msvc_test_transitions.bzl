@@ -93,14 +93,33 @@ def _windows_msvc_test_impl(ctx):
         target_file = executable,
         is_executable = True,
     )
+
+    forwarded_files = [forwarded_executable]
+    if OutputGroupInfo in target:
+        runtime_libraries = getattr(
+            target[OutputGroupInfo],
+            "runtime_dynamic_libraries",
+            depset(),
+        ).to_list()
+        for runtime_library in runtime_libraries:
+            forwarded_library = ctx.actions.declare_file(paths.join(
+                ctx.label.name,
+                runtime_library.basename,
+            ))
+            ctx.actions.symlink(
+                output = forwarded_library,
+                target_file = runtime_library,
+            )
+            forwarded_files.append(forwarded_library)
+
     result = [DefaultInfo(
         executable = forwarded_executable,
         files = depset(
-            direct = [forwarded_executable],
+            direct = forwarded_files,
             transitive = [default_info.files],
         ),
         runfiles = default_info.default_runfiles.merge(
-            ctx.runfiles([forwarded_executable]),
+            ctx.runfiles(forwarded_files),
         ),
     )]
     if RunEnvironmentInfo in target:
