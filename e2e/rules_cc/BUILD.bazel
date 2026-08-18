@@ -1386,6 +1386,7 @@ cc_library(
     windows_msvc_runtime_optimization_probe(
         name = "windows_msvc_runtime_optimization_{}".format(mode),
         runtime_debug = runtime_debug,
+        tags = ["manual"],
         target = ":windows_msvc_runtime_optimization_{}_library".format(mode),
         target_platform = "@llvm//platforms:windows_x86_64_msvc",
     )
