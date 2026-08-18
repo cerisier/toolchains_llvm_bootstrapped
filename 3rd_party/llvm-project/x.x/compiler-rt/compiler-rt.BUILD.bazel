@@ -21,10 +21,46 @@ load("@llvm//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
 load("@llvm//toolchain/runtimes:cc_internal_symbolizer_object.bzl", "cc_internal_symbolizer_object")
 load("@llvm//toolchain/runtimes:cc_runtime_shared_library.bzl", "cc_runtime_stage0_shared_library")
 load("@llvm//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_static_library")
-load("@llvm//toolchain/runtimes:cc_stage0_object.bzl", "cc_stage0_object")
+load("@llvm//toolchain/runtimes:cc_stage0_object.bzl", "cc_stage0_object", "stage0_files")
 load("@llvm//toolchain/runtimes:cc_unsanitized_library.bzl", "cc_unsanitized_library")
 load("@llvm-project//:vars.bzl", "LLVM_VERSION_MAJOR")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
+selects.config_setting_group(
+    name = "windows_msvc",
+    match_any = [
+        "@llvm//platforms/config:windows_x86_64_msvc",
+        "@llvm//platforms/config:windows_aarch64_msvc",
+    ],
+)
+
+config_setting(
+    name = "windows_x86_64_msvc_optimized",
+    constraint_values = [
+        "@llvm//constraints/windows/abi:msvc",
+        "@platforms//cpu:x86_64",
+        "@platforms//os:windows",
+    ],
+    flag_values = {"@llvm//config:runtimes_optimization_mode": "optimized"},
+)
+
+config_setting(
+    name = "windows_aarch64_msvc_optimized",
+    constraint_values = [
+        "@llvm//constraints/windows/abi:msvc",
+        "@platforms//cpu:aarch64",
+        "@platforms//os:windows",
+    ],
+    flag_values = {"@llvm//config:runtimes_optimization_mode": "optimized"},
+)
+
+selects.config_setting_group(
+    name = "windows_msvc_optimized",
+    match_any = [
+        ":windows_x86_64_msvc_optimized",
+        ":windows_aarch64_msvc_optimized",
+    ],
+)
 
 # diff_tests asserting the weak-symbol lists in weak_symbols.bzl stay in sync
 # with upstream's compiler-rt/lib/<name>/weak_symbols.txt (run on any platform).
@@ -258,6 +294,11 @@ filegroup(
 )
 
 filegroup(
+    name = "builtins_x86_arch_sources_msvc",
+    srcs = ["lib/builtins/cpu_model/x86.c"],
+)
+
+filegroup(
     name = "builtins_x86_80_bit_sources",
     srcs = [
         "lib/builtins/divxc3.c",
@@ -279,15 +320,24 @@ filegroup(
 
 filter_builtin_sources(
     name = "builtins_x86_64_sources",
-    srcs = [
-        "lib/builtins/x86_64/floatdidf.c",
-        "lib/builtins/x86_64/floatdisf.c",
-        "lib/builtins/x86_64/floatdixf.c",  # if not ANDROID
-        ":builtins_generic_srcs",
-        ":builtins_generic_tf_sources",
-        ":builtins_x86_80_bit_sources",
-        ":builtins_x86_arch_sources",
-    ] + select({
+    srcs = select({
+        ":windows_msvc": [
+            "lib/builtins/x86_64/floatdidf.c",
+            "lib/builtins/x86_64/floatdisf.c",
+            ":builtins_generic_srcs",
+            ":builtins_x86_arch_sources_msvc",
+        ],
+        "//conditions:default": [
+            "lib/builtins/x86_64/floatdidf.c",
+            "lib/builtins/x86_64/floatdisf.c",
+            "lib/builtins/x86_64/floatdixf.c",  # if not ANDROID
+            ":builtins_generic_srcs",
+            ":builtins_generic_tf_sources",
+            ":builtins_x86_80_bit_sources",
+            ":builtins_x86_arch_sources",
+        ],
+    }) + select({
+        ":windows_msvc": [],
         "@platforms//os:windows": [
             "lib/builtins/x86_64/chkstk.S",
         ],
@@ -314,6 +364,7 @@ filter_builtin_sources(
         ":builtins_generic_srcs",
         ":builtins_generic_tf_sources",
     ] + select({
+        ":windows_msvc": [],
         "@platforms//os:windows": [
             "lib/builtins/aarch64/chkstk.S",  # if MINGW
         ],
@@ -584,14 +635,30 @@ cc_library(
         ],
         "//conditions:default": [],
     }),
-    copts = [
-        "-fno-builtin",
-        "-std=c11",
-        "-fvisibility=hidden",
-        # "-Wbuiltin-declaration-mismatch",
-    ] + select({
+    copts = select({
+        ":windows_msvc": [
+            "/clang:-fno-builtin",
+            "/clang:-std=c11",
+            "/clang:-fvisibility=hidden",
+        ],
+        "//conditions:default": [
+            "-fno-builtin",
+            "-std=c11",
+            "-fvisibility=hidden",
+            # "-Wbuiltin-declaration-mismatch",
+        ],
+    }) + select({
+        ":windows_msvc_optimized": [
+            "/clang:-fomit-frame-pointer",
+        ],
         "@llvm//config:runtimes_optimization_mode_optimized": [
             "-fomit-frame-pointer",
+        ],
+        "//conditions:default": [],
+    }) + select({
+        ":windows_msvc": [
+            "/clang:-Wno-missing-declarations",
+            "/clang:-Wno-pragma-pack",
         ],
         "//conditions:default": [],
     }) + select({
@@ -625,6 +692,7 @@ cc_library(
         "@platforms//os:macos": [
             # on macOS we implicitly use SDK provided headers
         ],
+        ":windows_msvc": [],
         "@platforms//os:windows": [
             "@mingw//:mingw_headers",
         ],
@@ -711,11 +779,39 @@ cc_library(
 )
 
 cc_runtime_stage0_static_library(
-    name = "clang_rt.builtins.static",
+    name = "clang_rt.builtins.static.transitive",
     visibility = ["//visibility:public"],
     deps = [
         ":builtins",
     ],
+)
+
+# MSVC's compiler-rt builtins are already one ordinary cc_library archive.
+# Copy that archive to Clang's exact resource-directory name; the transitive
+# cc_static_library validator is unnecessary and currently loses its hosted
+# validator executable across the runtime transition on remote exec hosts.
+copy_file(
+    name = "clang_rt.builtins.static.msvc",
+    src = ":builtins",
+    out = "clang_rt.builtins.lib",
+    allow_symlink = False,
+)
+
+# Toolchains may consume this archive as an embedded runtime. Force its build
+# through the stage0 runtime configuration so that consumer toolchains do not
+# recursively depend on the runtime they are building.
+stage0_files(
+    name = "clang_rt.builtins.static.msvc.stage0",
+    srcs = [":clang_rt.builtins.static.msvc"],
+)
+
+alias(
+    name = "clang_rt.builtins.static",
+    actual = select({
+        ":windows_msvc": ":clang_rt.builtins.static.msvc.stage0",
+        "//conditions:default": ":clang_rt.builtins.static.transitive",
+    }),
+    visibility = ["//visibility:public"],
 )
 
 CRT_CFLAGS = [

@@ -397,6 +397,46 @@ cc_artifact_name_pattern(
 )
 
 cc_artifact_name_pattern(
+    name = "windows_msvc_object_file_pattern",
+    category = "@rules_cc//cc/toolchains/artifacts:object_file",
+    extension = ".obj",
+    prefix = "",
+    visibility = ["//visibility:public"],
+)
+
+cc_artifact_name_pattern(
+    name = "windows_msvc_static_library_pattern",
+    category = "@rules_cc//cc/toolchains/artifacts:static_library",
+    extension = ".lib",
+    prefix = "",
+    visibility = ["//visibility:public"],
+)
+
+cc_artifact_name_pattern(
+    name = "windows_msvc_alwayslink_static_library_pattern",
+    category = "@rules_cc//cc/toolchains/artifacts:alwayslink_static_library",
+    extension = ".lo.lib",
+    prefix = "",
+    visibility = ["//visibility:public"],
+)
+
+cc_artifact_name_pattern(
+    name = "windows_dynamic_library_pattern",
+    category = "@rules_cc//cc/toolchains/artifacts:dynamic_library",
+    extension = ".dll",
+    prefix = "",
+    visibility = ["//visibility:public"],
+)
+
+cc_artifact_name_pattern(
+    name = "windows_interface_library_pattern",
+    category = "@rules_cc//cc/toolchains/artifacts:interface_library",
+    extension = ".if.lib",
+    prefix = "",
+    visibility = ["//visibility:public"],
+)
+
+cc_artifact_name_pattern(
     name = "macos_dynamic_library_pattern",
     category = "@rules_cc//cc/toolchains/artifacts:dynamic_library",
     extension = ".dylib",

@@ -125,30 +125,39 @@ cc_args(
     actions = [
         "@rules_cc//cc/toolchains/actions:compile_actions",
     ],
-    args = [
-        # No debug symbols.
-        # Maybe we should enable https://gcc.gnu.org/wiki/DebugFission for opt or
-        # even generally? However, that can't happen here, as it requires special
-        # handling in Bazel.
-        "-g0",
+    args = select({
+        "//constraints/windows/abi:msvc": [
+            "/O2",
+            "/DNDEBUG",
+            "/Gy",
+            "/Gw",
+            "/Zc:inline",
+        ],
+        "//conditions:default": [
+            # No debug symbols.
+            # Maybe we should enable https://gcc.gnu.org/wiki/DebugFission for opt or
+            # even generally? However, that can't happen here, as it requires special
+            # handling in Bazel.
+            "-g0",
 
-        # Conservative choice for -O
-        # -O3 can increase binary size and even slow down the resulting binaries.
-        # Profile first and / or use FDO if you need better performance than this.
-        "-O2",
+            # Conservative choice for -O
+            # -O3 can increase binary size and even slow down the resulting binaries.
+            # Profile first and / or use FDO if you need better performance than this.
+            "-O2",
 
-        # Security hardening on by default.
-        # Conservative choice; -D_FORTIFY_SOURCE=2 may be unsafe in some cases.
-        "-D_FORTIFY_SOURCE=1",
+            # Security hardening on by default.
+            # Conservative choice; -D_FORTIFY_SOURCE=2 may be unsafe in some cases.
+            "-D_FORTIFY_SOURCE=1",
 
-        # Disable assertions
-        "-DNDEBUG",
+            # Disable assertions
+            "-DNDEBUG",
 
-        # Removal of unused code and data at link time (can this increase binary
-        # size in some cases?).
-        "-ffunction-sections",
-        "-fdata-sections",
-    ],
+            # Removal of unused code and data at link time (can this increase binary
+            # size in some cases?).
+            "-ffunction-sections",
+            "-fdata-sections",
+        ],
+    }),
 )
 
 # Use a stub feature so we can properly control flag ordering.
@@ -172,18 +181,24 @@ cc_args(
     actions = [
         "@rules_cc//cc/toolchains/actions:compile_actions",
     ],
-    args = [
-        # windows c runtime requires -D_DEBUG if using debug libraries
-        "-D_DEBUG",
+    args = select({
+        "//constraints/windows/abi:msvc": [
+            "/Od",
+            "/Z7",
+        ],
+        "//conditions:default": [
+            # windows c runtime requires -D_DEBUG if using debug libraries
+            "-D_DEBUG",
 
-        # Clang has -Og for compatibility with GCC, but currently it is just equivalent
-        # to -O1. Besides potentially impairing debugging, -O1/-Og significantly
-        # increases compile times.
-        "-O0",
+            # Clang has -Og for compatibility with GCC, but currently it is just equivalent
+            # to -O1. Besides potentially impairing debugging, -O1/-Og significantly
+            # increases compile times.
+            "-O0",
 
-        # Debug symbols.
-        "-g",
-    ],
+            # Debug symbols.
+            "-g",
+        ],
+    }),
 )
 
 # Use a stub feature so we can properly control flag ordering.
@@ -193,6 +208,10 @@ cc_feature(
         ":dbg_compile_flags",
     ],
     feature_name = "_underlying_dbg",
+    implies = select({
+        "//constraints/windows/abi:msvc": ["//toolchain/features/msvc:generate_pdb_file"],
+        "//conditions:default": [],
+    }),
     requires_any_of = [":dbg_stub"],
 )
 

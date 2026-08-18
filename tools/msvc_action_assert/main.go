@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 )
@@ -259,24 +260,50 @@ func effectiveArguments(r resolvedAction) []string {
 	return arguments
 }
 
-func paramFilePaths(r resolvedAction) []string {
-	files := referencedParamFiles(r)
-	paths := make([]string, 0, len(files))
-	for _, file := range files {
-		paths = append(paths, file.ExecPath)
+func opaqueParamFilePaths(r resolvedAction) []string {
+	referenced := map[string]bool{}
+	for _, file := range referencedParamFiles(r) {
+		referenced[file.ExecPath] = true
 	}
+	var opaque []string
+	for _, argument := range r.Arguments {
+		if !strings.HasPrefix(argument, "@") {
+			continue
+		}
+		path := strings.Trim(strings.TrimPrefix(argument, "@"), `"`)
+		if !referenced[path] {
+			opaque = append(opaque, path)
+		}
+	}
+	sort.Strings(opaque)
+	return opaque
+}
+
+func paramFilePaths(r resolvedAction) []string {
+	found := map[string]bool{}
+	for _, file := range referencedParamFiles(r) {
+		found[file.ExecPath] = true
+	}
+	// Bazel 9's JSON aquery output records virtual parameter files only as
+	// @argv entries even with --include_param_files. Preserve full argument
+	// inspection when metadata is available, while still verifying the real
+	// response-file protocol when it is not.
+	for _, argument := range r.Arguments {
+		if strings.HasPrefix(argument, "@") {
+			found[strings.Trim(strings.TrimPrefix(argument, "@"), `"`)] = true
+		}
+	}
+	paths := make([]string, 0, len(found))
+	for path := range found {
+		paths = append(paths, path)
+	}
+	sort.Strings(paths)
 	return paths
 }
 
-func selected(r resolvedAction, want assertion) bool {
-	arguments := effectiveArguments(r)
+func selectedWithoutArguments(r resolvedAction, want assertion) bool {
 	if want.Mnemonic != "" && r.Mnemonic != want.Mnemonic {
 		return false
-	}
-	for _, needle := range want.SelectorArgvContains {
-		if !contains(arguments, needle) {
-			return false
-		}
 	}
 	for _, needle := range want.SelectorInputsContain {
 		if !contains(r.Inputs, needle) {
@@ -291,6 +318,24 @@ func selected(r resolvedAction, want assertion) bool {
 	return true
 }
 
+func selected(r resolvedAction, want assertion) (bool, error) {
+	if !selectedWithoutArguments(r, want) {
+		return false, nil
+	}
+	if len(want.SelectorArgvContains) > 0 {
+		if opaque := opaqueParamFilePaths(r); len(opaque) > 0 {
+			return false, fmt.Errorf("cannot verify argv selectors: response file contents unavailable for %s", strings.Join(opaque, ", "))
+		}
+	}
+	arguments := effectiveArguments(r)
+	for _, needle := range want.SelectorArgvContains {
+		if !contains(arguments, needle) {
+			return false, nil
+		}
+	}
+	return true, nil
+}
+
 func match(r resolvedAction, want assertion) error {
 	arguments := effectiveArguments(r)
 	if want.Mnemonic != "" && r.Mnemonic != want.Mnemonic {
@@ -298,6 +343,11 @@ func match(r resolvedAction, want assertion) error {
 	}
 	if want.ExecutableContains != "" && (len(r.Arguments) == 0 || !strings.Contains(r.Arguments[0], want.ExecutableContains)) {
 		return fmt.Errorf("executable does not contain %q", want.ExecutableContains)
+	}
+	if len(want.ArgvContains) > 0 || len(want.ArgvAbsent) > 0 || len(want.ArgvOccurrences) > 0 {
+		if opaque := opaqueParamFilePaths(r); len(opaque) > 0 {
+			return fmt.Errorf("cannot verify argv assertions: response file contents unavailable for %s", strings.Join(opaque, ", "))
+		}
 	}
 	for _, needle := range want.ArgvContains {
 		if !contains(arguments, needle) {
@@ -318,7 +368,7 @@ func match(r resolvedAction, want assertion) error {
 		if *want.ExpectedParamFiles < 0 {
 			return errors.New("expected_param_files must be nonnegative")
 		}
-		if actual := len(referencedParamFiles(r)); actual != *want.ExpectedParamFiles {
+		if actual := len(paramFilePaths(r)); actual != *want.ExpectedParamFiles {
 			return fmt.Errorf("action references %d param files, want %d", actual, *want.ExpectedParamFiles)
 		}
 	}
@@ -363,7 +413,11 @@ func match(r resolvedAction, want assertion) error {
 	return nil
 }
 
-func assertGraph(g graph, spec specification) error {
+func assertionNeedsArguments(want assertion) bool {
+	return len(want.SelectorArgvContains) > 0 || len(want.ArgvContains) > 0 || len(want.ArgvAbsent) > 0 || len(want.ArgvOccurrences) > 0
+}
+
+func assertGraphWithParamFileRoot(g graph, spec specification, paramFileRoot *string) error {
 	if len(spec.Assertions) == 0 {
 		return errors.New("specification must contain at least one assertion")
 	}
@@ -374,7 +428,16 @@ func assertGraph(g graph, spec specification) error {
 	for i, want := range spec.Assertions {
 		var selectedActions []resolvedAction
 		for _, action := range actions {
-			if selected(action, want) {
+			if paramFileRoot != nil && assertionNeedsArguments(want) && selectedWithoutArguments(action, want) {
+				if err := hydrateParamFiles(&action, *paramFileRoot); err != nil {
+					return fmt.Errorf("assertion %d response-file loading failed: %w", i+1, err)
+				}
+			}
+			selected, err := selected(action, want)
+			if err != nil {
+				return fmt.Errorf("assertion %d selection failed: %w", i+1, err)
+			}
+			if selected {
 				selectedActions = append(selectedActions, action)
 			}
 		}
@@ -397,7 +460,38 @@ func assertGraph(g graph, spec specification) error {
 	return nil
 }
 
-func run(aqueryPath, specPath string) error {
+func assertGraph(g graph, spec specification) error {
+	return assertGraphWithParamFileRoot(g, spec, nil)
+}
+
+func hydrateParamFiles(action *resolvedAction, root string) error {
+	known := map[string]bool{}
+	for _, file := range action.ParamFiles {
+		known[file.ExecPath] = true
+	}
+	for _, argument := range action.Arguments {
+		if !strings.HasPrefix(argument, "@") {
+			continue
+		}
+		path := strings.Trim(strings.TrimPrefix(argument, "@"), `"`)
+		if known[path] {
+			continue
+		}
+		contents, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(path)))
+		if err != nil {
+			return fmt.Errorf("%s response file %s is unavailable: run the owning bazel build with --materialize_param_files: %w", action.Mnemonic, path, err)
+		}
+		lines := strings.Split(strings.ReplaceAll(string(contents), "\r\n", "\n"), "\n")
+		if len(lines) > 0 && lines[len(lines)-1] == "" {
+			lines = lines[:len(lines)-1]
+		}
+		action.ParamFiles = append(action.ParamFiles, paramFile{ExecPath: path, Arguments: lines})
+		known[path] = true
+	}
+	return nil
+}
+
+func run(aqueryPath, specPath, paramFileRoot string) error {
 	if aqueryPath == "" || specPath == "" {
 		return errors.New("both -aquery and -spec are required")
 	}
@@ -409,14 +503,15 @@ func run(aqueryPath, specPath string) error {
 	if err := readJSON(specPath, &spec, true); err != nil {
 		return err
 	}
-	return assertGraph(g, spec)
+	return assertGraphWithParamFileRoot(g, spec, &paramFileRoot)
 }
 
 func main() {
 	aqueryPath := flag.String("aquery", "", "path to bazel aquery --include_param_files --output=jsonproto output")
+	paramFileRoot := flag.String("param-file-root", ".", "directory from which relative response-file paths are resolved")
 	specPath := flag.String("spec", "", "path to the JSON assertion specification")
 	flag.Parse()
-	if err := run(*aqueryPath, *specPath); err != nil {
+	if err := run(*aqueryPath, *specPath, *paramFileRoot); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}

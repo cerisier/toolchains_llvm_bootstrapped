@@ -1,0 +1,26 @@
+{
+  "assertions": [
+    {
+      "mnemonic": "CppCompile",
+      "selector_outputs_contain": [
+        "windows_x86_64_msvc-dbg-ST-",
+        "windows_msvc_runtime_optimization_optimized.obj"
+      ],
+      "expected_matches": 1,
+      "executable_contains": "clang-cl",
+      "expected_param_files": 1,
+      "inputs_contain": ["windows_msvc_runtime_optimization_optimized.c"]
+    },
+    {
+      "mnemonic": "CppCompile",
+      "selector_outputs_contain": [
+        "windows_x86_64_msvc-opt-ST-",
+        "windows_msvc_runtime_optimization_debug.obj"
+      ],
+      "expected_matches": 1,
+      "executable_contains": "clang-cl",
+      "expected_param_files": 1,
+      "inputs_contain": ["windows_msvc_runtime_optimization_debug.c"]
+    }
+  ]
+}

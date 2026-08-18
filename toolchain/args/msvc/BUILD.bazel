@@ -1,0 +1,239 @@
+load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
+load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
+
+package(default_visibility = ["//visibility:public"])
+
+cc_args(
+    name = "target_and_compatibility",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:source_compile_actions",
+    ],
+    args = select({
+        "//platforms/config:windows_x86_64_msvc": [
+            "--target=x86_64-pc-windows-msvc",
+            "/clang:-fms-compatibility-version=19.50.35717",
+        ],
+        "//platforms/config:windows_aarch64_msvc": [
+            "--target=aarch64-pc-windows-msvc",
+            "/clang:-fms-compatibility-version=19.50.35717",
+        ],
+        "//conditions:default": [],
+    }),
+)
+
+cc_args(
+    name = "hermetic_compile",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:source_compile_actions",
+    ],
+    args = [
+        "/clang:-nostdlibinc",
+        "/clang:-nobuiltininc",
+        # Keep compiler-resource paths relative in .d files so Bazel can match
+        # them against declared tool inputs on remote execution hosts.
+        "/clang:-no-canonical-prefixes",
+        "/nologo",
+        "/Brepro",
+        "/Z7",
+        "/EHsc",
+        "/GR",
+        "/bigobj",
+        "/DNOMINMAX",
+        "/D_CRT_NONSTDC_NO_WARNINGS",
+        "/D_CRT_SECURE_NO_DEPRECATE",
+        "/D_CRT_SECURE_NO_WARNINGS",
+        "/D_CRT_STDIO_ISO_WIDE_SPECIFIERS",
+        "/D_LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS",
+        "/D_LIBCPP_NO_AUTO_LINK",
+        "/clang:-Wno-builtin-macro-redefined",
+        "/D__DATE__=\"redacted\"",
+        "/D__TIMESTAMP__=\"redacted\"",
+        "/D__TIME__=\"redacted\"",
+        "/clang:-ffile-compilation-dir=.",
+        "/clang:-gno-codeview-command-line",
+    ],
+)
+
+cc_args(
+    name = "runtime_optimization_flags",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:source_compile_actions",
+    ],
+    args = select({
+        "//config:runtimes_optimization_mode_debug": [
+            "/Od",
+        ],
+        "//conditions:default": [
+            "/DNDEBUG",
+            "/O2",
+        ],
+    }),
+)
+
+cc_args(
+    name = "libcxx_include",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:source_compile_actions",
+    ],
+    args = select({
+        "//toolchain:runtimes_all": ["/imsvc{libcxx_include}"],
+        "//conditions:default": [],
+    }),
+    data = select({
+        "//toolchain:runtimes_all": ["//runtimes/cxxstdlib:headers_include_search_directory"],
+        "//conditions:default": [],
+    }),
+    format = {
+        "libcxx_include": "//runtimes/cxxstdlib:headers_include_search_directory",
+    },
+)
+
+cc_args(
+    name = "sdk_case_overlay",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:source_compile_actions",
+    ],
+    args = [
+        "/clang:-ivfsoverlay",
+        "/clang:{sdk_case_overlay}",
+    ],
+    data = ["//windows:msvc_sdk_case_overlay"],
+    format = {
+        "sdk_case_overlay": "//windows:msvc_sdk_case_overlay",
+    },
+)
+
+cc_args(
+    name = "sdk_includes",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:source_compile_actions",
+    ],
+    allowlist_include_directories = [
+        "//windows:msvc_vcruntime_headers",
+        "//windows:winsdk_shared_include",
+        "//windows:winsdk_ucrt_include",
+        "//windows:winsdk_um_include",
+        "//windows:winsdk_winrt_include",
+    ],
+    args = [
+        "/imsvc{msvc_include}",
+        "/imsvc{winsdk_ucrt_include}",
+        "/imsvc{winsdk_shared_include}",
+        "/imsvc{winsdk_um_include}",
+        "/imsvc{winsdk_winrt_include}",
+    ],
+    data = [
+        "//windows:msvc_vcruntime_headers",
+        "//windows:winsdk_shared_include",
+        "//windows:winsdk_ucrt_include",
+        "//windows:winsdk_um_include",
+        "//windows:winsdk_winrt_include",
+    ],
+    format = {
+        "msvc_include": "//windows:msvc_vcruntime_headers",
+        "winsdk_shared_include": "//windows:winsdk_shared_include",
+        "winsdk_ucrt_include": "//windows:winsdk_ucrt_include",
+        "winsdk_um_include": "//windows:winsdk_um_include",
+        "winsdk_winrt_include": "//windows:winsdk_winrt_include",
+    },
+)
+
+cc_args(
+    name = "msvc_dynamic_runtime_library_path",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = ["/LIBPATH:{msvc_dynamic_lib}"],
+    data = ["//windows:msvc_dynamic_runtime_libraries"],
+    format = {
+        "msvc_dynamic_lib": "//windows:msvc_dynamic_runtime_libraries",
+    },
+)
+
+cc_args(
+    name = "msvc_static_runtime_library_path",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = ["/LIBPATH:{msvc_static_lib}"],
+    data = ["//windows:msvc_static_runtime_libraries"],
+    format = {
+        "msvc_static_lib": "//windows:msvc_static_runtime_libraries",
+    },
+)
+
+cc_args(
+    name = "sdk_library_paths",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = [
+        "/LIBPATH:{winsdk_ucrt_lib}",
+        "/LIBPATH:{winsdk_um_lib}",
+    ],
+    data = [
+        "//windows:winsdk_ucrt_libraries",
+        "//windows:winsdk_um_libraries",
+    ],
+    format = {
+        "winsdk_ucrt_lib": "//windows:winsdk_ucrt_libraries",
+        "winsdk_um_lib": "//windows:winsdk_um_libraries",
+    },
+)
+
+# rules_cc filters dynamic_runtime_lib to shared-library-shaped artifacts.
+# Windows MSVC deliberately has no dynamic libc++ artifact, so bind the single
+# static archive directly to every complete-program link action instead.
+cc_args(
+    name = "libcxx_static_runtime_link",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = ["{libcxx_static_runtime}"],
+    data = ["//runtimes/cxxstdlib:static_runtime_lib"],
+    format = {
+        "libcxx_static_runtime": "//runtimes/cxxstdlib:static_runtime_lib",
+    },
+)
+
+# clang-cl may lower otherwise supported source operations to compiler-rt
+# helpers. Direct lld-link invocation does not discover Clang's resource
+# directory, so the target-matched archive must be an explicit link input.
+cc_args(
+    name = "compiler_rt_builtins_link",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = ["{compiler_rt_builtins}"],
+    data = ["//runtimes/compiler-rt:clang_rt.builtins.static"],
+    format = {
+        "compiler_rt_builtins": "//runtimes/compiler-rt:clang_rt.builtins.static",
+    },
+)
+
+cc_args_list(
+    name = "toolchain_prefix_args",
+    args = [
+        ":target_and_compatibility",
+        ":hermetic_compile",
+        ":libcxx_include",
+    ],
+)
+
+cc_args_list(
+    name = "toolchain_suffix_args",
+    args = [
+        ":sdk_case_overlay",
+        ":sdk_includes",
+        ":sdk_library_paths",
+    ] + select({
+        "//toolchain/features/msvc:static_crt_config": [":msvc_static_runtime_library_path"],
+        "//conditions:default": [":msvc_dynamic_runtime_library_path"],
+    }) + select({
+        "//toolchain:runtimes_all": [
+            ":libcxx_static_runtime_link",
+            ":compiler_rt_builtins_link",
+        ],
+        "//conditions:default": [],
+    }),
+)

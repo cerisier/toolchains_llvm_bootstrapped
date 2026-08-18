@@ -220,6 +220,12 @@ copy_to_resource_directory(
     srcs = select({
         "//platforms/config:none_bpfeb": {},
         "//platforms/config:none_bpfel": {},
+        "//platforms/config:windows_x86_64_msvc": {
+            "//runtimes/compiler-rt:clang_rt.builtins.static": "clang_rt.builtins",
+        },
+        "//platforms/config:windows_aarch64_msvc": {
+            "//runtimes/compiler-rt:clang_rt.builtins.static": "clang_rt.builtins",
+        },
         "//conditions:default": {
             "//runtimes/compiler-rt:clang_rt.builtins.static": "libclang_rt.builtins",
         },
@@ -239,11 +245,11 @@ copy_to_resource_directory(
         "//config:ubsan_enabled": {
             "//runtimes/compiler-rt:clang_rt.ubsan_standalone.static": "libclang_rt.ubsan_standalone",
             "//runtimes/compiler-rt:clang_rt.ubsan_standalone_cxx.static": "libclang_rt.ubsan_standalone_cxx",
-        },
+        } | ({
+            "//runtimes/compiler-rt:clang_rt.ubsan_loop_detect.static": "libclang_rt.ubsan_loop_detect",
+        } if int(LLVM_VERSION_MAJOR) >= 23 else {}),
         "//conditions:default": {},
-    }) | ({
-        "//runtimes/compiler-rt:clang_rt.ubsan_loop_detect.static": "libclang_rt.ubsan_loop_detect",
-    } if int(LLVM_VERSION_MAJOR) >= 23 else {}) | select({
+    }) | select({
         "//config:cfi_enabled": {
             "//runtimes/compiler-rt:clang_rt.cfi.static": "libclang_rt.cfi",
             "//runtimes/compiler-rt:clang_rt.cfi_diag.static": "libclang_rt.cfi_diag",

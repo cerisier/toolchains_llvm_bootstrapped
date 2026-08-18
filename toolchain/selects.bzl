@@ -43,6 +43,9 @@ def platform_module_map(exec_os, exec_cpu):
 def resource_dir_arg(exec_os, exec_cpu):
     return Label(_tool_repo(exec_os, exec_cpu) + ":compile_resource_dir")
 
+def msvc_resource_dir_arg(exec_os, exec_cpu):
+    return Label(_tool_repo(exec_os, exec_cpu) + ":compile_resource_dir_msvc")
+
 def platform_cc_tool_map(exec_os, exec_cpu):
     tool_repo = _tool_repo(exec_os, exec_cpu)
 
@@ -51,9 +54,14 @@ def platform_cc_tool_map(exec_os, exec_cpu):
     # point at further aliases that use `select`, those will resolve according to the exec platform.
     # See https://github.com/bazelbuild/bazel/issues/27623#issuecomment-3529439585 for more details.
     return select({
+        "@llvm//platforms/config:windows_x86_64_msvc": Label(tool_repo + ":tools_for_msvc_for_runtime"),
+        "@llvm//platforms/config:windows_aarch64_msvc": Label(tool_repo + ":tools_for_msvc_for_runtime"),
         "@llvm//toolchain:linux_complete": Label(tool_repo + ":tools_with_interface_libraries"),
         "@llvm//toolchain:macos_complete_with_libtool": Label(tool_repo + ":tools_with_dsym_and_libtool"),
         "@llvm//toolchain:macos_complete": Label(tool_repo + ":tools_with_dsym"),
         "@rules_cc//cc/toolchains/args/archiver_flags:use_libtool_on_apple_setting": Label(tool_repo + ":tools_with_libtool_for_runtime"),
         "//conditions:default": Label(tool_repo + ":default_tools_for_runtime"),
     })
+
+def platform_msvc_cc_tool_map(exec_os, exec_cpu):
+    return Label(_tool_repo(exec_os, exec_cpu) + ":tools_for_msvc_for_runtime")

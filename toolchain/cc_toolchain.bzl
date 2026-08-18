@@ -1,7 +1,81 @@
 load("@rules_cc//cc/toolchains:feature_set.bzl", "cc_feature_set")
 load("@rules_cc//cc/toolchains:toolchain.bzl", _cc_toolchain = "cc_toolchain")
 
-def cc_toolchain(name, tool_map, module_map = None, extra_args = []):
+def _msvc_cc_toolchain(name, tool_map, module_map, extra_args):
+    cc_feature_set(
+        name = name + "_known_features",
+        all_of = [
+            "@llvm//toolchain/features/msvc:opt",
+            "@llvm//toolchain/features/msvc:opt_stub",
+            "@llvm//toolchain/features/msvc:dbg",
+            "@llvm//toolchain/features/msvc:dbg_stub",
+            "@llvm//toolchain/features:static_link_cpp_runtimes",
+            "@llvm//toolchain/features/msvc:known_features",
+            "@llvm//toolchain/features/msvc:legacy_replacements",
+            "@llvm//toolchain/features/msvc:no_legacy_features",
+            "@llvm//toolchain/features/msvc:dynamic_linking_mode",
+        ],
+    )
+
+    cc_feature_set(
+        name = name + "_enabled_features",
+        all_of = [
+            "@llvm//toolchain/features/msvc:opt",
+            "@llvm//toolchain/features/msvc:dbg",
+            "@llvm//toolchain/features:static_link_cpp_runtimes",
+            "@llvm//toolchain/features/msvc:enabled_features",
+            "@llvm//toolchain/features/msvc:no_legacy_features",
+            # Always last: contains user compile/link arguments.
+            "@llvm//toolchain/features/msvc:legacy_replacements",
+        ],
+    )
+
+    _cc_toolchain(
+        name = name,
+        # libc++, Clang's resource headers, then VC/UCRT. This keeps libc++'s
+        # C wrapper headers first while include_next <stddef.h> reaches
+        # Clang's max_align_t before the UCRT compatibility header.
+        args = [
+            "@llvm//toolchain/args/msvc:toolchain_prefix_args",
+            # ABI validation and CRT selection are toolchain invariants, not
+            # user-disableable features.
+            "@llvm//toolchain/features/msvc:configuration_validation_args",
+        ] + select({
+            "@llvm//toolchain/features/msvc:static_crt_config": [
+                "@llvm//toolchain/features/msvc:static_crt_compile_args",
+            ],
+            "//conditions:default": [
+                "@llvm//toolchain/features/msvc:dynamic_crt_compile_args",
+            ],
+        }) + extra_args + [
+            "@llvm//toolchain/args/msvc:toolchain_suffix_args",
+        ],
+        artifact_name_patterns = [
+            "@llvm//toolchain:windows_msvc_object_file_pattern",
+            "@llvm//toolchain:windows_msvc_static_library_pattern",
+            "@llvm//toolchain:windows_msvc_alwayslink_static_library_pattern",
+            "@llvm//toolchain:windows_executable_pattern",
+            "@llvm//toolchain:windows_dynamic_library_pattern",
+            "@llvm//toolchain:windows_interface_library_pattern",
+        ],
+        compiler = "clang-cl",
+        # The MSVC args bind the static-only libc++ archive for complete links.
+        # rules_cc's dynamic_runtime_lib accepts only shared-shaped artifacts,
+        # so neither runtime attribute owns this configuration-wide input.
+        dynamic_runtime_lib = "@llvm//runtimes:none",
+        enabled_features = [name + "_enabled_features"],
+        known_features = [name + "_known_features"],
+        module_map = module_map,
+        static_runtime_lib = "@llvm//runtimes:none",
+        supports_header_parsing = False,
+        supports_param_files = True,
+        tool_map = tool_map,
+    )
+
+def cc_toolchain(name, tool_map, module_map = None, extra_args = [], msvc = False):
+    if msvc:
+        _msvc_cc_toolchain(name, tool_map, module_map, extra_args)
+        return
     cc_feature_set(
         name = name + "_known_features",
         all_of = [

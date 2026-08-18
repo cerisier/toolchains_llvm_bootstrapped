@@ -6,7 +6,7 @@ load("@llvm//3rd_party/llvm-project/21.x/libcxx:libcxx_headers.bzl", "LIBCXX_HEA
 load("@llvm//3rd_party/llvm-project/22.x/libcxx:libcxx_headers.bzl", "LIBCXX_HEADERS_FILES_22")
 load("@llvm//3rd_party/llvm-project/23.x/libcxx:libcxx_headers.bzl", "LIBCXX_HEADERS_FILES_23")
 load("@llvm//toolchain/runtimes:cc_runtime_shared_library.bzl", "cc_runtime_stage1_asan_shared_library")
-load("@llvm//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_asan_static_library")
+load("@llvm//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_asan_static_library", "cc_runtime_stage0_static_library")
 load("@llvm-project//:vars.bzl", "LLVM_VERSION_MAJOR")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
@@ -59,22 +59,56 @@ _CONFIG_SITE_THREAD_API_PTHREAD_LINES = [
     "#define _LIBCPP_HAS_THREAD_API_WIN32   0",
 ]
 
-_CONFIG_SITE_LIBCPP_VISIBILITY_LINES = [
-    "#define _LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS",
+_CONFIG_SITE_PREAMBLE_LINES = [
+    "// Generated from this LLVM line's libcxx/include/__config_site.in.",
+    "#ifndef _LIBCPP___CONFIG_SITE",
+    "#define _LIBCPP___CONFIG_SITE",
 ]
+
+_CONFIG_SITE_POSTAMBLE_LINES = [
+    "#endif // _LIBCPP___CONFIG_SITE",
+]
+
+_CONFIG_SITE_ABI_MSVC_LINES = [
+    "#define _LIBCPP_ABI_FORCE_ITANIUM       0",
+    "#define _LIBCPP_ABI_FORCE_MICROSOFT     1",
+    "#define _LIBCPP_HAS_TIME_ZONE_DATABASE  0",
+]
+
+_CONFIG_SITE_ABI_DEFAULT_LINES = [
+    "#define _LIBCPP_ABI_FORCE_ITANIUM       0",
+    "#define _LIBCPP_ABI_FORCE_MICROSOFT     0",
+    "#define _LIBCPP_HAS_TIME_ZONE_DATABASE  1",
+]
+
+_CONFIG_SITE_LLVM_LINE_LINES = ([
+    "// LLVM 23 libcxx/include/__config_site.in contract.",
+    "#define _LIBCPP_HAS_THREAD_API_C11      0",
+    "#define _LIBCPP_ASSERTION_SEMANTIC_DEFAULT 2",
+    "#define _LIBCPP_LIBC_PICOLIBC 0",
+    "#define _LIBCPP_LIBC_NEWLIB 0",
+    "#define _LIBCPP_LIBC_LLVM_LIBC 0",
+] if int(LLVM_VERSION_MAJOR) >= 23 else [
+    "// LLVM 22 libcxx/include/__config_site.in contract.",
+    "#define _LIBCPP_HAS_TERMINAL            1",
+    "#define _LIBCPP_HAS_THREAD_API_C11      0",
+    "#define _LIBCPP_ASSERTION_SEMANTIC_DEFAULT 2",
+    "#define _LIBCPP_LIBC_PICOLIBC 0",
+    "#define _LIBCPP_LIBC_NEWLIB 0",
+] if int(LLVM_VERSION_MAJOR) >= 22 else [
+    "// LLVM 21 libcxx/include/__config_site.in contract.",
+    "#define _LIBCPP_HAS_TERMINAL            1",
+    "#define _LIBCPP_HAS_THREAD_API_C11      0",
+])
 
 _CONFIG_SITE_GENERIC_LINES = [
     "#define _LIBCPP_ABI_VERSION             1",
     "#ifndef _LIBCPP_ABI_NAMESPACE",
     "#define _LIBCPP_ABI_NAMESPACE           __1",
     "#endif",
-    "#define _LIBCPP_ABI_FORCE_ITANIUM       0",
-    "#define _LIBCPP_ABI_FORCE_MICROSOFT     0",
     "#define _LIBCPP_HAS_THREADS             1 // TODO: Handle no threads",
     "#define _LIBCPP_HAS_MONOTONIC_CLOCK     1",
-    "#define _LIBCPP_HAS_TERMINAL            1",
     "#define _LIBCPP_HAS_THREAD_API_EXTERNAL 0",
-    "#define _LIBCPP_HAS_THREAD_API_C11      0 // FIXME: Is this guarding dead code?",
     "// #define _LIBCPP_NO_VCRUNTIME",
     "// #define _LIBCPP_TYPEINFO_COMPARISON_IMPLEMENTATION @_LIBCPP_TYPEINFO_COMPARISON_IMPLEMENTATION@",
     "#define _LIBCPP_HAS_FILESYSTEM          1",
@@ -83,12 +117,8 @@ _CONFIG_SITE_GENERIC_LINES = [
     "#define _LIBCPP_HAS_UNICODE             1",
     "#define _LIBCPP_HAS_WIDE_CHARACTERS     1",
     "#define _LIBCPP_HAS_STD_MODULES         0",
-    "#define _LIBCPP_HAS_TIME_ZONE_DATABASE  1",
     "#define _LIBCPP_HAS_VENDOR_AVAILABILITY_ANNOTATIONS 0",
     "#define _LIBCPP_INSTRUMENTED_WITH_ASAN  __has_feature(address_sanitizer)",
-    "#define _LIBCPP_LIBC_PICOLIBC 0",
-    "#define _LIBCPP_LIBC_NEWLIB 0",
-    "#define _LIBCPP_LIBC_LLVM_LIBC 0",
     "",
     "#define _LIBCPP_PSTL_BACKEND_SERIAL",
     "// #define _LIBCPP_PSTL_BACKEND_STD_THREAD",
@@ -96,7 +126,6 @@ _CONFIG_SITE_GENERIC_LINES = [
     "",
     "# // Hardening.",
     "#define _LIBCPP_HARDENING_MODE_DEFAULT _LIBCPP_HARDENING_MODE_NONE",
-    "#define _LIBCPP_ASSERTION_SEMANTIC_DEFAULT 2",
     "",
     "// \"_LIBCPP_HAS_NO_LIBRARY_ALIGNED_ALLOCATION\", # GLIBC < 2.16",
 ]
@@ -109,13 +138,23 @@ selects.config_setting_group(
     ],
 )
 
+selects.config_setting_group(
+    name = "windows_msvc",
+    match_all = [
+        "@platforms//os:windows",
+        "@llvm//constraints/windows/abi:msvc",
+    ],
+)
+
 write_file(
     name = "__config_site",
     out = "include/__config_site",
-    content = _CONFIG_SITE_GENERIC_LINES +
+    content = _CONFIG_SITE_PREAMBLE_LINES +
+              _CONFIG_SITE_GENERIC_LINES +
+              _CONFIG_SITE_LLVM_LINE_LINES +
               select({
-                  ":windows_static": _CONFIG_SITE_LIBCPP_VISIBILITY_LINES,
-                  "//conditions:default": [],
+                  ":windows_msvc": _CONFIG_SITE_ABI_MSVC_LINES,
+                  "//conditions:default": _CONFIG_SITE_ABI_DEFAULT_LINES,
               }) +
               select({
                   "@llvm//constraints/libc:musl": _CONFIG_SITE_MUSL_LINES,
@@ -124,7 +163,8 @@ write_file(
               select({
                   "@platforms//os:windows": _CONFIG_SITE_THREAD_API_WIN32_LINES,
                   "//conditions:default": _CONFIG_SITE_THREAD_API_PTHREAD_LINES,
-              }),
+              }) +
+              _CONFIG_SITE_POSTAMBLE_LINES,
     visibility = ["//visibility:public"],
 )
 
@@ -292,36 +332,48 @@ cc_library(
         ":__config_site",
         ":libcxx_headers_files",
     ],
-    copts = [
-        "-faligned-allocation",
-        "-std=c++26" if int(LLVM_VERSION_MAJOR) >= 23 else "-std=c++23",
-        "-fvisibility=hidden",
-        "-fvisibility-inlines-hidden",
+    copts = select({
+        ":windows_msvc": [
+            "/clang:-faligned-allocation",
+            "/std:c++latest",
 
-        # "-fno-exceptions", # if no exceptions
-        # "-fno-rtti",       # if no rtti
+            # Compiler-agnostic warnings to disable.
+            "/clang:-Wno-unused-parameter",
+            "/clang:-Wno-long-long",
+            "/clang:-Wno-nullability-completeness",
 
-        # Compiler agnostic warnings to disable
-        "-Wno-unused-parameter",
-        "-Wno-long-long",
-        "-Wno-nullability-completeness",
-
-        # Clang specific warnings to disable
-        "-Wno-user-defined-literals",
-        "-Wno-covered-switch-default",
-        "-Wno-suggest-override",
-    ] + select({
-        "@platforms//os:windows": [
-            "-Wno-pragma-pack",
-            "-Wno-unused-value",
+            # Clang-specific warnings to disable.
+            "/clang:-Wno-user-defined-literals",
+            "/clang:-Wno-covered-switch-default",
+            "/clang:-Wno-suggest-override",
+            "/clang:-Wno-macro-redefined",
+            "/clang:-Wno-pragma-pack",
+            "/clang:-Wno-unused-value",
         ],
-        "//conditions:default": [],
+        "//conditions:default": [
+            "-faligned-allocation",
+            "-std=c++26" if int(LLVM_VERSION_MAJOR) >= 23 else "-std=c++23",
+            "-fvisibility=hidden",
+            "-fvisibility-inlines-hidden",
+
+            # Compiler-agnostic warnings to disable.
+            "-Wno-unused-parameter",
+            "-Wno-long-long",
+            "-Wno-nullability-completeness",
+
+            # Clang-specific warnings to disable.
+            "-Wno-user-defined-literals",
+            "-Wno-covered-switch-default",
+            "-Wno-suggest-override",
+        ],
     }),
     implementation_deps = [
         # Order matter. Search path should have C++ headers before any lib C headers.
         "@llvm-project//libcxx:headers",
-        "@llvm-project//libcxxabi:headers",
     ] + select({
+        ":windows_msvc": [],
+        "//conditions:default": ["@llvm-project//libcxxabi:headers"],
+    }) + select({
         "@platforms//os:macos": [],
         "@platforms//os:windows": [],
         "@platforms//os:linux": [
@@ -341,42 +393,84 @@ cc_library(
         "@llvm//platforms/config:gnu": [
             "@glibc//:gnu_libc_headers",
         ],
-        "@platforms//os:windows": [
+        "@platforms//os:windows": [],
+        "@platforms//os:macos": [],
+    }) + select({
+        ":windows_msvc": [],
+        "@llvm//platforms/config:windows_x86_64_mingw_compatible": [
             "@mingw//:mingw_headers",
         ],
-        "@platforms//os:macos": [],
+        "@llvm//platforms/config:windows_aarch64_mingw_compatible": [
+            "@mingw//:mingw_headers",
+        ],
+        "//conditions:default": [],
     }),
     includes = [
         "include",
         "src",
     ],
+    linkstatic = True,
     local_defines = [
-        "NDEBUG",
         "LIBC_NAMESPACE=__llvm_libc_common_utils",
         "_LIBCPP_BUILDING_LIBRARY",
         "_LIBCPP_REMOVE_TRANSITIVE_INCLUDES",
-        "LIBCXX_BUILDING_LIBCXXABI",
         "_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER",
-    ],
+    ] + select({
+        "@llvm//config:runtimes_optimization_mode_debug": [],
+        "//conditions:default": ["NDEBUG"],
+    }) + select({
+        ":windows_msvc": [
+            "_ALLOW_ITERATOR_DEBUG_LEVEL_MISMATCH",
+            "_ALLOW_MSC_VER_MISMATCH",
+            "_CRTBLD",
+            "_CRT_NONSTDC_NO_WARNINGS",
+            "_CRT_SECURE_NO_WARNINGS",
+            "_CRT_STDIO_ISO_WIDE_SPECIFIERS",
+        ],
+        # The Itanium route builds libc++ against libc++abi. Defining this on
+        # the VCRuntime route makes LLVM 21's exception.cpp include cxxabi.h
+        # and would select the wrong ABI implementation.
+        "//conditions:default": ["LIBCXX_BUILDING_LIBCXXABI"],
+    }) + select({
+        ":windows_static": ["_LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS"],
+        "//conditions:default": [],
+    }),
     textual_hdrs = glob([
         "src/**/*.h",
         "src/**/*.ipp",
-    ]) + [
-        "@llvm-project//libcxxabi:textual_hdrs",
-    ],
+    ]) + select({
+        ":windows_msvc": [],
+        "//conditions:default": ["@llvm-project//libcxxabi:textual_hdrs"],
+    }),
     visibility = ["//compiler-rt:__pkg__"],
 )
 
 cc_runtime_stage0_asan_static_library(
-    name = "libcxx.static",
+    name = "libcxx.static.default",
     visibility = ["//visibility:public"],
     deps = [
         ":libcxx",
     ],
 )
 
+cc_runtime_stage0_static_library(
+    name = "libcxx.static.archive",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":libcxx",
+    ],
+)
+
+copy_file(
+    name = "libcxx.static.msvc",
+    src = ":libcxx.static.archive",
+    out = "libc++.lib",
+    allow_symlink = False,
+    visibility = ["//visibility:public"],
+)
+
 cc_runtime_stage1_asan_shared_library(
-    name = "libcxx.shared",
+    name = "libcxx.shared.default",
     shared_lib_name = "libc++.so.1",
     user_link_flags = [
         "-Wl,-soname,libc++.so.1",
@@ -385,4 +479,29 @@ cc_runtime_stage1_asan_shared_library(
     deps = [
         ":libcxx",
     ],
+)
+
+filegroup(
+    name = "libcxx.shared.msvc.unsupported",
+    srcs = [],
+    target_compatible_with = ["@platforms//:incompatible"],
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "libcxx.static",
+    actual = select({
+        ":windows_msvc": ":libcxx.static.msvc",
+        "//conditions:default": ":libcxx.static.default",
+    }),
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "libcxx.shared",
+    actual = select({
+        ":windows_msvc": ":libcxx.shared.msvc.unsupported",
+        "//conditions:default": ":libcxx.shared.default",
+    }),
+    visibility = ["//visibility:public"],
 )

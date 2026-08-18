@@ -1,5 +1,6 @@
 load("@bazel_features//:features.bzl", "bazel_features")
 load("@llvm-project//:vars.bzl", "LLVM_VERSION_MAJOR")
+load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains:tool.bzl", "cc_tool")
 load("@rules_cc//cc/toolchains:tool_map.bzl", "cc_tool_map")
 load("//platforms:common.bzl", "SUPPORTED_TARGETS")
@@ -84,6 +85,26 @@ def declare_tool_map(exec_os, exec_cpu, prefix = None, fdo_profile = None, fdo_i
     )
 
     cc_tool_map(
+        name = prefix + "/tools_for_msvc",
+        tools = {
+            "@rules_cc//cc/toolchains/actions:c_compile": prefix + "/clang-cl",
+            "@rules_cc//cc/toolchains/actions:cpp_compile": prefix + "/clang-cl",
+            "@rules_cc//cc/toolchains/actions:linkstamp_compile": prefix + "/clang-cl",
+            "@rules_cc//cc/toolchains/actions:preprocess_assemble": prefix + "/clang-cl",
+            "@rules_cc//cc/toolchains/actions:cpp_header_parsing": prefix + "/clang-cl",
+            "@rules_cc//cc/toolchains/actions:generate_def_file": prefix + "/msvc-def-parser",
+            "@rules_cc//cc/toolchains/actions:ar_actions": prefix + "/llvm-ar",
+            "@rules_cc//cc/toolchains/actions:link_actions": prefix + "/lld-link",
+            "@rules_cc//cc/toolchains/actions:strip": prefix + "/llvm-strip",
+        } | _validate_static_library_tool(prefix),
+    )
+
+    native.alias(
+        name = prefix + "/tools_for_msvc_for_runtime",
+        actual = prefix + "/tools_for_msvc",
+    )
+
+    cc_tool_map(
         name = prefix + "/tools_with_interface_libraries",
         tools = TOOLS_WITHOUT_LINKER | COMPLETE_ONLY_TOOLS | {
             "@rules_cc//cc/toolchains/actions:link_executable_actions": prefix + "/lld",
@@ -154,6 +175,22 @@ def declare_tool_map(exec_os, exec_cpu, prefix = None, fdo_profile = None, fdo_i
         strip_prefix = "clang/lib/Headers",
     )
 
+    cc_args(
+        name = prefix + "/compile_resource_dir_msvc",
+        actions = [
+            "@rules_cc//cc/toolchains/actions:compile_actions",
+        ],
+        args = [
+            "/imsvc{resource_dir}",
+        ],
+        data = [
+            prefix + "/clang_builtin_headers_include_directory",
+        ],
+        format = {
+            "resource_dir": prefix + "/clang_builtin_headers_include_directory",
+        },
+    )
+
     _bootstrap_cc_tool(
         prefix,
         "clang",
@@ -175,6 +212,31 @@ def declare_tool_map(exec_os, exec_cpu, prefix = None, fdo_profile = None, fdo_i
             prefix + "/clang_builtin_headers_include_directory",
         ],
         capabilities = ["@rules_cc//cc/toolchains/capabilities:supports_pic"],
+    )
+
+    _bootstrap_cc_tool(
+        prefix,
+        "clang-cl",
+        bootstrap_binary_kwargs,
+        data = [
+            prefix + "/clang_builtin_headers_include_directory",
+        ],
+    )
+
+    _bootstrap_cc_tool(
+        prefix,
+        "lld-link",
+        bootstrap_binary_kwargs,
+        capabilities = [
+            "@rules_cc//cc/toolchains/capabilities:has_configured_linker_path",
+            "@rules_cc//cc/toolchains/capabilities:supports_dynamic_linker",
+            "@rules_cc//cc/toolchains/capabilities:supports_interface_shared_libraries",
+        ],
+    )
+
+    cc_tool(
+        name = prefix + "/msvc-def-parser",
+        src = "@llvm//tools/msvc_def_parser",
     )
 
     bootstrap_binary(
@@ -418,12 +480,22 @@ def declare_toolchains(*, execs = None, targets = SUPPORTED_TARGETS):
             cc_toolchain(
                 name = cc_toolchain_name,
                 tool_map = select({
+                    "@llvm//platforms/config:windows_x86_64_msvc": ":%s/tools_for_msvc_for_runtime" % tool_prefix,
+                    "@llvm//platforms/config:windows_aarch64_msvc": ":%s/tools_for_msvc_for_runtime" % tool_prefix,
                     "@llvm//toolchain:linux_complete": ":%s/tools_with_interface_libraries" % tool_prefix,
                     "@llvm//toolchain:macos_complete_with_libtool": ":%s/tools_with_dsym_and_libtool" % tool_prefix,
                     "@llvm//toolchain:macos_complete": ":%s/tools_with_dsym" % tool_prefix,
                     "@rules_cc//cc/toolchains/args/archiver_flags:use_libtool_on_apple_setting": ":%s/tools_with_libtool_for_runtime" % tool_prefix,
                     "//conditions:default": ":%s/default_tools_for_runtime" % tool_prefix,
                 }),
+            )
+
+            msvc_cc_toolchain_name = "%s_%s_%s_msvc_cc_toolchain" % (stage_name, exec_os, exec_cpu)
+            cc_toolchain(
+                name = msvc_cc_toolchain_name,
+                extra_args = [":%s/compile_resource_dir_msvc" % tool_prefix],
+                tool_map = ":%s/tools_for_msvc_for_runtime" % tool_prefix,
+                msvc = True,
             )
 
             for (target_os, target_cpu) in targets:
@@ -446,3 +518,23 @@ def declare_toolchains(*, execs = None, targets = SUPPORTED_TARGETS):
                     toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
                     visibility = ["//visibility:public"],
                 )
+
+                if target_os == "windows":
+                    native.toolchain(
+                        name = "%s_%s_%s_to_%s_%s_msvc" % (stage_name, exec_os, exec_cpu, target_os, target_cpu),
+                        exec_compatible_with = [
+                            "@platforms//cpu:" + exec_cpu,
+                            "@platforms//os:" + exec_os,
+                        ],
+                        target_compatible_with = [
+                            "@platforms//cpu:" + target_cpu,
+                            "@platforms//os:" + target_os,
+                        ],
+                        target_settings = [
+                            target_setting,
+                            "@llvm//platforms/config:windows_{}_msvc".format(target_cpu),
+                        ],
+                        toolchain = msvc_cc_toolchain_name,
+                        toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
+                        visibility = ["//visibility:public"],
+                    )

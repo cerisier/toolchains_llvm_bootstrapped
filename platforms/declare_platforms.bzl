@@ -45,6 +45,21 @@ def declare_platforms():
             )
 
     declare_platforms_libc_aware()
+    declare_windows_msvc_platforms()
+
+def declare_windows_msvc_platforms():
+    for target_cpu in ["x86_64", "aarch64"]:
+        native.platform(
+            name = "windows_{}_msvc".format(target_cpu),
+            constraint_values = [
+                "@platforms//cpu:{}".format(target_cpu),
+                "@platforms//os:windows",
+                "//constraints/cxxstdlib:libcxx",
+                "//constraints/windows/abi:msvc",
+                "//constraints/windows/crt:ucrt",
+            ],
+            visibility = ["//visibility:public"],
+        )
 
 def declare_platforms_libc_aware():
     for target_os, target_cpu in LIBC_SUPPORTED_TARGETS:
