@@ -1,5 +1,5 @@
 load("//platforms:common.bzl", "SUPPORTED_EXECS", "SUPPORTED_TARGETS")
-load("//toolchain:selects.bzl", "platform_cc_tool_map", "platform_module_map", "resource_dir_arg")
+load("//toolchain:selects.bzl", "msvc_resource_dir_arg", "platform_cc_tool_map", "platform_module_map", "platform_msvc_cc_tool_map", "resource_dir_arg")
 load(":cc_toolchain.bzl", "cc_toolchain")
 
 def declare_toolchains(*, execs = SUPPORTED_EXECS, targets = SUPPORTED_TARGETS):
@@ -24,6 +24,17 @@ def declare_toolchains(*, execs = SUPPORTED_EXECS, targets = SUPPORTED_TARGETS):
             ],
         )
 
+        msvc_cc_toolchain_name = "{}_{}_msvc_cc_toolchain".format(exec_os, exec_cpu)
+        cc_toolchain(
+            name = msvc_cc_toolchain_name,
+            extra_args = [
+                msvc_resource_dir_arg(exec_os, exec_cpu),
+            ],
+            tool_map = platform_msvc_cc_tool_map(exec_os, exec_cpu),
+            module_map = platform_module_map(exec_os, exec_cpu),
+            msvc = True,
+        )
+
         for (target_os, target_cpu) in targets:
             target_settings = ["@llvm//toolchain:bootstrap_stage0_prebuilt_seed"]
             if target_os == "windows":
@@ -44,3 +55,23 @@ def declare_toolchains(*, execs = SUPPORTED_EXECS, targets = SUPPORTED_TARGETS):
                 toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
                 visibility = ["//visibility:public"],
             )
+
+            if target_os == "windows":
+                native.toolchain(
+                    name = "{}_{}_to_{}_{}_msvc".format(exec_os, exec_cpu, target_os, target_cpu),
+                    exec_compatible_with = [
+                        "@platforms//cpu:{}".format(exec_cpu),
+                        "@platforms//os:{}".format(exec_os),
+                    ],
+                    target_compatible_with = [
+                        "@platforms//cpu:{}".format(target_cpu),
+                        "@platforms//os:{}".format(target_os),
+                    ],
+                    target_settings = [
+                        "@llvm//toolchain:bootstrap_stage0_prebuilt_seed",
+                        "@llvm//platforms/config:windows_{}_msvc".format(target_cpu),
+                    ],
+                    toolchain = msvc_cc_toolchain_name,
+                    toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
+                    visibility = ["//visibility:public"],
+                )

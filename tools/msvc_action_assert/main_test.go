@@ -148,6 +148,75 @@ func TestAssertGraphIgnoresUnreferencedParamFileMetadata(t *testing.T) {
 	}
 }
 
+func TestAssertGraphRecognizesVirtualParamFileWithoutMetadata(t *testing.T) {
+	g := fixture()
+	g.Actions[0].ParamFiles = nil
+	err := assertGraph(g, specification{Assertions: []assertion{{
+		Mnemonic: "CppCompile", ExpectedParamFiles: intPointer(1),
+		ParamFilesContain: []string{"probe.rsp"},
+	}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestAssertGraphRejectsOpaqueParamFileForArgumentAssertions(t *testing.T) {
+	g := fixture()
+	g.Actions[0].ParamFiles = nil
+	err := assertGraph(g, specification{Assertions: []assertion{{
+		Mnemonic: "CppCompile", ArgvAbsent: []string{"-Wl,"},
+	}}})
+	if err == nil || !strings.Contains(err.Error(), "cannot verify argv assertions: response file contents unavailable for probe.rsp") {
+		t.Fatalf("got %v", err)
+	}
+}
+
+func TestAssertGraphRejectsOpaqueParamFileForArgumentSelectors(t *testing.T) {
+	g := fixture()
+	g.Actions[0].ParamFiles = nil
+	err := assertGraph(g, specification{Assertions: []assertion{{
+		Mnemonic: "CppCompile", SelectorArgvContains: []string{"/MD"},
+	}}})
+	if err == nil || !strings.Contains(err.Error(), "cannot verify argv selectors: response file contents unavailable for probe.rsp") {
+		t.Fatalf("got %v", err)
+	}
+}
+
+func TestHydrateParamFilesLoadsMaterializedArguments(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "probe.rsp"), []byte("/MD\r\n/Brepro\r\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	g := fixture()
+	g.Actions[0].ParamFiles = nil
+	actions, err := resolve(g)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := hydrateParamFiles(&actions[0], root); err != nil {
+		t.Fatal(err)
+	}
+	err = match(actions[0], assertion{
+		Mnemonic: "CppCompile", ArgvContains: []string{"/MD", "/Brepro"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestHydrateParamFilesRequiresMaterializedFile(t *testing.T) {
+	g := fixture()
+	g.Actions[0].ParamFiles = nil
+	actions, err := resolve(g)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = hydrateParamFiles(&actions[0], t.TempDir())
+	if err == nil || !strings.Contains(err.Error(), "run the owning bazel build with --materialize_param_files") {
+		t.Fatalf("got %v", err)
+	}
+}
+
 func TestResolveRejectsCycles(t *testing.T) {
 	g := graph{DepSetOfFiles: []depSet{{ID: "1", TransitiveDepSetIds: []identifier{"1"}}}, Actions: []action{{InputDepSetIds: []identifier{"1"}}}}
 	if _, err := resolve(g); err == nil || !strings.Contains(err.Error(), "cycle") {

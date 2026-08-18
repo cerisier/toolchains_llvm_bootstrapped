@@ -1,0 +1,25 @@
+{
+  "assertions": [
+    {
+      "mnemonic": "CppCompile",
+      "selector_outputs_contain": ["windows_msvc_libcxx_behavior.obj"],
+      "executable_contains": "clang-cl",
+      "argv_contains": ["@bazel-out/"],
+      "argv_absent": ["/MDd", "/MTd", "/Zi", "/Fd", "_DEBUG"],
+      "expected_param_files": 1
+    },
+    {
+      "mnemonic": "CppLink",
+      "selector_outputs_contain": ["windows_msvc_libcxx_behavior_static.exe"],
+      "executable_contains": "lld-link",
+      "argv_contains": ["/DEBUG", "/NODEFAULTLIB", "/PDBALTPATH:%_PDB%", "clang_rt.builtins.lib", "iso_stdio_wide_specifiers.lib", "msvcrt.lib", "msvcprt.lib"],
+      "argv_absent": ["/DEBUG:NONE", "/PDB:", "/MDd", "/MTd", "_DEBUG"],
+      "inputs_contain": ["clang_rt.builtins.lib", "msvc_dynamic_runtime_libraries"],
+      "inputs_absent": ["msvc_static_runtime_libraries"],
+      "outputs_contain": [
+        "windows_msvc_libcxx_behavior_static.exe",
+        "windows_msvc_libcxx_behavior_static.pdb"
+      ]
+    }
+  ]
+}

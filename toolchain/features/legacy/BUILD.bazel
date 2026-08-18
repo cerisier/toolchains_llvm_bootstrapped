@@ -89,9 +89,10 @@ cc_feature(
 
 cc_feature_set(
     name = "all_legacy_builtin_features",
-    all_of = [
-        ":default_compile_flags",
-    ],
+    all_of = select({
+        "//constraints/windows/abi:msvc": [],
+        "//conditions:default": [":default_compile_flags"],
+    }),
     visibility = ["//visibility:public"],
 )
 
@@ -101,38 +102,44 @@ cc_feature_set(
     name = "experimental_replace_legacy_action_config_features",
     all_of = [
         ":no_legacy_features",
-        "@rules_cc//cc/toolchains/args/archiver_flags:feature",
-        "@rules_cc//cc/toolchains/args/pic_flags:feature",
-        "@rules_cc//cc/toolchains/args/libraries_to_link:feature",
-        "@rules_cc//cc/toolchains/args/linker_param_file:feature",
-        "@rules_cc//cc/toolchains/args/preprocessor_defines:feature",
-        "@rules_cc//cc/toolchains/args/random_seed:feature",
-        "@rules_cc//cc/toolchains/args/runtime_library_search_directories:feature",
-        "@rules_cc//cc/toolchains/args/shared_flag:feature",
-        ":strip_debug_symbols",
-        "@rules_cc//cc/toolchains/args/strip_flags:feature",
-        "@rules_cc//cc/toolchains/args/objc_arc_flags:feature",
-        # Inlined below as it isn't visible and also has an issue upstream.
-        # TODO: Use upstream version after https://github.com/bazelbuild/rules_cc/pull/797
-        ":set_soname",
-        # Intentionally omitted since we link runtime libraries ourselves and
-        # including this flag just raises a warning.
-        # "@rules_cc//cc/toolchains/args/static_libgcc:feature",
-        "@rules_cc//cc/toolchains/args/include_flags:feature",
-        "@rules_cc//cc/toolchains/args/fission_flags:feature",
-        "@rules_cc//cc/toolchains/args/link_flags:feature",
-        "@rules_cc//cc/toolchains/args/linkstamp_flags:feature",
-        "@rules_cc//cc/toolchains/args/library_search_directories:feature",
-        "@rules_cc//cc/toolchains/args/dependency_file:feature",
+    ] + select({
+        "//constraints/windows/abi:msvc": [
+            "//toolchain/features/msvc:legacy_replacements",
+        ],
+        "//conditions:default": [
+            "@rules_cc//cc/toolchains/args/archiver_flags:feature",
+            "@rules_cc//cc/toolchains/args/pic_flags:feature",
+            "@rules_cc//cc/toolchains/args/libraries_to_link:feature",
+            "@rules_cc//cc/toolchains/args/linker_param_file:feature",
+            "@rules_cc//cc/toolchains/args/preprocessor_defines:feature",
+            "@rules_cc//cc/toolchains/args/random_seed:feature",
+            "@rules_cc//cc/toolchains/args/runtime_library_search_directories:feature",
+            "@rules_cc//cc/toolchains/args/shared_flag:feature",
+            ":strip_debug_symbols",
+            "@rules_cc//cc/toolchains/args/strip_flags:feature",
+            "@rules_cc//cc/toolchains/args/objc_arc_flags:feature",
+            # Inlined below as it isn't visible and also has an issue upstream.
+            # TODO: Use upstream version after https://github.com/bazelbuild/rules_cc/pull/797
+            ":set_soname",
+            # Intentionally omitted since we link runtime libraries ourselves and
+            # including this flag just raises a warning.
+            # "@rules_cc//cc/toolchains/args/static_libgcc:feature",
+            "@rules_cc//cc/toolchains/args/include_flags:feature",
+            "@rules_cc//cc/toolchains/args/fission_flags:feature",
+            "@rules_cc//cc/toolchains/args/link_flags:feature",
+            "@rules_cc//cc/toolchains/args/linkstamp_flags:feature",
+            "@rules_cc//cc/toolchains/args/library_search_directories:feature",
+            "@rules_cc//cc/toolchains/args/dependency_file:feature",
 
-        # aka user_compile_flags_feature.
-        # NOTE: This should come last as it must be able to override other features but before compiler inputs.
-        "@rules_cc//cc/toolchains/args/compile_flags:feature",
+            # aka user_compile_flags_feature.
+            # NOTE: This should come last as it must be able to override other features but before compiler inputs.
+            "@rules_cc//cc/toolchains/args/compile_flags:feature",
 
-        # NOTE: This should come after user compile flags since some flags need to be added before the input file (e.g., -x lang)
-        "@rules_cc//cc/toolchains/args/compiler_input_flags:feature",
-        "@rules_cc//cc/toolchains/args/compiler_output_flags:feature",
-    ],
+            # NOTE: This should come after user compile flags since some flags need to be added before the input file (e.g., -x lang)
+            "@rules_cc//cc/toolchains/args/compiler_input_flags:feature",
+            "@rules_cc//cc/toolchains/args/compiler_output_flags:feature",
+        ],
+    }),
     visibility = ["//visibility:public"],
 )
 

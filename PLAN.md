@@ -111,20 +111,33 @@ The first public MSVC milestone uses libc++ with VCRuntime:
 - `_LIBCPP_NO_VCRUNTIME` is not selected: VCRuntime interoperability is the
   intended contract, and disabling it restricts replacement `operator new`
   and `operator delete` cases;
-- the broad VC include tree remains available for ABI headers such as
-  `vcruntime_new.h`, after libc++ in include-search order;
+- a curated VCRuntime header subset supplies ABI headers such as
+  `vcruntime_new.h`, after libc++ in include-search order; Microsoft STL
+  headers are not declared compiler inputs;
 - libc++abi and libunwind are absent;
-- MinGW and Microsoft-STL inputs are absent;
+- MinGW inputs and Microsoft STL headers are absent; the only Microsoft-STL
+  binary input permitted on the libc++ route is upstream libc++'s narrow
+  Microsoft C++ runtime ABI helper provider: `msvcprt.lib`/`msvcp*.dll` for
+  `/MD` or `libcpmt.lib` for `/MT`;
 - libc++ ABI-affecting configuration and cache identity are pinned by LLVM
   source revision, ABI version/defines, hardening mode, exception/RTTI/thread/
-  filesystem configuration, target architecture, CRT mode, and static/shared
-  artifact form;
-- libc++ auto-linking is disabled with `_LIBCPP_NO_AUTO_LINK` unless Phase 0
-  demonstrates a declared, unambiguous alternative for the emitted `c++.lib`
-  shared or `libc++.lib` static directive;
+  filesystem configuration, target architecture, and CRT mode;
+- Windows MSVC libc++ is configuration-wide static. Consumer compilation
+  disables DLL visibility annotations, and ordinary dependency `linkstatic`
+  or dynamic mode does not select a different libc++ artifact;
+- libc++ auto-linking is disabled with `_LIBCPP_NO_AUTO_LINK`; `libc++.lib` is
+  the only selected Windows MSVC libc++ artifact;
 - selected libc++ artifacts are explicit declared link inputs.
 
-Microsoft STL is the second complete stack layer. Do not expose
+That narrow helper dependency does not select Microsoft STL as the standard
+library. It supplies libc++'s Microsoft-ABI `exception_ptr` operations and
+uncaught-exception state; libc++ still owns every public standard-library
+header and type. Declare the CRT-matched provider explicitly, prove its exact
+imported helper surface, and reject every other Microsoft-STL header or
+library input on the libc++ route.
+
+Microsoft STL as the selected complete standard library is the second stack
+layer. Do not expose
 `//constraints/cxxstdlib:msvc` before that route works end-to-end.
 Its established `/MD` route normally uses DLL/import-library form and `/MT`
 uses static form. Do not promise an independent Microsoft-STL linkage selector
@@ -159,6 +172,9 @@ linkage:
   versus `/MT`;
 - a per-rule `features` attribute is not a supported CRT selector because it
   does not propagate to independently compiled dependencies;
+- each selected CRT mode receives its own filtered library directory, and
+  direct links use `/NODEFAULTLIB` plus an explicit complete closure so COFF
+  default-library directives cannot select the other CRT family;
 - `--compilation_mode=dbg` continues to use the selected retail CRT;
 - `/MDd`, `/MTd`, debug CRT libraries, and `_DEBUG` are unsupported until
   separately approved.
@@ -191,11 +207,12 @@ deployment remains the independent follow-up in Section 20.
 | libc++ artifact | `/MD` | `/MT` |
 |---|---:|---:|
 | Static libc++ | supported after proof | supported after proof |
-| Shared libc++ | supported after proof | analysis error unless upstream behavior is disproved |
+| Shared libc++ | deferred; no Layer 1 route | deferred; no Layer 1 route |
 
-Shared libc++ plus a static CRT is not an initial supported combination.
-Ordinary dependency `linkstatic` remains conceptually independent, but the
-runtime-specific compatibility gate may reject an unsafe libc++ artifact.
+Ordinary dependency `linkstatic` remains independent. Both ordinary static and
+dynamic linking modes consume `libc++.lib`; neither exposes `c++.dll` or its
+import library. Dynamic libc++ requires a future configuration-wide consumer
+annotation and deployment contract.
 
 ### Determinism and security claims
 
@@ -304,7 +321,7 @@ meaning in Phase 0.
 | GNU/gnullvm | Microsoft STL | Analysis error |
 
 Repository-owned transitions and closures must preserve ABI, STL, CRT mode,
-and libc++ static/shared selection. Analysis can reject mixed repository-owned
+and the static Windows MSVC libc++ selection. Analysis can reject mixed repository-owned
 routes; it cannot infer the ABI of arbitrary opaque prebuilt libraries. State
 that limitation explicitly.
 
@@ -397,7 +414,7 @@ argument golden plus end-to-end action assertion.
 | Windows quoting | Separate proof for clang-cl, llvm-ar, lld-link on every exec OS; llvm-lib deferred |
 | Archive expansion | Objects/groups expanded for llvm-ar; Layer 4 replaces only this boundary |
 | Libraries to link | Objects/groups/static/interface/dynamic forms; `/WHOLEARCHIVE:` only for alwayslink |
-| Link outputs/options | `/OUT`, `/DLL`, `/LIBPATH`, `/SUBSYSTEM`, `/MACHINE`, `/DEF`, `/IMPLIB`, `/PDB`, determinism |
+| Link outputs/options | `/OUT`, `/DLL`, `/LIBPATH`, `/SUBSYSTEM`, `/MACHINE`, `/DEF`, `/IMPLIB`, `/DEBUG`, declared PDB, determinism; explicit `/PDB` only when rules_cc exposes its path |
 | Interface libraries | `supports_interface_shared_libraries`, real output variable, generated import library, DLL copying proven together |
 | Artifact patterns | `.obj`, `.lib`, approved alwayslink name, `.exe`, `.dll`, declared import-library suffix |
 | Tool capabilities | No MSVC PIC claim; exact configured-linker, Windows, dynamic-linker, header-parser, param-file capabilities |
@@ -455,8 +472,13 @@ Never run the clang++ wrapper with clang-cl-only `/c` arguments.
 
 ## 7. PR 187 and rules_cc PR 561 adoption contract
 
-PR 187 is a prototype and requirements source, not a cherry-pick unit. PR 561
-is a design/provenance reference and behavioral oracle, not a dependency.
+PR 187 got most of the intended Windows stack working end to end. Treat it as
+the first implementation reference and mine its working pieces before
+inventing replacements. It is still a prototype and requirements source, not
+a cherry-pick unit: some concepts are too tightly coupled and some paths take
+shortcuts that must be separated or hardened against this plan's contracts.
+PR 561 is a design/provenance reference and behavioral oracle, not a
+dependency.
 
 ### Adopt or reimplement from PR 187
 
@@ -602,7 +624,7 @@ native Linux/macOS/Windows x x86-64/ARM64 workflow passed in GitHub Actions run
 14. case-correct header/library transformations on Linux/macOS;
 15. declared `interface_library_output_path` and import-library contract;
 16. declared PDB output/default-name contract;
-17. libc++ static/shared/import names and auto-link policy;
+17. static libc++ name, absent shared/import artifacts, and auto-link policy;
 18. pinned libc++ ABI site configuration by LLVM line;
 19. Microsoft-STL platform, library, debug, iterator-debug, redistribution
    contract;
@@ -740,9 +762,11 @@ Microsoft SDK/UCRT/VCRuntime, and libc++ for x64 and ARM64.
 - Worktree: `/Users/corentinkerisit/code/github.com/hermeticbuild/hermetic-llvm-msvc-libcxx`.
 - Owned invariant: an MSVC+libc++ platform has one coherent ABI/CRT/STL
   contract through every action, runtime transition, and output.
-- Non-goals: Microsoft STL, sanitizer enablement, llvm-lib dialect, app-local
-  VC redistributables, rules_foreign_cc, resources/MASM, advanced
-  instrumentation except required C-only spikes.
+- Non-goals: Microsoft STL as the selected standard library, sanitizer
+  enablement, llvm-lib dialect, app-local VC redistributables,
+  rules_foreign_cc, resources/MASM, advanced instrumentation except required
+  C-only spikes. The CRT-selected Microsoft C++ runtime ABI helper provider is
+  the sole Microsoft-STL-runtime exception.
 
 ### Internal implementation order
 
@@ -758,8 +782,8 @@ Microsoft SDK/UCRT/VCRuntime, and libc++ for x64 and ARM64.
    keep profile/coverage and advanced runtimes unavailable until owned.
 7. Implement `/MD` and `/MT`, declared import libraries/PDBs, dependency
    parsing, response files, header parsing, artifact names, and linkstamps.
-8. Port libc++ to the Microsoft ABI/VCRuntime model and explicit COFF
-   static/shared/import artifacts.
+8. Port libc++ to the Microsoft ABI/VCRuntime model and explicit static COFF
+   artifact; prove dynamic artifacts are absent.
 9. Add behavior, action, artifact, determinism, source-built, native-runtime,
    and MinGW-regression tests.
 10. Add approved minimal public documentation only after all proof is green.
@@ -817,17 +841,23 @@ Test representative VCRuntime, UCRT, shared/UM/WinRT, include-next, exact-case
 header, and exact-case library lookups on Linux and macOS. EULA acceptance must
 remain lazy until the MSVC repository is fetched.
 
+Consume windows_support's version-independent directory targets. Validate that
+their selected path still matches the pinned MSVC payload version so a
+downstream root-module extension override fails analysis with a clear ABI
+error instead of silently changing inputs or producing missing labels.
+
 libc++ include order:
 
 1. libc++ headers;
-2. VCRuntime/broad VC include path as required;
+2. curated VCRuntime headers;
 3. UCRT;
 4. Windows SDK shared/UM/WinRT.
 
-If windows_support exposes only a broad VC include directory, do not claim the
-Microsoft STL headers are physically absent. Prove instead that standard
-headers resolve to libc++, no Microsoft STL library/defaultlib enters the
-closure, and include-next behavior is correct.
+Filter windows_support's broad VC include directory into the exact VCRuntime
+header subset. Prove that standard headers resolve to libc++, that Microsoft
+STL headers are absent from action inputs, that only the explicit CRT-selected
+Microsoft C++ runtime ABI helper provider enters from the Microsoft-STL binary
+runtime, and that include-next behavior is correct.
 
 ### MSVC compatibility version
 
@@ -912,8 +942,11 @@ PDB gate:
 - compile uses `/Z7` or fully declared `/Zi`/`/Fd` outputs;
 - lld-link receives `/DEBUG`;
 - final PDB is declared and named as expected;
+- matching rules_cc behavior, lld-link may derive the sibling PDB name from
+  `/OUT`; explicit `/PDB:` is required only when rules_cc exposes the declared
+  PDB path to the toolchain;
 - PE CodeView record names the intended PDB;
-- no empty `/PDB:`;
+- no empty or guessed `/PDB:`;
 - reproducibility and path privacy inspected.
 
 ### libc++/VCRuntime port
@@ -924,15 +957,17 @@ Build libc++ for MSVC ABI with:
 - VCRuntime headers/libraries;
 - no libc++abi or libunwind;
 - no MinGW files;
-- no Microsoft STL link input;
+- no Microsoft STL headers or selected standard-library closure; explicitly
+  link only upstream libc++'s CRT-matched Microsoft C++ runtime ABI helper
+  provider (`msvcprt.lib` for `/MD`, `libcpmt.lib` for `/MT`);
 - pinned ABI site configuration;
 - explicit auto-link policy;
-- COFF static, shared DLL, and import-library artifacts;
+- COFF static `libc++.lib`; no shared DLL or import-library artifact in Layer 1;
 - ABI/CRT/STL-preserving runtime transitions.
 
-Static libc++ must work with `/MD` and `/MT`. Shared libc++ must work with
-`/MD`. Shared libc++ plus `/MT` must fail analysis unless Phase 0 records
-contrary upstream proof.
+Static libc++ must work with `/MD` and `/MT` under both ordinary static and
+dynamic dependency linkage. Shared libc++ is deferred; Layer 1 must expose no
+`c++.dll` or shared-libc++ import-library route.
 
 Behavior scenarios, x64 and ARM64:
 
@@ -957,6 +992,7 @@ Layer 1 creates these stable targets/scripts; names become CI interfaces:
 - `//tools:msvc_action_assert_test` — JSON action assertions;
 - `//tools:msvc_artifact_assert_test` — COFF/PE/archive/PDB assertions;
 - `//e2e/rules_cc:windows_msvc_libcxx_matrix` — compile/link/runtime behavior;
+- `//e2e/rules_cc:windows_msvc_resource_directory_matrix` — exact MSVC compiler-rt builtins resource paths and archives;
 - `//e2e/rules_cc:windows_msvc_invalid_matrix` — stable negative cases;
 - `//e2e/rules_cc:windows_mingw_regression_matrix` — unchanged MinGW boundary.
 
@@ -969,6 +1005,7 @@ bazel test --config=remote \
   @llvm//tools:msvc_action_assert_test \
   @llvm//tools:msvc_artifact_assert_test \
   //:windows_msvc_libcxx_matrix \
+  //:windows_msvc_resource_directory_matrix \
   //:windows_msvc_invalid_matrix \
   //:windows_mingw_regression_matrix
 ```
@@ -995,9 +1032,11 @@ Layer 1 is complete only when:
 - `/MD` or `/MT` is coherent across objects, transitive libraries, generated
   sources, linkstamps, runtimes, transitions, directives, and PE imports;
 - `dbg` never introduces `_DEBUG`, `/MDd`, `/MTd`, or debug libraries;
-- libc++ route contains no MinGW, Microsoft-STL library, libc++abi, or
-  libunwind input;
-- static/shared support matches the approved matrix;
+- libc++ route contains no MinGW, libc++abi, libunwind, Microsoft STL headers,
+  or Microsoft-STL library input beyond the exact CRT-selected Microsoft C++
+  runtime ABI helper provider;
+- static-only libc++ support matches the approved matrix under ordinary static
+  and dynamic dependency modes;
 - direct behavior scenarios execute natively on matching Windows targets;
 - repeated artifacts are deterministic;
 - prebuilt/source-built and x64/ARM64 artifacts have correct machine types,
@@ -1009,7 +1048,8 @@ Layer 1 is complete only when:
 
 Stop on any claimed-host tool/path failure, undeclared input/output,
 contradictory CRT/defaultlib directive, runtime-transition loss, target/exec
-architecture leak, MinGW/Microsoft-STL contamination, SDK case failure,
+architecture leak, MinGW/Microsoft-STL contamination outside the approved
+Microsoft C++ runtime ABI helper provider, SDK case failure,
 unrepresentable import library/PDB, or existing-toolchain regression. Do not
 merge a compile-only or C-only public platform.
 
@@ -1329,15 +1369,17 @@ Required assertions:
 - `/MD` or `/MT` appears exactly where required;
 - `/MDd`, `/MTd`, `_DEBUG`, and debug CRT libraries never appear;
 - `/Brepro` appears on every compile and link action;
-- `/WHOLEARCHIVE`, `/IMPLIB`, `/PDB`, `/DEF`, `/OUT`, `/DLL`, `/MACHINE` appear
-  only on owning actions;
+- `/WHOLEARCHIVE`, `/IMPLIB`, `/DEF`, `/OUT`, `/DLL`, `/MACHINE`, and any
+  available explicit `/PDB` appear only on owning actions; `/DEBUG` plus the
+  declared sibling PDB is the rules_cc-compatible default contract;
 - Layer 1-3 archives use `rcsD`, with no llvm-lib `/OUT`/`/MACHINE` syntax;
 - Layer 4 archives use `/OUT`/`/MACHINE`, with no `rcsD` operand;
 - libc++ headers precede broad VC includes only on libc++ selections;
 - Microsoft-STL selections resolve its headers first and contain no libc++
   include/library;
 - no libc++abi, libunwind, MinGW, Microsoft STL, or sanitizer input appears
-  outside its owning configuration;
+  outside its owning configuration, except the CRT-selected Microsoft C++
+  runtime ABI helper provider explicitly owned by the Layer 1 libc++ route;
 - target CPU selects SDK/runtime libraries;
 - transitive libraries, linkstamps, generated sources, runtime builds, and any
   supported ThinLTO backend preserve ABI/CRT/STL;
@@ -1373,8 +1415,13 @@ Required assertions:
 - exports and DEF behavior;
 - import-library content and downstream consumption;
 - PDB existence and PE CodeView reference;
-- libc++ static/shared/import identity;
-- no `msvcprt`, `libcpmt`, or `msvcp*.dll` on libc++ targets;
+- static `libc++.lib` identity and absence of `c++.dll`/`c++.lib`;
+- libc++ `/MD` targets consume `msvcprt.lib` and import only the required
+  `__ExceptionPtr*` operations and `std::uncaught_exceptions` state from the
+  compatible `msvcp*.dll`; libc++ `/MT` targets consume `libcpmt.lib` only for
+  the corresponding static helper closure;
+- no other Microsoft-STL library, import, header, or `std::*` implementation
+  enters libc++ targets;
 - no libc++ headers/libraries/DLLs on Microsoft-STL targets;
 - no libc++abi/libunwind on MSVC+libc++ targets;
 - sanitizer runtime libraries/DLLs and STL-specific closure;
@@ -1419,7 +1466,8 @@ the action's execution platform is checked or remote execution is disabled.
 - Long, spaced, colon-bearing, and non-ASCII paths.
 - LLVM 21, default LLVM, LLVM 23; prebuilt and representative source-built
   artifact parity.
-- Full x64/ARM64, `/MD`/`/MT`, static/shared libc++ matrix.
+- Full x64/ARM64, `/MD`/`/MT`, ordinary static/dynamic dependency-linkage
+  matrix with static libc++.
 - Both STLs after Layer 2.
 - Full supported sanitizer matrix after Layer 3.
 - Repeated deterministic builds separated in time.
@@ -1480,7 +1528,7 @@ Global stop conditions:
 - incomplete case handling;
 - unrepresentable declared import library or PDB;
 - conflicting `/MD`/`/MT`, retail/debug, or STL directives;
-- unsafe shared libc++ plus `/MT` requirement;
+- requirement to expose dynamic libc++ without a separately approved contract;
 - transition loses CRT/STL selection;
 - demonstrated architecture/LLVM/sanitizer upstream limitation;
 - unexpected MinGW action/artifact change;
@@ -1528,7 +1576,8 @@ Document only demonstrated behavior:
 - clang-cl `copts` and direct LINK `linkopts` dialect;
 - default `/MD`, global opt-in `/MT`, and retail `dbg` policy;
 - libc++ versus Microsoft STL availability by layer;
-- static/shared libc++ matrix and shared-libc++ plus `/MT` rejection;
+- static-only Windows MSVC libc++ across ordinary static/dynamic dependency
+  linkage;
 - target/exec architecture matrix;
 - external VC Redistributable prerequisite for core `/MD` execution;
 - unsupported actions and capabilities;
@@ -1598,6 +1647,10 @@ Require:
   llvm-ar/unified-tool personality.
 - clang-cl supports a viable `.d` route through audited `/clang:` escapes.
 - Windows libc++ supports VCRuntime without libc++abi/libunwind.
+- Upstream Microsoft-ABI libc++ implements `exception_ptr` operations and
+  uncaught-exception state through the Microsoft C++ runtime: `msvcprt`/MSVCP
+  for `/MD`, `libcpmt` for `/MT`. This narrow binary dependency is not
+  Microsoft STL selection.
 - Shared libc++ plus `/MT` conflicts with upstream guidance.
 - rules_cc 0.2.22 lacks a complete public rule-based clang-cl surface.
 - Unknown Bazel features may be ignored, so omission is not a capability
@@ -1621,9 +1674,10 @@ Require:
 | 2026-08-18 | Static CRT feature wins over default dynamic CRT feature | Approved |
 | 2026-08-18 | `.d` dependency files and UTF-8 tool-specific response files | Approved |
 | 2026-08-18 | Explicit SDK directories; windows_support case transformations | Approved |
-| 2026-08-18 | `c++.dll`/`c++.lib` shared and `libc++.lib` static; disable auto-link | Approved |
+| 2026-08-18 | Windows MSVC exposes only static `libc++.lib`; `c++.dll`/`c++.lib` are deferred; disable auto-link | Owner-approved Phase 0 amendment; supersedes the earlier shared-artifact decision |
 | 2026-08-18 | Microsoft payload redistribution forbidden in the stack | Approved |
 | 2026-08-18 | Four-layer `gh stack` plan | Explicitly approved |
+| 2026-08-18 | Allow only the CRT-selected Microsoft C++ runtime ABI helper provider (`__ExceptionPtr*` and uncaught-exception state) on libc++ routes; Microsoft STL headers/full selection remain Layer 2 | Owner-approved Phase 0 amendment, refined by emitted-artifact proof |
 
 ### Outcomes
 

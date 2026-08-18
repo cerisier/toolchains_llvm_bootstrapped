@@ -81,9 +81,14 @@ func inspectArchiveMetadata(path, machineName string) (string, error) {
 		}
 		name := strings.TrimSpace(string(header[0:16]))
 		timestampText := strings.TrimSpace(string(header[16:28]))
-		timestamp, err := strconv.ParseInt(timestampText, 10, 64)
-		if err != nil {
-			return "", fmt.Errorf("archive member %q has invalid timestamp %q: %w", name, timestampText, err)
+		var timestamp int64
+		if timestampText != "" {
+			timestamp, err = strconv.ParseInt(timestampText, 10, 64)
+			if err != nil {
+				return "", fmt.Errorf("archive member %q has invalid timestamp %q: %w", name, timestampText, err)
+			}
+		} else if !isArchiveMetadataMember(name) {
+			return "", fmt.Errorf("archive member %q has an empty timestamp", name)
 		}
 		if timestamp != 0 {
 			return "", fmt.Errorf("archive member %q timestamp = %d, want 0", name, timestamp)

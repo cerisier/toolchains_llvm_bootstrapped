@@ -17,6 +17,12 @@ def declare_llvm_targets(*, suffix = ""):
         visibility = ["//visibility:public"],
     )
 
+    headers_directory(
+        name = "builtin_resource_include_dir",
+        path = native.glob(["lib/clang/*/include"], exclude_directories = 0)[0],
+        visibility = ["//visibility:public"],
+    )
+
     # Convenient exports
     native.exports_files(native.glob(["bin/*"]))
 
@@ -62,7 +68,7 @@ def declare_llvm_targets(*, suffix = ""):
             "@rules_cc//cc/toolchains/actions:compile_actions",
         ],
         allowlist_include_directories = [
-            ":builtin_resource_dir",
+            ":builtin_resource_include_dir",
         ],
         args = [
             # Use -isystem instead of -resource-dir to avoid conflicts with the
@@ -82,6 +88,26 @@ def declare_llvm_targets(*, suffix = ""):
         visibility = ["//visibility:public"],
     )
 
+    cc_args(
+        name = "compile_resource_dir_msvc",
+        actions = [
+            "@rules_cc//cc/toolchains/actions:compile_actions",
+        ],
+        allowlist_include_directories = [
+            ":builtin_resource_include_dir",
+        ],
+        args = [
+            "/imsvc{resource_dir}",
+        ],
+        data = [
+            ":builtin_resource_include_dir",
+        ],
+        format = {
+            "resource_dir": ":builtin_resource_include_dir",
+        },
+        visibility = ["//visibility:public"],
+    )
+
     cc_tool(
         name = "static_library_validator",
         src = "@llvm//tools/internal:static-library-validator",
@@ -97,6 +123,11 @@ def declare_llvm_targets(*, suffix = ""):
             "cxxfilt": "bin/c++filt" + suffix,
             "llvm_nm": "bin/llvm-nm" + suffix,
         },
+    )
+
+    cc_tool(
+        name = "msvc_def_parser",
+        src = "@llvm//tools/msvc_def_parser",
     )
 
     TOOLS_WITHOUT_LINKER = {
@@ -124,6 +155,30 @@ def declare_llvm_targets(*, suffix = ""):
         tools = BASE_TOOLS | COMPLETE_ONLY_TOOLS | {
             "@rules_cc//cc/toolchains/actions:ar_actions": ":llvm-ar",
         },
+        visibility = ["//visibility:public"],
+    )
+
+    # MSVC ABI actions use the CL/LINK dialect directly. Keep this map separate
+    # from MinGW so target ABI, never execution OS, selects the personality.
+    cc_tool_map(
+        name = "tools_for_msvc",
+        tools = {
+            "@rules_cc//cc/toolchains/actions:c_compile": ":clang-cl",
+            "@rules_cc//cc/toolchains/actions:cpp_compile": ":clang-cl",
+            "@rules_cc//cc/toolchains/actions:linkstamp_compile": ":clang-cl",
+            "@rules_cc//cc/toolchains/actions:preprocess_assemble": ":clang-cl",
+            "@rules_cc//cc/toolchains/actions:cpp_header_parsing": ":clang-cl",
+            "@rules_cc//cc/toolchains/actions:generate_def_file": ":msvc_def_parser",
+            "@rules_cc//cc/toolchains/actions:ar_actions": ":llvm-ar",
+            "@rules_cc//cc/toolchains/actions:link_actions": ":lld-link",
+            "@rules_cc//cc/toolchains/actions:strip": ":llvm-strip",
+        } | _VALIDATE_STATIC_LIBRARY_TOOL,
+        visibility = ["//visibility:public"],
+    )
+
+    native.alias(
+        name = "tools_for_msvc_for_runtime",
+        actual = ":tools_for_msvc",
         visibility = ["//visibility:public"],
     )
 
@@ -215,6 +270,25 @@ def declare_llvm_targets(*, suffix = ""):
         ],
         capabilities = ["@rules_cc//cc/toolchains/capabilities:supports_pic"],
         allowlist_include_directories = [":builtin_resource_dir"],
+    )
+
+    cc_tool(
+        name = "clang-cl",
+        src = "bin/clang-cl" + suffix,
+        data = [
+            ":builtin_resource_include_dir",
+        ],
+        allowlist_include_directories = [":builtin_resource_include_dir"],
+    )
+
+    cc_tool(
+        name = "lld-link",
+        src = "bin/lld-link" + suffix,
+        capabilities = [
+            "@rules_cc//cc/toolchains/capabilities:has_configured_linker_path",
+            "@rules_cc//cc/toolchains/capabilities:supports_dynamic_linker",
+            "@rules_cc//cc/toolchains/capabilities:supports_interface_shared_libraries",
+        ],
     )
 
     cc_tool(

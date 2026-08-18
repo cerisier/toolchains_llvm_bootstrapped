@@ -52,6 +52,16 @@ test_suite(
     tests = ["//tools/msvc_tool_probe:test"],
 )
 
+alias(
+    name = "msvc_def_parser",
+    actual = "//tools/msvc_def_parser",
+)
+
+test_suite(
+    name = "msvc_def_parser_test",
+    tests = ["//tools/msvc_def_parser:test"],
+)
+
 bzl_library(
     name = "defs",
     srcs = ["defs.bzl"],

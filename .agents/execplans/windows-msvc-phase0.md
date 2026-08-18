@@ -354,6 +354,13 @@ libc++, not Microsoft STL. Layer 2 adds the independently selectable
 `//constraints/cxxstdlib:msvc` route through custom platforms; no initial
 `*_msvc_stl` convenience platform names.
 
+Owner-approved amendment, 2026-08-18: upstream libc++'s narrow Microsoft-ABI
+runtime-helper dependency does not count as selecting Microsoft STL. Layer 1
+may link only the CRT-selected provider (`msvcprt.lib`/MSVCP for `/MD`,
+`libcpmt.lib` for `/MT`) for `__ExceptionPtr*` operations and
+uncaught-exception state; Microsoft STL headers and the complete standard
+library implementation remain exclusive to Layer 2.
+
 ### 3. Windows CRT constraint semantics
 
 Fact: modern MSVC direct probes close through UCRT plus VCRuntime; repository
@@ -496,12 +503,18 @@ shared libc++ plus a non-DLL CRT does not work correctly.
 
 Decision:
 
-- shared runtime: `c++.dll`;
-- shared import library: `c++.lib`;
-- static library: `libc++.lib`;
+- expose only the static library `libc++.lib` on the Windows MSVC route;
+- do not expose `c++.dll` or `c++.lib` in Layer 1;
+- compile every Windows MSVC libc++ consumer with
+  `_LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS`, independent of ordinary dependency
+  `linkstatic` mode;
 - define `_LIBCPP_NO_AUTO_LINK` for consumers and make the selected artifact an
   explicit declared link input;
-- reject shared libc++ plus `/MT`.
+- explicitly declare `msvcprt.lib` for `/MD` or `libcpmt.lib` for `/MT` as
+  upstream libc++'s Microsoft C++ runtime ABI helper provider; this is the sole
+  permitted Microsoft-STL-runtime input on a libc++ route;
+- defer dynamic libc++ until a separately approved configuration-wide consumer
+  annotation and deployment contract exists.
 
 ### 18. libc++ ABI site configuration by LLVM line
 
@@ -522,7 +535,8 @@ common ABI contract on every line:
 - Windows time-zone database off unless a data source becomes a separately
   owned feature;
 - hardening mode `none`, matching current repository policy;
-- `_LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS` only for the static artifact;
+- `_LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS` for every Windows MSVC consumer,
+  because Layer 1 exposes only the static artifact;
 - `_LIBCPP_NO_AUTO_LINK` for consumer compilation.
 
 Do not copy the LLVM 22 generated header into 21 or 23. Line-specific macros
@@ -536,21 +550,22 @@ order puts the broad VC tree before other C++ headers. Use retail libraries,
 payload. `/MD` requires an externally installed/deployed matching VC runtime;
 `/MT` links retail static CRT/VCRuntime. The repository does not publish,
 bundle, or expose `VC/Redist`; app-local deployment remains a legal-review
-follow-up. Mixing repository-owned libc++ and Microsoft-STL closures fails
-analysis; opaque prebuilt ABI cannot be inferred.
+follow-up. Mixing repository-owned libc++ and Microsoft-STL headers or complete
+standard-library closures fails analysis; the exact CRT-selected Microsoft C++
+runtime ABI helper provider is the sole Layer 1 exception. Opaque prebuilt ABI
+cannot be inferred.
 
 ### 20. STL x CRT x libc++ linkage matrix
 
-| STL | CRT | libc++ artifact | Disposition |
-|---|---|---|---|
-| libc++ | `/MD` | static `libc++.lib` | supported after Layer 1 proof |
-| libc++ | `/MT` | static `libc++.lib` | supported after Layer 1 proof |
-| libc++ | `/MD` | `c++.dll` + `c++.lib` | supported after Layer 1 proof |
-| libc++ | `/MT` | shared | reject: upstream-unsafe |
-| Microsoft STL | `/MD` | not applicable | Layer 2 supported route |
-| Microsoft STL | `/MT` | not applicable | Layer 2 supported route |
-| either | debug CRT | any | reject |
-| mixed repository-owned STL closure | any | any | reject |
+| STL | CRT | libc++ artifact | ABI helper provider | Disposition |
+|---|---|---|---|---|
+| libc++ | `/MD` | static `libc++.lib` | `msvcprt.lib`/compatible MSVCP | supported after Layer 1 proof |
+| libc++ | `/MT` | static `libc++.lib` | `libcpmt.lib` static helper closure | supported after Layer 1 proof |
+| libc++ | either | shared | not applicable | deferred; no Layer 1 route |
+| Microsoft STL | `/MD` | not applicable | Microsoft STL runtime | Layer 2 supported route |
+| Microsoft STL | `/MT` | not applicable | Microsoft STL runtime | Layer 2 supported route |
+| either | debug CRT | any | any | reject |
+| mixed repository-owned STL closure beyond the approved libc++ helper | any | any | any | reject |
 
 Decision: CRT, STL, and libc++ linkage are orthogonal configuration dimensions
 but validated together. Transitions preserve all three.
@@ -616,6 +631,12 @@ credential value only; introduce no new credential value or secret dependency.
 Any request
 to publish payloads or app-local Redist stops for legal review.
 
+The Layer 1 `msvcprt.lib`/`libcpmt.lib` link inputs remain inside that approved
+private fetch/build boundary. `/MD` native execution uses a separately
+provisioned compatible VC Redistributable; Layer 1 does not publish or bundle
+MSVCP DLLs. This amendment therefore changes the link closure, not the payload
+redistribution decision.
+
 ### 25. Stack approval
 
 Fact: owner explicitly approved PLAN Section 9 and authorized the prescribed
@@ -638,8 +659,8 @@ this goal.
 | SDK release/API | windows_support 0.2.0 observed |
 | case model | clear: case-sensitive APFS and Linux CI passed |
 | import library/PDB | direct x86-64/ARM64 proof and representable rules_cc outputs |
-| CRT/STL conflict | explicit validation contract |
-| shared libc++ + `/MT` | stable reject |
+| CRT/STL conflict | explicit validation contract, including the narrow libc++ Microsoft C++ runtime ABI helper exception |
+| dynamic libc++ | deferred; no Layer 1 route |
 | README/public API edit | no README edit; approved PLAN-only semantics |
 | Layer 1 work | none |
 | permanent Python introduced | none |
