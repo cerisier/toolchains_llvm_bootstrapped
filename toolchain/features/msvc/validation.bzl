@@ -16,7 +16,11 @@ def validate_msvc_configuration(
         disabled_features,
         unsupported_features,
         enabled_build_settings = []):
-    """Returns the frozen Layer 1 configuration error, or None when valid."""
+    """Validates the frozen Layer 1 MSVC configuration.
+
+    Returns:
+        The configuration error string, or None when valid.
+    """
     if not is_msvc_abi:
         return None
     if is_legacy_msvcrt:
