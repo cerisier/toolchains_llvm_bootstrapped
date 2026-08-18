@@ -184,5 +184,4 @@ bzl_library(
 bzl_library(
     name = "versions",
     srcs = ["versions.bzl"],
-    visibility = ["//visibility:public"],
 )

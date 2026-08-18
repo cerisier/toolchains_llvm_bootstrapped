@@ -1,3 +1,5 @@
+load("@bazel_lib//:bzl_library.bzl", "bzl_library")
+
 # Expansion structure independently adapted from hermetic-llvm PR 187,
 # commit ef1eb169508b7f0461463c442e0e100ef575a90a,
 # toolchain/features/legacy/BUILD.bazel (Apache-2.0). Phase 0 contracts replace
@@ -15,6 +17,10 @@ package(default_visibility = ["//visibility:public"])
 
 validation_test(
     name = "validation_test",
+    target_compatible_with = select({
+        "@platforms//os:windows": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
 )
 
 test_suite(
@@ -770,4 +776,10 @@ cc_feature_set(
         ":targets_windows",
         ":windows_quoting_for_param_files",
     ],
+)
+
+bzl_library(
+    name = "validation",
+    srcs = ["validation.bzl"],
+    deps = ["@bazel_skylib//rules:common_settings"],
 )
