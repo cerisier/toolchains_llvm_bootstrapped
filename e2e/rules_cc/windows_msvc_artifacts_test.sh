@@ -6,6 +6,66 @@ found_archive=0
 pe_artifacts=()
 pdb_basenames=()
 
+resolve_runfile() {
+  local path="${1//\\//}"
+  local -a keys=("${path}")
+
+  if [[ -e "${path}" ]]; then
+    printf '%s\n' "${path}"
+    return 0
+  fi
+
+  case "${path}" in
+    ./*)
+      keys+=("_main/${path#./}")
+      ;;
+    ../*)
+      keys+=("${path#../}")
+      ;;
+    *)
+      keys+=("_main/${path}")
+      ;;
+  esac
+
+  local key
+  if [[ -n "${RUNFILES_DIR:-}" ]]; then
+    for key in "${keys[@]}"; do
+      if [[ -e "${RUNFILES_DIR}/${key}" ]]; then
+        printf '%s\n' "${RUNFILES_DIR}/${key}"
+        return 0
+      fi
+    done
+  fi
+
+  if [[ -n "${RUNFILES_MANIFEST_FILE:-}" ]]; then
+    local manifest_key
+    local manifest_value
+    while IFS= read -r line; do
+      manifest_key="${line%% *}"
+      manifest_value="${line#* }"
+      for key in "${keys[@]}"; do
+        if [[ "${manifest_key}" == "${key}" ]]; then
+          printf '%s\n' "${manifest_value}"
+          return 0
+        fi
+      done
+    done <"${RUNFILES_MANIFEST_FILE}"
+  fi
+
+  return 1
+}
+
+resolve_optional_tool() {
+  local variable="$1"
+  local path="${!variable:-}"
+  [[ -z "${path}" ]] && return 0
+  if ! path="$(resolve_runfile "${path}")"; then
+    echo "could not resolve runfile for ${variable}: ${!variable}" >&2
+    exit 1
+  fi
+  printf -v "${variable}" '%s' "${path}"
+}
+
 assert_exception_provider_imports() {
   local artifact="$1"
   local imports
@@ -41,7 +101,15 @@ assert_exception_provider_imports() {
   done <<<"${msvcp_symbols}"
 }
 
-for artifact in ${ARTIFACTS}; do
+for tool in ARTIFACT_ASSERT LLVM_AR LLVM_NM LLVM_OBJDUMP LLVM_READOBJ; do
+  resolve_optional_tool "${tool}"
+done
+
+for artifact_key in ${ARTIFACTS}; do
+  if ! artifact="$(resolve_runfile "${artifact_key}")"; then
+    echo "could not resolve Windows artifact runfile: ${artifact_key}" >&2
+    exit 1
+  fi
   if [[ ! -s "${artifact}" ]]; then
     echo "missing or empty Windows artifact: ${artifact}" >&2
     exit 1

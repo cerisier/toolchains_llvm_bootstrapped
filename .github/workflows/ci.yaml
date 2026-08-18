@@ -346,6 +346,7 @@ jobs:
           fi
           remote_flags=(
             --config=remote
+            --jobs=100
             --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7
           )
           action_dir="${RUNNER_TEMP}/windows-msvc-actions"
