@@ -465,7 +465,7 @@ copy_file(
     name = "libcxx.static.msvc",
     src = ":libcxx.static.archive",
     out = "libc++.lib",
-    allow_symlink = False,
+    allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
