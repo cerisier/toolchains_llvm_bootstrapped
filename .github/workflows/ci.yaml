@@ -329,7 +329,7 @@ jobs:
             --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
             --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
             --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
-            --extra_execution_platforms=@platforms//host:host \
+            --extra_execution_platforms=@platforms//host:host,@llvm//platforms:windows_${{ matrix.target_cpu }}_msvc \
             --spawn_strategy=local \
             --strategy=TestRunner=local \
             //:windows_msvc_native_libcxx_matrix_${{ matrix.target_cpu }}

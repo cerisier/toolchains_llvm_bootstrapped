@@ -311,4 +311,19 @@ artifact inspection rather than skipping it. A representative four-target
 artifact/resource/MinGW suite passed after that change in BuildBuddy invocation
 `d82ca04f-4a07-4abd-96ff-6235062e2bcd`.
 
+CI run `32157711579` then proved the complete Layer 1 job on Linux x86-64,
+Linux ARM64, macOS Intel, and macOS ARM64. On native Windows ARM64, all 18
+applicable host-local artifact and protocol tests passed in BuildBuddy
+invocation `8992ed87-1b2c-4f90-8d81-01a077265c9b`; Windows x86-64 passed the
+same phase. Native execution subsequently failed during analysis because
+Bazel 9 requires the transitioned MSVC target platform to participate in
+default test-toolchain resolution. The native CI command now registers the
+host platform first for compiler/helper actions and the exact MSVC target
+platform second for TestRunner actions. Local `--nobuild` analysis of the
+ARM64 native matrix accepted that ordering in invocation
+`cc8f8098-de0d-4215-950e-8cd8b1ed2929`. The unrelated MinGW POSIX structural
+`sh_test` remains exercised on Linux and macOS but is marked incompatible with
+native Windows, whose rules_shell launcher cannot execute that cross-target
+test.
+
 Pending final task-owned commit, stack resubmission, and green six-host CI.

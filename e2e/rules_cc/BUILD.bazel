@@ -1730,6 +1730,13 @@ _WINDOWS_MINGW_TEST_PLATFORMS = [
         env = {
             "ARTIFACTS": "$(rootpaths :windows_mingw_artifacts_{})".format(cpu),
         },
+        target_compatible_with = select({
+            # rules_shell's POSIX sh_test launcher is not a native Windows
+            # executable. The same transitioned artifacts are inspected by
+            # this test on Linux and macOS hosts.
+            "@platforms//os:windows": ["@platforms//:incompatible"],
+            "//conditions:default": [],
+        }),
     )
     for cpu, _ in _WINDOWS_MINGW_TEST_PLATFORMS
 ]
