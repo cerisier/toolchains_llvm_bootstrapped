@@ -344,6 +344,10 @@ jobs:
           if [[ "${RUNNER_OS}" == "Windows" ]]; then
             cache_flags+=(--repository_cache= --repo_contents_cache=)
           fi
+          remote_flags=(
+            --config=remote
+            --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7
+          )
           action_dir="${RUNNER_TEMP}/windows-msvc-actions"
           mkdir -p "${action_dir}"
           if [[ "${{ matrix.target_cpu }}" == "aarch64" ]]; then
@@ -358,7 +362,7 @@ jobs:
             --bazelrc=.bazelrc \
             build \
             "${cache_flags[@]}" \
-            --config=remote \
+            "${remote_flags[@]}" \
             --materialize_param_files \
             --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
             --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
@@ -368,7 +372,7 @@ jobs:
             --bazelrc=.bazelrc \
             build \
             "${cache_flags[@]}" \
-            --config=remote \
+            "${remote_flags[@]}" \
             --materialize_param_files \
             --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
             --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
@@ -381,7 +385,7 @@ jobs:
             --bazelrc=.bazelrc \
             build \
             "${cache_flags[@]}" \
-            --config=remote \
+            "${remote_flags[@]}" \
             --features=-msvc_configuration_validation \
             --features=-msvc_crt_mode_args \
             --platforms=@llvm//platforms:windows_x86_64_msvc \
@@ -392,7 +396,7 @@ jobs:
             --bazelrc=.bazelrc \
             build \
             "${cache_flags[@]}" \
-            --config=remote \
+            "${remote_flags[@]}" \
             --features=asan \
             --features=-msvc_configuration_validation \
             --platforms=@llvm//platforms:windows_x86_64_msvc \
@@ -406,7 +410,7 @@ jobs:
             --bazelrc=.bazelrc \
             build \
             "${cache_flags[@]}" \
-            --config=remote \
+            "${remote_flags[@]}" \
             --platforms=@llvm//platforms:windows_x86_64_msvc \
             --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
             --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
@@ -418,7 +422,7 @@ jobs:
             --bazelrc=.bazelrc \
             build \
             "${cache_flags[@]}" \
-            --config=remote \
+            "${remote_flags[@]}" \
             --@llvm//config:asan=true \
             --platforms=@llvm//platforms:windows_x86_64_msvc \
             --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
@@ -431,7 +435,7 @@ jobs:
             --bazelrc=.bazelrc \
             aquery \
             "${cache_flags[@]}" \
-            --config=remote \
+            "${remote_flags[@]}" \
             --include_param_files \
             --output=jsonproto \
             --output_file="${action_dir}/default.json" \
@@ -443,7 +447,7 @@ jobs:
             --bazelrc=.bazelrc \
             run \
             "${cache_flags[@]}" \
-            --config=remote \
+            "${remote_flags[@]}" \
             @llvm//tools:msvc_action_assert -- \
             -aquery "${action_dir}/default.json" \
             -param-file-root "${PWD}" \
@@ -460,7 +464,7 @@ jobs:
               --bazelrc=.bazelrc \
               build \
               "${cache_flags[@]}" \
-              --config=remote \
+              "${remote_flags[@]}" \
               --materialize_param_files \
               --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
               --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
@@ -471,7 +475,7 @@ jobs:
               --bazelrc=.bazelrc \
               aquery \
               "${cache_flags[@]}" \
-              --config=remote \
+              "${remote_flags[@]}" \
               --include_param_files \
               --output=jsonproto \
               --output_file="${action_dir}/${cell}.json" \
@@ -484,7 +488,7 @@ jobs:
               --bazelrc=.bazelrc \
               run \
               "${cache_flags[@]}" \
-              --config=remote \
+              "${remote_flags[@]}" \
               @llvm//tools:msvc_action_assert -- \
               -aquery "${action_dir}/${cell}.json" \
               -param-file-root "${PWD}" \
@@ -495,7 +499,7 @@ jobs:
             --bazelrc=.bazelrc \
             aquery \
             "${cache_flags[@]}" \
-            --config=remote \
+            "${remote_flags[@]}" \
             --include_param_files \
             --output=jsonproto \
             --output_file="${action_dir}/runtime-optimization.json" \
@@ -506,7 +510,7 @@ jobs:
             --bazelrc=.bazelrc \
             run \
             "${cache_flags[@]}" \
-            --config=remote \
+            "${remote_flags[@]}" \
             @llvm//tools:msvc_action_assert -- \
             -aquery "${action_dir}/runtime-optimization.json" \
             -param-file-root "${PWD}" \
