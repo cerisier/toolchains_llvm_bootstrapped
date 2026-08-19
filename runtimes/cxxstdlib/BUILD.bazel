@@ -70,7 +70,7 @@ alias(
     actual = select({
         ":libstdcxx_linux": "//runtimes/libstdcxx:libstdcxx_library_search_directory",
         ":libstdcxx_windows": ":libstdcxx_windows_unsupported",
-        ":libcxx_windows_msvc": "@llvm//runtimes:none",
+        ":libcxx_windows_msvc": "//runtimes/libcxx:libcxx_msvc_library_search_directory",
         "//conditions:default": "//runtimes/libcxx:libcxx_library_search_directory",
     }),
 )

@@ -4,17 +4,28 @@ load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 package(default_visibility = ["//visibility:public"])
 
 cc_args(
-    name = "target_and_compatibility",
+    name = "target",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:source_compile_actions",
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = select({
+        "//platforms/config:windows_x86_64_msvc": ["--target=x86_64-pc-windows-msvc"],
+        "//platforms/config:windows_aarch64_msvc": ["--target=aarch64-pc-windows-msvc"],
+        "//conditions:default": [],
+    }),
+)
+
+cc_args(
+    name = "compatibility",
     actions = [
         "@rules_cc//cc/toolchains/actions:source_compile_actions",
     ],
     args = select({
         "//platforms/config:windows_x86_64_msvc": [
-            "--target=x86_64-pc-windows-msvc",
             "/clang:-fms-compatibility-version=19.50.35717",
         ],
         "//platforms/config:windows_aarch64_msvc": [
-            "--target=aarch64-pc-windows-msvc",
             "/clang:-fms-compatibility-version=19.50.35717",
         ],
         "//conditions:default": [],
@@ -44,7 +55,6 @@ cc_args(
         "/D_CRT_SECURE_NO_WARNINGS",
         "/D_CRT_STDIO_ISO_WIDE_SPECIFIERS",
         "/D_LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS",
-        "/D_LIBCPP_NO_AUTO_LINK",
         "/clang:-Wno-builtin-macro-redefined",
         "/D__DATE__=\"redacted\"",
         "/D__TIMESTAMP__=\"redacted\"",
@@ -52,6 +62,34 @@ cc_args(
         "/clang:-ffile-compilation-dir=.",
         "/clang:-gno-codeview-command-line",
     ],
+)
+
+# clang-cl owns final links and selects the declared sibling lld-link. The
+# direct spelling is required for InstalledDir discovery before /clang: flags
+# are translated for cc1.
+cc_args(
+    name = "driver_link",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = [
+        "-no-canonical-prefixes",
+        "/clang:-fuse-ld=lld",
+    ],
+)
+
+# Keep the option and path in one response-file token. clang-cl's CL-mode
+# response parser does not associate a value placed on the following line.
+cc_args(
+    name = "resource_dir",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = ["-resource-dir={resource_dir}"],
+    data = ["//runtimes:resource_directory"],
+    format = {
+        "resource_dir": "//runtimes:resource_directory",
+    },
 )
 
 cc_args(
@@ -143,7 +181,10 @@ cc_args(
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
-    args = ["/LIBPATH:{msvc_dynamic_lib}"],
+    args = [
+        "/clang:-Xlinker",
+        "/clang:/LIBPATH:{msvc_dynamic_lib}",
+    ],
     data = ["//windows:msvc_dynamic_runtime_libraries"],
     format = {
         "msvc_dynamic_lib": "//windows:msvc_dynamic_runtime_libraries",
@@ -155,7 +196,10 @@ cc_args(
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
-    args = ["/LIBPATH:{msvc_static_lib}"],
+    args = [
+        "/clang:-Xlinker",
+        "/clang:/LIBPATH:{msvc_static_lib}",
+    ],
     data = ["//windows:msvc_static_runtime_libraries"],
     format = {
         "msvc_static_lib": "//windows:msvc_static_runtime_libraries",
@@ -168,8 +212,10 @@ cc_args(
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
     args = [
-        "/LIBPATH:{winsdk_ucrt_lib}",
-        "/LIBPATH:{winsdk_um_lib}",
+        "/clang:-Xlinker",
+        "/clang:/LIBPATH:{winsdk_ucrt_lib}",
+        "/clang:-Xlinker",
+        "/clang:/LIBPATH:{winsdk_um_lib}",
     ],
     data = [
         "//windows:winsdk_ucrt_libraries",
@@ -181,42 +227,31 @@ cc_args(
     },
 )
 
-# rules_cc filters dynamic_runtime_lib to shared-library-shaped artifacts.
-# Windows MSVC deliberately has no dynamic libc++ artifact, so bind the single
-# static archive directly to every complete-program link action instead.
+# clang-cl rejects the common -L spelling in CL mode. Keep the common declared
+# directory model, but translate this irreducible spelling to LINK syntax.
 cc_args(
-    name = "libcxx_static_runtime_link",
+    name = "libcxx_library_search_path",
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
-    args = ["{libcxx_static_runtime}"],
-    data = ["//runtimes/cxxstdlib:static_runtime_lib"],
-    format = {
-        "libcxx_static_runtime": "//runtimes/cxxstdlib:static_runtime_lib",
-    },
-)
-
-# clang-cl may lower otherwise supported source operations to compiler-rt
-# helpers. Direct lld-link invocation does not discover Clang's resource
-# directory, so the target-matched archive must be an explicit link input.
-cc_args(
-    name = "compiler_rt_builtins_link",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:link_actions",
+    args = [
+        "/clang:-Xlinker",
+        "/clang:/LIBPATH:{libcxx_library_search_path}",
     ],
-    args = ["{compiler_rt_builtins}"],
-    data = ["//runtimes/compiler-rt:clang_rt.builtins.static"],
+    data = ["//runtimes/cxxstdlib:library_search_directory"],
     format = {
-        "compiler_rt_builtins": "//runtimes/compiler-rt:clang_rt.builtins.static",
+        "libcxx_library_search_path": "//runtimes/cxxstdlib:library_search_directory",
     },
 )
 
 cc_args_list(
     name = "toolchain_prefix_args",
     args = [
-        ":target_and_compatibility",
+        ":target",
+        ":compatibility",
         ":hermetic_compile",
         ":libcxx_include",
+        ":driver_link",
     ],
 )
 
@@ -231,8 +266,9 @@ cc_args_list(
         "//conditions:default": [":msvc_dynamic_runtime_library_path"],
     }) + select({
         "//toolchain:runtimes_all": [
-            ":libcxx_static_runtime_link",
-            ":compiler_rt_builtins_link",
+            ":resource_dir",
+            "@llvm//toolchain/args:rtlib_compiler_rt",
+            ":libcxx_library_search_path",
         ],
         "//conditions:default": [],
     }),

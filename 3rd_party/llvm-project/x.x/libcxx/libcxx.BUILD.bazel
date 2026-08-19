@@ -146,6 +146,14 @@ selects.config_setting_group(
     ],
 )
 
+selects.config_setting_group(
+    name = "windows_msvc_static_crt",
+    match_all = [
+        ":windows_msvc",
+        "@llvm//toolchain/features/msvc:static_crt_config",
+    ],
+)
+
 write_file(
     name = "__config_site",
     out = "include/__config_site",
@@ -366,6 +374,19 @@ cc_library(
             "-Wno-covered-switch-default",
             "-Wno-suggest-override",
         ],
+    }) + select({
+        # clang-cl's /MD and /MT defaults do not name the Microsoft C++
+        # exception_ptr provider. Make libc++'s archive own that narrow ABI
+        # dependency through a COFF .drectve instead of a Bazel link argument.
+        ":windows_msvc_static_crt": [
+            "/clang:-Xclang",
+            "/clang:--dependent-lib=libcpmt",
+        ],
+        ":windows_msvc": [
+            "/clang:-Xclang",
+            "/clang:--dependent-lib=msvcprt",
+        ],
+        "//conditions:default": [],
     }),
     implementation_deps = [
         # Order matter. Search path should have C++ headers before any lib C headers.
