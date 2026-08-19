@@ -1,6 +1,7 @@
 # Windows MSVC Phase 0 decision ledger
 
-Status: decisions frozen; native six-host closeout pending. No Layer 1 implementation.
+Status: Phase 0 decisions frozen; the direct-link Layer 1 baseline exists, and
+the 2026-08-19 architecture supersession below awaits implementation.
 
 Date: 2026-08-18 (Asia/Tokyo)
 
@@ -9,6 +10,25 @@ Base: `d2f5dd0f33aae9f52d34ba631540285b2d09b368` (`origin/main`, PR 709)
 Branch: `cerisier/windows-msvc-phase0`
 
 Worktree: `/Users/corentinkerisit/code/github.com/hermeticbuild/hermetic-llvm-msvc-phase0`
+
+## Superseding owner decision, 2026-08-19
+
+The direct-lld-link and explicit-runtime-closure decisions in this historical
+ledger are superseded for Layer 1. Windows MSVC must follow hermetic-llvm's
+existing driver-owned link/runtime model as closely as possible:
+
+- Bazel executes clang-cl for final links; clang-cl selects its declared
+  sibling lld-link;
+- declared resource and library directories provide compiler-rt, libc++, CRT,
+  UCRT, VCRuntime, and SDK inputs;
+- driver and COFF default-library behavior select toolchain runtime filenames;
+- `/NODEFAULTLIB`, Bazel-enumerated CRT closure, explicit `libc++.lib`, and
+  explicit `clang_rt.builtins.lib` link arguments are not the target design;
+- a Windows-only divergence requires proof that the existing model cannot
+  satisfy an approved contract and a new owner decision.
+
+Phase 0's direct-tool probes remain baseline evidence, not the implementation
+architecture. See `.agents/execplans/windows-msvc-driver-link.md`.
 
 ## Evidence vocabulary
 

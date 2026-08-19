@@ -1,6 +1,6 @@
 # Windows MSVC clang-cl driver-link migration
 
-Status: proposed; architecture evidence complete; no implementation performed.
+Status: owner-approved design; implementation has not started.
 
 Date: 2026-08-19 (Asia/Tokyo)
 
@@ -9,19 +9,29 @@ Baseline: `b9b18f6b267fd7305930ac9d2fe5f7f24797d400` on
 
 ## Objective
 
-Change Layer 1 Windows MSVC executable and DLL link actions from direct
-`lld-link` invocation to the `clang-cl` driver, while still selecting the
-declared sibling `lld-link` and preserving every observable ABI, CRT, runtime,
-artifact, dependency, response-file, and unsupported-configuration contract.
+Make Windows MSVC linking follow hermetic-llvm's existing driver-link model as
+closely as the CL/COFF platform permits:
 
-This plan does not implement the change. It records the required argument and
-tool protocol, the expected simplifications, the new risks, and an executable
-verification sequence.
+- Bazel launches `clang-cl` for executable and DLL links;
+- clang-cl selects the declared sibling `lld-link`;
+- compiler and C++ runtimes live in declared resource/library directories;
+- normal driver and COFF default-library behavior selects runtime files;
+- Bazel does not enumerate toolchain-owned runtime `.lib` files on every link;
+- Windows-specific adapters remain only where the existing model cannot express
+  a required LINK/COFF output or ordering contract.
 
-## Executive conclusion
+This plan does not authorize implementation. Start only on the owner's explicit
+implementation mark.
 
-The migration is viable for LLVM 21.1.8, 22.1.8, and 23.1.0-rc1. The preferred
-action shape is:
+## Owner direction
+
+The existing repository model is the default. Do not preserve a direct-link or
+manually enumerated runtime closure merely because Layer 1 already implemented
+one. Diverge only after an end-to-end proof demonstrates that the existing
+driver/resource-directory/library-directory model cannot satisfy an approved
+Windows contract. Stop and report that proof before adding an exception.
+
+The intended action shape is:
 
 ```text
 clang-cl
@@ -29,298 +39,261 @@ clang-cl
   -no-canonical-prefixes
   /clang:-fuse-ld=lld
   /Fe<declared-output>
-  <objects and ordinary .lib inputs>
-  -Xlinker <each LINK-dialect option>
+  -resource-dir <declared Clang resource directory>
+  /MD or /MT
+  <ordinary objects and Bazel dependency libraries>
+  -Xlinker <LINK-only options>
 ```
 
-Do not use one terminal `/link` separator. A `clang-cl -### /link ...` probe
-with no input before `/link` produces no link job, and `/link` also makes
-rules_cc's interleaved input/option ordering difficult to preserve. Individual
-`-Xlinker <arg>` pairs let objects and ordinary libraries remain driver inputs
-while preserving the existing public contract that `linkopts` use LINK syntax.
+Declared, target-selected directories provide compiler-rt, libc++, the chosen
+Microsoft CRT family, UCRT, VCRuntime, and Windows SDK import libraries. The
+driver and COFF directives choose filenames from those directories.
 
-This is not a large simplification of the MSVC adapter. It removes the direct
-`lld-link` action tool wrapper and makes tool selection consistent with this
-repository's non-MSVC driver-link model. It does not remove the project-owned
-mapping for CRT closure, SDK paths, whole archive, DEF/import libraries, PDBs,
-or runtime inputs. It also introduces driver discovery and child-command
-ordering risks that direct `lld-link` did not have.
+## Existing-model mapping
+
+The non-MSVC toolchain already establishes the governing pattern:
+
+- a Clang driver owns final links and selects the LLD personality;
+- `//runtimes:resource_directory` stages compiler-rt by target triple;
+- `-resource-dir` and `-rtlib=compiler-rt` let Clang choose compiler-rt;
+- declared library search directories expose platform and C++ runtimes;
+- Bazel still passes ordinary target objects/libraries and special link intent;
+- action inputs remain hermetic even when the driver chooses a file by name.
+
+Windows should reuse those concepts and common argument groups where clang-cl
+accepts them. CL spelling or COFF output variables justify a thin adapter, not
+a second runtime architecture.
 
 ## Demonstrated facts
 
-### Existing action
+### Driver and linker selection
 
-The Layer 1 x86-64 `/MD` action query at `b9b18f6b` passed in BuildBuddy
-invocation `0e8bce19-4e84-40f7-8f9e-d8b1c4cfbe6e` and showed:
-
-- action executable: the Linux ARM64 `bin/lld-link`;
-- explicit `/MACHINE:X64`, `/NODEFAULTLIB`, `/WHOLEARCHIVE:`, `/OUT:`, SDK and
-  CRT paths, `libc++.lib`, and `clang_rt.builtins.lib`;
-- declared Windows SDK/UCRT/VCRuntime/libc++/compiler-rt inputs;
-- Linux ARM64 execution platform for a Windows x86-64 target.
-
-### clang-cl translation
-
-Local macOS ARM64 `clang-cl -###` probes used the repository's prebuilt LLVM
-21.1.8, 22.1.8, and 23.1.0-rc1 distributions. For all three:
+Local macOS ARM64 probes used the repository's LLVM 21.1.8, 22.1.8, and
+23.1.0-rc1 prebuilts. For all three:
 
 - `/clang:-fuse-ld=lld` selected the sibling `bin/lld-link`;
 - `/Feout.exe` became the child linker's `-out:out.exe`;
-- `-Xlinker /MACHINE:X64`, `/NODEFAULTLIB`, `/lldignoreenv`, `/DLL`, and
-  `/IMPLIB:out.if.lib` reached `lld-link` unchanged;
-- x86-64 and ARM64 target triples selected the requested MSVC target;
-- the sibling `lld-link` executable existed in every tested distribution.
+- individual `-Xlinker` pairs reached lld-link unchanged;
+- x86-64 and ARM64 triples selected the intended MSVC targets.
 
-The same driver implementation path is present in upstream
-`clang/lib/Driver/ToolChains/MSVC.cpp` at:
+Do not use a terminal `/link`. With no input before it clang-cl can emit no
+link job, and it conflicts with rules_cc's interleaved option/input ordering.
 
-- LLVM 21.1.8, commit `2078da43e25a4623cab2d0d60decddf709aaea28`;
-- LLVM 22.1.8, commit `ca7933e47d3a3451d81e72ac174dcb5aa28b59d1`;
-- LLVM 23.1.0-rc1, commit `278c31bfb8ceb7ea17dbfd11a4fb21e6634af957`.
+Source-built clang-cl is a symlink to the monolithic LLVM binary. Direct
+`-no-canonical-prefixes` keeps `InstalledDir` at the staged `bin` directory so
+the driver selects the staged sibling `lld-link`; this still requires native
+Windows and every-source-stage proof.
 
-That source translates `-fuse-ld=lld` to `lld-link`, appends `-Xlinker`
-arguments as linker inputs, and may create an internal UTF-16 response file for
+### Runtime selection
+
+Clang-cl compilation embeds the selected CRT default libraries:
+
+- `/MD` emits `msvcrt` and `oldnames` dependencies;
+- `/MT` emits `libcmt` and `oldnames` dependencies.
+
+Microsoft-ABI libc++ headers auto-link `libc++.lib` unless
+`_LIBCPP_NO_AUTO_LINK` is defined. The Layer 1 static libc++ configuration uses
+the spelling `libc++.lib`.
+
+The MSVC driver adds compiler-rt from its resource directory when
+`-rtlib=compiler-rt` is selected. The repository already stages the target
+archive as `lib/<triple>/clang_rt.builtins.lib`.
+
+Normal CRT libraries may carry further default-library directives that close
+UCRT/VCRuntime dependencies. That behavior must be proven for the filtered
+hermetic `/MD` and `/MT` directory trees; it is not permission to expose the
+host Visual Studio installation.
+
+### Hermetic discovery
+
+Clang-cl otherwise probes Visual Studio, the Windows SDK, `LIB`, `CL`, and
+`_CL_`. Production actions must make all search roots explicit and declared,
+clear or control host-affecting variables, and prove that no host path reaches
 the child command.
 
-### Discovery and packaging hazards
+The preferred initial model is explicit declared resource/library directories,
+matching this repository's existing `-resource-dir` plus library-search-path
+model. Do not introduce a separate `/winsysroot` topology unless explicit
+directories are proven insufficient and the owner approves that exception.
 
-Without `LIB` in the environment, clang-cl injected discovered/guessed VC
-paths such as `lib/amd64` and `atlmfc/lib/amd64`. Setting `LIB` to an explicit
-empty or sentinel value removed those paths. The existing `/lldignoreenv`
-then prevents lld-link from consuming `LIB` itself.
+## Exact protocol
 
-Clang also reads `CL` and `_CL_`. Driver-link actions must set all three
-variables explicitly (`LIB`, `CL`, `_CL_`) rather than inherit host state.
-
-Source-built clang-cl is currently a symlink to the monolithic LLVM binary.
-With canonical prefixes, Clang resolves the real binary and searches beside
-it. A symlink probe proved that the direct driver argument
-`-no-canonical-prefixes` keeps `InstalledDir` at the staged `bin` directory and
-selects the declared staged sibling `lld-link`. The existing
-`/clang:-no-canonical-prefixes` spelling is too late to affect Clang's initial
-executable-path resolution. Alternatively copying clang-cl would work but
-would duplicate a large binary; the plan uses the direct driver argument and
-requires a source-stage proof.
-
-Using driver `/LD` injects a default `<dll>.lib` import-library path before the
-project's required `.if.lib`. Prefer `/Fe<dll>` plus
-`-Xlinker /DLL` and the exact declared `-Xlinker /IMPLIB:<name>.if.lib`.
-
-### Comparison with existing conventions
-
-- hermetic-llvm's non-MSVC tool map uses `clang++` as the link action tool and
-  declares the selected linker beside it. Driver-link therefore aligns with
-  this repository's normal architecture.
-- rules_cc 0.2.22's native Windows reference invokes `msvc_link_path`
-  (`link.exe`) directly, not through `cl.exe`.
-- rules_cc PR 561's clang-cl example maps link actions directly to `lld-link`.
-
-The migration is a repository consistency choice, not rules_cc Windows parity.
-
-## Exact protocol mapping
-
-| Current direct-link surface | Driver-link form |
+| Surface | Required form |
 |---|---|
 | action tool | `clang-cl` |
-| linker selection | `/clang:-fuse-ld=lld` before inputs |
-| staged sibling lookup | direct `-no-canonical-prefixes`; declare sibling `lld-link` as tool data |
-| target | `--target=x86_64-pc-windows-msvc` or `--target=aarch64-pc-windows-msvc` on link actions |
-| output | `/Fe{output_execpath}`; remove project-owned `/OUT:` |
-| ordinary object/static/interface/dynamic library | unchanged plain driver input |
+| actual linker | declared sibling `lld-link` selected by `/clang:-fuse-ld=lld` |
+| target | explicit x86-64 or ARM64 MSVC triple on link actions |
+| output | `/Fe{output_execpath}` |
+| compiler-rt | declared resource directory plus driver `-rtlib=compiler-rt`; no Bazel-emitted builtins filename |
+| libc++ | declared library directory plus upstream MSVC auto-link; no Bazel-emitted `libc++.lib` filename |
+| CRT mode | `/MD` or `/MT`; object/default-library directives choose the family |
+| CRT/SDK files | selected, declared, case-correct library directories; no enumerated link closure |
+| ordinary Bazel dependencies | unchanged driver inputs |
 | alwayslink archive | `-Xlinker /WHOLEARCHIVE:{library}` |
-| library search path | `-Xlinker /LIBPATH:{path}` |
+| library search path | reuse the common driver library-search form when clang-cl accepts it; otherwise use proven `-Xlinker /LIBPATH:{path}` |
 | DLL | `-Xlinker /DLL`, not `/LD` |
-| DEF | `-Xlinker /DEF:{def_file_path}` |
-| import library | `-Xlinker /IMPLIB:{interface_library_output_path}` |
-| machine/subsystem | one `-Xlinker` pair per current LINK option |
-| PDB/debug | `-Xlinker /DEBUG`; keep sibling declared PDB behavior |
-| determinism | driver `/Brepro`; forward `/INCREMENTAL:NO`, `/PDBALTPATH`, and `/pdbsourcepath` with `-Xlinker` |
-| CRT isolation | forward `/NODEFAULTLIB`; retain the explicit ordered CRT closure |
-| user/legacy `linkopts` | expand each existing LINK-syntax value as `-Xlinker {value}` |
-| Bazel link response file | clang-cl UTF-8/Windows-quoted declared input; child spill file is driver-internal |
+| DEF/import library | exact declared paths forwarded with `-Xlinker` |
+| PDB/debug | declared sibling PDB plus forwarded `/DEBUG` |
+| user `linkopts` | public LINK syntax, individually forwarded with `-Xlinker` |
+| response file | declared clang-cl link-driver response file; child spill file is internal |
 
-Keep `LIB` present and controlled in the action environment. Keep
-`/lldignoreenv`. Assert that `CL` and `_CL_` are controlled and that no host VC,
-Windows SDK, `LIB`, or `PATH` search contributes a link input.
+Do not emit `/NODEFAULTLIB`: it disables the platform mechanism selected by
+this plan. Do retain controls that prevent lld-link from reading ambient host
+state.
 
-## Deletion and simplification inventory
+## Expected simplification
 
 Delete or replace:
 
-- link-action mappings from the `lld-link` `cc_tool` to the existing
-  `clang-cl` `cc_tool` in prebuilt and bootstrap maps;
-- standalone `lld-link` `cc_tool` wrappers and their capabilities;
-- source-stage `cc_tool` wrapper creation for `lld-link`, replacing it with the
-  raw staged `bin/lld-link` needed as clang-cl data;
-- direct-link `/OUT:` generation in favor of `/Fe`;
-- tests and comments requiring the Bazel action executable itself to be
-  `lld-link`;
-- contract wording that calls the Bazel response file a direct lld-link
-  response file.
+- the direct `lld-link` action mapping and standalone action-tool wrapper;
+- project-owned `/OUT:` generation;
+- `/NODEFAULTLIB`;
+- explicit ordered `/MD` and `/MT` library-name closures;
+- explicit `libc++.lib` link arguments and `_LIBCPP_NO_AUTO_LINK`;
+- explicit `clang_rt.builtins.lib` link arguments;
+- tests/comments requiring those filenames in Bazel's top-level argv;
+- direct-lld-link response-file wording.
 
-Move the configured-linker, dynamic-linker, and interface-library capabilities
-to the clang-cl action tool. Keep the raw `lld-link[.exe]` in every prebuilt and
-source-built package and in `TOOLCHAIN_BINARIES`.
+Keep:
 
-Must remain:
+- raw `lld-link[.exe]` beside clang-cl and declared as tool data;
+- target-selected compiler resource and runtime/library directories;
+- filtered `/MD` and `/MT` Microsoft library directories until broader input
+  exposure is explicitly approved;
+- `windows_case_copy` for case-correct SDK/import-library lookup;
+- `windows_case_vfs` for Clang header lookup;
+- the portable DEF parser and its BSD notice;
+- rules_cc adapters for objects, libraries, whole archive, DEF, `.if.lib`, PDB,
+  subsystem, machine, and response files;
+- artifact and native behavior verification;
+- deterministic llvm-ar and archive response files.
 
-- the MSVC link argument adapter and rules_cc overrides;
-- explicit Windows SDK/UCRT and filtered `/MD`/`/MT` VCRuntime library trees;
-- `windows_case_copy`; the driver does not make lld-link's filesystem
-  case-insensitive;
-- `windows_case_vfs`; compile/header lookup is unchanged;
-- the portable DEF parser and its license;
-- `/NODEFAULTLIB` plus ordered explicit CRT/provider libraries;
-- explicit static `libc++.lib` and compiler-rt builtins inputs;
-- `/WHOLEARCHIVE`, DEF, declared `.if.lib`, PDB, PE/COFF, CRT, and native
-  behavior verification;
-- llvm-ar and its archive response-file protocol.
+If a runtime cannot be selected through the existing driver/directory model,
+record the smallest demonstrated exception and obtain owner approval before
+adding an explicit runtime filename.
 
-Do not introduce `/winsysroot`, driver-discovered SDK/CRT libraries, automatic
-libc++ linking, driver-discovered compiler-rt, Microsoft STL selection,
-sanitizers, or llvm-lib personality in this migration.
+## Recorded contract amendments
 
-## Contract amendments requiring owner approval
+This documentation-only preparation records these superseding decisions in
+`PLAN.md`, the Phase 0 ledger, and the Layer 1 goal record:
 
-Before implementation, record one decision superseding Phase 0 and Layer 1's
-direct-link wording:
+1. the Bazel link action executable is clang-cl; lld-link is its declared child;
+2. `/Fe` replaces project-owned `/OUT:`;
+3. runtime selection follows declared directories plus driver/COFF defaults;
+4. `/NODEFAULTLIB` and the explicit runtime closure are removed;
+5. libc++ MSVC auto-link and compiler-rt resource-directory discovery are
+   enabled;
+6. public `linkopts` remain LINK syntax and are forwarded individually;
+7. any Windows-only departure from the existing runtime model requires a
+   failed proof and a new owner decision.
 
-1. the Bazel link action executable is clang-cl; lld-link is a declared child
-   tool selected with `/clang:-fuse-ld=lld`;
-2. `/Fe` owns the driver output while the child linker still receives its
-   translated `-out:`;
-3. the declared UTF-8 Bazel response file is a clang-cl link-driver response
-   file; any UTF-16 child spill file is internal to the action;
-4. public `linkopts` remain LINK syntax and are individually forwarded with
-   `-Xlinker`.
-
-The current instruction approves investigation and planning. Implementation
-should start only after the owner confirms these exact amendments. Any request
-to change public `linkopts`, introduce `/winsysroot`, rely on host discovery,
-or alter redistribution/EULA/CI-secret behavior is a separate stop decision.
+No README, redistribution, EULA, CI-secret, Microsoft STL, sanitizer, dynamic
+libc++, debug CRT, or llvm-lib decision is included.
 
 ## Execution plan
 
-### 1. Freeze baseline and amend contracts
+### 1. Freeze the direct-link baseline
 
-- Re-run x64 and ARM64 `/MD` and `/MT` action queries at `b9b18f6`.
-- Save the direct action tool, argv, environment, inputs, outputs, and response
-  contents for differential comparison.
-- Update `PLAN.md`, the Phase 0 ledger, and the Layer 1 goal record with the
-  approved superseding decision. Do not edit README files.
-- Rollback point: documentation-only commit.
+- Save x64/ARM64 `/MD` and `/MT` actions and runtime artifacts at `b9b18f6`.
+- Record action tool, environment, inputs/outputs, PE imports, COFF directives,
+  PDB association, DLL exports/import library, and alwayslink symbol.
+- Commit only the approved plan/ledger amendments before code.
 
-### 2. Change tool packaging and maps
+Rollback point: documentation-only commit.
 
-- Add raw sibling `lld-link[.exe]` to clang-cl `cc_tool.data` for every prebuilt
-  host.
-- Map MSVC link actions to clang-cl and move link capabilities to that tool.
-- In bootstrap stages, keep raw `bin/lld-link`, add it to staged clang-cl data,
-  and remove only the unused standalone lld-link `cc_tool` wrapper.
-- Add link-only `-no-canonical-prefixes` and prove staged `InstalledDir` points
-  at the stage directory for LLVM 21/default/23.
-- Rollback point: tool-map commit; compile actions must remain unchanged.
+### 2. Reuse the existing driver tool model
 
-### 3. Translate the link argument surface
+- Map MSVC link actions to the existing clang-cl tool.
+- Give clang-cl the declared sibling lld-link and the same link capabilities.
+- Reuse the common target, resource-directory, compiler-rt, and runtime search
+  concepts wherever their spelling works in CL mode.
+- Keep raw staged lld-link beside source-built clang-cl; remove only its
+  standalone action wrapper.
+- Prove `-no-canonical-prefixes` preserves same-stage sibling discovery.
 
-- Extend target-triple args to link actions without adding the compile-only
-  compatibility flag there.
-- Add `/clang:-fuse-ld=lld` and `/Fe{output_execpath}` driver arguments.
-- Wrap every linker-owned generated, legacy, and user LINK argument in an
-  individual `-Xlinker` pair.
-- Keep ordinary files as driver inputs; wrap only whole-archive libraries.
-- Use `-Xlinker /DLL`, never `/LD`.
-- Add controlled `LIB`, `CL`, and `_CL_` link environments and retain
-  `/lldignoreenv`.
-- Keep explicit libc++, compiler-rt, SDK, CRT, DEF, import-library, and PDB
-  inputs/outputs.
-- Rollback point: one link-protocol commit with the prior action golden.
+Rollback point: tool-map-only commit.
 
-### 4. Focused risk tests
+### 3. Move runtime ownership to the driver/directories
 
-- Update `windows_msvc_action_test.sh` to require clang-cl as the CppLink tool,
-  both target triples, `/clang:-fuse-ld=lld`, `/Fe`, `-Xlinker` pairing,
-  declared lld-link input, controlled environment, whole archive, DEF,
-  `.if.lib`, PDB, libc++, compiler-rt, and absence of bare direct LINK options.
-- Add the smallest cross-host driver translation check needed to prove no
-  discovered VC/SDK libpaths enter the child command. Prefer a `-###` probe in
-  the existing host job; do not add a general assertion framework.
-- Keep artifact, behavior, and analysis tests unchanged except where they name
-  the top-level link tool.
-- Prove a long/non-ASCII link response file through the real action.
+- Pass the target triple, `/clang:-fuse-ld=lld`, `/Fe`, resource directory,
+  `-rtlib=compiler-rt`, and `/MD` or `/MT` to driver link actions.
+- Begin with the repository's existing target, resource, compiler-rt, and
+  library-search argument groups; introduce CL spelling only where clang-cl
+  rejects a common spelling in an inspected action.
+- Expose target-selected libc++, CRT, UCRT, VCRuntime, and SDK library
+  directories as declared inputs/search roots.
+- Remove `_LIBCPP_NO_AUTO_LINK`, `/NODEFAULTLIB`, explicit CRT/provider names,
+  explicit libc++, and explicit compiler-rt builtins.
+- Control `LIB`, `CL`, `_CL_`, `PATH`, and any Visual Studio/SDK discovery.
+- Materialize an action and inspect the child command before changing special
+  LINK option adapters.
 
-### 5. Differential and matrix verification
+Rollback point: runtime-selection commit.
 
-From `e2e/rules_cc`:
+### 4. Translate only irreducible LINK surfaces
 
-```sh
-bazel test --config=remote //:windows_msvc_artifacts_matrix
-bash ./windows_msvc_action_test.sh --config=remote
-bash ./windows_msvc_analysis_test.sh --config=remote
-bazel build --config=remote //:main
-```
+- Keep ordinary object and dependency libraries as driver inputs.
+- Individually forward whole archive, `/DLL`, `/DEF`, `/IMPLIB`, `/DEBUG`,
+  machine/subsystem, determinism, and user LINK options. Forward library paths
+  only if the common driver form fails its clang-cl action proof.
+- Preserve exact declared outputs and rules_cc ordering.
+- Prefer common rules_cc/common-toolchain features; retain MSVC-local features
+  only where CL spelling or COFF variables make reuse impossible.
 
-Also run x64/ARM64 `/MD` and `/MT` behavior builds, debug PDB, ordinary DLL,
-explicit DEF, generated DEF, import-library consumer, and alwayslink cells.
-Compare pre/post PE/COFF/archive/PDB machine type, directives, imports, exports,
-subsystem, interface library, CodeView path, and retained alwayslink symbol.
+Rollback point: link-adapter commit.
 
-Inspect action graphs in addition to exit status:
+### 5. Focused proof
 
-```sh
-bazel aquery --config=remote --include_param_files --output=text \
-  --platforms=@llvm//platforms:windows_x86_64_msvc \
-  'mnemonic("CppLink", //:windows_msvc_libcxx_behavior_md)'
-bazel aquery --config=remote --include_param_files --output=text \
-  --platforms=@llvm//platforms:windows_aarch64_msvc \
-  'mnemonic("CppLink", //:windows_msvc_libcxx_behavior_md)'
-```
+Keep the permanent tests behavior-oriented:
 
-For LLVM 21.1.8, 22.1.8, and 23.1.0-rc1, build the source-stage representative
-with `--@llvm//toolchain:bootstrap_stage=stage1_from_source` and prove the
-action declares and executes the same-stage clang-cl and sibling lld-link.
+- C/C++/assembly libc++ smoke for `/MD` and `/MT`;
+- native DLL consumer with dllexport, explicit DEF, and generated DEF;
+- x64/ARM64 artifact inspection for PE/COFF, imports, PDB, `.if.lib`, and
+  alwayslink;
+- one action query proving clang-cl, sibling lld-link, resource/library
+  directories, response files, forwarding, and absence of explicit runtime
+  filenames/host paths;
+- existing unsupported-combination analysis tests.
 
-Exercise local actions on Linux x86-64/ARM64, macOS x86-64/ARM64, and Windows
-x86-64/ARM64. On Windows, execute matching target binaries natively. On every
-host, verify target CPU never selects the exec binary and host SDK/VS discovery
-does not alter argv or artifacts.
+The action proof must show that the child lld-link command resolves runtime
+names from declared directories and contains no host Visual Studio/SDK path.
 
-Finally run Buildifier on changed BUILD/Starlark files, `git diff --check`, the
-normal repository CI matrix, and rerun/fix until the latest commit is green.
+### 6. Matrix closeout
+
+Run focused remote tests from `e2e/rules_cc`, then the normal repository CI.
+Exercise Linux x64/ARM64, macOS x64/ARM64, and Windows x64/ARM64 execution
+hosts. Build representative prebuilt and source-built LLVM 21/default/23
+artifacts. Execute matching binaries natively on Windows.
+
+Inspect the resulting action graph and artifacts, not only command status.
 
 ## Acceptance criteria
 
-- Every MSVC CppLink action executes clang-cl and declares its runnable sibling
-  lld-link; no action executes link.exe or a host linker.
-- x64 and ARM64 child links are selected by explicit target triple and retain
-  explicit machine flags.
-- No terminal `/link`, bare unforwarded LINK option, GNU `-Wl,`, discovered VC
-  path, host SDK path, or host environment input appears.
-- Public LINK-syntax `linkopts`, option ordering, response-file quoting, and
-  user subsystem override behavior remain intact.
-- `/MD` and `/MT` retain exactly their approved explicit CRT closures;
-  libc++.lib and compiler-rt builtins remain declared once.
-- Executables, DLLs, `.if.lib`, PDBs, DEF flows, whole archive, and native
-  behavior match the direct-link baseline for x64 and ARM64.
-- Prebuilt and source-built LLVM 21/default/23 pass; all six claimed execution
-  hosts execute their own tools.
-- MinGW and other platform action graphs/artifacts are unchanged.
-- No README, redistribution, EULA, CI-secret, Microsoft STL, sanitizer, or
-  llvm-lib scope change.
+- Every MSVC final link executes clang-cl and declares its sibling lld-link.
+- Runtime inputs follow the existing declared resource/library-directory model.
+- Bazel emits no explicit toolchain-owned CRT, libc++, or compiler-rt filename.
+- `/MD` and `/MT` produce the approved CRT imports/default-library directives.
+- libc++ auto-link selects only static `libc++.lib`; no dynamic libc++ appears.
+- compiler-rt builtins come from the target resource directory exactly once.
+- No `/NODEFAULTLIB`, host VC/SDK path, ambient `LIB`/`CL`/`_CL_`, GNU child-
+  linker form, `link.exe`, or host linker appears.
+- Objects, ordinary libraries, alwayslink, DLL, DEF, `.if.lib`, PDB, subsystem,
+  machine, response-file, and public LINK-syntax contracts still pass.
+- Prebuilt/source-built LLVM 21/default/23 and all six execution hosts pass.
+- MinGW and non-Windows action graphs remain unchanged.
+- No README or later-layer scope changes.
 
-## Unresolved proof tasks
+## Stop conditions
 
-- Confirm rules_cc preserves per-value `-Xlinker` pairing inside the actual
-  materialized Windows-quoted parameter file on all six hosts.
-- Confirm an empty `LIB` value survives Bazel action-environment serialization
-  on Windows; use a nonempty sentinel if it does not.
-- Confirm user `/SUBSYSTEM:WINDOWS` remains later than the default after driver
-  translation; adjust feature ordering, not public syntax, if needed.
-- Confirm the staged symlink plus direct `-no-canonical-prefixes` behaves the
-  same on native Windows; fall back to copying clang-cl only if that proof
-  fails.
-- Confirm clang-cl's optional internal UTF-16 child response file stays inside
-  the sandbox and creates no undeclared persistent output.
+Stop for owner direction if:
 
-Failure of any item is a rollback to direct `lld-link`, not permission to weaken
-hermetic inputs, outputs, CRT isolation, or the public linkopts contract.
+- a runtime needs an explicit filename rather than directory/driver selection;
+- `/winsysroot` appears necessary;
+- exposing a broader Microsoft library directory would implicitly support
+  Microsoft STL or change the public input surface;
+- driver behavior differs across supported LLVM lines or execution hosts;
+- a new redistribution, EULA, CI-secret, or public-API decision appears.
+
+An unsuccessful implicit-selection proof is not permission to restore the old
+explicit closure. Preserve the direct-link baseline as rollback evidence and
+report the smallest blocking difference.

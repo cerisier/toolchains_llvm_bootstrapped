@@ -1,14 +1,16 @@
 # Windows MSVC Layer 1 goal record
 
-Status: complete; draft PR submitted and CI green.
+Status: direct-link baseline complete and green; driver-model replacement
+planned; implementation paused pending the owner's explicit mark.
 
 Date: 2026-08-19 (Asia/Tokyo)
 
 ## Activation
 
 - Objective: complete the first usable Windows MSVC-ABI product slice with
-  clang-cl, deterministic llvm-ar, direct lld-link, Windows SDK/UCRT/VCRuntime,
-  compiler-rt builtins, and libc++ for x86-64 and ARM64.
+  clang-cl compilation and driver links, deterministic llvm-ar,
+  clang-cl-selected lld-link, declared Windows SDK/UCRT/VCRuntime and runtime
+  directories, compiler-rt builtins, and libc++ for x86-64 and ARM64.
 - Parent branch: `cerisier/windows-msvc-phase0`.
 - Parent commit: `c41669b31ae825d3519c80fad818311aecd94f6d`.
 - Parent base: `origin/main` at
@@ -30,12 +32,15 @@ and declared output.
 In scope:
 
 - public `windows_x86_64_msvc` and `windows_aarch64_msvc` platforms;
-- prebuilt, staged, and source-built clang-cl/llvm-ar/lld-link tools;
-- explicit ordered Windows SDK, UCRT, and VCRuntime inputs;
+- prebuilt, staged, and source-built clang-cl/llvm-ar action tools plus a
+  declared sibling lld-link child;
+- declared Windows SDK, UCRT, VCRuntime, libc++, and compiler resource/library
+  directories, with driver/default-library runtime selection;
 - retail `/MD` default and retail `/MT` opt-in, with static winning;
 - clang-cl `.d` dependencies and independent UTF-8 response files;
 - deterministic llvm-ar `rcsD` and link-time `/WHOLEARCHIVE:`;
-- direct lld-link executables, DLLs, `.if.lib` import libraries, and PDBs;
+- clang-cl driver-linked executables, DLLs, `.if.lib` import libraries, and
+  PDBs;
 - exact MSVC compiler-rt builtins resource artifact;
 - Microsoft-ABI libc++ with static `libc++.lib` and absent dynamic artifacts,
   as amended after Phase 0;
@@ -81,16 +86,17 @@ SHA-256 `f1d80086981097d55c792ef3b0e48fe8cededf6dfbfa66849f78da789a211ed4`.
 - Compiler, archive, and linker response files independently handle long,
   spaced, non-ASCII, and host-legal colon-bearing paths using UTF-8.
 - Static libraries contain ordered AMD64/ARM64 COFF members with deterministic
-  timestamps; alwayslink affects only final lld-link argv.
-- Executables and DLLs use direct lld-link, declared outputs, deterministic
-  flags, expected machine/subsystem/import/export tables, and coherent CRT.
+  timestamps; alwayslink affects only the driver-forwarded lld-link argv.
+- Executables and DLLs use clang-cl-selected lld-link, declared outputs,
+  deterministic flags, expected machine/subsystem/import/export tables, and a
+  coherent driver-selected CRT.
 - DLL actions declare `<name>.if.lib`, pass that path to `/IMPLIB:`, and consumers
   link it; debug links declare and reference the matching sibling PDB.
 - libc++ `/MD` and `/MT`, under both ordinary static and dynamic dependency
-  modes, expose only `libc++.lib` without libc++abi, libunwind, or MinGW.
-  They explicitly consume only `msvcprt.lib`/compatible MSVCP for
-  `/MD` or `libcpmt.lib` for `/MT` from the Microsoft-STL binary runtime, and
-  no Microsoft STL headers or other standard-library closure.
+  modes, expose only static `libc++.lib` through upstream MSVC auto-link,
+  without libc++abi, libunwind, or MinGW. Filtered directories make only the
+  CRT-matched Microsoft C++ runtime ABI helper provider reachable, with no
+  Microsoft STL headers or other standard-library closure.
 - Representative exceptions, RTTI, allocation, iostream/locale, filesystem,
   threads/synchronization/atomics, libraries, executables, DLLs, DEF flows, and
   C/Win32 cross-DLL boundaries build for both architectures and run natively on
@@ -173,7 +179,7 @@ The generated-DEF tool uses the portable C++ parser from bazelbuild/bazel
 `df9cf21c8bf643f374790b0c2bc75686293b7024`, with an additional COFF section
 bounds check accepted from review.
 
-Final verification:
+Direct-link baseline verification:
 
 - focused x64/ARM64 artifact matrix passed in BuildBuddy invocation
   `59b2319e-1aad-41c5-b680-143d770e19b6`;
@@ -189,8 +195,9 @@ Final verification:
 
 Decision update, 2026-08-18: Layer 0's PDB contract follows existing rules_cc
 Windows behavior. rules_cc declares the sibling PDB but exposes no PDB-path
-toolchain variable; direct lld-link receives `/DEBUG` and derives the matching
-name from `/OUT`. Layer 1 verifies the declared output, PDB structure, and PE
+toolchain variable. Under the superseding driver design, clang-cl forwards
+`/DEBUG` and lld-link derives the matching name from the driver-translated
+`/Fe` output. Layer 1 verifies the declared output, PDB structure, and PE
 CodeView reference without inventing or guessing `/PDB:`.
 
 Decision update, 2026-08-18: the owner approved a static-only Windows MSVC
@@ -199,7 +206,18 @@ with `_LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS` and explicitly link
 `libc++.lib`; Layer 1 exposes no `c++.dll` or `c++.lib`. `/MD` and `/MT`
 remain independent retail CRT selections.
 
-Implementation evidence:
+Superseding decision, 2026-08-19: keep the static-only artifact contract but
+follow the repository's existing driver/runtime-directory model. Bazel final
+links execute clang-cl, which selects its declared sibling lld-link. Remove
+`_LIBCPP_NO_AUTO_LINK`, `/NODEFAULTLIB`, explicit CRT/provider library-name
+closures, explicit `libc++.lib`, and explicit `clang_rt.builtins.lib` from the
+target design. Declared target resource/library directories remain hermetic
+action inputs; `/MD` or `/MT`, libc++ auto-link, `-rtlib=compiler-rt`, and COFF
+default-library directives select runtime filenames. Any exception requires a
+failed end-to-end proof and a new owner decision. The detailed no-code plan is
+`.agents/execplans/windows-msvc-driver-link.md`.
+
+Historical direct-link implementation evidence:
 
 - After the static-only amendment, all `/MD`/`/MT` by ordinary static/dynamic
   dependency cells built for x86-64 and ARM64 in invocation
@@ -372,4 +390,12 @@ targets and no absolute host executable in invocation
 `12587f3d-d984-4c6c-837a-9b3d9899769f`; the four representative ARM64 outputs
 then built remotely in `c814475f-62db-4c2d-920f-463c96506fd9`.
 
-Pending final task-owned commit, stack resubmission, and green six-host CI.
+The direct-link baseline closed with GitHub Actions run `32239973592` attempt
+2 passing all 45 jobs. Attempt 1's only failure was a Bazel JVM out-of-memory
+after roughly 249,000 configured targets; the failed-job rerun passed without a
+code change.
+
+On 2026-08-19 the owner superseded the direct-link runtime architecture. No
+replacement implementation has started. The approved documentation-only next
+plan is `.agents/execplans/windows-msvc-driver-link.md`; implementation remains
+paused until the owner's explicit mark.
