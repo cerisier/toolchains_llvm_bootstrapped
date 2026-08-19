@@ -340,6 +340,7 @@ See https://github.com/hermeticbuild/hermetic-llvm/milestone/1
 
 ## Users
 - [OpenAI](https://github.com/openai/codex)
+- [LLVM](https://github.com/llvm/llvm-project)
 - [Aspect](https://github.com/aspect-build/aspect-cli)
 - [ZML](https://github.com/zml/zml)
 - [rules_py](https://github.com/aspect-build/rules_py)
