@@ -58,8 +58,8 @@ For `//constraints/windows/abi:msvc`:
 - explicit machine type on link actions and, after Layer 4, librarian actions;
 - CL-compatible compile arguments, with only audited `/clang:` escapes;
 - GNU-compatible initial `llvm-ar` arguments;
-- LINK-compatible `linkopts`, individually forwarded by the driver where
-  required;
+- LINK-compatible `linkopts`, individually forwarded by the driver with
+  response-safe `/clang:-Xlinker` pairs where required;
 - no MinGW headers, libraries, startup objects, pseudo-relocation, auto-import,
   or GNU linker mode;
 - no Microsoft `cl.exe`, `lib.exe`, or `link.exe` discovery.
@@ -139,6 +139,12 @@ header and type. Make only the CRT-matched provider reachable through the
 selected filtered library directory, prove its exact imported helper surface,
 and reject every other Microsoft-STL header or library input on the libc++
 route.
+
+Clang-cl's `/MD` and `/MT` defaults do not name that C++ helper provider.
+Libc++ therefore owns the narrow dependency through a CRT-selected COFF
+dependent-library directive in its archive members. The filename is absent
+from Bazel's final-link argv and resolves only from the filtered declared
+directory; this does not select Microsoft STL headers or its full closure.
 
 Microsoft STL as the selected complete standard library is the second stack
 layer. Do not expose
@@ -341,7 +347,7 @@ that limitation explicitly.
 | Frontend executable | hermetic LLVM tool maps | Direct clang-cl |
 | Initial librarian | hermetic LLVM tool maps | Direct llvm-ar `rcsD` |
 | Final librarian dialect | Layer 4 | llvm-lib personality for MSVC ABI only |
-| Linker | LLVM LLD | Direct lld-link |
+| Linker | LLVM LLD | clang-cl-selected declared sibling lld-link |
 | Exec binary selection | tool repository/exec constraints | Exec OS/CPU only |
 | Target machine selection | target constraints | x64/ARM64 only |
 | Windows SDK/UCRT | windows_support | Declared include and library components |
@@ -930,11 +936,13 @@ lld-link:
 - `/Fe` owns the declared output;
 - driver/resource-directory selection owns compiler-rt;
 - `/MD` or `/MT`, libc++ auto-link, and declared library directories own
-  toolchain runtime selection; no explicit runtime filenames or
+  toolchain runtime selection; no explicit runtime filenames in final-link
+  argv or
   `/NODEFAULTLIB` appear in Bazel link argv;
 - reuse the common driver library-search form when clang-cl accepts it; use a
   forwarded `/LIBPATH:` only after a failed common-form action proof;
-- LINK-only `/DLL` is forwarded individually;
+- LINK-only `/DLL` is forwarded individually with response-safe
+  `/clang:-Xlinker` pairs;
 - objects, object groups, static libraries, interface libraries, and approved
   dynamic-library forms;
 - `/WHOLEARCHIVE:<library>` only for alwayslink;
@@ -1017,7 +1025,8 @@ Keep the permanent suite small and behavior-oriented:
   CRT import, export, import-library, alwayslink, compiler-rt, and PDB behavior;
 - `windows_msvc_action_test.sh` for the few protocols not observable by running
   or inspecting artifacts: clang-cl dependency/response inputs, llvm-ar
-  `rcsD`, clang-cl driver selection of lld-link, whole-archive, SDK case
+  `rcsD`, clang-cl driver selection of lld-link, response-safe LINK forwarding,
+  whole-archive, SDK case
   overlay, declared import library, resource/library directories, and absence
   of explicit runtime filenames;
 - `windows_msvc_analysis_test.sh` for unsupported combinations, including an
@@ -1375,7 +1384,8 @@ Required assertions:
 
 - compile executable is clang-cl;
 - archive executable is llvm-ar through Layer 3 and llvm-lib in Layer 4;
-- link executable is lld-link;
+- link action executable is clang-cl and its declared sibling lld-link is the
+  selected child linker;
 - no supported action falls through to a GNU tool;
 - no unsupported action is advertised through an inaccurate capability;
 - compiler/archive/link replacements expand once; overridden GNU forms expand
@@ -1657,8 +1667,8 @@ Require:
 - [x] PR 187 and rules_cc PR 561 roles clarified.
 - [x] Current GitHub base and PR states reverified 2026-08-17.
 - [x] Phase 0 branch/public API/legal/tool/protocol decisions approved.
-- [ ] Layer 1 complete; direct-link baseline is green, driver-model replacement
-  is planned and implementation has not started.
+- [ ] Layer 1 complete; driver-model replacement and focused proof are green;
+  six-host CI is pending.
 - [ ] Layer 2 complete.
 - [ ] Layer 3 complete.
 - [ ] Layer 4 complete.
@@ -1703,7 +1713,8 @@ Require:
 | 2026-08-18 | Microsoft payload redistribution forbidden in the stack | Approved |
 | 2026-08-18 | Four-layer `gh stack` plan | Explicitly approved |
 | 2026-08-18 | Allow only the CRT-selected Microsoft C++ runtime ABI helper provider (`__ExceptionPtr*` and uncaught-exception state) on libc++ routes; Microsoft STL headers/full selection remain Layer 2 | Owner-approved Phase 0 amendment, refined by emitted-artifact proof |
-| 2026-08-19 | Follow the existing driver/runtime-directory model: clang-cl links through declared sibling lld-link; driver/COFF defaults select toolchain runtimes from declared directories; no `/NODEFAULTLIB` or Bazel-enumerated runtime closure | Owner approved; implementation paused pending explicit mark |
+| 2026-08-19 | Follow the existing driver/runtime-directory model: clang-cl links through declared sibling lld-link; driver/COFF defaults select toolchain runtimes from declared directories; no `/NODEFAULTLIB` or Bazel-enumerated runtime closure | Implemented; focused proof green, six-host CI pending |
+| 2026-08-19 | libc++ archive members carry the CRT-selected `msvcprt`/`libcpmt` dependent-library directive because clang-cl `/MD`/`/MT` omits it; no provider filename returns to final-link argv | Implemented after focused implicit-selection failure; within the approved narrow ABI-helper exception |
 
 ### Outcomes
 
