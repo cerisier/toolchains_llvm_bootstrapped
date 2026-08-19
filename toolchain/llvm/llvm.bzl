@@ -170,7 +170,7 @@ def declare_llvm_targets(*, suffix = ""):
             "@rules_cc//cc/toolchains/actions:cpp_header_parsing": ":clang-cl",
             "@rules_cc//cc/toolchains/actions:generate_def_file": ":msvc_def_parser",
             "@rules_cc//cc/toolchains/actions:ar_actions": ":llvm-ar",
-            "@rules_cc//cc/toolchains/actions:link_actions": ":lld-link",
+            "@rules_cc//cc/toolchains/actions:link_actions": ":clang-cl",
             "@rules_cc//cc/toolchains/actions:strip": ":llvm-strip",
         } | _VALIDATE_STATIC_LIBRARY_TOOL,
         visibility = ["//visibility:public"],
@@ -277,18 +277,19 @@ def declare_llvm_targets(*, suffix = ""):
         src = "bin/clang-cl" + suffix,
         data = [
             ":builtin_resource_include_dir",
+            "bin/lld-link" + suffix,
         ],
-        allowlist_include_directories = [":builtin_resource_include_dir"],
-    )
-
-    cc_tool(
-        name = "lld-link",
-        src = "bin/lld-link" + suffix,
         capabilities = [
             "@rules_cc//cc/toolchains/capabilities:has_configured_linker_path",
             "@rules_cc//cc/toolchains/capabilities:supports_dynamic_linker",
             "@rules_cc//cc/toolchains/capabilities:supports_interface_shared_libraries",
         ],
+        env = {
+            # Presence suppresses clang-cl's Visual Studio library probing;
+            # /lldignoreenv prevents the child linker from consuming it.
+            "LIB": "__hermetic_llvm_empty_lib__",
+        },
+        allowlist_include_directories = [":builtin_resource_include_dir"],
     )
 
     cc_tool(

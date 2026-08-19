@@ -4,10 +4,6 @@
 #error "Windows MSVC Layer 1 requires configuration-wide static libc++ annotations"
 #endif
 
-#ifndef _LIBCPP_NO_AUTO_LINK
-#error "Windows MSVC Layer 1 requires explicit libc++ link inputs"
-#endif
-
 #include <atomic>
 #include <filesystem>
 

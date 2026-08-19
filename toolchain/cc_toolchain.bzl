@@ -59,9 +59,9 @@ def _msvc_cc_toolchain(name, tool_map, module_map, extra_args):
             "@llvm//toolchain:windows_interface_library_pattern",
         ],
         compiler = "clang-cl",
-        # The MSVC args bind the static-only libc++ archive for complete links.
-        # rules_cc's dynamic_runtime_lib accepts only shared-shaped artifacts,
-        # so neither runtime attribute owns this configuration-wide input.
+        # The MSVC driver finds static-only libc++ through its declared library
+        # directory and libc++'s COFF auto-link directive. Neither rules_cc
+        # runtime attribute owns this configuration-wide input.
         dynamic_runtime_lib = "@llvm//runtimes:none",
         enabled_features = [name + "_enabled_features"],
         known_features = [name + "_known_features"],

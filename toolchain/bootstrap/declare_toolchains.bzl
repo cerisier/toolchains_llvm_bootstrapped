@@ -30,7 +30,7 @@ def _declare_exec_platform(exec_os, exec_cpu):
         ],
     )
 
-def _bootstrap_cc_tool(prefix, tool, bootstrap_binary_kwargs, *, capabilities = [], data = [], symlink = True):
+def _bootstrap_cc_tool(prefix, tool, bootstrap_binary_kwargs, *, capabilities = [], data = [], env = {}, symlink = True):
     binary = prefix + "/bin/" + tool
     bootstrap_binary(
         name = binary,
@@ -43,6 +43,7 @@ def _bootstrap_cc_tool(prefix, tool, bootstrap_binary_kwargs, *, capabilities = 
         src = binary,
         capabilities = capabilities,
         data = data,
+        env = env,
     )
 
 def declare_tool_map(exec_os, exec_cpu, prefix = None, fdo_profile = None, fdo_instrumented = False):
@@ -94,7 +95,7 @@ def declare_tool_map(exec_os, exec_cpu, prefix = None, fdo_profile = None, fdo_i
             "@rules_cc//cc/toolchains/actions:cpp_header_parsing": prefix + "/clang-cl",
             "@rules_cc//cc/toolchains/actions:generate_def_file": prefix + "/msvc-def-parser",
             "@rules_cc//cc/toolchains/actions:ar_actions": prefix + "/llvm-ar",
-            "@rules_cc//cc/toolchains/actions:link_actions": prefix + "/lld-link",
+            "@rules_cc//cc/toolchains/actions:link_actions": prefix + "/clang-cl",
             "@rules_cc//cc/toolchains/actions:strip": prefix + "/llvm-strip",
         } | _validate_static_library_tool(prefix),
     )
@@ -220,18 +221,26 @@ def declare_tool_map(exec_os, exec_cpu, prefix = None, fdo_profile = None, fdo_i
         bootstrap_binary_kwargs,
         data = [
             prefix + "/clang_builtin_headers_include_directory",
+            prefix + "/bin/lld-link",
         ],
-    )
-
-    _bootstrap_cc_tool(
-        prefix,
-        "lld-link",
-        bootstrap_binary_kwargs,
         capabilities = [
             "@rules_cc//cc/toolchains/capabilities:has_configured_linker_path",
             "@rules_cc//cc/toolchains/capabilities:supports_dynamic_linker",
             "@rules_cc//cc/toolchains/capabilities:supports_interface_shared_libraries",
         ],
+        env = {
+            # Presence suppresses clang-cl's Visual Studio library probing;
+            # /lldignoreenv prevents the child linker from consuming it.
+            "LIB": "__hermetic_llvm_empty_lib__",
+        },
+    )
+
+    # clang-cl discovers this raw sibling by InstalledDir. It is action data,
+    # not an independently selected rules_cc action tool.
+    bootstrap_binary(
+        name = prefix + "/bin/lld-link",
+        actual = "@llvm-project//llvm:llvm.stripped",
+        **bootstrap_binary_kwargs
     )
 
     cc_tool(

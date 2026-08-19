@@ -385,7 +385,10 @@ cc_nested_args(
 
 cc_nested_args(
     name = "link_static_library_whole",
-    args = ["/WHOLEARCHIVE:{library}"],
+    args = [
+        "/clang:-Xlinker",
+        "/clang:/WHOLEARCHIVE:{library}",
+    ],
     format = {"library": "@rules_cc//cc/toolchains/variables:libraries_to_link.name"},
     requires_true = "@rules_cc//cc/toolchains/variables:libraries_to_link.is_whole_archive",
 )
@@ -429,20 +432,14 @@ cc_args(
 
 cc_feature(
     name = "libraries_to_link",
-    # Keep CRT/provider archives after user objects and libc++. Archive member
-    # selection is order-sensitive: placing libcpmt first would select its
-    # Microsoft-STL exception_ptr definitions before libc++ can provide them.
-    args = [":libraries_to_link_args"] + select({
-        ":static_crt_config": [":static_crt_link_args"],
-        "//conditions:default": [":dynamic_crt_link_args"],
-    }),
+    args = [":libraries_to_link_args"],
     overrides = "@rules_cc//cc/toolchains/features/legacy:libraries_to_link",
 )
 
 cc_args(
     name = "output_execpath_args",
     actions = _LINK_ACTIONS,
-    args = ["/OUT:{output_execpath}"],
+    args = ["/Fe{output_execpath}"],
     format = {"output_execpath": "@rules_cc//cc/toolchains/variables:output_execpath"},
     requires_not_none = "@rules_cc//cc/toolchains/variables:output_execpath",
 )
@@ -450,7 +447,10 @@ cc_args(
 cc_args(
     name = "legacy_link_flags_args",
     actions = _LINK_ACTIONS,
-    args = ["{legacy_link_flags}"],
+    args = [
+        "/clang:-Xlinker",
+        "/clang:{legacy_link_flags}",
+    ],
     format = {"legacy_link_flags": "@rules_cc//cc/toolchains/variables:legacy_link_flags"},
     iterate_over = "@rules_cc//cc/toolchains/variables:legacy_link_flags",
     requires_not_none = "@rules_cc//cc/toolchains/variables:legacy_link_flags",
@@ -459,7 +459,10 @@ cc_args(
 cc_args(
     name = "user_link_flags_args",
     actions = _LINK_ACTIONS,
-    args = ["{user_link_flags}"],
+    args = [
+        "/clang:-Xlinker",
+        "/clang:{user_link_flags}",
+    ],
     format = {"user_link_flags": "@rules_cc//cc/toolchains/variables:user_link_flags"},
     iterate_over = "@rules_cc//cc/toolchains/variables:user_link_flags",
     requires_not_none = "@rules_cc//cc/toolchains/variables:user_link_flags",
@@ -495,7 +498,10 @@ cc_feature_set(
 cc_args(
     name = "library_search_directories_args",
     actions = _LINK_ACTIONS,
-    args = ["/LIBPATH:{library_search_directories}"],
+    args = [
+        "/clang:-Xlinker",
+        "/clang:/LIBPATH:{library_search_directories}",
+    ],
     format = {"library_search_directories": "@rules_cc//cc/toolchains/variables:library_search_directories"},
     iterate_over = "@rules_cc//cc/toolchains/variables:library_search_directories",
     requires_not_none = "@rules_cc//cc/toolchains/variables:library_search_directories",
@@ -510,7 +516,10 @@ cc_feature(
 cc_args(
     name = "shared_flag_args",
     actions = ["@rules_cc//cc/toolchains/actions:dynamic_library_link_actions"],
-    args = ["/DLL"],
+    args = [
+        "/clang:-Xlinker",
+        "/clang:/DLL",
+    ],
 )
 
 cc_feature(
@@ -522,7 +531,10 @@ cc_feature(
 cc_args(
     name = "def_file_args",
     actions = _LINK_ACTIONS,
-    args = ["/DEF:{def_file_path}"],
+    args = [
+        "/clang:-Xlinker",
+        "/clang:/DEF:{def_file_path}",
+    ],
     format = {"def_file_path": "@rules_cc//cc/toolchains/variables:def_file_path"},
     requires_not_none = "@rules_cc//cc/toolchains/variables:def_file_path",
 )
@@ -541,7 +553,10 @@ cc_feature(
 cc_args(
     name = "strip_debug_symbols_args",
     actions = _LINK_ACTIONS,
-    args = ["/DEBUG:NONE"],
+    args = [
+        "/clang:-Xlinker",
+        "/clang:/DEBUG:NONE",
+    ],
     requires_not_none = "@rules_cc//cc/toolchains/variables:strip_debug_symbols",
 )
 
@@ -584,22 +599,8 @@ cc_feature(
 
 cc_args(
     name = "static_crt_compile_args",
-    actions = _COMPILE_ACTIONS,
+    actions = _COMPILE_ACTIONS + _LINK_ACTIONS,
     args = ["/MT"],
-)
-
-cc_args(
-    name = "static_crt_link_args",
-    actions = _LINK_ACTIONS,
-    args = [
-        "iso_stdio_wide_specifiers.lib",
-        "libcmt.lib",
-        "libcpmt.lib",
-        "libvcruntime.lib",
-        "libucrt.lib",
-        "oldnames.lib",
-        "kernel32.lib",
-    ],
 )
 
 cc_feature(
@@ -609,22 +610,8 @@ cc_feature(
 
 cc_args(
     name = "dynamic_crt_compile_args",
-    actions = _COMPILE_ACTIONS,
+    actions = _COMPILE_ACTIONS + _LINK_ACTIONS,
     args = ["/MD"],
-)
-
-cc_args(
-    name = "dynamic_crt_link_args",
-    actions = _LINK_ACTIONS,
-    args = [
-        "iso_stdio_wide_specifiers.lib",
-        "msvcrt.lib",
-        "msvcprt.lib",
-        "vcruntime.lib",
-        "ucrt.lib",
-        "oldnames.lib",
-        "kernel32.lib",
-    ],
 )
 
 cc_feature(
@@ -636,8 +623,14 @@ cc_args(
     name = "machine_args",
     actions = _LINK_ACTIONS,
     args = select({
-        "//platforms/config:windows_x86_64_msvc": ["/MACHINE:X64"],
-        "//platforms/config:windows_aarch64_msvc": ["/MACHINE:ARM64"],
+        "//platforms/config:windows_x86_64_msvc": [
+            "/clang:-Xlinker",
+            "/clang:/MACHINE:X64",
+        ],
+        "//platforms/config:windows_aarch64_msvc": [
+            "/clang:-Xlinker",
+            "/clang:/MACHINE:ARM64",
+        ],
         "//conditions:default": [],
     }),
 )
@@ -647,18 +640,24 @@ cc_args(
     actions = _LINK_ACTIONS,
     args = [
         "/Brepro",
-        "/INCREMENTAL:NO",
-        "/NODEFAULTLIB",
-        "/lldignoreenv",
-        "/PDBALTPATH:%_PDB%",
-        "/pdbsourcepath:.",
+        "/clang:-Xlinker",
+        "/clang:/INCREMENTAL:NO",
+        "/clang:-Xlinker",
+        "/clang:/lldignoreenv",
+        "/clang:-Xlinker",
+        "/clang:/PDBALTPATH:%_PDB%",
+        "/clang:-Xlinker",
+        "/clang:/pdbsourcepath:.",
     ],
 )
 
 cc_args(
     name = "console_subsystem_args",
     actions = ["@rules_cc//cc/toolchains/actions:link_executable_actions"],
-    args = ["/SUBSYSTEM:CONSOLE"],
+    args = [
+        "/clang:-Xlinker",
+        "/clang:/SUBSYSTEM:CONSOLE",
+    ],
 )
 
 cc_feature(
@@ -674,7 +673,10 @@ cc_feature(
 cc_args(
     name = "interface_library_args",
     actions = ["@rules_cc//cc/toolchains/actions:dynamic_library_link_actions"],
-    args = ["/IMPLIB:{interface_library_output_path}"],
+    args = [
+        "/clang:-Xlinker",
+        "/clang:/IMPLIB:{interface_library_output_path}",
+    ],
     format = {"interface_library_output_path": "@rules_cc//cc/toolchains/variables:interface_library_output_path"},
     requires_not_none = "@rules_cc//cc/toolchains/variables:interface_library_output_path",
 )
@@ -688,7 +690,10 @@ cc_feature(
 cc_args(
     name = "pdb_args",
     actions = _LINK_ACTIONS,
-    args = ["/DEBUG"],
+    args = [
+        "/clang:-Xlinker",
+        "/clang:/DEBUG",
+    ],
 )
 
 cc_feature(

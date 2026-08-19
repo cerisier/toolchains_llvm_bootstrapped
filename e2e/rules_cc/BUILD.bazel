@@ -369,6 +369,7 @@ cc_library(
         ],
         copts = ["/std:c++20"],
         features = ["generate_pdb_file"] if crt == "debug" else [],
+        linkopts = ["/OPT:REF"],
         linkstatic = False,
         target_compatible_with = [
             "@llvm//constraints/windows/abi:msvc",
