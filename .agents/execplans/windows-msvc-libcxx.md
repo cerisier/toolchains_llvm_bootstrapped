@@ -1,6 +1,6 @@
 # Windows MSVC Layer 1 goal record
 
-Status: implementation and local verification complete; delivery active.
+Status: complete; draft PR submitted and CI green.
 
 Date: 2026-08-19 (Asia/Tokyo)
 
@@ -163,6 +163,29 @@ MinGW/Microsoft-STL contamination outside the approved Microsoft C++ runtime
 ABI helper provider, or existing-toolchain regression.
 
 ## Closeout evidence
+
+Final test-surface decision, 2026-08-19: the owner approved retiring the Phase
+0 Go action/artifact probe frameworks in favor of the smaller behavior-oriented
+suite recorded in `PLAN.md`. The ordinary libc++ smoke now covers C, C++,
+assembly, `exception_ptr`, and both configuration-wide CRT modes. One DLL
+consumer covers `__declspec(dllexport)`, explicit DEF, and generated DEF flows.
+The generated-DEF tool uses the portable C++ parser from bazelbuild/bazel
+`df9cf21c8bf643f374790b0c2bc75686293b7024`, with an additional COFF section
+bounds check accepted from review.
+
+Final verification:
+
+- focused x64/ARM64 artifact matrix passed in BuildBuddy invocation
+  `59b2319e-1aad-41c5-b680-143d770e19b6`;
+- focused action and unsupported-configuration scripts passed;
+- `//tools/...` passed in `fd2d35f4-ab61-4cde-bc94-30046d686808`;
+- `e2e/rules_cc //:main` passed in
+  `5401c663-be1e-47f5-b338-37037ec27024`;
+- scoped review of only the simplification diff reported no actionable
+  correctness findings after the accepted parser bounds fix;
+- GitHub Actions run `32238463100` passed all 45 jobs, including Layer 1 local
+  execution on Linux, macOS, and Windows x86-64/ARM64, native Windows behavior,
+  and source-built LLVM 21.1.8, 22.1.8, and 23.1.0-rc1.
 
 Decision update, 2026-08-18: Layer 0's PDB contract follows existing rules_cc
 Windows behavior. rules_cc declares the sibling PDB but exposes no PDB-path
