@@ -1,7 +1,7 @@
 # Windows MSVC Layer 1 goal record
 
-Status: direct-link baseline complete and green; driver-model replacement
-planned; implementation paused pending the owner's explicit mark.
+Status: driver-model replacement implemented; focused proof green; six-host CI
+pending.
 
 Date: 2026-08-19 (Asia/Tokyo)
 
@@ -156,7 +156,8 @@ untouched. Any copied upstream code must record exact provenance.
    only built.
 4. Native six-host CI and matching Windows runtime cells pass.
 5. No README or persistent Python changes; no Microsoft payload publication.
-6. Structured autoreview has no accepted/actionable findings.
+6. A small scoped correctness review of the existing change is clean;
+   autoreview runs only with explicit owner approval.
 7. Task-owned commits are pushed and `gh stack submit --auto` creates a draft
    Layer 1 PR; all its checks are green.
 
@@ -216,6 +217,14 @@ action inputs; `/MD` or `/MT`, libc++ auto-link, `-rtlib=compiler-rt`, and COFF
 default-library directives select runtime filenames. Any exception requires a
 failed end-to-end proof and a new owner decision. The detailed no-code plan is
 `.agents/execplans/windows-msvc-driver-link.md`.
+
+Implementation update, 2026-08-19: clang-cl now owns final links and discovers
+the declared sibling lld-link. Compiler-rt and libc++ come from declared
+resource/library directories; `/NODEFAULTLIB` and the Bazel-enumerated runtime
+closure are gone. Bazel's Windows response-file protocol requires joined
+target/resource tokens and `/clang:-Xlinker` forwarding. The only runtime-name
+exception is libc++'s already-approved CRT-selected `msvcprt`/`libcpmt` COFF
+dependency directive; it is archive-owned and absent from final-link argv.
 
 Historical direct-link implementation evidence:
 

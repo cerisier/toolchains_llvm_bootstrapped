@@ -24,6 +24,9 @@ existing driver-owned link/runtime model as closely as possible:
 - driver and COFF default-library behavior select toolchain runtime filenames;
 - `/NODEFAULTLIB`, Bazel-enumerated CRT closure, explicit `libc++.lib`, and
   explicit `clang_rt.builtins.lib` link arguments are not the target design;
+- libc++ archive members may carry the already-approved CRT-selected
+  `msvcprt`/`libcpmt` helper directive because clang-cl's CRT defaults omit it;
+  that provider name does not appear in Bazel final-link argv;
 - a Windows-only divergence requires proof that the existing model cannot
   satisfy an approved contract and a new owner decision.
 
