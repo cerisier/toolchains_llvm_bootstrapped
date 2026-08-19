@@ -1,20 +1,14 @@
-load("@llvm//:defs.bzl", "exec_test")
-load("@rules_go//go:def.bzl", "go_binary", "go_test")
+load("@llvm//toolchain/runtimes:cc_runtime_binary.bzl", "cc_runtime_complete_binary")
 
 package(default_visibility = ["//visibility:public"])
 
-go_binary(
+# Ported from bazelbuild/bazel df9cf21c8bf643f374790b0c2bc75686293b7024,
+# third_party/def_parser. The accompanying BSD notice remains unchanged.
+cc_runtime_complete_binary(
     name = "msvc_def_parser",
-    srcs = ["main.go"],
-    pure = "on",
-)
-
-exec_test(
-    name = "test",
     srcs = [
-        "main.go",
-        "main_test.go",
+        "def_parser.cc",
+        "def_parser.h",
+        "def_parser_main.cc",
     ],
-    pure = "on",
-    rule = go_test,
 )

@@ -655,6 +655,11 @@ Checked-in before Layer 1 begins:
 - `MODULE.bazel`: rules_go 0.62.0 is a normal dependency so these targets are
   usable when the module is consumed, not only in the root development module.
 
+These Go probes are Phase 0 development scaffolding, not permanent public test
+interfaces. Layer 1 may retire them after their important observable contracts
+are covered by smaller Bazel behavior, action, analysis-failure, and artifact
+tests consistent with the rest of the repository.
+
 Required baseline:
 
 ```sh
@@ -983,37 +988,38 @@ Behavior scenarios, x64 and ARM64:
 - generated import-library consumption;
 - supported C/Win32 cross-DLL boundaries.
 
-### Named Layer 1 test surface
+### Layer 1 test surface
 
-Layer 1 creates these stable targets/scripts; names become CI interfaces:
+Keep the permanent suite small and behavior-oriented:
 
-- `//toolchain/features/msvc:all_tests` — argument and feature-state goldens;
-- `//tools:msvc_tool_probe_test` — direct tool/response/dependency/path probes;
-- `//tools:msvc_action_assert_test` — JSON action assertions;
-- `//tools:msvc_artifact_assert_test` — COFF/PE/archive/PDB assertions;
-- `//e2e/rules_cc:windows_msvc_libcxx_matrix` — compile/link/runtime behavior;
-- `//e2e/rules_cc:windows_msvc_resource_directory_matrix` — exact MSVC compiler-rt builtins resource paths and archives;
-- `//e2e/rules_cc:windows_msvc_invalid_matrix` — stable negative cases;
-- `//e2e/rules_cc:windows_mingw_regression_matrix` — unchanged MinGW boundary.
+- one C/C++/assembly libc++ smoke per CRT, with the ordinary exception path
+  exercising libc++'s `exception_ptr` ABI rather than a separate matrix;
+- one native DLL consumer covering `__declspec(dllexport)`, explicit DEF, and
+  generated DEF/import-library flows;
+- `//e2e/rules_cc:windows_msvc_artifacts_matrix` for x64/ARM64 PE, COFF archive,
+  CRT import, export, import-library, alwayslink, compiler-rt, and PDB behavior;
+- `windows_msvc_action_test.sh` for the few protocols not observable by running
+  or inspecting artifacts: clang-cl dependency/response inputs, llvm-ar
+  `rcsD`, direct lld-link, whole-archive, SDK case overlay, declared import
+  library, and static libc++ selection;
+- `windows_msvc_analysis_test.sh` for unsupported combinations, including an
+  explicit shared-libc++ request.
+
+Do not preserve bespoke Go action/artifact assertion frameworks or exhaustive
+private feature goldens after these checks cover the externally observable
+contract. MinGW remains protected by the repository's existing tests.
 
 Required focused verification from `e2e/rules_cc`:
 
 ```sh
-bazel test --config=remote \
-  @llvm//toolchain/features/msvc:all_tests \
-  @llvm//tools:msvc_tool_probe_test \
-  @llvm//tools:msvc_action_assert_test \
-  @llvm//tools:msvc_artifact_assert_test \
-  //:windows_msvc_libcxx_matrix \
-  //:windows_msvc_resource_directory_matrix \
-  //:windows_msvc_invalid_matrix \
-  //:windows_mingw_regression_matrix
+bazel test --config=remote //:windows_msvc_artifacts_matrix
+bash ./windows_msvc_action_test.sh --config=remote
+bash ./windows_msvc_analysis_test.sh --config=remote
 ```
 
-The target labels are a Layer 1 deliverable. If repository package ownership
-requires a different label, update this plan and CI in the same reviewed
-commit before running the goal; do not leave an unnamed “applicable tests”
-gate.
+Matching Windows CI also runs the libc++ smoke in both configuration-wide CRT
+modes and the combined DLL consumer natively. Linux, macOS, and Windows x64
+and ARM64 hosts locally execute the representative compile/link actions.
 
 ### Acceptance
 
@@ -1092,8 +1098,7 @@ artifact outside approved selection-specific differences.
 
 - `//e2e/rules_cc:windows_msvc_stl_matrix`;
 - `//e2e/rules_cc:windows_msvc_mixed_stl_failures`;
-- Layer 1 `windows_msvc_libcxx_matrix`, invalid matrix, action/artifact tests,
-  and MinGW matrix unchanged.
+- Layer 1 behavior, analysis, action, and artifact checks remain unchanged.
 
 Required focused verification:
 
@@ -1102,12 +1107,9 @@ cd e2e/rules_cc
 bazel test --config=remote \
   //:windows_msvc_stl_matrix \
   //:windows_msvc_mixed_stl_failures \
-  //:windows_msvc_libcxx_matrix \
-  //:windows_msvc_invalid_matrix \
-  //:windows_mingw_regression_matrix \
-  @llvm//toolchain/features/msvc:all_tests \
-  @llvm//tools:msvc_action_assert_test \
-  @llvm//tools:msvc_artifact_assert_test
+  //:windows_msvc_artifacts_matrix
+bash ./windows_msvc_action_test.sh --config=remote
+bash ./windows_msvc_analysis_test.sh --config=remote
 ```
 
 ### Acceptance
@@ -1219,11 +1221,10 @@ bazel test --config=remote \
   //:windows_msvc_fuzzer_matrix \
   //:windows_msvc_sanitizer_combinations \
   //:windows_msvc_sanitizer_invalid_matrix \
-  //:windows_msvc_libcxx_matrix \
   //:windows_msvc_stl_matrix \
-  //:windows_mingw_regression_matrix \
-  @llvm//tools:msvc_action_assert_test \
-  @llvm//tools:msvc_artifact_assert_test
+  //:windows_msvc_artifacts_matrix
+bash ./windows_msvc_action_test.sh --config=remote
+bash ./windows_msvc_analysis_test.sh --config=remote
 ```
 
 ### Acceptance
@@ -1312,11 +1313,10 @@ bazel test --config=remote \
   @llvm//toolchain/features/msvc:llvm_lib_argument_tests \
   @llvm//tools:msvc_llvm_lib_personality_test \
   //:windows_msvc_llvm_lib_differential_matrix \
-  @llvm//tools:msvc_action_assert_test \
-  @llvm//tools:msvc_artifact_assert_test \
-  //:windows_msvc_libcxx_matrix \
   //:windows_msvc_stl_matrix \
-  //:windows_mingw_regression_matrix
+  //:windows_msvc_artifacts_matrix
+bash ./windows_msvc_action_test.sh --config=remote
+bash ./windows_msvc_analysis_test.sh --config=remote
 ```
 
 ### Acceptance
@@ -1391,9 +1391,9 @@ Representative command pattern:
 cd e2e/rules_cc
 bazel aquery --config=remote \
   --platforms=@llvm//platforms:windows_x86_64_msvc \
-  //:windows_msvc_libcxx_matrix \
-  --output=jsonproto > /tmp/windows-msvc-x64-md-aquery.json
-bazel test --config=remote @llvm//tools:msvc_action_assert_test
+  //:windows_msvc_libcxx_behavior_md \
+  --include_param_files --output=text
+bash ./windows_msvc_action_test.sh --config=remote
 ```
 
 Equivalent ARM64 and `/MT` queries are mandatory. Layer 2 adds Microsoft STL;
@@ -1436,9 +1436,9 @@ llvm ar t <archive>
 llvm nm --defined-only <archive-or-pe>
 ```
 
-The checked-in `//tools:msvc_artifact_assert_test` owns exact invocations,
-expected values, archive extraction, PDB/CodeView inspection, and failure
-messages.
+The focused `windows_msvc_artifacts_test.sh` owns the stable output checks.
+Temporary development probes need not remain after the same behavior is
+covered here.
 
 ## 16. CI and regression design
 

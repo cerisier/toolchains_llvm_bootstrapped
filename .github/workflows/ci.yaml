@@ -42,26 +42,6 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Host-local MSVC tool protocol probes
-        if: matrix.folder == 'e2e/rules_cc'
-        env:
-          USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
-        working-directory: ${{ matrix.folder }}
-        shell: bash
-        run: |
-          bazel \
-            --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc \
-            --bazelrc=.bazelrc \
-            test \
-            --config=remote \
-            --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
-            --extra_execution_platforms=@platforms//host:host \
-            --spawn_strategy=local \
-            --strategy=TestRunner=local \
-            @llvm//tools:msvc_action_assert_test \
-            @llvm//tools:msvc_artifact_assert_test \
-            @llvm//tools:msvc_tool_probe_test
-
       # Cache build and external artifacts so that the next ci build is incremental.
       # Because github action caches cannot be updated after a build, we need to
       # store the contents of each build in a unique cache key, then fall back to loading
@@ -123,28 +103,6 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Host-local MSVC tool protocol probes
-        if: matrix.folder == 'e2e/rules_cc'
-        env:
-          USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
-        working-directory: ${{ matrix.folder }}
-        shell: bash
-        run: |
-          bazel \
-            --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc \
-            --bazelrc=.bazelrc \
-            test \
-            --config=remote \
-            --repository_cache= \
-            --repo_contents_cache= \
-            --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
-            --extra_execution_platforms=@platforms//host:host \
-            --spawn_strategy=local \
-            --strategy=TestRunner=local \
-            @llvm//tools:msvc_action_assert_test \
-            @llvm//tools:msvc_artifact_assert_test \
-            @llvm//tools:msvc_tool_probe_test
-
       - name: bazel test //...
         id: bazel_test
         env:
@@ -187,24 +145,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
-
-      - name: Host-local MSVC tool protocol probes
-        env:
-          USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
-        working-directory: ${{ matrix.folder }}
-        shell: bash
-        run: |
-          bazel \
-            --bazelrc=.bazelrc \
-            test \
-            --config=remote \
-            --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
-            --extra_execution_platforms=@platforms//host:host \
-            --spawn_strategy=local \
-            --strategy=TestRunner=local \
-            @llvm//tools:msvc_action_assert_test \
-            @llvm//tools:msvc_artifact_assert_test \
-            @llvm//tools:msvc_tool_probe_test
 
       - name: bazel build //:main_default
         id: bazel_test
@@ -283,7 +223,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Verify host-local MSVC Layer 1
+      - name: Cross-build representative MSVC behavior locally
         env:
           USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
         working-directory: e2e/rules_cc
@@ -293,28 +233,35 @@ jobs:
           if [[ "${RUNNER_OS}" == "Windows" ]]; then
             cache_flags+=(--repository_cache= --repo_contents_cache=)
           fi
-
           bazel \
             --bazelrc=.bazelrc \
-            test \
+            build \
             "${cache_flags[@]}" \
+            --jobs=50 \
             --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
             --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
             --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
             --extra_execution_platforms=@platforms//host:host \
+            --platforms=@llvm//platforms:windows_${{ matrix.target_cpu }}_msvc \
             --spawn_strategy=local \
-            --strategy=TestRunner=local \
-            @llvm//toolchain/features/msvc:all_tests \
-            @llvm//tools:msvc_action_assert_test \
-            @llvm//tools:msvc_artifact_assert_test \
-            @llvm//tools:msvc_def_parser_test \
-            @llvm//tools:msvc_tool_probe_test \
-            //:windows_msvc_libcxx_matrix \
-            //:windows_msvc_resource_directory_matrix \
-            //:windows_msvc_invalid_matrix \
-            //:windows_mingw_regression_matrix
+            //:windows_msvc_libcxx_behavior_md \
+            //:windows_msvc_dll_behavior
+          bazel \
+            --bazelrc=.bazelrc \
+            build \
+            "${cache_flags[@]}" \
+            --jobs=50 \
+            --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
+            --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
+            --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
+            --extra_execution_platforms=@platforms//host:host \
+            --platforms=@llvm//platforms:windows_${{ matrix.target_cpu }}_msvc \
+            --features=-dynamic_link_msvcrt \
+            --features=static_link_msvcrt \
+            --spawn_strategy=local \
+            //:windows_msvc_libcxx_behavior_mt
 
-      - name: Execute native Windows MSVC Layer 1
+      - name: Execute native MSVC behavior
         if: runner.os == 'Windows'
         env:
           USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
@@ -326,196 +273,73 @@ jobs:
             test \
             --repository_cache= \
             --repo_contents_cache= \
+            --jobs=50 \
             --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
             --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
             --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
             --extra_execution_platforms=@platforms//host:host,@llvm//platforms:windows_${{ matrix.target_cpu }}_msvc \
+            --platforms=@llvm//platforms:windows_${{ matrix.target_cpu }}_msvc \
             --spawn_strategy=local \
             --strategy=TestRunner=local \
-            //:windows_msvc_native_libcxx_matrix_${{ matrix.target_cpu }}
+            //:windows_msvc_libcxx_behavior_md \
+            //:windows_msvc_dll_behavior
+          bazel \
+            --bazelrc=.bazelrc \
+            test \
+            --repository_cache= \
+            --repo_contents_cache= \
+            --jobs=50 \
+            --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
+            --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
+            --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
+            --extra_execution_platforms=@platforms//host:host,@llvm//platforms:windows_${{ matrix.target_cpu }}_msvc \
+            --platforms=@llvm//platforms:windows_${{ matrix.target_cpu }}_msvc \
+            --features=-dynamic_link_msvcrt \
+            --features=static_link_msvcrt \
+            --spawn_strategy=local \
+            --strategy=TestRunner=local \
+            //:windows_msvc_libcxx_behavior_mt
 
-      - name: Verify MSVC Layer 1 action graphs
+      - name: Inspect representative MSVC artifacts
+        if: runner.os == 'Linux'
         env:
           USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
         working-directory: e2e/rules_cc
         shell: bash
         run: |
-          cache_flags=()
-          if [[ "${RUNNER_OS}" == "Windows" ]]; then
-            cache_flags+=(--repository_cache= --repo_contents_cache=)
-          fi
-          remote_flags=(
-            --config=remote
-            --jobs=100
+          bazel \
+            --bazelrc=.bazelrc \
+            test \
+            --config=remote \
+            --jobs=100 \
+            --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
+            --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
+            --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
+            //:windows_msvc_artifacts_${{ matrix.target_cpu }}_test
+
+      - name: Verify stable MSVC action protocols
+        if: runner.os == 'Linux' && matrix.target_cpu == 'x86_64'
+        env:
+          USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
+        working-directory: e2e/rules_cc
+        shell: bash
+        run: |
+          bash ./windows_msvc_action_test.sh \
+            --config=remote \
+            --jobs=100 \
             --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7
-          )
-          action_dir="${RUNNER_TEMP}/windows-msvc-actions"
-          mkdir -p "${action_dir}"
-          if [[ "${{ matrix.target_cpu }}" == "aarch64" ]]; then
-            target_platform="@llvm//platforms:windows_aarch64_msvc"
-            target_spec="${PWD}/windows_msvc_action_spec_arm64.json"
-          else
-            target_platform="@llvm//platforms:windows_x86_64_msvc"
-            target_spec="${PWD}/windows_msvc_action_spec.json"
-          fi
 
-          bazel \
-            --bazelrc=.bazelrc \
-            build \
-            "${cache_flags[@]}" \
-            "${remote_flags[@]}" \
-            --materialize_param_files \
-            --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
-            --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
-            //:windows_msvc_runtime_optimization_optimized \
-            //:windows_msvc_runtime_optimization_debug
-          bazel \
-            --bazelrc=.bazelrc \
-            build \
-            "${cache_flags[@]}" \
-            "${remote_flags[@]}" \
-            --materialize_param_files \
-            --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
-            --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
-            --platforms="${target_platform}" \
-            //:windows_msvc_libcxx_behavior_static \
-            //:windows_msvc_libcxx_behavior_dynamic_link \
-            //:windows_msvc_assembly_binary \
-            //:windows_msvc_generated_def_binary
-          bazel \
-            --bazelrc=.bazelrc \
-            build \
-            "${cache_flags[@]}" \
-            "${remote_flags[@]}" \
-            --features=-msvc_configuration_validation \
-            --features=-msvc_crt_mode_args \
-            --platforms=@llvm//platforms:windows_x86_64_msvc \
-            --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
-            --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
-            //:windows_msvc_crt_default_probe
-          if bazel \
-            --bazelrc=.bazelrc \
-            build \
-            "${cache_flags[@]}" \
-            "${remote_flags[@]}" \
-            --features=asan \
-            --features=-msvc_configuration_validation \
-            --platforms=@llvm//platforms:windows_x86_64_msvc \
-            --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
-            --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
-            //:windows_msvc_crt_default_probe; then
-            echo "mandatory MSVC configuration validation was bypassed" >&2
-            exit 1
-          fi
-          if bazel \
-            --bazelrc=.bazelrc \
-            build \
-            "${cache_flags[@]}" \
-            "${remote_flags[@]}" \
-            --platforms=@llvm//platforms:windows_x86_64_msvc \
-            --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
-            --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
-            //:windows_msvc_unsupported_feature_probe; then
-            echo "target-local unsupported MSVC feature was accepted" >&2
-            exit 1
-          fi
-          if bazel \
-            --bazelrc=.bazelrc \
-            build \
-            "${cache_flags[@]}" \
-            "${remote_flags[@]}" \
-            --@llvm//config:asan=true \
-            --platforms=@llvm//platforms:windows_x86_64_msvc \
-            --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
-            --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
-            //:windows_msvc_crt_default_probe; then
-            echo "unsupported MSVC sanitizer build setting was accepted" >&2
-            exit 1
-          fi
-          bazel \
-            --bazelrc=.bazelrc \
-            aquery \
-            "${cache_flags[@]}" \
-            "${remote_flags[@]}" \
-            --include_param_files \
-            --output=jsonproto \
-            --output_file="${action_dir}/default.json" \
-            --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
-            --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
-            --platforms="${target_platform}" \
-            'deps(set(//:windows_msvc_libcxx_behavior_static //:windows_msvc_libcxx_behavior_dynamic_link //:windows_msvc_assembly_binary //:windows_msvc_generated_def_binary))'
-          bazel \
-            --bazelrc=.bazelrc \
-            run \
-            "${cache_flags[@]}" \
-            "${remote_flags[@]}" \
-            @llvm//tools:msvc_action_assert -- \
-            -aquery "${action_dir}/default.json" \
-            -param-file-root "${PWD}" \
-            -spec "${target_spec}"
-
-          for cell in mt dbg; do
-            extra_flags=()
-            if [[ "${cell}" == "mt" ]]; then
-              extra_flags+=(--features=-dynamic_link_msvcrt --features=static_link_msvcrt)
-            else
-              extra_flags+=(--compilation_mode=dbg)
-            fi
-            bazel \
-              --bazelrc=.bazelrc \
-              build \
-              "${cache_flags[@]}" \
-              "${remote_flags[@]}" \
-              --materialize_param_files \
-              --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
-              --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
-              --platforms=@llvm//platforms:windows_x86_64_msvc \
-              "${extra_flags[@]}" \
-              //:windows_msvc_libcxx_behavior_static
-            bazel \
-              --bazelrc=.bazelrc \
-              aquery \
-              "${cache_flags[@]}" \
-              "${remote_flags[@]}" \
-              --include_param_files \
-              --output=jsonproto \
-              --output_file="${action_dir}/${cell}.json" \
-              --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
-              --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
-              --platforms=@llvm//platforms:windows_x86_64_msvc \
-              "${extra_flags[@]}" \
-              //:windows_msvc_libcxx_behavior_static
-            bazel \
-              --bazelrc=.bazelrc \
-              run \
-              "${cache_flags[@]}" \
-              "${remote_flags[@]}" \
-              @llvm//tools:msvc_action_assert -- \
-              -aquery "${action_dir}/${cell}.json" \
-              -param-file-root "${PWD}" \
-              -spec "${PWD}/windows_msvc_action_spec_${cell}.json"
-          done
-
-          bazel \
-            --bazelrc=.bazelrc \
-            aquery \
-            "${cache_flags[@]}" \
-            "${remote_flags[@]}" \
-            --include_param_files \
-            --output=jsonproto \
-            --output_file="${action_dir}/runtime-optimization.json" \
-            --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
-            --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
-            'deps(set(//:windows_msvc_runtime_optimization_optimized //:windows_msvc_runtime_optimization_debug))'
-          bazel \
-            --bazelrc=.bazelrc \
-            run \
-            "${cache_flags[@]}" \
-            "${remote_flags[@]}" \
-            @llvm//tools:msvc_action_assert -- \
-            -aquery "${action_dir}/runtime-optimization.json" \
-            -param-file-root "${PWD}" \
-            -spec "${PWD}/windows_msvc_runtime_optimization_spec.json"
+      - name: Verify unsupported MSVC configurations
+        if: runner.os == 'Linux' && matrix.target_cpu == 'x86_64'
+        env:
+          USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
+        working-directory: e2e/rules_cc
+        shell: bash
+        run: |
+          bash ./windows_msvc_analysis_test.sh \
+            --config=remote \
+            --jobs=100 \
+            --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7
 
   llvm_version_analysis:
     strategy:
@@ -547,21 +371,21 @@ jobs:
         run: |
           bazel build --nobuild //toolchain/bootstrap/stage1:llvm
 
-      - name: Verify source-built LLVM ${{ matrix.llvm_version }} MSVC artifacts
+      - name: Build source-built LLVM ${{ matrix.llvm_version }} MSVC behavior
         working-directory: e2e/rules_cc
         shell: bash
         run: |
           bazel \
             --bazelrc=.bazelrc \
-            test \
+            build \
             --config=remote \
             --lockfile_mode=off \
             --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
             --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
             --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
             --@llvm//toolchain:bootstrap_stage=stage1_from_source \
-            //:windows_msvc_artifacts_static_md_x86_64_test \
-            //:windows_msvc_resource_directory_x86_64_test
+            --platforms=@llvm//platforms:windows_x86_64_msvc \
+            //:windows_msvc_libcxx_behavior_md
 
       - name: Verify consumer prebuilt LLVM ${{ matrix.llvm_version }} selection
         env:
