@@ -1636,7 +1636,7 @@ Require:
 - [x] PR 187 and rules_cc PR 561 roles clarified.
 - [x] Current GitHub base and PR states reverified 2026-08-17.
 - [x] Phase 0 branch/public API/legal/tool/protocol decisions approved.
-- [ ] Layer 1 complete.
+- [x] Layer 1 complete.
 - [ ] Layer 2 complete.
 - [ ] Layer 3 complete.
 - [ ] Layer 4 complete.
