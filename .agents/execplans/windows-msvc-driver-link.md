@@ -1,6 +1,6 @@
 # Windows MSVC clang-cl driver-link migration
 
-Status: implemented and focused local/remote proof green; six-host CI pending.
+Status: complete; focused proof and the full 45-job CI matrix are green.
 
 Date: 2026-08-19 (Asia/Tokyo)
 
@@ -331,6 +331,11 @@ report the smallest blocking difference.
 - Response-safe clang-cl action contract: first invocation in
   `cad4a1c1-92d1-42e4-8526-a6b729ad9565`.
 - Source-built default LLVM driver link: `8df25428-2649-447a-adff-03e368bbdfa0`.
+- GitHub Actions run `32265648963`, attempt 2: all 45 jobs green, including
+  Layer 1 on all six execution hosts and LLVM 21.1.8, 22.1.8, and 23.1.0-rc1.
+  Attempt 1's only failure was transient remote TLS loss followed by a Bazel
+  JVM heap exhaustion in the unrelated root suite; its failed-job-only rerun
+  passed without a code change.
 
 ## Direct-consequence cleanup review
 

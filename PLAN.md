@@ -1667,8 +1667,9 @@ Require:
 - [x] PR 187 and rules_cc PR 561 roles clarified.
 - [x] Current GitHub base and PR states reverified 2026-08-17.
 - [x] Phase 0 branch/public API/legal/tool/protocol decisions approved.
-- [ ] Layer 1 complete; driver-model replacement and focused proof are green;
-  six-host CI is pending.
+- [x] Layer 1 complete; driver-model replacement, focused proof, all six
+  execution hosts, and LLVM 21/22/23 analysis are green in GitHub Actions run
+  `32265648963` attempt 2.
 - [ ] Layer 2 complete.
 - [ ] Layer 3 complete.
 - [ ] Layer 4 complete.
@@ -1713,7 +1714,7 @@ Require:
 | 2026-08-18 | Microsoft payload redistribution forbidden in the stack | Approved |
 | 2026-08-18 | Four-layer `gh stack` plan | Explicitly approved |
 | 2026-08-18 | Allow only the CRT-selected Microsoft C++ runtime ABI helper provider (`__ExceptionPtr*` and uncaught-exception state) on libc++ routes; Microsoft STL headers/full selection remain Layer 2 | Owner-approved Phase 0 amendment, refined by emitted-artifact proof |
-| 2026-08-19 | Follow the existing driver/runtime-directory model: clang-cl links through declared sibling lld-link; driver/COFF defaults select toolchain runtimes from declared directories; no `/NODEFAULTLIB` or Bazel-enumerated runtime closure | Implemented; focused proof green, six-host CI pending |
+| 2026-08-19 | Follow the existing driver/runtime-directory model: clang-cl links through declared sibling lld-link; driver/COFF defaults select toolchain runtimes from declared directories; no `/NODEFAULTLIB` or Bazel-enumerated runtime closure | Complete; focused proof and GitHub Actions run `32265648963` attempt 2 green |
 | 2026-08-19 | libc++ archive members carry the CRT-selected `msvcprt`/`libcpmt` dependent-library directive because clang-cl `/MD`/`/MT` omits it; no provider filename returns to final-link argv | Implemented after focused implicit-selection failure; within the approved narrow ABI-helper exception |
 
 ### Outcomes

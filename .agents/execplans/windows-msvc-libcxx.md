@@ -1,7 +1,7 @@
 # Windows MSVC Layer 1 goal record
 
-Status: driver-model replacement implemented; focused proof green; six-host CI
-pending.
+Status: complete; driver-model replacement, focused proof, and the full CI
+matrix are green.
 
 Date: 2026-08-19 (Asia/Tokyo)
 
@@ -404,7 +404,11 @@ The direct-link baseline closed with GitHub Actions run `32239973592` attempt
 after roughly 249,000 configured targets; the failed-job rerun passed without a
 code change.
 
-On 2026-08-19 the owner superseded the direct-link runtime architecture. No
-replacement implementation has started. The approved documentation-only next
-plan is `.agents/execplans/windows-msvc-driver-link.md`; implementation remains
-paused until the owner's explicit mark.
+On 2026-08-19 the owner superseded the direct-link runtime architecture and
+approved implementation of `.agents/execplans/windows-msvc-driver-link.md`.
+Commits `ffa658de` and `d661b8b9` implemented and recorded the clang-cl driver
+link. GitHub Actions run `32265648963`, attempt 2, passed all 45 jobs, including
+Layer 1 on Linux x86-64/ARM64, macOS x86-64/ARM64, and Windows x86-64/ARM64,
+plus LLVM 21.1.8, 22.1.8, and 23.1.0-rc1 analysis. Attempt 1's only failure was
+transient remote TLS loss followed by a Bazel JVM heap exhaustion in the
+unrelated root suite; its failed-job-only rerun passed without a code change.
