@@ -6,5 +6,6 @@ _builder = with_cfg(
     cc_binary,
 )
 
+cc_runtime_complete_binary, _cc_runtime_complete_binary_internal = configure_builder_for_runtimes(_builder.clone(), "complete").build()
 cc_runtime_stage0_binary, _cc_runtime_stage0_binary_internal = configure_builder_for_runtimes(_builder.clone(), "stage0").build()
 cc_runtime_stage1_hosted_binary, _cc_runtime_stage1_hosted_binary_internal = configure_builder_for_runtimes(_builder.clone(), "stage1_hosted").build()

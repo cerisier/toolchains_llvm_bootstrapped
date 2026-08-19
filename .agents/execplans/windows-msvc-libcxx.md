@@ -115,18 +115,17 @@ SHA-256 `f1d80086981097d55c792ef3b0e48fe8cededf6dfbfa66849f78da789a211ed4`.
 
 ## Stable test interfaces
 
-- `//toolchain/features/msvc:all_tests`
-- `//tools:msvc_tool_probe_test`
-- `//tools:msvc_action_assert_test`
-- `//tools:msvc_artifact_assert_test`
-- `//e2e/rules_cc:windows_msvc_libcxx_matrix`
-- `//e2e/rules_cc:windows_msvc_resource_directory_matrix`
-- `//e2e/rules_cc:windows_msvc_invalid_matrix`
-- `//e2e/rules_cc:windows_mingw_regression_matrix`
+- `//e2e/rules_cc:windows_msvc_libcxx_behavior_md`
+- `//e2e/rules_cc:windows_msvc_libcxx_behavior_mt`
+- `//e2e/rules_cc:windows_msvc_dll_behavior`
+- `//e2e/rules_cc:windows_msvc_artifacts_matrix`
+- `e2e/rules_cc/windows_msvc_action_test.sh`
+- `e2e/rules_cc/windows_msvc_analysis_test.sh`
 
-The Phase 0 Go tools own direct-tool, JSON aquery, and artifact verification.
-Tests prefer externally visible analysis results, action graphs, output files,
-binary structure, and runtime behavior over private implementation details.
+The Phase 0 Go probes supported development but were retired after their
+important observable contracts moved into this smaller behavior-oriented
+suite. The generated-DEF action now uses Corentin's portable C++ port of
+Bazel's DEF parser instead of a repository-specific Go reimplementation.
 
 ## Execution matrix
 

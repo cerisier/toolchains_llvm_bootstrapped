@@ -1,5 +1,5 @@
 load("@bazel_features//:features.bzl", "bazel_features")
-load("@bazel_lib//lib:transitions.bzl", "platform_transition_binary", "platform_transition_filegroup", "platform_transition_test")
+load("@bazel_lib//lib:transitions.bzl", "platform_transition_binary", "platform_transition_filegroup")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@llvm//:defs.bzl", "exec_test")
 load("@llvm//3rd_party/gcc:version.bzl", "DEFAULT_GCC_VERSION", "libstdcxx_constraint_value")
@@ -39,7 +39,7 @@ load(
 )
 load(":bazel_version.bzl", "validate_static_library_compatible")
 load(":musl_header_generation_tests.bzl", "musl_header_generation_tests")
-load(":windows_msvc_test_transitions.bzl", "windows_msvc_artifacts", "windows_msvc_runtime_optimization_probe", "windows_msvc_test")
+load(":windows_msvc_artifacts.bzl", "windows_msvc_artifacts")
 load(":windows_runtime_dynamic_libraries_test.bzl", "windows_runtime_dynamic_libraries_assertion")
 
 _VALIDATE_STATIC_LIBRARY_COMPATIBLE = validate_static_library_compatible()
@@ -333,36 +333,6 @@ cc_binary(
     srcs = ["main.cc"],
 )
 
-cc_binary(
-    name = "windows_msvc_c_smoke",
-    srcs = ["windows_msvc_c_smoke.c"],
-    target_compatible_with = [
-        "@llvm//constraints/windows/abi:msvc",
-        "@platforms//os:windows",
-    ],
-)
-
-cc_binary(
-    name = "windows_msvc_libcxx_exception_ptr",
-    srcs = ["windows_msvc_libcxx_exception_ptr.cc"],
-    target_compatible_with = [
-        "@llvm//constraints/windows/abi:msvc",
-        "@llvm//constraints/cxxstdlib:libcxx",
-        "@platforms//os:windows",
-    ],
-)
-
-cc_binary(
-    name = "windows_msvc_libcxx_dynamic_link_exception_ptr",
-    srcs = ["windows_msvc_libcxx_exception_ptr.cc"],
-    linkstatic = False,
-    target_compatible_with = [
-        "@llvm//constraints/windows/abi:msvc",
-        "@llvm//constraints/cxxstdlib:libcxx",
-        "@platforms//os:windows",
-    ],
-)
-
 cc_library(
     name = "windows_msvc_libcxx_behavior_support",
     srcs = ["windows_msvc_libcxx_behavior_support.cc"],
@@ -391,10 +361,15 @@ cc_library(
 
 [
     cc_test(
-        name = name,
-        srcs = ["windows_msvc_libcxx_behavior.cc"],
+        name = "windows_msvc_libcxx_behavior_" + crt,
+        srcs = [
+            "windows_msvc_assembly.S",
+            "windows_msvc_c_smoke.c",
+            "windows_msvc_libcxx_behavior.cc",
+        ],
         copts = ["/std:c++20"],
-        linkstatic = linkstatic,
+        features = ["generate_pdb_file"] if crt == "debug" else [],
+        linkstatic = False,
         target_compatible_with = [
             "@llvm//constraints/windows/abi:msvc",
             "@llvm//constraints/cxxstdlib:libcxx",
@@ -405,11 +380,19 @@ cc_library(
             ":windows_msvc_libcxx_behavior_support",
         ],
     )
-    for name, linkstatic in [
-        ("windows_msvc_libcxx_behavior_static", True),
-        ("windows_msvc_libcxx_behavior_dynamic_link", False),
+    for crt in [
+        "md",
+        "mt",
+        "debug",
     ]
 ]
+
+filegroup(
+    name = "windows_msvc_libcxx_behavior_debug_pdb",
+    testonly = True,
+    srcs = [":windows_msvc_libcxx_behavior_debug"],
+    output_group = "pdb_file",
+)
 
 # same as default
 cc_binary(
@@ -461,7 +444,7 @@ write_file(
     content = [
         "LIBRARY windows_explicit_def",
         "EXPORTS",
-        "    add42=internal_add42",
+        "    explicit_add42=internal_add42",
     ],
 )
 
@@ -547,9 +530,8 @@ cc_test(
     deps = [":windows_generated_def_import"],
 )
 
-# The existing MinGW regression above requires a Windows execution host. The
-# MSVC toolchain's Go DEF parser is intentionally host-portable, so this twin
-# proves export generation and consumption on non-Windows execution hosts.
+# The generic MinGW target requires a Windows execution host. This MSVC twin
+# uses Bazel's portable C++ DEF parser through the toolchain action instead.
 cc_binary(
     name = "windows_msvc_generated_def.dll",
     features = [
@@ -590,15 +572,18 @@ cc_binary(
     deps = [":windows_msvc_generated_def_import"],
 )
 
-cc_binary(
-    name = "windows_msvc_assembly_binary",
-    srcs = [
-        "windows_msvc_assembly.S",
-        "windows_msvc_assembly_main.c",
-    ],
+cc_test(
+    name = "windows_msvc_dll_behavior",
+    srcs = ["windows_msvc_dll_behavior.cc"],
+    linkstatic = False,
     target_compatible_with = [
         "@llvm//constraints/windows/abi:msvc",
         "@platforms//os:windows",
+    ],
+    deps = [
+        ":windows_add_import",
+        ":windows_explicit_def_import",
+        ":windows_msvc_generated_def_import",
     ],
 )
 
@@ -1338,28 +1323,10 @@ cc_test(
     deps = [":coverage_lib"],
 )
 
-_WINDOWS_MSVC_TEST_PLATFORMS = [
-    ("x86_64", "@llvm//platforms:windows_x86_64_msvc"),
-    ("aarch64", "@llvm//platforms:windows_aarch64_msvc"),
+_WINDOWS_MSVC_ARTIFACT_PLATFORMS = [
+    ("x86_64", "@llvm//platforms:windows_x86_64_msvc", "AMD64"),
+    ("aarch64", "@llvm//platforms:windows_aarch64_msvc", "ARM64"),
 ]
-
-cc_library(
-    name = "windows_msvc_runtime_optimization_optimized_library",
-    srcs = ["windows_msvc_runtime_optimization_optimized.c"],
-    target_compatible_with = [
-        "@llvm//constraints/windows/abi:msvc",
-        "@platforms//os:windows",
-    ],
-)
-
-cc_library(
-    name = "windows_msvc_runtime_optimization_debug_library",
-    srcs = ["windows_msvc_runtime_optimization_debug.c"],
-    target_compatible_with = [
-        "@llvm//constraints/windows/abi:msvc",
-        "@platforms//os:windows",
-    ],
-)
 
 cc_library(
     name = "windows_msvc_crt_default_probe",
@@ -1382,369 +1349,106 @@ cc_library(
     ],
 )
 
-[
-    windows_msvc_runtime_optimization_probe(
-        name = "windows_msvc_runtime_optimization_{}".format(mode),
-        runtime_debug = runtime_debug,
-        tags = ["manual"],
-        target = ":windows_msvc_runtime_optimization_{}_library".format(mode),
-        target_platform = "@llvm//platforms:windows_x86_64_msvc",
-    )
-    for mode, runtime_debug in [
-        ("optimized", False),
-        ("debug", True),
-    ]
-]
-
-_WINDOWS_MSVC_BEHAVIOR_CELLS = [
-    (
-        "static_md",
-        [
-            ("behavior", ":windows_msvc_libcxx_behavior_static"),
-            ("exception_ptr", ":windows_msvc_libcxx_exception_ptr"),
-        ],
-        False,
-    ),
-    (
-        "static_mt",
-        [
-            ("behavior", ":windows_msvc_libcxx_behavior_static"),
-            ("exception_ptr", ":windows_msvc_libcxx_exception_ptr"),
-        ],
-        True,
-    ),
-    (
-        "dynamic_link_md",
-        [
-            ("behavior", ":windows_msvc_libcxx_behavior_dynamic_link"),
-            ("exception_ptr", ":windows_msvc_libcxx_dynamic_link_exception_ptr"),
-        ],
-        False,
-    ),
-    (
-        "dynamic_link_mt",
-        [
-            ("behavior", ":windows_msvc_libcxx_behavior_dynamic_link"),
-            ("exception_ptr", ":windows_msvc_libcxx_dynamic_link_exception_ptr"),
-        ],
-        True,
-    ),
-]
-
-[
-    windows_msvc_test(
-        name = "windows_msvc_native_libcxx_{}_{}_{}".format(scenario, cell, cpu),
-        static_crt = static_crt,
-        tags = ["manual"],
-        target = target,
-        target_platform = platform,
-    )
-    for cpu, platform in _WINDOWS_MSVC_TEST_PLATFORMS
-    for cell, scenarios, static_crt in _WINDOWS_MSVC_BEHAVIOR_CELLS
-    for scenario, target in scenarios
-]
-
-[
-    windows_msvc_test(
-        name = "windows_msvc_native_c_smoke_{}".format(cpu),
-        tags = ["manual"],
-        target = ":windows_msvc_c_smoke",
-        target_platform = platform,
-    )
-    for cpu, platform in _WINDOWS_MSVC_TEST_PLATFORMS
-]
-
-_WINDOWS_MSVC_DLL_CONSUMERS = [
-    ("dllexport", ":windows_runtime_dynamic_libraries_binary"),
-    ("explicit_def", ":windows_explicit_def_binary"),
-    ("generated_def", ":windows_msvc_generated_def_binary"),
-]
-
-_WINDOWS_MSVC_DLL_ARTIFACTS = [
-    ":windows_add.dll",
-    ":windows_add_interface_library",
-    ":windows_explicit_def.dll",
-    ":windows_explicit_def_interface_library",
-    ":windows_msvc_generated_def.dll",
-    ":windows_msvc_generated_def_interface_library",
-]
-
-_WINDOWS_MSVC_COMPILE_PROTOCOL_ARTIFACTS = [
-    "windows_msvc_c_smoke",
-    "windows_msvc_crt_default_probe",
-    "windows_msvc_assembly_binary",
-]
-
-[
-    windows_msvc_test(
-        name = "windows_msvc_native_dll_{}_{}".format(flow, cpu),
-        tags = ["manual"],
-        target = target,
-        target_platform = platform,
-    )
-    for cpu, platform in _WINDOWS_MSVC_TEST_PLATFORMS
-    for flow, target in _WINDOWS_MSVC_DLL_CONSUMERS
-]
-
-test_suite(
-    name = "windows_msvc_native_libcxx_matrix",
-    tags = ["manual"],
-    tests = [
-        ":windows_msvc_native_libcxx_{}_{}_{}".format(scenario, cell, cpu)
-        for cpu, _ in _WINDOWS_MSVC_TEST_PLATFORMS
-        for cell, scenarios, _ in _WINDOWS_MSVC_BEHAVIOR_CELLS
-        for scenario, _ in scenarios
-    ] + [
-        ":windows_msvc_native_c_smoke_{}".format(cpu)
-        for cpu, _ in _WINDOWS_MSVC_TEST_PLATFORMS
-    ] + [
-        ":windows_msvc_native_dll_{}_{}".format(flow, cpu)
-        for cpu, _ in _WINDOWS_MSVC_TEST_PLATFORMS
-        for flow, _ in _WINDOWS_MSVC_DLL_CONSUMERS
+platform(
+    name = "windows_x86_64_msvc_libstdcxx_invalid",
+    constraint_values = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:windows",
+        _DEFAULT_LIBSTDCXX_CONSTRAINT,
+        "@llvm//constraints/windows/abi:msvc",
+        "@llvm//constraints/windows/crt:ucrt",
     ],
+    tags = ["manual"],
 )
 
-[
-    test_suite(
-        name = "windows_msvc_native_libcxx_matrix_{}".format(cpu),
-        tags = ["manual"],
-        tests = [
-            ":windows_msvc_native_libcxx_{}_{}_{}".format(scenario, cell, cpu)
-            for cell, scenarios, _ in _WINDOWS_MSVC_BEHAVIOR_CELLS
-            for scenario, _ in scenarios
-        ] + [
-            ":windows_msvc_native_c_smoke_{}".format(cpu),
-        ] + [
-            ":windows_msvc_native_dll_{}_{}".format(flow, cpu)
-            for flow, _ in _WINDOWS_MSVC_DLL_CONSUMERS
-        ],
-    )
-    for cpu, _ in _WINDOWS_MSVC_TEST_PLATFORMS
+_WINDOWS_MSVC_MD_ARTIFACTS = [
+    "windows_msvc_libcxx_behavior_md",
+    "windows_msvc_libcxx_behavior_debug",
+    "windows_msvc_libcxx_behavior_debug_pdb",
+    "windows_msvc_libcxx_behavior_support",
+    "windows_msvc_dll_behavior",
+    "windows_add.dll",
+    "windows_add_interface_library",
+    "windows_explicit_def.dll",
+    "windows_explicit_def_interface_library",
+    "windows_msvc_generated_def.dll",
+    "windows_msvc_generated_def_interface_library",
+]
+
+_WINDOWS_MSVC_MT_ARTIFACTS = [
+    "windows_msvc_libcxx_behavior_mt",
 ]
 
 [
     windows_msvc_artifacts(
-        name = "windows_msvc_artifacts_{}_{}".format(cell, cpu),
+        name = "windows_msvc_artifacts_" + cpu + "_md",
         testonly = True,
-        static_crt = static_crt,
+        static_crt = False,
         tags = ["manual"],
         target_platform = platform,
-        targets = [
-            target
-            for _, target in scenarios
-        ] + [
-            ":windows_msvc_libcxx_behavior_support",
-        ] + (
-            _WINDOWS_MSVC_DLL_ARTIFACTS + _WINDOWS_MSVC_COMPILE_PROTOCOL_ARTIFACTS if cell == "static_md" else []
-        ),
+        targets = _WINDOWS_MSVC_MD_ARTIFACTS,
     )
-    for cpu, platform in _WINDOWS_MSVC_TEST_PLATFORMS
-    for cell, scenarios, static_crt in _WINDOWS_MSVC_BEHAVIOR_CELLS
+    for cpu, platform, _ in _WINDOWS_MSVC_ARTIFACT_PLATFORMS
 ]
-
-[
-    exec_test(
-        name = "windows_msvc_artifacts_{}_{}_test".format(cell, cpu),
-        srcs = ["windows_msvc_artifacts_test.sh"],
-        data = [
-            ":windows_msvc_artifacts_{}_{}".format(cell, cpu),
-        ],
-        env = {
-            "ARTIFACTS": "$(rootpaths :windows_msvc_artifacts_{}_{})".format(cell, cpu),
-            "ARTIFACT_ASSERT": "$(rootpath @llvm//tools:msvc_artifact_assert)",
-            "CRT_MODE": "MT" if static_crt else "MD",
-            "EXPECT_ARCHIVE": "1",
-            "LLVM_AR": "$(rootpath @llvm//tools:llvm-ar)",
-            "LLVM_NM": "$(rootpath @llvm//tools:llvm-nm)",
-            "LLVM_OBJDUMP": "$(rootpath @llvm//tools:llvm-objdump)",
-            "LLVM_READOBJ": "$(rootpath @llvm//tools:llvm-readobj)",
-            "MACHINE": "AMD64" if cpu == "x86_64" else "ARM64",
-        },
-        rule = sh_test,
-        tags = ["manual"],
-        tools = [
-            "@llvm//tools:llvm-ar",
-            "@llvm//tools:llvm-nm",
-            "@llvm//tools:llvm-objdump",
-            "@llvm//tools:llvm-readobj",
-            "@llvm//tools:msvc_artifact_assert",
-        ],
-    )
-    for cpu, _ in _WINDOWS_MSVC_TEST_PLATFORMS
-    for cell, _, static_crt in _WINDOWS_MSVC_BEHAVIOR_CELLS
-]
-
-test_suite(
-    name = "windows_msvc_libcxx_matrix",
-    tags = ["manual"],
-    tests = [
-        ":windows_msvc_artifacts_{}_{}_test".format(cell, cpu)
-        for cpu, _ in _WINDOWS_MSVC_TEST_PLATFORMS
-        for cell, _, _ in _WINDOWS_MSVC_BEHAVIOR_CELLS
-    ] + [
-        ":windows_msvc_debug_artifacts_{}_test".format(cpu)
-        for cpu, _ in _WINDOWS_MSVC_TEST_PLATFORMS
-    ],
-)
 
 [
     windows_msvc_artifacts(
-        name = "windows_msvc_debug_artifacts_{}".format(cpu),
+        name = "windows_msvc_artifacts_" + cpu + "_mt",
         testonly = True,
-        debug = True,
-        output_groups = ["pdb_file"],
+        static_crt = True,
         tags = ["manual"],
         target_platform = platform,
-        targets = [":windows_msvc_libcxx_behavior_static"],
+        targets = _WINDOWS_MSVC_MT_ARTIFACTS,
     )
-    for cpu, platform in _WINDOWS_MSVC_TEST_PLATFORMS
+    for cpu, platform, _ in _WINDOWS_MSVC_ARTIFACT_PLATFORMS
+]
+
+[
+    filegroup(
+        name = "windows_msvc_artifacts_" + cpu,
+        testonly = True,
+        srcs = [
+            ":windows_msvc_artifacts_" + cpu + "_md",
+            ":windows_msvc_artifacts_" + cpu + "_mt",
+        ],
+        tags = ["manual"],
+    )
+    for cpu, _, _ in _WINDOWS_MSVC_ARTIFACT_PLATFORMS
 ]
 
 [
     exec_test(
-        name = "windows_msvc_debug_artifacts_{}_test".format(cpu),
+        name = "windows_msvc_artifacts_" + cpu + "_test",
         srcs = ["windows_msvc_artifacts_test.sh"],
-        data = [
-            ":windows_msvc_debug_artifacts_{}".format(cpu),
-        ],
+        data = ["windows_msvc_artifacts_" + cpu],
         env = {
-            "ARTIFACTS": "$(rootpaths :windows_msvc_debug_artifacts_{})".format(cpu),
-            "ARTIFACT_ASSERT": "$(rootpath @llvm//tools:msvc_artifact_assert)",
-            "CRT_MODE": "MD",
-            "EXPECT_ARCHIVE": "0",
-            "EXPECT_PDB": "1",
-            "LLVM_AR": "$(rootpath @llvm//tools:llvm-ar)",
-            "LLVM_NM": "$(rootpath @llvm//tools:llvm-nm)",
-            "LLVM_OBJDUMP": "$(rootpath @llvm//tools:llvm-objdump)",
-            "LLVM_READOBJ": "$(rootpath @llvm//tools:llvm-readobj)",
-            "MACHINE": "AMD64" if cpu == "x86_64" else "ARM64",
+            "ARTIFACTS": "$(rlocationpaths :windows_msvc_artifacts_{})".format(cpu),
+            "LLVM_AR": "$(rlocationpath @llvm//tools:llvm-ar)",
+            "LLVM_NM": "$(rlocationpath @llvm//tools:llvm-nm)",
+            "LLVM_READOBJ": "$(rlocationpath @llvm//tools:llvm-readobj)",
+            "MACHINE": machine,
         },
         rule = sh_test,
         tags = ["manual"],
-        tools = [
-            "@llvm//tools:llvm-ar",
-            "@llvm//tools:llvm-nm",
-            "@llvm//tools:llvm-objdump",
-            "@llvm//tools:llvm-readobj",
-            "@llvm//tools:msvc_artifact_assert",
-        ],
-    )
-    for cpu, _ in _WINDOWS_MSVC_TEST_PLATFORMS
-]
-
-test_suite(
-    name = "windows_msvc_debug_artifact_matrix",
-    tags = ["manual"],
-    tests = [
-        ":windows_msvc_debug_artifacts_{}_test".format(cpu)
-        for cpu, _ in _WINDOWS_MSVC_TEST_PLATFORMS
-    ],
-)
-
-[
-    windows_msvc_artifacts(
-        name = "windows_msvc_resource_directory_{}".format(cpu),
-        testonly = True,
-        tags = ["manual"],
-        target_platform = platform,
-        targets = ["@llvm//runtimes:resource_directory_default"],
-    )
-    for cpu, platform in _WINDOWS_MSVC_TEST_PLATFORMS
-]
-
-[
-    exec_test(
-        name = "windows_msvc_resource_directory_{}_test".format(cpu),
-        srcs = ["windows_msvc_resource_directory_test.sh"],
-        data = [
-            ":windows_msvc_resource_directory_{}".format(cpu),
-        ],
-        env = {
-            "ARTIFACT_ASSERT": "$(rootpath @llvm//tools:msvc_artifact_assert)",
-            "LLVM_AR": "$(rootpath @llvm//tools:llvm-ar)",
-            "LLVM_NM": "$(rootpath @llvm//tools:llvm-nm)",
-            "LLVM_READOBJ": "$(rootpath @llvm//tools:llvm-readobj)",
-            "MACHINE": "AMD64" if cpu == "x86_64" else "ARM64",
-            "RESOURCE_DIRS": "$(rootpaths :windows_msvc_resource_directory_{})".format(cpu),
-            "TRIPLE": "x86_64-pc-windows-msvc" if cpu == "x86_64" else "aarch64-pc-windows-msvc",
-        },
-        rule = sh_test,
-        tags = ["manual"],
-        tools = [
-            "@llvm//tools:llvm-ar",
-            "@llvm//tools:llvm-nm",
-            "@llvm//tools:llvm-readobj",
-            "@llvm//tools:msvc_artifact_assert",
-        ],
-    )
-    for cpu, _ in _WINDOWS_MSVC_TEST_PLATFORMS
-]
-
-test_suite(
-    name = "windows_msvc_resource_directory_matrix",
-    tags = ["manual"],
-    tests = [
-        ":windows_msvc_resource_directory_{}_test".format(cpu)
-        for cpu, _ in _WINDOWS_MSVC_TEST_PLATFORMS
-    ],
-)
-
-test_suite(
-    name = "windows_msvc_invalid_matrix",
-    tests = ["@llvm//toolchain/features/msvc:validation_test"],
-)
-
-_WINDOWS_MINGW_TEST_PLATFORMS = [
-    ("x86_64", "@llvm//platforms:windows_x86_64"),
-    ("aarch64", "@llvm//platforms:windows_aarch64"),
-]
-
-[
-    platform_transition_test(
-        name = "windows_mingw_native_{}_{}".format(flow, cpu),
-        binary = target,
-        tags = ["manual"],
-        target_platform = platform,
-    )
-    for cpu, platform in _WINDOWS_MINGW_TEST_PLATFORMS
-    for flow, target in [
-        ("explicit_def", ":windows_explicit_def_test"),
-        ("generated_def", ":windows_generated_def_test"),
-    ]
-]
-
-[
-    platform_transition_filegroup(
-        name = "windows_mingw_artifacts_{}".format(cpu),
-        srcs = [":windows_explicit_def_binary"],
-        target_platform = platform,
-    )
-    for cpu, platform in _WINDOWS_MINGW_TEST_PLATFORMS
-]
-
-[
-    sh_test(
-        name = "windows_mingw_artifacts_{}_test".format(cpu),
-        srcs = ["windows_msvc_artifacts_test.sh"],
-        data = [":windows_mingw_artifacts_{}".format(cpu)],
-        env = {
-            "ARTIFACTS": "$(rootpaths :windows_mingw_artifacts_{})".format(cpu),
-        },
         target_compatible_with = select({
-            # rules_shell's POSIX sh_test launcher is not a native Windows
-            # executable. The same transitioned artifacts are inspected by
-            # this test on Linux and macOS hosts.
             "@platforms//os:windows": ["@platforms//:incompatible"],
             "//conditions:default": [],
         }),
+        tools = [
+            "@llvm//tools:llvm-ar",
+            "@llvm//tools:llvm-nm",
+            "@llvm//tools:llvm-readobj",
+        ],
+        deps = ["@bazel_tools//tools/bash/runfiles"],
     )
-    for cpu, _ in _WINDOWS_MINGW_TEST_PLATFORMS
+    for cpu, _, machine in _WINDOWS_MSVC_ARTIFACT_PLATFORMS
 ]
 
 test_suite(
-    name = "windows_mingw_regression_matrix",
+    name = "windows_msvc_artifacts_matrix",
+    tags = ["manual"],
     tests = [
-        ":windows_mingw_artifacts_{}_test".format(cpu)
-        for cpu, _ in _WINDOWS_MINGW_TEST_PLATFORMS
+        "windows_msvc_artifacts_" + cpu + "_test"
+        for cpu, _, _ in _WINDOWS_MSVC_ARTIFACT_PLATFORMS
     ],
 )

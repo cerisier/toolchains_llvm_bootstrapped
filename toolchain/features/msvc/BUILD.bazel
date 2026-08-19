@@ -11,22 +11,8 @@ load("@rules_cc//cc/toolchains:mutually_exclusive_category.bzl", "cc_mutually_ex
 load("@rules_cc//cc/toolchains:nested_args.bzl", "cc_nested_args")
 load("//config:defs.bzl", "SANITIZERS")
 load(":validation.bzl", "msvc_configuration_validation")
-load(":validation_test.bzl", "validation_test")
 
 package(default_visibility = ["//visibility:public"])
-
-validation_test(
-    name = "validation_test",
-    target_compatible_with = select({
-        "@platforms//os:windows": ["@platforms//:incompatible"],
-        "//conditions:default": [],
-    }),
-)
-
-test_suite(
-    name = "all_tests",
-    tests = [":validation_test"],
-)
 
 _COMPILE_ACTIONS = [
     "@rules_cc//cc/toolchains/actions:c_compile",

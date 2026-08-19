@@ -26,6 +26,9 @@ struct Derived final : Base {
 };
 }  // namespace
 
+extern "C" int windows_msvc_assembly_value(void);
+extern "C" int windows_msvc_c_smoke(void);
+
 void* operator new(std::size_t size) {
   allocation_calls.fetch_add(1, std::memory_order_relaxed);
   if (void* allocation = std::malloc(size)) {
@@ -44,7 +47,8 @@ int main() {
   if (windows_msvc_ordinary_add(20, 22) != 42 ||
       windows_msvc_alwayslink_marker() != 1 ||
       windows_msvc_library_filesystem() != 42 ||
-      windows_msvc_wide_divide(1, 0, 2) != (1ULL << 63)) {
+      windows_msvc_wide_divide(1, 0, 2) != (1ULL << 63) ||
+      windows_msvc_assembly_value() != 42 || windows_msvc_c_smoke() != 42) {
     return 1;
   }
 
