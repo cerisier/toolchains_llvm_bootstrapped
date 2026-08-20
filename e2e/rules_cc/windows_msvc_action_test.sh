@@ -23,28 +23,48 @@ assert_absent() {
 action_dir="$(mktemp -d "${RUNNER_TEMP:-/tmp}/windows-msvc-actions.XXXXXX")"
 common_flags=(
   "$@"
-  --include_param_files
-  --output=text
   --platforms=@llvm//platforms:windows_x86_64_msvc
   --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1
   --repo_env=BAZEL_WINDOWS_SDK_EULA=1
 )
 
 bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
+  --include_param_files \
+  --output=text \
   'mnemonic("CppCompile", //:windows_msvc_libcxx_behavior_md)' \
   >"${action_dir}/compile.txt"
 bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
+  --include_param_files \
+  --output=text \
   'mnemonic("CppArchive", //:windows_msvc_libcxx_behavior_support)' \
   >"${action_dir}/archive.txt"
 bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
+  --include_param_files \
+  --output=text \
   'mnemonic("CppLink", //:windows_msvc_libcxx_behavior_md)' \
   >"${action_dir}/link.txt"
 bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
+  --include_param_files \
+  --output=text \
   'mnemonic("DefParser", deps(//:windows_msvc_generated_def.dll))' \
   >"${action_dir}/def.txt"
 bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
+  --include_param_files \
+  --output=text \
   'mnemonic("CppLink", //:windows_msvc_generated_def.dll)' \
   >"${action_dir}/dll-link.txt"
+bazel --bazelrc=.bazelrc cquery "${common_flags[@]}" \
+  --dynamic_mode=off \
+  --output=starlark \
+  --starlark:expr='providers(target)' \
+  '@llvm-project//clang:config' \
+  >"${action_dir}/clang-static-config.txt"
+bazel --bazelrc=.bazelrc cquery "${common_flags[@]}" \
+  --dynamic_mode=default \
+  --output=starlark \
+  --starlark:expr='providers(target)' \
+  '@llvm-project//clang:config' \
+  >"${action_dir}/clang-dynamic-config.txt"
 
 assert_contains "${action_dir}/compile.txt" "clang-cl"
 assert_contains "${action_dir}/compile.txt" "/MD"
@@ -57,6 +77,11 @@ assert_absent "${action_dir}/compile.txt" "clang++"
 assert_absent "${action_dir}/compile.txt" "-fPIC"
 assert_absent "${action_dir}/compile.txt" "_LIBCPP_NO_AUTO_LINK"
 assert_absent "${action_dir}/compile.txt" "msvc_include"
+
+assert_contains "${action_dir}/clang-static-config.txt" "CLANG_BUILD_STATIC"
+assert_contains "${action_dir}/clang-static-config.txt" "clang/Config/config.h"
+assert_absent "${action_dir}/clang-dynamic-config.txt" "CLANG_BUILD_STATIC"
+assert_contains "${action_dir}/clang-dynamic-config.txt" "clang/Config/config.h"
 
 assert_contains "${action_dir}/archive.txt" "llvm-ar"
 assert_contains "${action_dir}/archive.txt" "rcsD"
