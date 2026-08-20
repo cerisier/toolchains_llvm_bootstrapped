@@ -1,0 +1,9 @@
+diff --git a/libcxx/src/new_helpers.cpp b/libcxx/src/new_helpers.cpp
+--- a/libcxx/src/new_helpers.cpp
++++ b/libcxx/src/new_helpers.cpp
+@@ -14,3 +14,3 @@
+-#ifndef __GLIBCXX__
++#if !defined(__GLIBCXX__) && !defined(_LIBCPP_ABI_VCRUNTIME)
+ const nothrow_t nothrow{};
+-#endif
++#endif // !defined(__GLIBCXX__) && !defined(_LIBCPP_ABI_VCRUNTIME)
