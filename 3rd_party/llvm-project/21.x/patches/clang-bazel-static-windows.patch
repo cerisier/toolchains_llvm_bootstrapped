@@ -1,7 +1,8 @@
 diff --git a/clang/BUILD.bazel b/clang/BUILD.bazel
 --- a/clang/BUILD.bazel
 +++ b/clang/BUILD.bazel
-@@ -28,3 +28,17 @@ licenses(["notice"])
+@@ -28,5 +28,19 @@ licenses(["notice"])
+ licenses(["notice"])
 -
 +
 +config_setting(
