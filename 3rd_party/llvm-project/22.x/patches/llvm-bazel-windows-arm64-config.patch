@@ -1,0 +1,46 @@
+diff --git a/llvm/BUILD.bazel b/llvm/BUILD.bazel
+--- a/llvm/BUILD.bazel
++++ b/llvm/BUILD.bazel
+@@ -266,3 +266,30 @@
++config_setting(
++    name = "is_aarch64_windows_clang_mingw",
++    constraint_values = [
++        "@platforms//cpu:aarch64",
++        "@platforms//os:windows",
++    ],
++    flag_values = {"@rules_cc//cc/compiler:compiler": "clang"},
++)
++
++config_setting(
++    name = "is_aarch64_windows_clang_cl",
++    constraint_values = [
++        "@platforms//cpu:aarch64",
++        "@platforms//os:windows",
++    ],
++    flag_values = {"@rules_cc//cc/compiler:compiler": "clang-cl"},
++)
++
++config_setting(
++    name = "is_aarch64_windows_msvc",
++    constraint_values = [
++        "@platforms//cpu:aarch64",
++        "@platforms//os:windows",
++    ],
++    flag_values = {"@rules_cc//cc/compiler:compiler": "msvc-cl"},
++)
++
+ config_setting(
+     name = "is_x86_64_windows_clang_mingw",
+     constraint_values = [
+diff --git a/llvm/config.bzl b/llvm/config.bzl
+--- a/llvm/config.bzl
++++ b/llvm/config.bzl
+@@ -102,4 +102,8 @@
+ llvm_config_defines = os_defines + builtin_thread_pointer + select({
++    Label("//llvm:is_aarch64_windows_clang_mingw"): native_arch_defines("AArch64", "aarch64-w64-windows-gnu"),
++    Label("//llvm:is_aarch64_windows_clang_cl"): native_arch_defines("AArch64", "aarch64-pc-windows-msvc"),
++    Label("//llvm:is_aarch64_windows_msvc"): native_arch_defines("AArch64", "aarch64-pc-windows-msvc"),
++    Label("//llvm:is_x86_64_windows_clang_mingw"): native_arch_defines("X86", "x86_64-w64-windows-gnu"),
+     "@bazel_tools//src/conditions:windows": native_arch_defines("X86", "x86_64-pc-win32"),
+     "@bazel_tools//src/conditions:darwin_arm64": native_arch_defines("AArch64", "arm64-apple-darwin"),
+     "@bazel_tools//src/conditions:darwin_x86_64": native_arch_defines("X86", "x86_64-unknown-darwin"),

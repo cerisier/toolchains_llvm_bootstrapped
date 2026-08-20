@@ -41,6 +41,7 @@ _LLVM_21_SOURCE_PATCHES = [
     "//3rd_party/llvm-project/21.x/patches:libcxx-lgamma_r.patch",
     "//3rd_party/llvm-project/x.x/patches:libcxx-vcruntime-nothrow.patch",
     "//3rd_party/llvm-project/21.x/patches:llvm-bazel-blake3-windows-gnu.patch",
+    "//3rd_party/llvm-project/21.x/patches:llvm-bazel-windows-arm64-config.patch",
     "//3rd_party/llvm-project/21.x/patches:llvm-compression-defines.patch",
 ] + _BEFORE_23_SOURCE_PATCHES + _DEFAULT_SOURCE_PATCHES
 
@@ -60,6 +61,7 @@ _LLVM_22_SOURCE_PATCHES = [
     "//3rd_party/llvm-project/22.x/patches:libcxx-lgamma_r.patch",
     "//3rd_party/llvm-project/x.x/patches:libcxx-vcruntime-nothrow.patch",
     "//3rd_party/llvm-project/22.x/patches:llvm-bazel-blake3-windows-gnu.patch",
+    "//3rd_party/llvm-project/22.x/patches:llvm-bazel-windows-arm64-config.patch",
 ] + _BEFORE_23_SOURCE_PATCHES + _DEFAULT_SOURCE_PATCHES
 
 _LLVM_23_SOURCE_PATCHES = [
@@ -68,6 +70,7 @@ _LLVM_23_SOURCE_PATCHES = [
     "//3rd_party/llvm-project/22.x/patches:lld-coff-thinlto-lazy-index.patch",
     "//3rd_party/llvm-project/x.x/patches:llvm-http-windows-gnu.patch",
     "//3rd_party/llvm-project/x.x/patches:llvm-bazel-blake3-windows-clang-cl.patch",
+    "//3rd_party/llvm-project/x.x/patches:llvm-bazel-windows-arm64-config.patch",
     "//3rd_party/llvm-project/x.x/patches:llvm-link-multicall.patch",
     "//3rd_party/llvm-project/x.x/patches:llvm-profdata-multicall.patch",
     "//3rd_party/llvm-project/x.x/patches:clang-format-multicall.patch",
