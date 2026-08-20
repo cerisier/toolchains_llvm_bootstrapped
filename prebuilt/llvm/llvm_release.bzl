@@ -3,7 +3,11 @@ load("@tar.bzl", "mtree_mutate", "mtree_spec", "tar")
 load("//prebuilt:mtree.bzl", "mtree")
 load("//tools:defs.bzl", "TOOLCHAIN_BINARIES")
 
-def llvm_release(name, bin_suffix = ""):
+def llvm_release(
+        name,
+        bin_suffix = "",
+        llvm_binary = "//toolchain/bootstrap/stage3:llvm",
+        target_compatible_with = []):
     mtree_spec(
         name = name + "_builtin_headers_mtree_",
         srcs = [
@@ -21,7 +25,7 @@ def llvm_release(name, bin_suffix = ""):
     )
 
     bin_files = {
-        "//toolchain/bootstrap/stage3:llvm": "bin/llvm" + bin_suffix,
+        llvm_binary: "bin/llvm" + bin_suffix,
         "@llvm-project//compiler-rt:asan_ignorelist": "lib/clang/{llvm_major}/share/asan_ignorelist.txt",
         "@llvm-project//compiler-rt:msan_ignorelist": "lib/clang/{llvm_major}/share/msan_ignorelist.txt",
     }
@@ -66,4 +70,5 @@ def llvm_release(name, bin_suffix = ""):
         compress = "zstd",
         mtree = name + "_mtree",
         tags = ["manual"],
+        target_compatible_with = target_compatible_with,
     )

@@ -46,6 +46,15 @@ common:release  --dynamic_mode=off
 common:release  --extra_toolchains=//toolchain:all
 common:release  --extra_execution_platforms=@llvm//:rbe_linux_x86_64,@llvm//:rbe_linux_aarch64
 
+common:windows_msvc_prebuilt  -c opt
+common:windows_msvc_prebuilt  --dynamic_mode=off
+common:windows_msvc_prebuilt  --extra_toolchains=//toolchain:all
+common:windows_msvc_prebuilt  --features=-thin_lto
+common:windows_msvc_prebuilt  --copt=/clang:-fomit-frame-pointer
+common:windows_msvc_prebuilt  --cxxopt=/std:c++17
+common:windows_msvc_prebuilt  --cxxopt=/EHs-c-
+common:windows_msvc_prebuilt  --cxxopt=/GR-
+
 common:rust    --@rules_cc//cc/toolchains/args/archiver_flags:use_libtool_on_macos=False
 common:rust    --@rules_rust//rust/settings:experimental_use_sh_toolchain_for_bootstrap_process_wrapper
 
