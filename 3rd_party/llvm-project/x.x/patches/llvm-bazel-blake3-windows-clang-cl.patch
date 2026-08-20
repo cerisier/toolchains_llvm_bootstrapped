@@ -1,0 +1,31 @@
+diff --git a/llvm/BUILD.bazel b/llvm/BUILD.bazel
+--- a/llvm/BUILD.bazel
++++ b/llvm/BUILD.bazel
+@@ -332,6 +332,15 @@ config_setting(
+     flag_values = {"@rules_cc//cc/compiler:compiler": "clang"},
+ )
+-
++
++config_setting(
++    name = "is_x86_64_windows_clang_cl",
++    constraint_values = [
++        "@platforms//cpu:x86_64",
++        "@platforms//os:windows",
++    ],
++    flag_values = {"@rules_cc//cc/compiler:compiler": "clang-cl"},
++)
++
+ BLAKE3_x86_64_ASM_SOURCE_PATTERNS = [
+     "lib/Support/BLAKE3/blake3_avx2_x86-64_%s.S",
+     "lib/Support/BLAKE3/blake3_avx512_x86-64_%s.S",
+@@ -346,6 +355,10 @@ filegroup(
+             pattern % "windows_gnu"
+             for pattern in BLAKE3_x86_64_ASM_SOURCE_PATTERNS
+         ],
++        ":is_x86_64_windows_clang_cl": [
++            pattern % "windows_gnu"
++            for pattern in BLAKE3_x86_64_ASM_SOURCE_PATTERNS
++        ],
+         "//conditions:default": [
+             pattern % "unix"
+             for pattern in BLAKE3_x86_64_ASM_SOURCE_PATTERNS
