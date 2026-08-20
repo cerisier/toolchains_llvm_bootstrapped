@@ -53,7 +53,8 @@ Non-goals for this layer:
   inspection are the acceptance surface;
 - README/release-note changes, artifact publication, EULA redistribution, new
   CI secrets, or a prebuilt-release workflow cutover;
-- macOS as a claimed full-LLVM construction host in this layer.
+- expanding construction-host support beyond the existing Linux x86-64 RBE
+  path used to prove the Windows target builds.
 
 ## Current graph and exact labels
 
@@ -131,15 +132,13 @@ capture.
 | B7 | Stage 1 x64 plus `--cxxopt=/std:c++17` | Compilation advanced to `@llvm-project//llvm:WindowsDriver` and failed at `MSVCPaths.cpp:43`, missing `comdef.h`; invocation `77667245-d3ba-4373-8d67-d54d28398ce9`. |
 | B8 | Stage 1 ARM64 plus `--cxxopt=/std:c++17` | Same `comdef.h` failure; invocation `77b4f926-e4f6-44dd-a210-5a0f2147f094`. |
 | B9 | Stage 1 x64 with release flags, ThinLTO disabled, and C++17 | Reached 6,607 scheduled actions and the same `comdef.h` failure, but clang-cl warned that raw `-fno-exceptions`, `-fno-rtti`, and `-fomit-frame-pointer` from `.bazelrc` were ignored. Invocation `1ad641f5-5ef3-4280-8db7-87f5467dc941`. The generic release config is not a valid clang-cl optimization config. |
-| B10 | Materialized LLVM `Analysis` compile params | 125 observed actions carried raw `-ftrapping-math`; clang-cl reported it ignored. Owner: LLVM upstream `utils/bazel/llvm-project-overlay/llvm/BUILD.bazel`, `Analysis.copts`. This pattern exists in 21.1.8, 22.1.8, 23.1.0-rc1, and current upstream main. |
-| B11 | ARM64 materialized compile params | Target triple was `aarch64-pc-windows-msvc`, but `LLVM_NATIVE_ARCH` was `X86` and host/default triples were `x86_64-pc-win32`. Owner: LLVM upstream `utils/bazel/llvm-project-overlay/llvm/config.bzl`; all three supported source lines and upstream main select every Windows CPU as x86-64. |
-| B12 | Configured genrule inventory | Only `@llvm-project//clang-tools-extra/clangd:gen_features_inc` and `@llvm-project//clang-tools-extra/clang-tidy:confusables_inc` remained. Both executed `/bin/bash` with `PATH=/bin:/usr/bin:/usr/local/bin`; invocation `b7c8a2a5-cc2c-4097-84f7-fce939c9040b`. No configured `py_binary` or `sh_binary` remained; invocation `dee12f40-a419-425e-8c9d-33b5deb53868`. |
-| B13 | `TdGenerate` aquery | Windows target-generated files were produced by `clang-tblgen`/`llvm-min-tblgen` under `rbe_linux_aarch64-opt-exec`; invocation `f263f805-4b7a-44c8-bcd8-e941a8371a60`. `mlir/tblgen.bzl` declares its executable with `cfg = "exec"`. This boundary is correct and must not regress. |
-| B14 | Whole Stage 1 action inventory | 6,503 `CppCompile`, 841 `CppArchive`, 352 `TdGenerate`, 278 `CppLink`, 218 `DefParser`, 70 `CopyToDirectory`, 14 `CopyFile`, and declared Windows case actions, among others; invocation `282e9af9-296d-4a9d-9e81-d17c70ae9c10`. The only configured shell actions are B12. |
-| B15 | Archive aquery | Target archives use exec-host `llvm-ar`, Windows `.lib` names, and deterministic `rcsD`; invocation `39efcf0e-df70-4c95-9c47-72de5b94cfd0`. Action generation succeeded; archive execution remains unproven because compilation stops earlier. |
-| B16 | Final-link aquery | The planned x64 action launches exec-host clang-cl, targets x64 MSVC, selects sibling lld-link, declares SDK/UCRT/VCRuntime/libc++ resource and library directories, emits `/MACHINE:X64`, `/Brepro`, `/INCREMENTAL:NO`, `/lldignoreenv`, deterministic PDB path controls, `/SUBSYSTEM:CONSOLE`, `.lib` dependencies, and `/WHOLEARCHIVE`; invocation `bfde2c52-ed47-4c22-b72e-87b3cc64d6f3`. It does not execute because B7 fails. Link success remains unproven. |
-| B17 | Packaging source inspection | `prebuilt/llvm/llvm_release.bzl` hardcodes Stage 3, maps an extensionless bootstrap output to `bin/llvm.exe`, and concatenates two generated mtree manifests with `native.genrule(cmd = "cat $(SRCS) > $(@)")`. This is a declared source fact: the product path has a host-shell/PATH dependency even after LLVM compiles. |
-| B18 | COM closure inspection | The pinned payload contains `comdef.h`, `comdefsp.h`, `comip.h`, `comutil.h`, `new.h`, and x64/ARM64 `comsuppw.lib`; Layer 1's curated trees expose none of them. `comdef.h` auto-links retail Unicode `comsuppw.lib`, `user32.lib`, `ole32.lib`, and `oleaut32.lib`. The ARM64 `comsuppw.lib` is a vendor fat archive with both ARM64EC and ARM64 members; target-member selection is not yet proven. |
+| B10 | ARM64 materialized compile params | Target triple was `aarch64-pc-windows-msvc`, but `LLVM_NATIVE_ARCH` was `X86` and host/default triples were `x86_64-pc-win32`. Owner: LLVM upstream `utils/bazel/llvm-project-overlay/llvm/config.bzl`; all three supported source lines and upstream main select every Windows CPU as x86-64. |
+| B11 | `TdGenerate` aquery | Windows target-generated files were produced by `clang-tblgen`/`llvm-min-tblgen` under `rbe_linux_aarch64-opt-exec`; invocation `f263f805-4b7a-44c8-bcd8-e941a8371a60`. `mlir/tblgen.bzl` declares its executable with `cfg = "exec"`. This boundary is correct and must not regress. |
+| B12 | Whole Stage 1 action inventory | 6,503 `CppCompile`, 841 `CppArchive`, 352 `TdGenerate`, 278 `CppLink`, 218 `DefParser`, 70 `CopyToDirectory`, 14 `CopyFile`, and declared Windows case actions, among others; invocation `282e9af9-296d-4a9d-9e81-d17c70ae9c10`. |
+| B13 | Archive aquery | Target archives use exec-host `llvm-ar`, Windows `.lib` names, and deterministic `rcsD`; invocation `39efcf0e-df70-4c95-9c47-72de5b94cfd0`. Action generation succeeded; archive execution remains unproven because compilation stops earlier. |
+| B14 | Final-link aquery | The planned x64 action launches exec-host clang-cl, targets x64 MSVC, selects sibling lld-link, declares SDK/UCRT/VCRuntime/libc++ resource and library directories, emits `/MACHINE:X64`, `/Brepro`, `/INCREMENTAL:NO`, `/lldignoreenv`, deterministic PDB path controls, `/SUBSYSTEM:CONSOLE`, `.lib` dependencies, and `/WHOLEARCHIVE`; invocation `bfde2c52-ed47-4c22-b72e-87b3cc64d6f3`. It does not execute because B7 fails. Link success remains unproven. |
+| B15 | Packaging source inspection | `prebuilt/llvm/llvm_release.bzl` hardcodes Stage 3 and maps an extensionless bootstrap output to `bin/llvm.exe`. Stage ownership and Windows output naming must be proven when the package target is reached. Existing release genrules are accepted and are not cleanup targets. |
+| B16 | COM closure inspection | The pinned payload contains `comdef.h`, `comdefsp.h`, `comip.h`, `comutil.h`, `new.h`, and x64/ARM64 `comsuppw.lib`; Layer 1's curated trees expose none of them. `comdef.h` auto-links retail Unicode `comsuppw.lib`, `user32.lib`, `ole32.lib`, and `oleaut32.lib`. The ARM64 `comsuppw.lib` is a vendor fat archive with both ARM64EC and ARM64 members; target-member selection is not yet proven. |
 
 The generated external `vars.bzl` sets `CMAKE_CXX_STANDARD = "17"`, and LLVM's
 own `utils/bazel/.bazelrc` supplies `/std:c++17` in its Windows config. The
@@ -183,10 +182,10 @@ uses COM Setup Configuration intentionally for MSVC-environment discovery.
    Temporary line-specific patch files must contain the same reviewable change
    and be removable when a released LLVM source includes it. No hermetic-
    llvm-only macro, build setting, or path may enter an upstream patch.
-8. **Portable file actions.** Generated files and archive manifests use
-   declared Bazel actions/tools, fixed metadata, and explicit inputs. No raw
-   `genrule`, `/bin/bash`, `cat`, `echo`, Python, or ambient PATH in the
-   configured product closure.
+8. **Scope discipline.** Existing llvm-project and release shell/genrule
+   actions are accepted unless an exact supported build demonstrates that one
+   blocks compilation or packaging. Do not replace them for style,
+   portability, or hermeticity as part of this task.
 9. **Windows artifact naming.** Target executables are `.exe`, target objects
    `.obj`, target archives `.lib`. Wrapper/copy actions preserve configured
    extensions. Response files use Layer 1's independent UTF-8 compiler,
@@ -206,18 +205,17 @@ uses COM Setup Configuration intentionally for MSVC-environment discovery.
 ```text
 Step 1: Stage-1 MSVC release route/config
   +--> Step 2: curated COM compiler-support closure
-  +--> Step 3: upstream ARM64/config + clang-cl flag patch
-  +--> Step 4: upstream generated-file actions
-              (Steps 2-4 can proceed independently once Step 1 exposes probes)
+  +--> Step 3: upstream ARM64 configuration patch
+              (Steps 2-3 can proceed independently once Step 1 exposes probes)
                     |
                     v
-          Step 5: build-to-completion owner loop
+          Step 4: build-to-completion owner loop
                     |
                     v
-          Step 6: portable packaging + artifact contract
+          Step 5: package + artifact contract
                     |
                     v
-          Step 7: line/exec-host matrix and CI build jobs
+          Step 6: supported-source build jobs
                     |
                     v
           STOP: report non-LTO/non-FDO support only
@@ -255,8 +253,7 @@ Implementation shape:
   `/std:c++17`, explicit `--features=-thin_lto`, and clang-cl-correct
   equivalents for no-exceptions/no-RTTI/frame-pointer flags;
 - keep remote-executor and execution-platform selection in `--config=remote`,
-  outside the product config, so the same product config remains valid for a
-  native Windows exec host;
+  outside the product config;
 - do not weaken Layer 1's unsupported-feature validation.
 
 Build/action commands:
@@ -303,9 +300,7 @@ Risks/stop conditions:
 
 - stop if the only available design disables ThinLTO/FDO globally or changes
   non-MSVC Stage 3;
-- stop if target-dialect config flags leak into exec-configured Linux tools or
-  if source generators on a native Windows exec host lack their exec
-  toolchain's required C++ standard;
+- stop if target-dialect config flags leak into exec-configured Linux tools;
 - if `.exe` cannot be preserved by the current wrapper, fix the generic
   wrapper from the configured executable basename rather than hardcoding an
   exec host or target CPU.
@@ -393,16 +388,15 @@ Upstream llvm-project patch expected: **no** on the preferred path; **possible
 only after the stop condition**, with native discovery preserved when support
 headers exist.
 
-## Step 3 — Fix upstream Windows architecture and clang-cl flag semantics
+## Step 3 — Fix upstream Windows ARM64 architecture configuration
 
 **Codex-agent-ready goal:** Make the LLVM Bazel overlay generate correct
-ARM64 native configuration and compiler-dialect flags without changing other
-platform semantics.
+ARM64 native configuration without changing other platform semantics.
 
 Likely upstream files/targets:
 
 - `llvm-project/utils/bazel/llvm-project-overlay/llvm/BUILD.bazel`:
-  Windows CPU/compiler config settings and target `Analysis`;
+  only the Windows CPU/compiler config settings needed by `config.bzl`;
 - `llvm-project/utils/bazel/llvm-project-overlay/llvm/config.bzl`:
   `llvm_config_defines`;
 - temporary identical downstream backports under
@@ -419,19 +413,7 @@ Required semantics:
 - do not apply MSVC triples blindly to Windows GNU/MinGW. Add CPU/compiler-
   aware settings or preserve/define that route's GNU triple explicitly;
 - Windows x86-64 retains its existing X86 configuration; Linux, macOS, and all
-  other CPUs remain byte-for-byte semantically unchanged;
-- `Analysis` retains trapping-math intent with `/clang:-ftrapping-math` for
-  clang-cl and a source-equivalent MSVC spelling or explicitly reviewed
-  omission for `msvc-cl`; GNU Clang/GCC retain `-ftrapping-math`.
-
-Keep two independent upstream commit/review units inside this assignable step:
-
-1. ARM64 Windows CPU/compiler settings, native defines, initializer names,
-   and triples in `config.bzl` plus only the config settings they require.
-2. `Analysis` trapping-math compiler-dialect selection in `llvm/BUILD.bazel`.
-
-Each unit must build and backport independently; do not combine them merely
-because the same full-LLVM invocation discovers both.
+  other CPUs remain byte-for-byte semantically unchanged.
 
 Build/action commands:
 
@@ -462,10 +444,8 @@ Success criteria:
 
 - materialized ARM64 params contain only AArch64 native initializer names and
   the intended ARM64 triple; x64 params remain X86/x86-64;
-- clang-cl reports no ignored `-ftrapping-math` or other raw unsupported flag;
-- final native Windows execution of `llvm.exe --version` and
-  `clang-cl.exe --print-target-triple` agrees with the packaged machine and
-  target;
+- the final ARM64 PE machine and reported default target agree with the
+  configured ARM64 target;
 - generic MinGW and non-Windows configured definitions remain correct.
 
 Risks/stop conditions:
@@ -476,88 +456,15 @@ Risks/stop conditions:
   constraints, or hermetic-llvm paths;
 - do not use string substitution in generated files after compilation.
 
-Upstream llvm-project patch expected: **yes, as two focused reviews** matching
-the two commit units above. For the architecture review, explain the Bazel
-target-platform bug and compare to the CMake/native target result. For the flag
-review, preserve trapping-math semantics across compiler dialects. Run the
-relevant upstream Linux/macOS/Windows clang/clang-cl configurations for each.
-Submit only after the owner separately authorizes upstream publication. Carry
-clean, independently applicable release-line backports only until a source
-release contains each patch.
+Upstream llvm-project patch expected: **yes**. Explain the Bazel target-
+platform bug, compare to the CMake/native target result, and run relevant
+upstream non-ARM64 and MinGW configurations. Submit only after the owner
+separately authorizes upstream publication. Carry clean release-line backports
+only until a source release contains the patch.
 
-## Step 4 — Replace remaining upstream shell generators
+## Step 4 — Drive both Stage 1 builds to completion, one traced owner at a time
 
-**Codex-agent-ready goal:** Remove the two configured shell genrules from the
-LLVM driver closure while preserving exact generated contents and exec-
-configured tools.
-
-Likely upstream files/targets:
-
-- `utils/bazel/llvm-project-overlay/clang-tools-extra/clangd/BUILD.bazel`,
-  `gen_features_inc`: replace echo/redirection with `write_file`, preserving
-  line order and final newline;
-- `utils/bazel/llvm-project-overlay/clang-tools-extra/clang-tidy/BUILD.bazel`,
-  `confusables_inc`: replace the shell wrapper with `run_binary`, keeping
-  `confusable_table_builder` in exec configuration and declaring input/output
-  execpaths;
-- matching temporary release-line patches and `extensions/llvm.bzl` entries.
-
-Also re-run the configured closure inventory after every source line. Existing
-21/22 `windows_link_and_genrule.patch` changes demonstrate the preferred
-upstream style, but do not silently append unrelated new fixes to that broad
-historical patch; keep new upstream reviews/backports focused.
-
-Build/action commands:
-
-```sh
-bazel build --config=remote --config=windows_msvc_prebuilt \
-  --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
-  --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
-  --platforms=@llvm//platforms:windows_x86_64_msvc \
-  //toolchain/bootstrap/stage1:llvm
-
-bazel cquery --config=remote --config=windows_msvc_prebuilt \
-  --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
-  --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
-  --platforms=@llvm//platforms:windows_x86_64_msvc \
-  'kind("(genrule|py_binary|sh_binary)", deps(//toolchain/bootstrap/stage1:llvm))' \
-  --output=label
-
-bazel aquery --config=remote --config=windows_msvc_prebuilt \
-  --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
-  --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
-  --platforms=@llvm//platforms:windows_x86_64_msvc \
-  'mnemonic("TdGenerate|RunBinary|FileWrite", deps(//toolchain/bootstrap/stage1:llvm))' \
-  --output=text --include_artifacts=true \
-  --output_file=/tmp/windows-msvc-prebuilt-generators.txt
-```
-
-Success criteria:
-
-- no configured `genrule`, `py_binary`, or `sh_binary` remains in the LLVM
-  product closure;
-- generated `Features.inc` and `Confusables.inc` are byte-equivalent to the
-  baseline/source-of-truth output;
-- the confusable builder and every TableGen executable are under an exec
-  output tree whose OS/CPU matches the selected exec platform; generated
-  outputs remain in the Windows target configuration;
-- no action environment gains a host PATH or shell path.
-
-Risks/stop conditions:
-
-- stop if a replacement moves the generator into target configuration or runs
-  a Windows target executable on Linux;
-- preserve all feature values and source ordering; this is a file-action port,
-  not a clangd feature decision.
-
-Upstream llvm-project patch expected: **yes**. Prepare focused `utils/bazel`
-reviews using only dependencies already accepted by LLVM's overlay; submit
-only after the owner separately authorizes upstream publication. Backport
-unchanged semantics to each supported line and retire backports after uptake.
-
-## Step 5 — Drive both Stage 1 builds to completion, one traced owner at a time
-
-**Codex-agent-ready goal:** After Steps 1-4, build the entire monolithic LLVM
+**Codex-agent-ready goal:** After Steps 1-3, build the entire monolithic LLVM
 binary for both targets, record each next real failure, and fix only its owning
 layer. Do not preemptively bulk-port Unix selects/flags.
 
@@ -600,8 +507,10 @@ Classify before editing:
 Specific audits after successful compilation:
 
 - scan materialized compiler/linker response files for raw GNU-only `-Wl,`,
-  `-L`, `-l`, unsupported `-f*`, host absolute paths, target/exec CPU leaks,
-  undeclared input paths, and mismatched `.o`/`.a` suffixes;
+  `-L`, `-l`, flags rejected as errors or changing required release semantics,
+  host absolute target paths, target/exec CPU leaks, undeclared input paths,
+  and mismatched `.o`/`.a` suffixes. Record ignored non-blocking upstream flags
+  without turning them into drive-by fixes;
 - inspect all `CppArchive` commands for exec-host llvm-ar, target `.obj`
   members, target `.lib` output, `rcsD`, stable ordering, and response-file
   encoding;
@@ -620,9 +529,8 @@ Success criteria:
   link, not merely analyze;
 - x64 `llvm.exe` is `IMAGE_FILE_MACHINE_AMD64`; ARM64 is
   `IMAGE_FILE_MACHINE_ARM64` and not ARM64EC;
-- no warnings say a required option was ignored;
-- no undeclared host shell, Python, tool, or ambient Visual Studio/SDK path
-  appears;
+- no warning says a required product option was ignored;
+- no ambient Visual Studio/SDK path appears in target actions;
 - no new downstream-only LLVM source workaround exists.
 
 Risks/stop conditions:
@@ -639,37 +547,28 @@ Upstream llvm-project patch expected: **only for traced overlay/source-owned
 failures**. Every such change needs exact upstream file/target/semantic scope
 and non-Windows regression coverage.
 
-## Step 6 — Make packaging suffix-safe, shell-free, and inspect the archive
+## Step 5 — Package the completed MSVC LLVM binaries and inspect the archive
 
-**Codex-agent-ready goal:** Package completed Stage 1 PE binaries with declared
-portable actions, fixed metadata, preserved `.exe` naming, and the existing
-minimal archive layout.
+**Codex-agent-ready goal:** Make the existing `//prebuilt/llvm` release rule
+package the completed Stage 1 PE binaries for both MSVC targets, changing only
+demonstrated Stage ownership or Windows filename blockers.
 
 Likely owned files:
 
-- `toolchain/bootstrap/bootstrap_binary.bzl` for configured executable suffix
-  preservation if Step 1 did not already fix it;
-- `prebuilt/mtree.bzl`;
 - `prebuilt/llvm/llvm_release.bzl`;
 - `prebuilt/llvm/BUILD.bazel`.
+- only if an exact package failure proves it necessary,
+  `toolchain/bootstrap/bootstrap_binary.bzl` for configured executable suffix
+  preservation.
 
 Implementation shape:
 
-- derive the wrapper output suffix from the configured executable; never
-  produce an extensionless Windows executable merely because the label is
-  named `llvm`;
-- retain `ctx.actions.symlink` where supported and the consumer accepts it. If
-  native Windows proves that action unsupported, use the repository's declared
-  copy-file action for this wrapper only, preserving `.exe`;
-- remove the `cat` genrule by extending the Starlark `mtree` rule to flatten
-  the declared builtin-header filegroup and binary labels into one manifest at
-  analysis time. Apply explicit strip/package prefixes and fixed uid/gid/mode/
-  mtime to every line; do not introduce a concatenation executable, shell, or
-  Python;
-- preserve real `bin/llvm.exe` plus the existing `.exe` multicall aliases.
-  Inspect whether tar symlink entries are usable by supported Windows
-  extraction; if not, make an explicit package-layout decision rather than
-  silently following host filesystem behavior.
+- use the existing release mtree, genrule, tar, and alias mechanisms unchanged;
+- parameterize the release rule to consume the Stage 1 MSVC binary from Step 1;
+- preserve real `bin/llvm.exe` plus the existing `.exe` multicall aliases;
+- if the existing extensionless bootstrap wrapper demonstrably prevents the
+  package from containing a valid `bin/llvm.exe`, make the smallest generic
+  suffix-preserving correction. Do not redesign file actions preemptively.
 
 Build/artifact commands:
 
@@ -709,33 +608,31 @@ Success criteria:
 
 - cquery reports one `.tar.zst` per transition label in distinct platform
   output directories;
-- no packaging `Genrule`, `/bin/bash`, `cat`, Python, or ambient PATH action;
-- archive manifest paths, ownership, modes, mtimes, symlink targets, and order
-  are deterministic; no absolute execroot path is stored;
+- the existing release genrules and archive layout complete successfully on
+  the claimed Linux x86-64 RBE construction host;
+- archive manifest paths, ownership, modes, mtimes, aliases, and order retain
+  the existing release contract; no absolute execroot path is stored;
 - `bin/llvm.exe` machine matches its label. Aliases end in `.exe` and resolve to
   that file after extraction;
 - Clang builtin headers and both ignorelists are present at the current layout;
 - optimized EXE has no import-library output. A PDB is either absent with no
   CodeView/PDB requirement, or deliberately declared and packaged; never an
-  orphaned reference;
-- two builds on Linux x86-64 and Linux ARM64 produce identical archive SHA-256
-  per target/source line after accounting for no intentional difference.
+  orphaned reference.
 
 Risks/stop conditions:
 
-- stop if changing the shared mtree rule alters existing archive layouts;
-- stop if tar symlink semantics make the package unusable on claimed Windows
-  hosts; record and obtain an explicit alias-layout decision;
+- stop if the only solution requires changing the shared mtree/archive layout,
+  replacing working shell/genrule actions, or broad release infrastructure;
 - clean all extraction/output-base temporary directories with `trash` after
   recording hashes and action evidence.
 
 Upstream llvm-project patch expected: **no**.
 
-## Step 7 — Verify source lines and claimed execution hosts with LLVM builds
+## Step 6 — Verify supported LLVM source lines with LLVM builds
 
 **Codex-agent-ready goal:** Add CI build jobs, not test targets, that compile
-and package LLVM itself for the claimed matrix. Prove actions/artifacts in the
-same jobs and keep version-selection edits ephemeral.
+and package LLVM itself for both Windows MSVC target architectures on the
+existing Linux x86-64 RBE path. Keep version-selection edits ephemeral.
 
 Likely owned files:
 
@@ -746,17 +643,14 @@ Likely owned files:
 
 Required matrix:
 
-| LLVM source | Linux x86-64 RBE -> x64 MSVC | Linux x86-64 RBE -> ARM64 MSVC | Linux ARM64 RBE -> x64 MSVC | Linux ARM64 RBE -> ARM64 MSVC | native Windows |
-|---|---:|---:|---:|---:|---:|
-| 21.1.8 | full Stage 1 + package | full Stage 1 + package | full Stage 1 + package | full Stage 1 + package | not claimed |
-| 22.1.8 | full Stage 1 + package | full Stage 1 + package | full Stage 1 + package | full Stage 1 + package | matching x64 and ARM64 hosts |
-| 23.1.0-rc1 | full Stage 1 + package | full Stage 1 + package | full Stage 1 + package | full Stage 1 + package | not claimed |
+| LLVM source | Linux x86-64 RBE -> x64 MSVC | Linux x86-64 RBE -> ARM64 MSVC |
+|---|---:|---:|
+| 21.1.8 | full Stage 1 + package | full Stage 1 + package |
+| 22.1.8 | full Stage 1 + package | full Stage 1 + package |
+| 23.1.0-rc1 | full Stage 1 + package | full Stage 1 + package |
 
 Jobs may share remote-cache results, but every cell invokes the package build;
 `--nobuild`, a consumer smoke target, or analysis-only success is insufficient.
-If cost requires reducing the matrix, reduce the claimed host/source support in
-the final table rather than keeping an unexecuted claim. macOS full-LLVM hosts
-remain unclaimed until an equivalent package build is added.
 
 Use the repository's existing ephemeral `LLVM_VERSION` replacement pattern in
 CI with `--lockfile_mode=off`. Do not commit a selected non-default version.
@@ -767,49 +661,28 @@ applicable and record:
 - target triple/machine in compile/link response files;
 - package SHA-256 and PE machine/import/debug metadata;
 - archive member machine and deterministic archive mode;
-- absence of Stage 2/3, ThinLTO/FDO, shell, Python, and host paths.
-
-Native Windows default-line jobs build the matching package locally with:
-
-```sh
-bazel build --config=windows_msvc_prebuilt \
-  --repository_cache= --repo_contents_cache= \
-  --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
-  --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
-  --extra_execution_platforms=@platforms//host:host \
-  --spawn_strategy=local \
-  //prebuilt/llvm:for_windows_x86_64_msvc
-```
-
-Use the ARM64 label on `windows-11-arm`. Extract with a Windows-capable bsdtar,
-then run at minimum `bin/llvm.exe --version`, `bin/clang-cl.exe
---print-target-triple`, `bin/llvm-ar.exe --version`, and a representative
-read-only command through another alias. These are inspections of the built
-LLVM product, not new Bazel test targets.
+- absence of Stage 2/3, ThinLTO/FDO, and target-action host paths.
 
 Success criteria:
 
 - every claimed matrix cell builds the full LLVM archive;
-- x64/ARM64 artifacts and reported triples agree across exec architectures;
+- x64/ARM64 artifact machines and configured triples agree with their target
+  labels;
 - generated host tools always match and run on the exec host; they never carry
   the Windows target machine in an executable action;
-- native Windows extraction preserves or materializes usable aliases and runs
-  the matching target binaries;
 - version-specific patches apply cleanly and generated Clang resource paths use
   the correct LLVM major;
 - the working tree is clean after each ephemeral version cell.
 
 Risks/stop conditions:
 
-- stop claiming a native host if file actions, suffixes, archive extraction,
-  runner capacity, or a missing prebuilt exec tool prevents the full build;
 - classify timeouts/resource limits separately from compiler correctness, but
   do not replace a full-build cell with `--nobuild`;
 - do not modify `.github/workflows/llvm-prebuilt.sh` or publish artifacts until
   a separate owner decision defines release naming and migration.
 
-Upstream llvm-project patch expected: **no new patch**; this validates and
-upstreams Steps 3-4.
+Upstream llvm-project patch expected: **no new patch**; this validates Step 3
+and any traced upstream fixes from Step 4.
 
 ## Upstreaming strategy and downstream-coupling review
 
@@ -840,16 +713,14 @@ Explicit ownership summary:
 | C++17 invocation and dialect-correct release flags | hermetic-llvm config/toolchain | no |
 | Curated COM headers/library | hermetic-llvm Windows SDK/compiler-support closure | no |
 | ARM64 LLVM native defines/triple | llvm-project Bazel overlay | yes |
-| `Analysis` trapping-math dialect | llvm-project Bazel overlay | yes |
-| clangd/tidy generated-file actions | llvm-project Bazel overlay | yes |
-| bootstrap output suffix and mtree/package actions | hermetic-llvm | no |
+| Stage 1 package input and proven Windows output-name blocker | hermetic-llvm release rule | no |
 | a newly discovered source/select bug | determine from failing owner before edit | maybe |
 
 Rejected coupling:
 
 - a downstream `-U_MSC_VER`, fake `comdef.h`, post-link triple rewrite, full
   Visual Studio include/lib path, repository-specific upstream config setting,
-  host shell, persistent Python generator, or global toolchain C++17 default;
+  or global toolchain C++17 default;
 - altering existing Stage 3 or falsely enabling unsupported optimization
   features to reuse the current release workflow;
 - adding targeted `srcs` exclusions without tracing the upstream CMake/source
@@ -865,9 +736,9 @@ State to advertise only after all gates pass:
 | platform-transition package label | supported | supported | Exact labels named in Objective. |
 | Stage 1 source build, opt, `/MD`, static libc++ | supported | supported | clang-cl + llvm-ar + driver-selected lld-link. |
 | Cross-build on Linux x86-64 RBE | supported | supported | All three listed LLVM lines after matrix passes. |
-| Cross-build on Linux ARM64 RBE | supported | supported | All three listed LLVM lines after matrix passes. |
-| Native matching Windows construction/execution | default LLVM line only | default LLVM line only | Claim only after Step 7 product execution. |
-| macOS construction host | unclaimed | unclaimed | Layer 1 consumers work; full LLVM package not verified here. |
+| Cross-build on Linux ARM64 RBE | unclaimed | unclaimed | May be added later with a full package build. |
+| Native matching Windows construction/execution | unclaimed | unclaimed | Not needed to prove the Windows target build in this task. |
+| macOS construction host | unclaimed | unclaimed | May be added later with a full package build. |
 | `/MT` package variant | unsupported | unsupported | Layer 1 runtime route remains, but no package product is defined. |
 | Debug/PDB package | unsupported | unsupported | Opt EXE only; no orphan PDB/import library. |
 | Shared LLVM/shared libc++ | unsupported | unsupported | Static libc++ only. |
@@ -903,12 +774,7 @@ inspection above.
 - whether lld-link selects the pure ARM64 half of vendor `comsuppw.lib` and
   resolves its VCRuntime/libc++ ABI helper references coherently;
 - every additional LLVM 21/23 overlay delta encountered after full compilation;
-- whether native Windows can create/consume the bootstrap symlink and archive
-  symlink entries without elevation or alias loss;
-- final opt PE debug-directory/PDB behavior under the dedicated config;
-- full LLVM build time/disk limits on native Windows ARM64 GitHub runners;
-- whether an independently forced Linux x86-64 versus ARM64 exec build produces
-  identical archive bytes or exposes metadata/tool-version differences.
+- final opt PE debug-directory/PDB behavior under the dedicated config.
 
 These are not claimed defects. Convert an item into an implementation change
 only after an exact failing action/artifact identifies its owner.
@@ -930,8 +796,9 @@ only after an exact failing action/artifact identifies its owner.
   review/backport status, and unknowns.
 - Before integration, self-review for: Stage 3 regression, downstream-only LLVM
   coupling, target/exec inversion, full MSVC input exposure, Microsoft-STL
-  contamination, raw shell/Python, suffix loss, unclaimed PDB/import outputs,
-  and any wording that implies ThinLTO/FDO support.
+  contamination, preemptive file-action cleanup, unclaimed PDB/import outputs,
+  and any wording that implies ThinLTO/FDO support or an unverified execution
+  host.
 
 ## Mandatory stop before ThinLTO/FDO
 
