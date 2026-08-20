@@ -37,6 +37,7 @@ _LLVM_21_SOURCE_PATCHES = [
     "//3rd_party/llvm-project/21.x/patches:no_zlib_genrule.patch",
     "//3rd_party/llvm-project/21.x/patches:no_rules_python.patch",
     "//3rd_party/llvm-project/21.x/patches:llvm-windows-stack-size.patch",
+    "//3rd_party/llvm-project/21.x/patches:clang-bazel-static-windows.patch",
     "//3rd_party/llvm-project/21.x/patches:libcxx-lgamma_r.patch",
     "//3rd_party/llvm-project/21.x/patches:libcxx-vcruntime-nothrow.patch",
     "//3rd_party/llvm-project/21.x/patches:llvm-bazel-blake3-windows-gnu.patch",
@@ -55,6 +56,7 @@ _LLVM_22_SOURCE_PATCHES = [
     "//3rd_party/llvm-project/22.x/patches:bundle_resources_no_python.patch",
     "//3rd_party/llvm-project/22.x/patches:no_rules_python.patch",
     "//3rd_party/llvm-project/22.x/patches:llvm-windows-stack-size.patch",
+    "//3rd_party/llvm-project/22.x/patches:clang-bazel-static-windows.patch",
     "//3rd_party/llvm-project/22.x/patches:libcxx-lgamma_r.patch",
     "//3rd_party/llvm-project/22.x/patches:libcxx-vcruntime-nothrow.patch",
     "//3rd_party/llvm-project/22.x/patches:llvm-bazel-blake3-windows-gnu.patch",
@@ -62,6 +64,7 @@ _LLVM_22_SOURCE_PATCHES = [
 ] + _BEFORE_23_SOURCE_PATCHES + _DEFAULT_SOURCE_PATCHES
 
 _LLVM_23_SOURCE_PATCHES = [
+    "//3rd_party/llvm-project/x.x/patches:clang-bazel-static-windows.patch",
     "//3rd_party/llvm-project/x.x/patches:libcxx-vcruntime-nothrow.patch",
     "//3rd_party/llvm-project/22.x/patches:lld-coff-thinlto-lazy-index.patch",
     "//3rd_party/llvm-project/x.x/patches:llvm-http-windows-gnu.patch",
