@@ -147,6 +147,7 @@ cc_args(
         "@rules_cc//cc/toolchains/actions:source_compile_actions",
     ],
     allowlist_include_directories = [
+        "//windows:msvc_com_support_headers",
         "//windows:msvc_vcruntime_headers",
         "//windows:winsdk_shared_include",
         "//windows:winsdk_ucrt_include",
@@ -154,6 +155,7 @@ cc_args(
         "//windows:winsdk_winrt_include",
     ],
     args = [
+        "/imsvc{msvc_com_support_include}",
         "/imsvc{msvc_include}",
         "/imsvc{winsdk_ucrt_include}",
         "/imsvc{winsdk_shared_include}",
@@ -161,6 +163,7 @@ cc_args(
         "/imsvc{winsdk_winrt_include}",
     ],
     data = [
+        "//windows:msvc_com_support_headers",
         "//windows:msvc_vcruntime_headers",
         "//windows:winsdk_shared_include",
         "//windows:winsdk_ucrt_include",
@@ -168,11 +171,27 @@ cc_args(
         "//windows:winsdk_winrt_include",
     ],
     format = {
+        "msvc_com_support_include": "//windows:msvc_com_support_headers",
         "msvc_include": "//windows:msvc_vcruntime_headers",
         "winsdk_shared_include": "//windows:winsdk_shared_include",
         "winsdk_ucrt_include": "//windows:winsdk_ucrt_include",
         "winsdk_um_include": "//windows:winsdk_um_include",
         "winsdk_winrt_include": "//windows:winsdk_winrt_include",
+    },
+)
+
+cc_args(
+    name = "msvc_com_support_library_path",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = [
+        "/clang:-Xlinker",
+        "/clang:/LIBPATH:{msvc_com_support_lib}",
+    ],
+    data = ["//windows:msvc_com_support_libraries"],
+    format = {
+        "msvc_com_support_lib": "//windows:msvc_com_support_libraries",
     },
 )
 
@@ -261,6 +280,7 @@ cc_args_list(
         ":sdk_case_overlay",
         ":sdk_includes",
         ":sdk_library_paths",
+        ":msvc_com_support_library_path",
     ] + select({
         "//toolchain/features/msvc:static_crt_config": [":msvc_static_runtime_library_path"],
         "//conditions:default": [":msvc_dynamic_runtime_library_path"],
