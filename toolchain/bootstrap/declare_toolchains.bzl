@@ -101,6 +101,7 @@ def declare_tool_map(exec_os, exec_cpu, prefix = None, fdo_profile = None, fdo_i
         "@rules_cc//cc/toolchains/actions:lto_index_for_executable": prefix + "/clang-cl",
         "@rules_cc//cc/toolchains/actions:lto_index_for_dynamic_library": prefix + "/clang-cl",
         "@rules_cc//cc/toolchains/actions:lto_index_for_nodeps_dynamic_library": prefix + "/clang-cl",
+        "@rules_cc//cc/toolchains/actions:llvm_profdata": prefix + "/llvm-profdata",
         "@rules_cc//cc/toolchains/actions:strip": prefix + "/llvm-strip",
     }
 
