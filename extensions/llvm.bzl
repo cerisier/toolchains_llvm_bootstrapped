@@ -12,6 +12,7 @@ _DEFAULT_SOURCE_PATCHES = [
     "//3rd_party/llvm-project/x.x/patches:compiler-rt-symbolizer_skip_cxa_atexit.patch",
     "//3rd_party/llvm-project/x.x/patches:lit_test_stub.patch",
     "//3rd_party/llvm-project/x.x/patches:lld-macho-thinlto-obj-path.patch",
+    "//3rd_party/llvm-project/x.x/patches:llvm-bazel-msvc-trapping-math.patch",
 ]
 
 _BEFORE_23_SOURCE_PATCHES = [
