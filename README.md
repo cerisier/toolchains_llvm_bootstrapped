@@ -100,6 +100,20 @@ use_repo(go_sdk, "go_sdk")
 
 e2e/wasm has an example of a fully working Cgo setup.
 
+### Reproducible output paths
+
+The first segment of the output directory (`bazel-out/<cpu>-<compilation_mode>/...`) is the value of `--cpu`, which defaults to the auto-detected host CPU and does not follow `--platforms`. The same `--platforms` therefore gives `darwin_arm64-<compilation_mode>` on a macOS arm64 host and `aarch64-<compilation_mode>` on a Linux arm64 host.
+
+This leaks into artifacts. Bazel-generated `.go` sources are compiled from their output path, and the Go linker records source paths in the `pclntab`, so the directory name ends up inside the binary and the same target built on two hosts gives two different binaries. Cgo packages are affected too: they record `cgo_ldflag` directives in the compiled `.a`, and those flags contain these same output paths, so every cgo `.a` differs across hosts as well. The linker consumes those as arguments rather than embedding them, so they do not change the binary, but they do prevent cross-host cache hits.
+
+Deriving the name from the platform label instead makes it host-independent, at the cost of a one-time full cache miss:
+
+```sh
+--experimental_platform_in_output_dir
+```
+
+Identical `constraint_values` still do not guarantee identical paths. The name comes from the platform's target name, so a differently named copy, or even an `alias()` to the same platform, gets its own directory and its own binary. Adding `--experimental_use_platforms_in_output_dir_legacy_heuristic=false` switches to a hash of the label, which stops same-named platforms in different packages from colliding but is still label-derived.
+
 ### Usage with Rust
 We highly recommend using [rules_rs](https://github.com/hermeticbuild/rules_rs) to seamlessly interop the Rust and CC toolchains. It is best to use the toolchains and platforms defined by that ruleset to configure everything properly.
 
