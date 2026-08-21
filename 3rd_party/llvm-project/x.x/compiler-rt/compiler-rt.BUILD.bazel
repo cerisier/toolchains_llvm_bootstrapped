@@ -673,6 +673,12 @@ cc_library(
         ],
         "//conditions:default": [],
     }) + CF_PROTECTION_COPTS,
+    features = select({
+        # clang-cl discovers builtins in its resource directory, outside
+        # Bazel's LTO compilation context. Keep the implicit archive native.
+        ":windows_msvc": ["-thin_lto"],
+        "//conditions:default": [],
+    }),
     implementation_deps = select({
         "@platforms//os:macos": [],
         "@platforms//os:linux": [

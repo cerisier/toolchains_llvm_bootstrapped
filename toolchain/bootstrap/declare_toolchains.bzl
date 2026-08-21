@@ -91,11 +91,18 @@ def declare_tool_map(exec_os, exec_cpu, prefix = None, fdo_profile = None, fdo_i
             "@rules_cc//cc/toolchains/actions:c_compile": prefix + "/clang-cl",
             "@rules_cc//cc/toolchains/actions:cpp_compile": prefix + "/clang-cl",
             "@rules_cc//cc/toolchains/actions:linkstamp_compile": prefix + "/clang-cl",
+            "@rules_cc//cc/toolchains/actions:lto_backend": prefix + "/clang-cl",
             "@rules_cc//cc/toolchains/actions:preprocess_assemble": prefix + "/clang-cl",
             "@rules_cc//cc/toolchains/actions:cpp_header_parsing": prefix + "/clang-cl",
             "@rules_cc//cc/toolchains/actions:generate_def_file": prefix + "/msvc-def-parser",
             "@rules_cc//cc/toolchains/actions:ar_actions": prefix + "/llvm-ar",
-            "@rules_cc//cc/toolchains/actions:link_actions": prefix + "/clang-cl",
+            "@rules_cc//cc/toolchains/actions:cpp_link_executable": prefix + "/clang-cl",
+            "@rules_cc//cc/toolchains/actions:cpp_link_dynamic_library": prefix + "/clang-cl",
+            "@rules_cc//cc/toolchains/actions:cpp_link_nodeps_dynamic_library": prefix + "/clang-cl",
+            "@rules_cc//cc/toolchains/actions:objc_executable": prefix + "/clang-cl",
+            "@rules_cc//cc/toolchains/actions:lto_index_for_executable": prefix + "/clang-cl-thinlto-index",
+            "@rules_cc//cc/toolchains/actions:lto_index_for_dynamic_library": prefix + "/clang-cl-thinlto-index",
+            "@rules_cc//cc/toolchains/actions:lto_index_for_nodeps_dynamic_library": prefix + "/clang-cl-thinlto-index",
             "@rules_cc//cc/toolchains/actions:strip": prefix + "/llvm-strip",
         } | _validate_static_library_tool(prefix),
     )
@@ -179,7 +186,7 @@ def declare_tool_map(exec_os, exec_cpu, prefix = None, fdo_profile = None, fdo_i
     cc_args(
         name = prefix + "/compile_resource_dir_msvc",
         actions = [
-            "@rules_cc//cc/toolchains/actions:compile_actions",
+            "@rules_cc//cc/toolchains/actions:source_compile_actions",
         ],
         args = [
             "/imsvc{resource_dir}",
@@ -241,6 +248,29 @@ def declare_tool_map(exec_os, exec_cpu, prefix = None, fdo_profile = None, fdo_i
         name = prefix + "/bin/lld-link",
         actual = "@llvm-project//llvm:llvm.stripped",
         **bootstrap_binary_kwargs
+    )
+
+    cc_tool(
+        name = prefix + "/clang-cl-thinlto-index",
+        src = "@llvm//tools/internal:clang-cl-thinlto-index",
+        data = [
+            prefix + "/bin/clang-cl",
+            prefix + "/bin/lld-link",
+        ],
+        capabilities = [
+            "@rules_cc//cc/toolchains/capabilities:has_configured_linker_path",
+            "@rules_cc//cc/toolchains/capabilities:supports_dynamic_linker",
+            "@rules_cc//cc/toolchains/capabilities:supports_interface_shared_libraries",
+        ],
+        env = {
+            "LIB": "__hermetic_llvm_empty_lib__",
+            "LLVM_CLANG_CL": "{clang_cl}",
+            "LLVM_LLD_LINK": "{lld_link}",
+        },
+        format = {
+            "clang_cl": prefix + "/bin/clang-cl",
+            "lld_link": prefix + "/bin/lld-link",
+        },
     )
 
     cc_tool(

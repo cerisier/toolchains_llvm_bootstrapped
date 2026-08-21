@@ -10,6 +10,15 @@ local_path_override(
 
 bazel_dep(name = "platforms", version = "1.0.0")
 bazel_dep(name = "rules_cc", version = "0.2.22")
+single_version_override(
+    module_name = "rules_cc",
+    patch_strip = 1,
+    # Keep synchronized with
+    # @llvm//3rd_party/rules_cc:coff-thinlto-actions.patch. Module overrides
+    # may only load patches from their own main repository.
+    patches = ["//:rules_cc_coff_thinlto_actions.patch"],
+)
+
 bazel_dep(name = "rules_shell", version = "0.6.1")
 bazel_dep(name = "with_cfg.bzl", version = "0.12.0")
 bazel_dep(name = "rules_python", version = "1.7.0")

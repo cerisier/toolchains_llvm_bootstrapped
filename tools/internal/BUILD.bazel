@@ -12,6 +12,12 @@ cc_runtime_stage1_hosted_binary(
     visibility = ["//visibility:public"],
 )
 
+cc_runtime_stage1_hosted_binary(
+    name = "clang-cl-thinlto-index",
+    srcs = ["clang_cl_thinlto_index.c"],
+    visibility = ["//visibility:public"],
+)
+
 # rustc infers the linker flavor from the executable name. Keep the `-clang++`
 # suffix so Rust shared-library links treat this wrapper as a compiler driver.
 cc_runtime_stage1_hosted_binary(

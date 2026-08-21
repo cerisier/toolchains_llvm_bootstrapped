@@ -6,6 +6,7 @@ package(default_visibility = ["//visibility:public"])
 cc_args(
     name = "target",
     actions = [
+        "@rules_cc//cc/toolchains/actions:lto_backend",
         "@rules_cc//cc/toolchains/actions:source_compile_actions",
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
@@ -19,6 +20,7 @@ cc_args(
 cc_args(
     name = "compatibility",
     actions = [
+        "@rules_cc//cc/toolchains/actions:lto_backend",
         "@rules_cc//cc/toolchains/actions:source_compile_actions",
     ],
     args = select({

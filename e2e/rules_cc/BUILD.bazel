@@ -388,6 +388,28 @@ cc_library(
     ]
 ]
 
+cc_test(
+    name = "windows_msvc_libcxx_behavior_thinlto",
+    srcs = [
+        "windows_msvc_assembly.S",
+        "windows_msvc_c_smoke.c",
+        "windows_msvc_libcxx_behavior.cc",
+    ],
+    copts = ["/std:c++20"],
+    features = ["thin_lto"],
+    linkopts = ["/OPT:REF"],
+    linkstatic = False,
+    target_compatible_with = [
+        "@llvm//constraints/windows/abi:msvc",
+        "@llvm//constraints/cxxstdlib:libcxx",
+        "@platforms//os:windows",
+    ],
+    deps = [
+        ":windows_msvc_libcxx_alwayslink",
+        ":windows_msvc_libcxx_behavior_support",
+    ],
+)
+
 filegroup(
     name = "windows_msvc_libcxx_behavior_debug_pdb",
     testonly = True,
@@ -1364,6 +1386,7 @@ platform(
 
 _WINDOWS_MSVC_MD_ARTIFACTS = [
     "windows_msvc_libcxx_behavior_md",
+    "windows_msvc_libcxx_behavior_thinlto",
     "windows_msvc_libcxx_behavior_debug",
     "windows_msvc_libcxx_behavior_debug_pdb",
     "windows_msvc_libcxx_behavior_support",
