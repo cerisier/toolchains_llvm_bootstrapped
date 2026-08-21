@@ -9,12 +9,29 @@
 static const char *required_env(const char *name) {
   const char *value = getenv(name);
   if (value == NULL || value[0] == '\0') {
-    fprintf(stderr,
-            "clang-cl-thinlto-index: required env var %s is not set\n",
+    fprintf(stderr, "clang-cl-thinlto-index: required env var %s is not set\n",
             name);
     exit(1);
   }
   return value;
+}
+
+static int set_compiler_path(const char *value) {
+#if defined(_WIN32)
+  static const char prefix[] = "COMPILER_PATH=";
+  size_t definition_size = sizeof(prefix) + strlen(value);
+  char *definition = malloc(definition_size);
+  if (definition == NULL) {
+    return -1;
+  }
+  snprintf(definition, definition_size, "%s%s", prefix, value);
+
+  // _putenv may retain the supplied buffer. The process immediately execs, so
+  // keep it alive rather than risking an invalid environment entry.
+  return _putenv(definition);
+#else
+  return setenv("COMPILER_PATH", value, 1);
+#endif
 }
 
 int main(int argc, char **argv) {
@@ -38,8 +55,9 @@ int main(int argc, char **argv) {
     *separator = '\0';
   }
 
-  if (setenv("COMPILER_PATH", compiler_path, 1) != 0) {
-    fprintf(stderr, "clang-cl-thinlto-index: setenv failed: %s\n",
+  if (set_compiler_path(compiler_path) != 0) {
+    fprintf(stderr,
+            "clang-cl-thinlto-index: setting COMPILER_PATH failed: %s\n",
             strerror(errno));
     return 1;
   }
