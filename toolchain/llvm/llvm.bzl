@@ -4,7 +4,6 @@ load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains:tool.bzl", "cc_tool")
 load("@rules_cc//cc/toolchains:tool_map.bzl", "cc_tool_map")
 load("//:directory.bzl", "headers_directory")
-load("//toolchain/bootstrap:bootstrap_binary.bzl", "bootstrap_binary")
 
 _VALIDATE_STATIC_LIBRARY_TOOL = {
     "@rules_cc//cc/toolchains/actions:validate_static_library": ":static_library_validator",
@@ -131,39 +130,6 @@ def declare_llvm_targets(*, suffix = ""):
         src = "@llvm//tools/msvc_def_parser",
     )
 
-    # COFF distributed ThinLTO needs an lld-link built from the patched source
-    # overlay. Keep it separate from the ordinary prebuilt linker so only
-    # index actions use source lld.
-    bootstrap_binary(
-        name = "thinlto_index/bin/lld-link",
-        actual = "@llvm-project//llvm:llvm.stripped",
-    )
-
-    cc_tool(
-        name = "clang-cl-thinlto-index",
-        src = "@llvm//tools/internal:clang-cl-thinlto-index",
-        data = [
-            ":builtin_resource_include_dir",
-            ":thinlto_index/bin/lld-link",
-            "bin/clang-cl" + suffix,
-        ],
-        capabilities = [
-            "@rules_cc//cc/toolchains/capabilities:has_configured_linker_path",
-            "@rules_cc//cc/toolchains/capabilities:supports_dynamic_linker",
-            "@rules_cc//cc/toolchains/capabilities:supports_interface_shared_libraries",
-        ],
-        env = {
-            "LIB": "__hermetic_llvm_empty_lib__",
-            "LLVM_CLANG_CL": "{clang_cl}",
-            "LLVM_LLD_LINK": "{lld_link}",
-        },
-        format = {
-            "clang_cl": "bin/clang-cl" + suffix,
-            "lld_link": ":thinlto_index/bin/lld-link",
-        },
-        allowlist_include_directories = [":builtin_resource_include_dir"],
-    )
-
     TOOLS_WITHOUT_LINKER = {
         "@rules_cc//cc/toolchains/actions:assembly_actions": ":clang",
         "@rules_cc//cc/toolchains/actions:c_compile": ":clang",
@@ -209,9 +175,9 @@ def declare_llvm_targets(*, suffix = ""):
             "@rules_cc//cc/toolchains/actions:cpp_link_dynamic_library": ":clang-cl",
             "@rules_cc//cc/toolchains/actions:cpp_link_nodeps_dynamic_library": ":clang-cl",
             "@rules_cc//cc/toolchains/actions:objc_executable": ":clang-cl",
-            "@rules_cc//cc/toolchains/actions:lto_index_for_executable": ":clang-cl-thinlto-index",
-            "@rules_cc//cc/toolchains/actions:lto_index_for_dynamic_library": ":clang-cl-thinlto-index",
-            "@rules_cc//cc/toolchains/actions:lto_index_for_nodeps_dynamic_library": ":clang-cl-thinlto-index",
+            "@rules_cc//cc/toolchains/actions:lto_index_for_executable": ":clang-cl",
+            "@rules_cc//cc/toolchains/actions:lto_index_for_dynamic_library": ":clang-cl",
+            "@rules_cc//cc/toolchains/actions:lto_index_for_nodeps_dynamic_library": ":clang-cl",
             "@rules_cc//cc/toolchains/actions:strip": ":llvm-strip",
         } | _VALIDATE_STATIC_LIBRARY_TOOL,
         visibility = ["//visibility:public"],
