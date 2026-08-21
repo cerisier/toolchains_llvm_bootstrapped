@@ -65,6 +65,14 @@ bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   'mnemonic("CppCompile", //:windows_msvc_generated_def_binary)' \
   >"${action_dir}/release-user-overrides.txt"
 bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
+  --features=-compiler_param_file \
+  --features=llvm_release_no_exceptions \
+  --features=llvm_release_no_rtti \
+  --features=llvm_release_omit_frame_pointer \
+  --output=commands \
+  'inputs(".*libcxxabi/src/private_typeinfo.cpp", mnemonic("CppCompile", deps(@llvm-project//libcxxabi:libcxxabi.static)))' \
+  >"${action_dir}/release-libcxxabi-compile.txt"
+bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   --include_param_files \
   --output=text \
   'mnemonic("CppArchive", //:windows_msvc_libcxx_behavior_support)' \
@@ -142,6 +150,14 @@ assert_matches "${action_dir}/release-user-overrides.txt" "/EHs-c-.* /EHsc "
 assert_matches "${action_dir}/release-user-overrides.txt" "/GR-.* /GR "
 assert_matches "${action_dir}/release-user-overrides.txt" "/clang:-fomit-frame-pointer.* /clang:-fno-omit-frame-pointer "
 assert_matches "${action_dir}/release-user-overrides.txt" "/std:c\\+\\+17.* /std:c\\+\\+20"
+assert_contains "${action_dir}/release-libcxxabi-compile.txt" "libcxxabi/src/private_typeinfo.cpp"
+assert_contains "${action_dir}/release-libcxxabi-compile.txt" "-funwind-tables"
+assert_absent "${action_dir}/release-libcxxabi-compile.txt" " -fno-exceptions"
+assert_absent "${action_dir}/release-libcxxabi-compile.txt" " -fno-rtti"
+assert_absent "${action_dir}/release-libcxxabi-compile.txt" " -fomit-frame-pointer"
+assert_absent "${action_dir}/release-libcxxabi-compile.txt" "/EHs-c-"
+assert_absent "${action_dir}/release-libcxxabi-compile.txt" "/GR-"
+assert_absent "${action_dir}/release-libcxxabi-compile.txt" "/clang:-fomit-frame-pointer"
 
 assert_contains "${action_dir}/clang-static-config.txt" "CLANG_BUILD_STATIC"
 assert_contains "${action_dir}/clang-static-config.txt" "clang/Config/config.h"
