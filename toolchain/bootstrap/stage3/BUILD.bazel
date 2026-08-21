@@ -18,7 +18,11 @@ _WINDOWS_MSVC_TARGET_CPUS = [
     "x86_64",
 ]
 
-bootstrap_binaries(fdo_profile = ":llvm_fdo_profdata")
+bootstrap_binaries(fdo_profile = select({
+    "//platforms/config:windows_aarch64_msvc": ":llvm_fdo_profdata_msvc",
+    "//platforms/config:windows_x86_64_msvc": ":llvm_fdo_profdata_msvc",
+    "//conditions:default": ":llvm_fdo_profdata",
+}))
 
 [
     llvm_fdo_profile_workload(
