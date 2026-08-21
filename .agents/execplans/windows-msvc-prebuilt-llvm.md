@@ -1,7 +1,7 @@
 # Windows MSVC prebuilt LLVM execution plan
 
-Status: Steps 1-4 complete. Step 5 is intentionally skipped. Steps 6-12 remain
-proposed and require separate implementation authorization.
+Status: Steps 1-4 and 6-7 complete. Step 5 is intentionally skipped. Steps
+8-12 remain proposed and require separate implementation authorization.
 
 Date: 2026-08-20 (Asia/Tokyo)
 Revised: 2026-08-21 (Asia/Tokyo)
@@ -24,13 +24,13 @@ Revised: 2026-08-21 (Asia/Tokyo)
   existing minimal-toolchain archive layout.
 
 The planning branch contains only this plan. This revision records completed
-implementation but does not authorize Steps 6-12, README edits, release
+implementation but does not authorize Steps 8-12, README edits, release
 publication, a new PR, or `gh stack` operations.
 
 ## Implementation progress
 
-Steps 1-4 are implemented on draft hermetic-llvm PR #711 at
-`24869f63f669db8fb9263425587bc04ff61fc6e8`:
+Steps 1-4 and 6-7 are implemented on draft hermetic-llvm PR #711 through
+`3be43832dd40e995ff248de38f8ea13dd4b992d0`:
 
 - Step 1: `1347780b` adds the temporary Stage-1-backed MSVC route.
 - Step 2: `d948c9f3` closes the curated COM compiler-support dependency.
@@ -41,6 +41,14 @@ Steps 1-4 are implemented on draft hermetic-llvm PR #711 at
   #217695; the libc++ VCRuntime `std::nothrow` fix remains draft PR #217694;
   the conditional static-Clang configuration remains downstream only by owner
   decision.
+- Step 6: `88d95603` moves C++17 and release intent into dialect-aware
+  toolchain features while retaining the existing generic spellings and
+  effective behavior.
+- Step 7: `21ee5d74` and `97584336` implement the LLVM lld weak-alias fix and
+  repository-owned clang-cl/COFF ThinLTO protocol. `36ab3da5` and `3be43832`
+  then simplify the supported contract to source-backed bootstrap tools and
+  remove the temporary indexing launcher, special linker alias, environment
+  plumbing, and downstream rules_cc patch.
 
 Both complete Stage 1 outputs were inspected: x86-64 is
 `IMAGE_FILE_MACHINE_AMD64`; ARM64 is `IMAGE_FILE_MACHINE_ARM64`, not ARM64EC.
@@ -48,6 +56,20 @@ An unchanged packaging feasibility probe also produced and extracted both
 Stage 1 archives (`fa08b192-ba5f-4e8d-a859-003f2c2bee9f`), but no packaging
 edit, commit, or delivery followed. The probe is evidence that the existing
 archive machinery works; it is not an accepted package checkpoint.
+
+Both complete source-backed ThinLTO LLVM monoliths were also built directly as
+`@llvm-project//llvm:llvm` with
+`--//toolchain:bootstrap_stage=stage1_from_source`: x86-64 invocation
+`e8217f53-6129-4f1c-98ed-f72e0b2b0e89` and ARM64 invocation
+`074f1a25-fa93-46ac-a1b9-f55558007a15`. Their PE machine types are respectively
+AMD64 and native ARM64. Action inspection proved normal source-built clang-cl
+with its declared sibling source-built lld-link for indexing and final link,
+plus target `.obj` backend outputs. The rules_cc-owned merged intermediate
+remains named `.lto.merged.o`; selective downloads proved it is AMD64/ARM64
+COFF and the final lld-link action consumes it. No custom launcher,
+`COMPILER_PATH`, launcher environment, special linker path, or rules_cc patch
+remains. Stage 0 prebuilt ThinLTO is not a supported correctness boundary for
+the known weak-alias case.
 
 ## Objective and non-goals
 
@@ -253,10 +275,12 @@ uses COM Setup Configuration intentionally for MSVC-environment discovery.
 12. **Optimization dialect ownership.** Release intent is expressed through
     toolchain features or other target-aware semantics. Generic Clang keeps
     its current effective ThinLTO/FDO/release arguments; clang-cl receives
-    audited CL or `/clang:` spellings. ThinLTO indexing/backend outputs use
-    configured `.obj` naming and lld-link's COFF protocol. FDO instrumentation
-    runs in the Linux exec-platform compiler process; no Windows target binary
-    executes while profiles are collected or merged.
+    audited CL or `/clang:` spellings. ThinLTO backend outputs use configured
+    `.obj` naming and lld-link's COFF protocol. The rules_cc-owned merged
+    internal may retain its `.lto.merged.o` name when its contents are proved
+    COFF and the final link consumes it. FDO instrumentation runs in the Linux
+    exec-platform compiler process; no Windows target binary executes while
+    profiles are collected or merged.
 13. **Validation graduates one capability at a time.** Layer 1's unsupported-
     feature validation remains intact except for an exact feature after its
     dedicated step proves analysis, actions, and artifacts. ThinLTO support
@@ -826,16 +850,18 @@ Upstream llvm-project patch expected: **no**.
 ## Step 7 — Implement the clang-cl/COFF ThinLTO action protocol
 
 **Codex-agent-ready goal:** Make `thin_lto` a real supported MSVC toolchain
-feature for compile, index, backend, archive, and final-link actions without
-promoting or building the dormant package labels.
+feature for compile, index, backend, archive, and final-link actions with
+source-backed bootstrap tools, without promoting or building the dormant
+package labels. Stage 0 prebuilt ThinLTO is not part of this contract.
 
 Likely owned files:
 
 - `toolchain/features/msvc/BUILD.bazel`;
 - `toolchain/cc_toolchain.bzl`;
 - `toolchain/bootstrap/declare_toolchains.bzl`;
-- `toolchain/llvm/llvm.bzl` if the installed/prebuilt MSVC tool map needs the
-  same backend action binding;
+- `toolchain/llvm/llvm.bzl` for the installed/prebuilt MSVC action bindings,
+  while correctness proof uses `stage1_from_source` or a later source-backed
+  bootstrap stage;
 - existing `e2e/rules_cc/windows_msvc_action_test.sh`, artifact inspection
   macros/scripts, and `.github/workflows/ci.yaml`;
 - a focused rules_cc compatibility patch only if a demonstrated action
@@ -850,8 +876,8 @@ Implementation shape:
   indexing, imports, prefix/suffix replacement, merged object, backend input,
   backend index, and `.obj` output arguments;
 - bind the `lto_backend` action to an exec-platform LLVM driver with a coherent
-  argument dialect; keep lld-link as the COFF index/final linker selected by
-  clang-cl;
+  argument dialect; route all three index variants through normal clang-cl and
+  keep its declared sibling lld-link as the COFF index/final linker;
 - use configured artifact naming and existing independent response-file
   protocols; never hardcode `.o`, an exec CPU, or an exec-host path;
 - remove `--features=-thin_lto` from the temporary product config once Stage 1
@@ -859,9 +885,10 @@ Implementation shape:
   1's unsupported list after both architectures pass;
 - leave all generic toolchains on the existing rules_cc ThinLTO feature and do
   not route `windows_msvc_llvm_release` to Stage 2/3 in this step.
-- extend the existing MSVC action test with a `--features=thin_lto` query that
-  asserts compile/index/backend/link tools and spellings, and extend the
-  existing artifact CI cell to build/inspect a ThinLTO PE for both CPUs.
+- extend the existing MSVC action test with a source-backed
+  `--features=thin_lto` query that asserts compile/index/backend/link tools and
+  spellings, no compatibility launcher or linker-path environment, and extend
+  the existing artifact CI cell to build/inspect a ThinLTO PE for both CPUs.
 
 Build/action commands:
 
@@ -871,21 +898,24 @@ bazel build --config=remote --config=windows_msvc_prebuilt \
   --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
   --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
   --platforms=@llvm//platforms:windows_x86_64_msvc \
-  //toolchain/bootstrap/stage1:llvm --remote_download_all
+  --//toolchain:bootstrap_stage=stage1_from_source \
+  @llvm-project//llvm:llvm --remote_download_all
 
 bazel build --config=remote --config=windows_msvc_prebuilt \
   --features=thin_lto \
   --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
   --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
   --platforms=@llvm//platforms:windows_aarch64_msvc \
-  //toolchain/bootstrap/stage1:llvm --remote_download_all
+  --//toolchain:bootstrap_stage=stage1_from_source \
+  @llvm-project//llvm:llvm --remote_download_all
 
 bazel aquery --config=remote --config=windows_msvc_prebuilt \
   --features=thin_lto \
   --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
   --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
   --platforms=@llvm//platforms:windows_x86_64_msvc \
-  'deps(//toolchain/bootstrap/stage1:llvm)' \
+  --//toolchain:bootstrap_stage=stage1_from_source \
+  'deps(@llvm-project//llvm:llvm)' \
   --output=text --include_artifacts=true \
   --output_file=/tmp/windows-msvc-prebuilt-thinlto-x64.txt
 ```
@@ -896,14 +926,16 @@ Success criteria:
   a valid AMD64/ARM64 PE; merely passing `-flto=thin` to one compile is not
   sufficient;
 - index and backend actions use declared exec-platform LLVM tools, MSVC target
-  triples, COFF inputs, configured `.obj` outputs, and declared response files;
+  triples, COFF inputs, configured backend `.obj` outputs, and declared
+  response files; the rules_cc merged internal may remain `.lto.merged.o` when
+  its COFF contents and final-link consumption are proved;
 - no raw generic-only `-Wl,`, `-o`, or `-x ir` token is ignored by clang-cl;
 - non-ThinLTO direct Stage 1 commands retain their prior action graph;
 - existing generic ThinLTO aquery topology and artifacts are unchanged.
 
 **Potentially mergeable finish line:** `--features=thin_lto` is independently
-supported and artifact-proved for ordinary MSVC targets, while the manual MSVC
-prebuilt labels remain dormant temporary scaffolding. All other Layer 1
+supported and artifact-proved for source-backed MSVC targets, while the manual
+MSVC prebuilt labels remain dormant temporary scaffolding. All other Layer 1
 rejected capabilities remain rejected.
 
 Risks/stop conditions:
@@ -914,8 +946,10 @@ Risks/stop conditions:
 - split a rules_cc defect into a focused upstream/downstream compatibility
   patch with a minimal COFF reproduction before continuing the LLVM build.
 
-Upstream patch expected: **no llvm-project patch**; **possible focused
-rules_cc patch only after a minimal demonstrated protocol gap**.
+Upstream patch expected: **no additional llvm-project patch and no rules_cc
+patch for the proved executable path**. The lld weak-alias correction remains
+an LLVM-owned patch; dynamic-library ThinLTO variants remain outside this
+monolithic executable acceptance surface.
 
 ## Step 8 — Generate and merge MSVC-target bootstrap FDO profiles
 
@@ -1412,7 +1446,7 @@ Explicit ownership summary:
 | C++17 default and dialect-aware release-policy features | hermetic-llvm toolchain | no |
 | Curated COM headers/library | hermetic-llvm Windows SDK/compiler-support closure | no |
 | ARM64 LLVM native defines/triple | llvm-project Bazel overlay | yes |
-| clang-cl/COFF ThinLTO action protocol | hermetic-llvm toolchain; rules_cc only for a proved protocol gap | maybe |
+| clang-cl/COFF ThinLTO executable action protocol | hermetic-llvm toolchain; source-built clang-cl/lld-link contract | no additional patch |
 | Linux Stage 2 instrumentation under existing `host_profile` | existing generic bootstrap/toolchain | no change expected |
 | MSVC FDO profile application | hermetic-llvm toolchain | no |
 | MSVC workload/profile aggregate and merge action | hermetic-llvm bootstrap rules | no |
@@ -1495,8 +1529,6 @@ inspection above.
   before/after executor-resolution coverage;
 - any additional LLVM 21/23 overlay delta encountered by the full optimized
   Stage 3 source matrix; Step 4 proved patch application but built LLVM 22.1.8;
-- exact clang-cl/lld-link ThinLTO response-file spellings required by the
-  pinned rules_cc action variables;
 - whether the hosted zstd workload needs an additional declared Windows
   system-library input while remaining uninstrumented target code;
 - profile coverage/hash differences between the instrumented Linux compiler
