@@ -1,10 +1,10 @@
 # Windows MSVC prebuilt LLVM execution plan
 
-Status: Steps 1-4 and 6-7 complete. Step 5 is intentionally skipped. Steps
-8-12 remain proposed and require separate implementation authorization.
+Status: Steps 1-4 and 6-9.1 complete. Step 5 is intentionally skipped. Steps
+10-12 remain proposed and require separate implementation authorization.
 
 Date: 2026-08-20 (Asia/Tokyo)
-Revised: 2026-08-21 (Asia/Tokyo)
+Revised: 2026-08-22 (Asia/Tokyo)
 
 ## Activation and baseline
 
@@ -24,13 +24,13 @@ Revised: 2026-08-21 (Asia/Tokyo)
   existing minimal-toolchain archive layout.
 
 The planning branch contains only this plan. This revision records completed
-implementation but does not authorize Steps 8-12, README edits, release
-publication, a new PR, or `gh stack` operations.
+implementation through Step 9.1 but does not authorize Steps 10-12, README
+edits, release publication, a new PR, or `gh stack` operations.
 
 ## Implementation progress
 
-Steps 1-4 and 6-7 are implemented on draft hermetic-llvm PR #711 through
-`3be43832dd40e995ff248de38f8ea13dd4b992d0`:
+Steps 1-4 and 6-7 are implemented on draft hermetic-llvm PR #711 through its
+current remote head, `3be43832dd40e995ff248de38f8ea13dd4b992d0`:
 
 - Step 1: `1347780b` adds the temporary Stage-1-backed MSVC route.
 - Step 2: `d948c9f3` closes the curated COM compiler-support dependency.
@@ -49,6 +49,18 @@ Steps 1-4 and 6-7 are implemented on draft hermetic-llvm PR #711 through
   then simplify the supported contract to source-backed bootstrap tools and
   remove the temporary indexing launcher, special linker alias, environment
   plumbing, and downstream rules_cc patch.
+
+Steps 8-9.1 are implemented locally on the same branch through
+`73d74238c2168146ffdcfea90197d4366eca6199`; they are not yet pushed:
+
+- the Step 8 prerequisite `1c066553` resets release features for runtime
+  builds, `0b305d7c` generates and merges the MSVC bootstrap profiles, and
+  `96d570a8` uses the correct trapping-math spelling for clang-cl workloads;
+- Step 9 commit `e81af7a6` selects and applies the MSVC profile to direct Stage
+  3 compile and ThinLTO backend actions;
+- Step 9.1 commit `73d74238` removes the conservative MSVC-only full-bitcode
+  indexing override and asserts the standard rules_cc dual-output contract:
+  minimized `.indexing.o` for indexing, complete `.obj` for each backend.
 
 Both complete Stage 1 outputs were inspected: x86-64 is
 `IMAGE_FILE_MACHINE_AMD64`; ARM64 is `IMAGE_FILE_MACHINE_ARM64`, not ARM64EC.
@@ -70,6 +82,19 @@ COFF and the final lld-link action consumes it. No custom launcher,
 `COMPILER_PATH`, launcher environment, special linker path, or rules_cc patch
 remains. Stage 0 prebuilt ThinLTO is not a supported correctness boundary for
 the known weak-alias case.
+
+Direct ThinLTO/FDO Stage 3 builds completed for x86-64 (invocation
+`20f7251b-b159-4217-97de-b271d4d0413d`) and ARM64 (invocation
+`cef15446-e68c-4e02-8141-cdf3a6533225`). Their PE machine types are AMD64 and
+native ARM64 respectively, not ARM64EC. The generated Stage 3 compile actions
+apply the declared merged MSVC profile, emit both complete and minimized
+ThinLTO bitcode, and use the source-backed clang-cl/lld-link COFF protocol.
+Representative minimized summaries were 26,192 bytes for ARM64 Stage 1 and
+23,896 bytes for profiled x86-64 Stage 3, versus complete objects of 1,284,576
+and 1,286,832 bytes. Normalized `llvm-dis --print-thinlto-index-only` output
+matched its corresponding complete object at the semantic-summary level.
+Backends and final link parameter files reference complete target `.obj`
+files only. No LLVM or rules_cc production patch was required.
 
 ## Objective and non-goals
 
@@ -276,11 +301,13 @@ uses COM Setup Configuration intentionally for MSVC-environment discovery.
     toolchain features or other target-aware semantics. Generic Clang keeps
     its current effective ThinLTO/FDO/release arguments; clang-cl receives
     audited CL or `/clang:` spellings. ThinLTO backend outputs use configured
-    `.obj` naming and lld-link's COFF protocol. The rules_cc-owned merged
-    internal may retain its `.lto.merged.o` name when its contents are proved
-    COFF and the final link consumes it. FDO instrumentation runs in the Linux
-    exec-platform compiler process; no Windows target binary executes while
-    profiles are collected or merged.
+    `.obj` naming and lld-link's COFF protocol. After Step 9.1, the index action
+    consumes only Clang's minimized `.indexing.o` summaries and maps them back
+    to the complete `.obj` module paths; backends retain the complete bitcode
+    objects. The rules_cc-owned merged internal may retain its `.lto.merged.o`
+    name when its contents are proved COFF and the final link consumes it. FDO
+    instrumentation runs in the Linux exec-platform compiler process; no
+    Windows target binary executes while profiles are collected or merged.
 13. **Validation graduates one capability at a time.** Layer 1's unsupported-
     feature validation remains intact except for an exact feature after its
     dedicated step proves analysis, actions, and artifacts. ThinLTO support
@@ -378,6 +405,9 @@ Step 1: Stage-1 MSVC release route/config
           Step 9: MSVC FDO application + direct Stage 3 proof
                     |
                     v
+          Step 9.1: minimized clang-cl/COFF ThinLTO indexing
+                    |
+                    v
           Step 10: first Stage 3 packages + remove Step 1 debt
                     |
                     v
@@ -394,7 +424,9 @@ the owner separately approves that delivery workflow.
 To reduce coordination overhead, one authorized goal may execute Steps 6-7
 continuously and another may execute Steps 8-9 continuously, provided each
 step retains its own traced owner, reviewable commits, and advertised finish
-line. Step 10 remains gated on complete direct Stage 3 proof.
+line. Step 9.1 remains a separate post-Step-9 correction. Step 10 is gated on
+both complete direct Stage 3 proof and the minimized-indexing proof from Step
+9.1.
 
 ## Step 1 — Add a truthful Stage-1-backed MSVC release route
 
@@ -996,21 +1028,21 @@ Implementation shape:
 Build/action commands:
 
 ```sh
-bazel build --config=remote --config=windows_msvc_prebuilt \
+bazel build --config=remote --config=release --config=windows_msvc_prebuilt \
   --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
   --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
   --platforms=@llvm//platforms:windows_x86_64_msvc \
   //toolchain/bootstrap/stage3:llvm_fdo_profdata_msvc \
-  --remote_download_all
+  --remote_download_toplevel
 
-bazel build --config=remote --config=windows_msvc_prebuilt \
+bazel build --config=remote --config=release --config=windows_msvc_prebuilt \
   --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
   --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
   --platforms=@llvm//platforms:windows_aarch64_msvc \
   //toolchain/bootstrap/stage3:llvm_fdo_profdata_msvc \
-  --remote_download_all
+  --remote_download_toplevel
 
-bazel aquery --config=remote --config=windows_msvc_prebuilt \
+bazel aquery --config=remote --config=release --config=windows_msvc_prebuilt \
   --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
   --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
   --platforms=@llvm//platforms:windows_x86_64_msvc \
@@ -1091,19 +1123,19 @@ Implementation shape:
 Build/action commands:
 
 ```sh
-bazel build --config=remote --config=windows_msvc_prebuilt \
+bazel build --config=remote --config=release --config=windows_msvc_prebuilt \
   --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
   --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
   --platforms=@llvm//platforms:windows_x86_64_msvc \
-  //toolchain/bootstrap/stage3:llvm --remote_download_all
+  //toolchain/bootstrap/stage3:llvm --remote_download_toplevel
 
-bazel build --config=remote --config=windows_msvc_prebuilt \
+bazel build --config=remote --config=release --config=windows_msvc_prebuilt \
   --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
   --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
   --platforms=@llvm//platforms:windows_aarch64_msvc \
-  //toolchain/bootstrap/stage3:llvm --remote_download_all
+  //toolchain/bootstrap/stage3:llvm --remote_download_toplevel
 
-bazel aquery --config=remote --config=windows_msvc_prebuilt \
+bazel aquery --config=remote --config=release --config=windows_msvc_prebuilt \
   --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
   --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
   --platforms=@llvm//platforms:windows_x86_64_msvc \
@@ -1140,6 +1172,192 @@ Risks/stop conditions:
 
 Upstream llvm-project patch expected: **no** unless an exact LLVM source/build
 select fails only under the now-proved optimization configuration.
+
+## Step 9.1 — Restore minimized clang-cl/COFF ThinLTO indexing
+
+**Codex-agent-ready goal:** Replace the conservative full-bitcode ThinLTO
+index inputs from Step 7 with Clang's minimized thin-link bitcode for Windows
+MSVC, while retaining the complete bitcode objects for every backend. Prove
+the correction against the completed direct Stage 3 ThinLTO/FDO graph before
+any package label is promoted.
+
+Demonstrated starting facts:
+
+- before Step 9.1, Step 7 made MSVC `thin_lto` imply
+  `no_use_lto_indexing_bitcode_file`, so rules_cc neither declares the
+  minimized compile output nor passes `-fthin-link-bitcode`;
+- the comment that lld-link cannot consume Clang's minimized bitcode is not
+  supported by LLVM's implementation. LLVM 22.1.8 contains
+  `lld/test/COFF/thinlto-object-suffix-replace.ll`, which indexes a minimized
+  thin-link file, maps its suffix back to the full `.obj`, and compares its
+  index with the full-bitcode result;
+- rules_cc's normal path declares a `.indexing.o` summary output, passes it to
+  the index action, and supplies `thinlto_object_suffix_replace` to map that
+  name to the configured target object extension. Its TODO about deriving the
+  `.indexing.o` spelling from Starlark file types is a naming TODO, not an LLVM
+  support boundary;
+- the downstream lld COFF weak-alias prevailing fix remains required and is
+  semantically independent of whether the index reads the full or minimized
+  representation.
+
+Completion evidence (2026-08-22):
+
+- baseline compile/index/backend action captures proved that the MSVC feature
+  forced complete `.obj` inputs into indexing and suppressed the minimized
+  output; the focused regression failed before the fix because
+  `/clang:-fthin-link-bitcode=` was absent;
+- source-backed full LLVM builds passed for x86-64 (invocation
+  `dc041e77-2991-4618-a23b-e7af0a64567c`) and ARM64 (invocation
+  `22543b16-f224-4e92-9c26-084321cdf23f`);
+- direct profiled Stage 3 builds passed for x86-64 (invocation
+  `20f7251b-b159-4217-97de-b271d4d0413d`) and ARM64 (invocation
+  `cef15446-e68c-4e02-8141-cdf3a6533225`), with AMD64 and native ARM64 PE
+  outputs respectively;
+- representative compile, index, and backend actions proved the intended
+  split. Indexing declares `.indexing.o` and uses
+  `/thinlto-object-suffix-replace:.indexing.o;.obj`; backends declare the
+  complete `.obj`, imports, and index, and final-link parameters contain no
+  `.indexing.o`;
+- the focused MSVC action regression, both MSVC artifact tests, negative MSVC
+  analysis boundaries, buildifier, and representative Linux and MinGW
+  ThinLTO builds passed. Generic actions retain their GNU protocol;
+- no full remote download was used. Selective regular-expression downloads
+  materialized only representative complete/minimized objects and final-link
+  parameters.
+
+Likely owned files:
+
+- `toolchain/features/msvc/BUILD.bazel`;
+- existing `e2e/rules_cc/windows_msvc_action_test.sh` and artifact inspection
+  coverage;
+- an LLVM source/backport patch only if the complete minimized graph exposes a
+  focused LLVM defect that also reproduces outside hermetic-llvm;
+- a rules_cc patch only if its standard minimized/full mapping produces an
+  incorrect declared action after the existing COFF artifact fixes.
+
+Implementation shape:
+
+- before editing, capture representative Step 9 compile, index, backend, and
+  final-link actions that demonstrate the current full-bitcode indexing route;
+- remove the MSVC `thin_lto` implication of
+  `no_use_lto_indexing_bitcode_file`. Remove the local feature declaration and
+  feature-set entry only if no live MSVC caller remains; do not change Bazel or
+  generic toolchains' support for the feature;
+- let the existing `lto_indexing_bitcode_file` variable make clang-cl emit both
+  the complete ThinLTO `.obj` and rules_cc's separate minimized `.indexing.o`;
+- make the index action consume the minimized file and the existing
+  `/thinlto-object-suffix-replace` protocol, while every backend continues to
+  consume its corresponding complete bitcode `.obj`, generated index, and
+  imports;
+- replace the incorrect full-bitcode comment and negative tests with focused
+  assertions for the actual dual-output/index/backend contract. Do not rename
+  `.indexing.o` to `.indexing.obj` merely for Windows aesthetics; it is an
+  internal rules_cc artifact whose mapped target/backend output remains
+  `.obj`;
+- compare a representative minimized file with its complete bitcode object
+  using `llvm-dis --print-thinlto-index-only`, `llvm-bcanalyzer`, and byte
+  sizes. The minimized input must not contain function bodies needed by the
+  backend;
+- preserve source-backed clang-cl and its declared sibling source-built
+  lld-link, COFF response protocols, target `.obj` backend outputs, and the
+  Step 9 FDO profile inputs/flags;
+- if the complete graph fails, classify the exact owner before editing:
+  hermetic MSVC feature, rules_cc/Bazel action protocol, LLVM Clang bitcode
+  writer, lld COFF input/symbol resolution, declared input, remote
+  infrastructure, or resource exhaustion. Do not infer an LLVM defect from a
+  linker symptom;
+- develop a proved LLVM semantic fix against current upstream main with a
+  focused fail-before/pass-after regression, then carry the same supported-line
+  backport for LLVM 22.1.x. Do not invent an LLVM production change if the
+  existing implementation is already correct, and do not publish an upstream
+  review without separate authorization.
+
+Build/action commands:
+
+```sh
+bazel build --config=remote --config=windows_msvc_prebuilt \
+  --features=thin_lto \
+  --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
+  --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
+  --platforms=@llvm//platforms:windows_x86_64_msvc \
+  --//toolchain:bootstrap_stage=stage1_from_source \
+  @llvm-project//llvm:llvm --remote_download_toplevel
+
+bazel build --config=remote --config=windows_msvc_prebuilt \
+  --features=thin_lto \
+  --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
+  --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
+  --platforms=@llvm//platforms:windows_aarch64_msvc \
+  --//toolchain:bootstrap_stage=stage1_from_source \
+  @llvm-project//llvm:llvm --remote_download_toplevel
+
+bazel build --config=remote --config=release --config=windows_msvc_prebuilt \
+  --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
+  --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
+  --platforms=@llvm//platforms:windows_x86_64_msvc \
+  //toolchain/bootstrap/stage3:llvm --remote_download_toplevel
+
+bazel build --config=remote --config=release --config=windows_msvc_prebuilt \
+  --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
+  --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
+  --platforms=@llvm//platforms:windows_aarch64_msvc \
+  //toolchain/bootstrap/stage3:llvm --remote_download_toplevel
+
+bazel aquery --config=remote --config=release --config=windows_msvc_prebuilt \
+  --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
+  --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
+  --platforms=@llvm//platforms:windows_x86_64_msvc \
+  'deps(//toolchain/bootstrap/stage3:llvm)' \
+  --output=text --include_artifacts=true \
+  --output_file=/tmp/windows-msvc-prebuilt-minimized-thinlto-x64.txt
+```
+
+Prefer selective BuildBuddy downloads or `--remote_download_regex` for
+representative complete/minimized bitcode, index, backend, and merged objects.
+Use `--remote_download_all` only when an exact inspection cannot otherwise
+materialize its required artifact, and record why.
+
+Success criteria:
+
+- x64 and ARM64 compile actions declare both the complete ThinLTO `.obj` and a
+  nonempty, substantially smaller `.indexing.o`, with
+  `-fthin-link-bitcode=<declared output>` reaching clang-cl correctly;
+- every `CppLTOIndexing` action declares the minimized objects and does not
+  declare the corresponding complete bitcode objects merely for indexing;
+- every ThinLTO backend declares the complete bitcode `.obj`, its index and
+  imports, and produces the configured target `.obj`; no backend attempts to
+  compile the minimized representation;
+- suffix/prefix replacement and final-link parameter files name the complete
+  backend/native `.obj` paths, not `.indexing.o`, with no ambient path or host
+  CPU leak;
+- complete source-backed ThinLTO and direct Stage 3 ThinLTO/FDO LLVM builds
+  finish for both targets. Final outputs inspect as AMD64 and native ARM64,
+  not ARM64EC;
+- the lld weak-alias/COMDAT case remains correct under minimized indexing;
+- representative full-input and minimized-input lld indexes are semantically
+  equivalent, while measured index-action inputs demonstrate the intended
+  transfer/parse reduction;
+- generic Linux, macOS, GNU/MinGW, and unrelated MSVC actions retain their
+  existing feature selection, tools, arguments, and artifacts.
+
+**Completed finish line:** Both complete direct Stage 3 products use minimized
+summary inputs only for ThinLTO indexing and complete bitcode only for
+backends, with inspected action and PE proof. Package labels remain dormant
+until Step 10.
+
+Risks/stop conditions:
+
+- do not call a successful small `lld-link` probe sufficient; the complete
+  source-backed and FDO-applied LLVM graphs are the acceptance boundary;
+- stop before a change to LLVM source semantics beyond a focused reproduced
+  COFF ThinLTO defect, to generic rules_cc ThinLTO behavior, or to another
+  platform;
+- do not fall back silently to full-bitcode indexing, disable ThinLTO/FDO, or
+  drop the weak-alias fix to make the build pass.
+
+Upstream patch expected: **none based on the demonstrated LLVM 22.1.8
+contract; prepare an llvm-project or rules_cc patch only for an independently
+reproduced defect exposed by the complete graph**.
 
 ## Step 10 — Build the first MSVC packages from Stage 3 and remove Step 1 debt
 
@@ -1447,6 +1665,7 @@ Explicit ownership summary:
 | Curated COM headers/library | hermetic-llvm Windows SDK/compiler-support closure | no |
 | ARM64 LLVM native defines/triple | llvm-project Bazel overlay | yes |
 | clang-cl/COFF ThinLTO executable action protocol | hermetic-llvm toolchain; source-built clang-cl/lld-link contract | no additional patch |
+| Minimized clang-cl/COFF ThinLTO index inputs | hermetic-llvm feature selection over the existing Clang/lld/rules_cc protocol | no patch expected; classify a reproduced defect before changing an upstream owner |
 | Linux Stage 2 instrumentation under existing `host_profile` | existing generic bootstrap/toolchain | no change expected |
 | MSVC FDO profile application | hermetic-llvm toolchain | no |
 | MSVC workload/profile aggregate and merge action | hermetic-llvm bootstrap rules | no |
@@ -1486,7 +1705,7 @@ State to advertise only after all gates pass:
 | `/MT` package variant | unsupported | unsupported | Layer 1 runtime route remains, but no package product is defined. |
 | Debug/PDB package | unsupported | unsupported | Opt EXE only; no orphan PDB/import library. |
 | Shared LLVM/shared libc++ | unsupported | unsupported | Static libc++ only. |
-| ThinLTO | supported | supported | COFF indexing/backend artifacts required. |
+| ThinLTO | supported | supported | Minimized `.indexing.o` summaries for indexing; complete bitcode `.obj` inputs for backends; COFF index/backend artifacts required. |
 | Bootstrap FDO instrumentation/profile/application | supported | supported | MSVC-only workloads/aggregate; no target PE execution. |
 | General user `//config:profile` | unsupported | unsupported | Internal bootstrap FDO does not silently graduate this separate public surface. |
 | Sanitizers/coverage/other Layer 1 rejected features | unsupported | unsupported | Existing stable analysis errors remain. |
@@ -1504,6 +1723,7 @@ target/exec platforms, result, and remaining unknowns. Required evidence:
 | Stage 2 instrumentation | required | required | Linux tool execution, clang-cl workload, nonempty `.profraw` |
 | Profile merge | required | required | declared Linux llvm-profdata, profile contents/counts |
 | Direct Stage 3 build | required | required | ThinLTO plus declared profile application and final PE |
+| Minimized ThinLTO indexing | required | required | dual compile outputs; minimized-only index inputs; complete-bitcode backend inputs; suffix mapping and size comparison |
 | Stage 3 package full build | required | required | cquery output path and archive SHA-256 |
 | Prebuilt compiler consumer | required | required | matching Windows runner, selected archive hash/tool path, build and execution |
 | Compile params | required | required | triple, `/std:c++17`, includes, flags, target/exec separation |
@@ -1533,6 +1753,9 @@ inspection above.
   system-library input while remaining uninstrumented target code;
 - profile coverage/hash differences between the instrumented Linux compiler
   and profile-applied Windows compiler for platform-conditional LLVM code;
+- whether LLVM 21.1.8 and 23.1.0-rc1 retain the minimized-index behavior proved
+  on the default LLVM 22.1.8 line; Step 9.1 did not rebuild those compatibility
+  lines;
 - final opt PE debug-directory/PDB behavior under the canonical release config;
 - whether native Windows execution of the MSVC-built prebuilt has a fully
   declared VCRuntime closure or depends on a runner-installed DLL;
@@ -1566,12 +1789,13 @@ only after an exact failing action/artifact identifies its owner.
 ## Completion boundary
 
 Completion means: both explicit MSVC archives use the canonical release config
-and the full ThinLTO/FDO Stage 3 topology; all supported source/version cells
-pass; matching-Windows consumer rows select and execute the completed prebuilt
-compiler while the MinGW row remains unchanged; action/profile/PE/archive
-evidence is recorded; generic release products retain their existing topology
-and effective semantics; unrelated Layer 1 features remain rejected; and all
-temporary Step 1 config, Stage 1 package override, and unused `llvm_binary`
-parameterization have been removed. Native Windows source self-hosting,
-Microsoft tool executables, public release upload, and release workflow cutover
-remain outside this plan.
+and the full ThinLTO/FDO Stage 3 topology, with minimized summaries used only
+for indexing and complete bitcode retained for backends; all supported
+source/version cells pass; matching-Windows consumer rows select and execute
+the completed prebuilt compiler while the MinGW row remains unchanged;
+action/profile/PE/archive evidence is recorded; generic release products retain
+their existing topology and effective semantics; unrelated Layer 1 features
+remain rejected; and all temporary Step 1 config, Stage 1 package override,
+and unused `llvm_binary` parameterization have been removed. Native Windows
+source self-hosting, Microsoft tool executables, public release upload, and
+release workflow cutover remain outside this plan.
