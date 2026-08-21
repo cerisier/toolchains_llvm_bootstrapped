@@ -1,9 +1,10 @@
 # Windows MSVC prebuilt LLVM execution plan
 
-Status: proposed; implementation is not authorized. Stop after review until the
-owner explicitly marks implementation start.
+Status: Steps 1-4 complete. Step 5 is intentionally skipped. Steps 6-12 remain
+proposed and require separate implementation authorization.
 
 Date: 2026-08-20 (Asia/Tokyo)
+Revised: 2026-08-21 (Asia/Tokyo)
 
 ## Activation and baseline
 
@@ -22,9 +23,31 @@ Date: 2026-08-20 (Asia/Tokyo)
   x86-64 and ARM64, with deterministic `llvm-ar` intermediate archives and the
   existing minimal-toolchain archive layout.
 
-This plan is the only file changed by the planning task. It does not authorize
-implementation, README edits, new tests/e2e targets, release publication, a PR,
-or `gh stack` operations.
+The planning branch contains only this plan. This revision records completed
+implementation but does not authorize Steps 6-12, README edits, release
+publication, a new PR, or `gh stack` operations.
+
+## Implementation progress
+
+Steps 1-4 are implemented on draft hermetic-llvm PR #711 at
+`24869f63f669db8fb9263425587bc04ff61fc6e8`:
+
+- Step 1: `1347780b` adds the temporary Stage-1-backed MSVC route.
+- Step 2: `d948c9f3` closes the curated COM compiler-support dependency.
+- Step 3: `df2b6187` fixes ARM64 native configuration. The corresponding LLVM
+  change was merged as llvm-project PR #217557.
+- Step 4: `c14d2bbd` through `24869f63` complete the full x86-64 and ARM64
+  Stage 1 builds. The BLAKE3 clang-cl fix was merged as llvm-project PR
+  #217695; the libc++ VCRuntime `std::nothrow` fix remains draft PR #217694;
+  the conditional static-Clang configuration remains downstream only by owner
+  decision.
+
+Both complete Stage 1 outputs were inspected: x86-64 is
+`IMAGE_FILE_MACHINE_AMD64`; ARM64 is `IMAGE_FILE_MACHINE_ARM64`, not ARM64EC.
+An unchanged packaging feasibility probe also produced and extracted both
+Stage 1 archives (`fa08b192-ba5f-4e8d-a859-003f2c2bee9f`), but no packaging
+edit, commit, or delivery followed. The probe is evidence that the existing
+archive machinery works; it is not an accepted package checkpoint.
 
 ## Objective and non-goals
 
@@ -37,12 +60,13 @@ release products. It will expose two explicit platform-transitioned labels:
 - `//prebuilt/llvm:for_windows_aarch64_msvc`
 
 The directly configurable product label will be
-`//prebuilt/llvm:windows_msvc_llvm_release`. Step 1 temporarily backs these
-labels with Stage 1 so source and packaging blockers can be resolved without
-falsely claiming ThinLTO/FDO support. The final product returns to the normal
+`//prebuilt/llvm:windows_msvc_llvm_release`. Step 1 currently backs these manual
+labels with Stage 1 as temporary implementation scaffolding. They must remain
+dormant: do not publish, register, advertise, or add persistent package CI for
+their unoptimized archives. The first accepted MSVC archives are produced only
+after direct ThinLTO/FDO Stage 3 proof. The final product returns to the normal
 Stage 3 input and `--config=release`; all Stage-1-only configuration and release
-rule indirection introduced for that checkpoint is removal debt, not final
-architecture. The existing
+rule indirection is removal debt, not final architecture. The existing
 `//prebuilt/llvm:windows_llvm_release` and `for_windows_amd64`/
 `for_windows_arm64` remain the GNU/MinGW products and keep their current Stage
 3 behavior.
@@ -61,8 +85,10 @@ Non-goals for this plan:
   authoritative acceptance surface;
 - README/release-note changes, artifact publication, EULA redistribution, new
   CI secrets, or a prebuilt-release workflow cutover;
-- expanding construction-host support beyond the existing Linux RBE executors
-  already used by the generic Stage 2/3 graph.
+- expanding source-bootstrap construction-host support beyond the existing
+  Linux RBE executors already used by the generic Stage 2/3 graph. Step 11's
+  focused matching-Windows consumer cells execute the completed prebuilt
+  compiler but do not rebuild LLVM from source.
 
 ## Current graph and exact labels
 
@@ -104,24 +130,26 @@ bazel build --config=remote \
   //prebuilt/llvm:windows_llvm_release
 ```
 
-They intentionally fail on the baseline for the reasons below. From Step 1
-through the Stage 1 package checkpoint, the transitional acceptance commands
-become:
+They intentionally fail on the baseline for the reasons below. Until direct
+Stage 3 proof, use the temporary config only for direct bootstrap diagnostics.
+The manual package wrappers remain dormant:
 
 ```sh
 bazel build --config=remote --config=windows_msvc_prebuilt \
   --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
   --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
-  //prebuilt/llvm:for_windows_x86_64_msvc
+  --platforms=@llvm//platforms:windows_x86_64_msvc \
+  //toolchain/bootstrap/stage1:llvm
 
 bazel build --config=remote --config=windows_msvc_prebuilt \
   --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
   --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
-  //prebuilt/llvm:for_windows_aarch64_msvc
+  --platforms=@llvm//platforms:windows_aarch64_msvc \
+  //toolchain/bootstrap/stage1:llvm
 ```
 
-Direct target diagnostics use the same config plus `--platforms=<MSVC
-platform>` and `//prebuilt/llvm:windows_msvc_llvm_release`.
+Do not use `//prebuilt/llvm:windows_msvc_llvm_release` as an acceptance target
+before Stage 3 promotion.
 
 After the Stage 3 promotion and cleanup step, the canonical product command is:
 
@@ -171,9 +199,10 @@ uses COM Setup Configuration intentionally for MSVC-environment discovery.
 
 ## Architectural invariants
 
-1. **Truthful optimization stage.** Through the explicit Stage 1 checkpoint,
-   MSVC packages consume Stage 1 only and contain no Stage 2/3, ThinLTO, or FDO
-   action. The final labels consume Stage 3 and must contain the complete
+1. **Truthful optimization stage.** Until direct Stage 3 proof, no MSVC package
+   is accepted, registered, advertised, or added to persistent package CI. The
+   current manual labels may still resolve to Stage 1 only as dormant temporary
+   scaffolding. The final labels consume Stage 3 and must contain the complete
    Stage 1 -> ThinLTO/instrumented Stage 2 -> MSVC workload -> `llvm-profdata`
    merge -> ThinLTO/profile-applied Stage 3 graph. No label may claim a later
    stage before its actions and artifacts have been proved. Existing non-MSVC
@@ -267,9 +296,9 @@ unreviewable long-lived branch:
   changes and inspects the produced action/artifact, not only command status.
 - a step that graduates a public feature or package boundary extends the
   existing MSVC action/analysis/artifact CI surface for default LLVM 22.1.8 in
-  the same merge. Step 11 expands that already-green default cell to the full
+  the same merge. Step 12 expands that already-green default cell to the full
   source-version matrix; it is not the first persistent coverage for Steps
-  7-10.
+  7-11.
 
 At every step, run and retain the common regression gate in addition to that
 step's owning commands:
@@ -310,7 +339,7 @@ Step 1: Stage-1 MSVC release route/config
           Step 4: build-to-completion owner loop
                     |
                     v
-          Step 5: Stage 1 package + artifact checkpoint
+          Step 5: skipped (Stage 1 packaging feasibility only)
                     |
                     v
           Step 6: dialect-aware shared release semantics
@@ -325,15 +354,23 @@ Step 1: Stage-1 MSVC release route/config
           Step 9: MSVC FDO application + direct Stage 3 proof
                     |
                     v
-          Step 10: promote packages to Stage 3 + remove Step 1 debt
+          Step 10: first Stage 3 packages + remove Step 1 debt
                     |
                     v
-          Step 11: supported-source Stage 3 build jobs
+          Step 11: register prebuilts + Windows consumer matrix
+                    |
+                    v
+          Step 12: supported-source Stage 3 build jobs
 ```
 
 Each implementation step belongs on an isolated branch/worktree based on the
 then-current accepted predecessor. Do not create a stack or submit a PR until
 the owner separately approves that delivery workflow.
+
+To reduce coordination overhead, one authorized goal may execute Steps 6-7
+continuously and another may execute Steps 8-9 continuously, provided each
+step retains its own traced owner, reviewable commits, and advertised finish
+line. Step 10 remains gated on complete direct Stage 3 proof.
 
 ## Step 1 — Add a truthful Stage-1-backed MSVC release route
 
@@ -676,103 +713,28 @@ Upstream llvm-project patch expected: **only for traced overlay/source-owned
 failures**. Every such change needs exact upstream file/target/semantic scope
 and non-Windows regression coverage.
 
-## Step 5 — Package the completed Stage 1 MSVC LLVM binaries as a checkpoint
+## Step 5 — Skipped: do not package or register Stage 1
 
-**Codex-agent-ready goal:** Prove the existing `//prebuilt/llvm` release rule
-can package the completed Stage 1 PE binaries for both MSVC targets before
-optimization work begins, changing only demonstrated Stage ownership or
-Windows filename blockers. This is an intermediate supported checkpoint, not
-the final optimization topology.
+The owner removed the Stage 1 package checkpoint from the delivery sequence.
+There is no useful prebuilt product until ThinLTO and FDO Stage 3 are complete.
 
-Likely owned files:
+The unchanged feasibility probe recorded under Implementation progress proves
+that the existing release rule can package both current PE binaries and that
+the basic `.exe` layout survives extraction. Do not repeat that probe as a
+merge gate, add Stage 1 package CI, publish its archives, update the prebuilt
+index, or register them as compiler toolchains.
 
-- `prebuilt/llvm/llvm_release.bzl`;
-- `prebuilt/llvm/BUILD.bazel`;
-- `.github/workflows/ci.yaml` for one default-LLVM Stage 1 package checkpoint;
-- only if an exact package failure proves it necessary,
-  `toolchain/bootstrap/bootstrap_binary.bzl` for configured executable suffix
-  preservation.
-
-Implementation shape:
-
-- use the existing release mtree, genrule, tar, and alias mechanisms unchanged;
-- parameterize the release rule to consume the Stage 1 MSVC binary from Step 1;
-- preserve real `bin/llvm.exe` plus the existing `.exe` multicall aliases;
-- if the existing extensionless bootstrap wrapper demonstrably prevents the
-  package from containing a valid `bin/llvm.exe`, make the smallest generic
-  suffix-preserving correction. Do not redesign file actions preemptively.
-- add one default LLVM 22.1.8 x64/ARM64 package build to the existing MSVC CI
-  job or its nearest existing LLVM-build job; do not introduce the full source
-  matrix until Step 11.
-
-Build/artifact commands:
-
-```sh
-bazel build --config=remote --config=windows_msvc_prebuilt \
-  --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
-  --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
-  //prebuilt/llvm:for_windows_x86_64_msvc \
-  //prebuilt/llvm:for_windows_aarch64_msvc \
-  --remote_download_toplevel
-
-bazel cquery --config=remote --config=windows_msvc_prebuilt \
-  --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
-  --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
-  'set(//prebuilt/llvm:for_windows_x86_64_msvc //prebuilt/llvm:for_windows_aarch64_msvc)' \
-  --output=files
-
-bazel aquery --config=remote --config=windows_msvc_prebuilt \
-  --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
-  --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
-  'deps(//prebuilt/llvm:for_windows_x86_64_msvc)' \
-  --output=text --include_artifacts=true \
-  --output_file=/tmp/windows-msvc-prebuilt-x64-package-actions.txt
-```
-
-For each cquery-reported archive, extract to a fresh `mktemp -d` directory with
-`bsdtar`, then inspect:
-
-```sh
-bsdtar -tvf <archive.tar.zst>
-bsdtar -xf <archive.tar.zst> -C <temporary-directory>
-llvm readobj --file-headers --coff-imports --coff-debug-directory \
-  <temporary-directory>/bin/llvm.exe
-```
-
-Success criteria:
-
-- cquery reports one `.tar.zst` per transition label in distinct platform
-  output directories;
-- the existing release genrules and archive layout complete successfully on
-  the claimed Linux x86-64 RBE construction host;
-- archive manifest paths, ownership, modes, mtimes, aliases, and order retain
-  the existing release contract; no absolute execroot path is stored;
-- `bin/llvm.exe` machine matches its label. Aliases end in `.exe` and resolve to
-  that file after extraction;
-- Clang builtin headers and both ignorelists are present at the current layout;
-- optimized EXE has no import-library output. A PDB is either absent with no
-  CodeView/PDB requirement, or deliberately declared and packaged; never an
-  orphaned reference.
-
-**Potentially mergeable finish line:** Both explicit MSVC package labels
-produce valid deterministic Stage 1 archives while remaining visibly distinct
-from the final Stage 3 release claim. Existing archive rules and generic
-products retain their current behavior.
-
-Risks/stop conditions:
-
-- stop if the only solution requires changing the shared mtree/archive layout,
-  replacing working shell/genrule actions, or broad release infrastructure;
-- clean all extraction/output-base temporary directories with `trash` after
-  recording hashes and action evidence.
-
-Upstream llvm-project patch expected: **no**.
+Keep the already-implemented manual labels and `llvm_binary` parameter only as
+dormant temporary scaffolding needed for the final atomic promotion. Step 10
+performs the first accepted package builds from proved Stage 3 inputs, runs the
+archive checks formerly specified here, and removes all Step 1 debt.
 
 ## Step 6 — Move release intent from config-local dialect flags into toolchains
 
 **Codex-agent-ready goal:** Give generic Clang and clang-cl the same effective
-release policy through target-aware toolchain semantics, while keeping the
-Stage 1 package checkpoint and every generic Stage 3 dependency unchanged.
+release policy through target-aware toolchain semantics, while keeping direct
+Stage 1 behavior and every generic Stage 3 dependency unchanged. Dormant MSVC
+package labels are not an acceptance or CI surface in this step.
 
 Likely owned files:
 
@@ -844,12 +806,12 @@ Success criteria:
   own configured target platform; no `/std:`, `/EH`, or `/GR` leaks into them;
 - generic representative release actions retain the same effective flags,
   tools, target triples, artifacts, and Stage 3 dependencies;
-- the Stage 1 MSVC package checkpoint still contains no ThinLTO/FDO actions.
+- the dormant MSVC package labels are not built, registered, or added to CI.
 
 **Potentially mergeable finish line:** Release-policy ownership moves into the
-toolchains with demonstrated generic semantic equivalence. The public MSVC
-package remains truthfully Stage 1 and the only remaining Step 1 config debt is
-stage selection/ThinLTO suppression and any now-unused release-rule parameter.
+toolchains with demonstrated generic semantic equivalence. Direct Stage 1
+behavior remains buildable and the remaining Step 1 debt is stage selection,
+ThinLTO suppression, and the dormant release-rule parameterization.
 
 Risks/stop conditions:
 
@@ -865,7 +827,7 @@ Upstream llvm-project patch expected: **no**.
 
 **Codex-agent-ready goal:** Make `thin_lto` a real supported MSVC toolchain
 feature for compile, index, backend, archive, and final-link actions without
-changing the package label from Stage 1 yet.
+promoting or building the dormant package labels.
 
 Likely owned files:
 
@@ -936,13 +898,13 @@ Success criteria:
 - index and backend actions use declared exec-platform LLVM tools, MSVC target
   triples, COFF inputs, configured `.obj` outputs, and declared response files;
 - no raw generic-only `-Wl,`, `-o`, or `-x ir` token is ignored by clang-cl;
-- non-ThinLTO Stage 1 package commands retain their prior action graph;
+- non-ThinLTO direct Stage 1 commands retain their prior action graph;
 - existing generic ThinLTO aquery topology and artifacts are unchanged.
 
 **Potentially mergeable finish line:** `--features=thin_lto` is independently
-supported and artifact-proved for ordinary MSVC targets, while public MSVC
-prebuilt labels still stop at the completed Stage 1 checkpoint. All other
-Layer 1 rejected capabilities remain rejected.
+supported and artifact-proved for ordinary MSVC targets, while the manual MSVC
+prebuilt labels remain dormant temporary scaffolding. All other Layer 1
+rejected capabilities remain rejected.
 
 Risks/stop conditions:
 
@@ -1087,9 +1049,10 @@ Implementation shape:
 - retain the normal Stage 3 bootstrap topology and tool-stage transitions; do
   not create an MSVC-specific replacement bootstrap macro;
 - keep `windows_msvc_llvm_release` on Stage 1 until this direct binary and its
-  complete aquery/artifacts pass for both target CPUs.
+  complete aquery/artifacts pass for both target CPUs; do not build or register
+  that dormant package target.
 - add default LLVM 22.1.8 direct Stage 3 x64/ARM64 builds to the existing
-  MSVC/LLVM CI surface; the package cell remains the Step 5 Stage 1 checkpoint.
+  MSVC/LLVM CI surface; no package cell exists before Step 10.
 
 Build/action commands:
 
@@ -1131,8 +1094,8 @@ Success criteria:
 
 **Potentially mergeable finish line:** Direct `//toolchain/bootstrap/stage3:llvm`
 is fully buildable for both MSVC platforms with inspected ThinLTO and FDO
-actions/artifacts. Public package labels remain on the prior Stage 1 checkpoint
-until the next atomic promotion/cleanup step.
+actions/artifacts. The dormant package labels are not accepted until the next
+atomic promotion/cleanup step.
 
 Risks/stop conditions:
 
@@ -1144,20 +1107,19 @@ Risks/stop conditions:
 Upstream llvm-project patch expected: **no** unless an exact LLVM source/build
 select fails only under the now-proved optimization configuration.
 
-## Step 10 — Promote the MSVC packages to Stage 3 and remove Step 1 debt
+## Step 10 — Build the first MSVC packages from Stage 3 and remove Step 1 debt
 
-**Codex-agent-ready goal:** Atomically switch both explicit MSVC package labels
-from the temporary Stage 1 route to the normal Stage 3 input, use the canonical
-`--config=release`, remove all obsolete Step 1 plumbing, and inspect the final
-archives.
+**Codex-agent-ready goal:** After both direct Stage 3 binaries pass, atomically
+switch the dormant MSVC package labels from the temporary Stage 1 route to the
+normal Stage 3 input, use the canonical `--config=release`, remove all obsolete
+Step 1 plumbing, build the first accepted MSVC archives, and inspect them.
 
 Likely owned files:
 
 - `.bazelrc`;
 - `prebuilt/llvm/BUILD.bazel`;
 - `prebuilt/llvm/llvm_release.bzl`;
-- `.github/workflows/ci.yaml` to replace the default Stage 1 package checkpoint
-  with the canonical Stage 3 package build;
+- `.github/workflows/ci.yaml` to add the canonical Stage 3 package build;
 - only if previously proven necessary,
   `toolchain/bootstrap/bootstrap_binary.bzl` for generic configured executable
   suffix preservation.
@@ -1175,9 +1137,9 @@ Implementation shape:
   from Step 1; C++17 and dialect-aware release semantics remain in their
   toolchain-owned final locations;
 - use the existing release mtree/tar/layout and `.exe` aliases unchanged;
-- replace the default LLVM 22.1.8 Stage 1 package CI checkpoint with the
-  canonical `--config=remote --config=release` Stage 3 package build; retain
-  the direct Stage 3 and focused action/profile assertions;
+- add a default LLVM 22.1.8
+  `--config=remote --config=release` Stage 3 package build; retain the direct
+  Stage 3 and focused action/profile assertions;
 - compare generic package cquery/aquery topology before and after the promotion.
 
 Build/artifact commands:
@@ -1204,9 +1166,18 @@ bazel aquery --config=remote --config=release \
   --output_file=/tmp/windows-msvc-prebuilt-final-x64.txt
 ```
 
-Extract and inspect both archives with the Step 5 manifest/`llvm readobj`
-commands. Also inspect the final action dump for each expected optimization
-stage and for absence of the deleted config/Stage 1 package override.
+For each cquery-reported archive, extract to a fresh `mktemp -d` directory and
+inspect the release layout and PE metadata:
+
+```sh
+bsdtar -tvf <archive.tar.zst>
+bsdtar -xf <archive.tar.zst> -C <temporary-directory>
+llvm readobj --file-headers --coff-imports --coff-debug-directory \
+  <temporary-directory>/bin/llvm.exe
+```
+
+Also inspect the final action dump for each expected optimization stage and for
+absence of the deleted config/Stage 1 package override.
 
 Success criteria:
 
@@ -1214,8 +1185,16 @@ Success criteria:
   platform, and Stage 3 under `--config=remote --config=release`;
 - action graphs contain ThinLTO Stage 2/3, MSVC workloads, nonempty profile
   merge, and FDO application; no dedicated product config is needed;
-- archives retain the Step 5 deterministic layout and contain valid matching-
-  machine `bin/llvm.exe` plus existing `.exe` aliases/headers/ignorelists;
+- cquery reports one `.tar.zst` per transition label in distinct platform
+  output directories;
+- the existing release genrules complete on the claimed Linux RBE construction
+  host and preserve fixed manifest ownership, modes, mtimes, aliases, and
+  ordering without storing an absolute execroot path;
+- archives contain valid matching-machine `bin/llvm.exe`, existing `.exe`
+  aliases, Clang builtin headers, and both ignorelists;
+- the optimized EXE has no import-library output. A PDB is absent without a
+  CodeView/PDB requirement or is deliberately declared and packaged; an
+  orphaned reference is a failure;
 - `.bazelrc` contains no `windows_msvc_prebuilt`; the MSVC release has no
   Stage 1 override; `llvm_binary` parameterization is gone unless its retained
   independent caller is named and tested;
@@ -1237,7 +1216,108 @@ Risks/stop conditions:
 
 Upstream llvm-project patch expected: **no**.
 
-## Step 11 — Verify supported LLVM source lines with Stage 3 package builds
+## Step 11 — Register the MSVC-built prebuilts and exercise them as compiler toolchains
+
+**Codex-agent-ready goal:** Make the final Windows MSVC Stage 3 archives
+selectable as the version-neutral Windows compiler prebuilts, then add an
+explicit Windows MSVC consumer row alongside the existing Windows MinGW row.
+Prove both target routes with the selected prebuilt compiler; do not replace or
+weaken the MinGW row.
+
+Preconditions:
+
+- Step 10 produced and inspected the default LLVM 22.1.8 x86-64 and ARM64
+  Stage 3 archives;
+- local registration/testing may use an exact temporary index or repository
+  override without publication;
+- committing release URLs and SHA-256 entries requires separately authorized,
+  completed release upload. Do not commit a placeholder URL, local path, or
+  unpublished index entry.
+
+Likely owned files after the registration path is proved:
+
+- `extensions/llvm_toolchain_minimal_index.json` for real published release
+  metadata;
+- `extensions/llvm_toolchain_minimal.bzl` only if the existing version-neutral
+  Windows repository selection cannot consume the archives unchanged;
+- `toolchain/llvm/llvm_release_windows.BUILD.bazel` or toolchain registration
+  only for an exact exposed archive/tool mismatch;
+- `.github/workflows/ci.yaml` and the existing Windows consumer targets.
+
+Implementation shape:
+
+- first try the existing `windows-amd64` and `windows-arm64` minimal repository
+  names and Windows BUILD overlay unchanged. The compiler executable's own MSVC
+  ABI does not by itself require a second target-toolchain namespace;
+- select the exact Step 10 archive and hash in an isolated local proof. Confirm
+  that configured compile/link tools resolve from that archive rather than a
+  source-built or older cached seed;
+- add one MSVC consumer entry for each matching Windows runner architecture,
+  analogous to the existing MinGW compilation-toolchain entry. Use the MSVC
+  platform, EULA repo-env gates, local execution platform, and representative
+  compile/link/test targets already owned by the Windows MSVC surface;
+- retain the MinGW entry and prove it still selects the GNU/MinGW target
+  configuration while using the same version-neutral compiler repository as
+  appropriate;
+- inspect the selected `llvm.exe` imports before claiming the prebuilt is a
+  portable Windows construction tool. Do not rely silently on an ambient
+  VCRuntime DLL or redistribute Microsoft runtime payloads in the archive;
+- after publication is separately authorized and completed, replace the local
+  proof with the real release URL/SHA index entry and rerun both consumer rows.
+
+Representative consumer commands after registration:
+
+```sh
+bazel build \
+  --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
+  --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
+  --extra_execution_platforms=@platforms//host:host \
+  --platforms=@llvm//platforms:windows_x86_64_msvc \
+  --spawn_strategy=local \
+  //:windows_msvc_libcxx_behavior_md \
+  //:windows_msvc_dll_behavior
+
+bazel build \
+  --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
+  --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
+  --extra_execution_platforms=@platforms//host:host \
+  --platforms=@llvm//platforms:windows_aarch64_msvc \
+  --spawn_strategy=local \
+  //:windows_msvc_libcxx_behavior_md \
+  //:windows_msvc_dll_behavior
+```
+
+Success criteria:
+
+- x86-64 and ARM64 Windows consumers select the intended new prebuilt archive,
+  the MSVC `cc_toolchain`, clang-cl compilation, llvm-ar, and lld-link;
+- matching Windows runners build and execute representative MSVC behavior with
+  no source-built LLVM fallback or ambient compiler/SDK discovery;
+- the existing Windows MinGW row remains present and green with its GNU target
+  platform, runtime, and argument dialect unchanged;
+- CI names the MinGW and MSVC rows distinctly and records the selected release
+  key/archive hash so cache reuse cannot hide incorrect registration;
+- no release publication, index update, or Microsoft payload redistribution is
+  performed without the separate authorization stated above.
+
+**Potentially mergeable finish line:** The produced Stage 3 compiler archives
+are consumable through a proved local registration path and both MinGW and MSVC
+Windows compilation rows pass. A committed public index entry is a separate
+delivery action if publication has not yet been authorized.
+
+Risks/stop conditions:
+
+- stop if registration would replace the existing MinGW compiler route rather
+  than adding an MSVC consumer row;
+- stop if native execution depends on an undeclared VCRuntime installation or
+  requires adding redistributable Microsoft payloads to the archive;
+- do not create ABI-specific repository names until an exact selection or
+  runtime-closure conflict proves the existing version-neutral repositories
+  cannot represent both consumer target dialects.
+
+Upstream llvm-project patch expected: **no**.
+
+## Step 12 — Verify supported LLVM source lines with Stage 3 package builds
 
 **Codex-agent-ready goal:** Add CI build jobs, not test targets, that build and
 package the full ThinLTO/FDO Stage 3 graph for both Windows MSVC target
@@ -1337,6 +1417,7 @@ Explicit ownership summary:
 | MSVC FDO profile application | hermetic-llvm toolchain | no |
 | MSVC workload/profile aggregate and merge action | hermetic-llvm bootstrap rules | no |
 | Stage 3 package input and proven Windows output-name blocker | hermetic-llvm release rule | no |
+| Prebuilt archive registration and Windows consumer row | hermetic-llvm minimal-prebuilt extension/toolchain/CI | no |
 | a newly discovered source/select bug | determine from failing owner before edit | maybe |
 
 Rejected coupling:
@@ -1363,9 +1444,10 @@ State to advertise only after all gates pass:
 | Stage 1 source build, opt, `/MD`, static libc++ | supported | supported | Independently proved checkpoint; clang-cl + llvm-ar + driver-selected lld-link. |
 | Stage 2 ThinLTO + instrumentation | supported | supported | Linux exec-platform compiler tools; MSVC target workloads. |
 | Stage 3 ThinLTO + FDO application | supported | supported | Final package input under `--config=release`. |
+| Matching-Windows prebuilt compiler consumer | supported | supported | Step 11 compilation row; does not rebuild LLVM from source. |
 | Cross-build on Linux x86-64 RBE | supported | supported | All three listed LLVM lines after matrix passes. |
 | Linux ARM64 FDO executor actions | supported | supported | Required where selected by the existing Stage 3 executor/profile graph. |
-| Native matching Windows construction/execution | unclaimed | unclaimed | Not needed to prove the Windows target build in this task. |
+| Native matching Windows source bootstrap | unclaimed | unclaimed | Only completed prebuilt compiler execution is tested on Windows. |
 | macOS construction host | unclaimed | unclaimed | May be added later with a full package build. |
 | `/MT` package variant | unsupported | unsupported | Layer 1 runtime route remains, but no package product is defined. |
 | Debug/PDB package | unsupported | unsupported | Opt EXE only; no orphan PDB/import library. |
@@ -1389,6 +1471,7 @@ target/exec platforms, result, and remaining unknowns. Required evidence:
 | Profile merge | required | required | declared Linux llvm-profdata, profile contents/counts |
 | Direct Stage 3 build | required | required | ThinLTO plus declared profile application and final PE |
 | Stage 3 package full build | required | required | cquery output path and archive SHA-256 |
+| Prebuilt compiler consumer | required | required | matching Windows runner, selected archive hash/tool path, build and execution |
 | Compile params | required | required | triple, `/std:c++17`, includes, flags, target/exec separation |
 | Archive params/artifacts | required | required | llvm-ar `rcsD`, `.obj`/`.lib`, member machine/order |
 | Final link params | required | required | clang-cl/lld-link, response file, directories, `/MACHINE`, outputs |
@@ -1410,17 +1493,19 @@ inspection above.
   standalone `--config=remote` behavior. Preserve current behavior in this plan
   unless the owner explicitly requests a separate config-ownership change with
   before/after executor-resolution coverage;
-- the first compile/link failure after the curated COM closure;
-- whether lld-link selects the pure ARM64 half of vendor `comsuppw.lib` and
-  resolves its VCRuntime/libc++ ABI helper references coherently;
-- every additional LLVM 21/23 overlay delta encountered after full compilation;
+- any additional LLVM 21/23 overlay delta encountered by the full optimized
+  Stage 3 source matrix; Step 4 proved patch application but built LLVM 22.1.8;
 - exact clang-cl/lld-link ThinLTO response-file spellings required by the
   pinned rules_cc action variables;
 - whether the hosted zstd workload needs an additional declared Windows
   system-library input while remaining uninstrumented target code;
 - profile coverage/hash differences between the instrumented Linux compiler
   and profile-applied Windows compiler for platform-conditional LLVM code;
-- final opt PE debug-directory/PDB behavior under the canonical release config.
+- final opt PE debug-directory/PDB behavior under the canonical release config;
+- whether native Windows execution of the MSVC-built prebuilt has a fully
+  declared VCRuntime closure or depends on a runner-installed DLL;
+- whether the existing version-neutral Windows minimal repository keys can
+  register the new archives without a separate ABI-specific namespace.
 
 These are not claimed defects. Convert an item into an implementation change
 only after an exact failing action/artifact identifies its owner.
@@ -1450,9 +1535,11 @@ only after an exact failing action/artifact identifies its owner.
 
 Completion means: both explicit MSVC archives use the canonical release config
 and the full ThinLTO/FDO Stage 3 topology; all supported source/version cells
-pass; action/profile/PE/archive evidence is recorded; generic release products
-retain their existing topology and effective semantics; unrelated Layer 1
-features remain rejected; and all temporary Step 1 config, Stage 1 package
-override, and unused `llvm_binary` parameterization have been removed. Native
-Windows self-hosting, Microsoft tool executables, publication, and release
-workflow cutover remain outside this plan.
+pass; matching-Windows consumer rows select and execute the completed prebuilt
+compiler while the MinGW row remains unchanged; action/profile/PE/archive
+evidence is recorded; generic release products retain their existing topology
+and effective semantics; unrelated Layer 1 features remain rejected; and all
+temporary Step 1 config, Stage 1 package override, and unused `llvm_binary`
+parameterization have been removed. Native Windows source self-hosting,
+Microsoft tool executables, public release upload, and release workflow cutover
+remain outside this plan.
