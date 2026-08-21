@@ -76,18 +76,21 @@ bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   >"${action_dir}/link.txt"
 bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   --features=thin_lto \
+  --@llvm//toolchain:bootstrap_stage=stage1_from_source \
   --features=-compiler_param_file \
   --output=commands \
   'mnemonic("CppCompile", //:windows_msvc_libcxx_behavior_md)' \
   >"${action_dir}/thin-lto-compile.txt"
 bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   --features=thin_lto \
+  --@llvm//toolchain:bootstrap_stage=stage1_from_source \
   --include_param_files \
   --output=text \
   'mnemonic("CppLTOIndexing", //:windows_msvc_libcxx_behavior_md)' \
   >"${action_dir}/thin-lto-index.txt"
 bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   --features=thin_lto \
+  --@llvm//toolchain:bootstrap_stage=stage1_from_source \
   --include_param_files \
   --output=text \
   'mnemonic("CppLink", //:windows_msvc_libcxx_behavior_md)' \
@@ -185,11 +188,14 @@ assert_absent "${action_dir}/thin-lto-compile.txt" ".indexing.obj"
 assert_absent "${action_dir}/thin-lto-compile.txt" "-fthin-link-bitcode"
 
 assert_contains "${action_dir}/thin-lto-index.txt" "CppLTOIndexing"
-assert_contains "${action_dir}/thin-lto-index.txt" "clang-cl-thinlto-index"
-assert_contains "${action_dir}/thin-lto-index.txt" "LLVM_CLANG_CL="
-assert_contains "${action_dir}/thin-lto-index.txt" "LLVM_LLD_LINK="
 assert_contains "${action_dir}/thin-lto-index.txt" "llvm.stripped"
-assert_contains "${action_dir}/thin-lto-index.txt" "thinlto_index/bin/lld-link"
+assert_matches "${action_dir}/thin-lto-index.txt" "Command Line: \\(exec .*stage1_(linux|macos)_(aarch64|x86_64)/bin/clang-cl"
+assert_matches "${action_dir}/thin-lto-index.txt" "stage1_(linux|macos)_(aarch64|x86_64)/bin/lld-link"
+assert_absent "${action_dir}/thin-lto-index.txt" "clang-cl-thinlto-index"
+assert_absent "${action_dir}/thin-lto-index.txt" "COMPILER_PATH="
+assert_absent "${action_dir}/thin-lto-index.txt" "LLVM_CLANG_CL="
+assert_absent "${action_dir}/thin-lto-index.txt" "LLVM_LLD_LINK="
+assert_absent "${action_dir}/thin-lto-index.txt" "thinlto_index/bin"
 assert_contains "${action_dir}/thin-lto-index.txt" "/clang:/MACHINE:X64"
 assert_contains "${action_dir}/thin-lto-index.txt" "/clang:/thinlto-index-only:"
 assert_contains "${action_dir}/thin-lto-index.txt" "/clang:/thinlto-emit-imports-files"
