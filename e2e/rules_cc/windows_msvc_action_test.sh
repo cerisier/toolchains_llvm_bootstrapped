@@ -75,6 +75,24 @@ bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   'mnemonic("CppLink", //:windows_msvc_libcxx_behavior_md)' \
   >"${action_dir}/link.txt"
 bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
+  --features=thin_lto \
+  --features=-compiler_param_file \
+  --output=commands \
+  'mnemonic("CppCompile", //:windows_msvc_libcxx_behavior_md)' \
+  >"${action_dir}/thin-lto-compile.txt"
+bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
+  --features=thin_lto \
+  --include_param_files \
+  --output=text \
+  'mnemonic("CppLTOIndexing", //:windows_msvc_libcxx_behavior_md)' \
+  >"${action_dir}/thin-lto-index.txt"
+bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
+  --features=thin_lto \
+  --include_param_files \
+  --output=text \
+  'mnemonic("CppLink", //:windows_msvc_libcxx_behavior_md)' \
+  >"${action_dir}/thin-lto-link.txt"
+bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   --include_param_files \
   --output=text \
   'mnemonic("DefParser", deps(//:windows_msvc_generated_def.dll))' \
@@ -156,6 +174,43 @@ assert_absent "${action_dir}/link.txt" "libclang_rt.builtins.a"
 assert_absent "${action_dir}/link.txt" "msvc_lib_arm64"
 assert_absent "${action_dir}/link.txt" "msvc_lib_x64"
 assert_absent "${action_dir}/link.txt" "-Wl,"
+
+assert_contains "${action_dir}/thin-lto-compile.txt" "bin/clang-cl"
+assert_contains "${action_dir}/thin-lto-compile.txt" "--target=x86_64-pc-windows-msvc"
+assert_contains "${action_dir}/thin-lto-compile.txt" "/std:c++17"
+assert_contains "${action_dir}/thin-lto-compile.txt" "/clang:-flto=thin"
+assert_contains "${action_dir}/thin-lto-compile.txt" "/Fo"
+assert_contains "${action_dir}/thin-lto-compile.txt" ".obj"
+assert_absent "${action_dir}/thin-lto-compile.txt" ".indexing.obj"
+assert_absent "${action_dir}/thin-lto-compile.txt" "-fthin-link-bitcode"
+
+assert_contains "${action_dir}/thin-lto-index.txt" "CppLTOIndexing"
+assert_contains "${action_dir}/thin-lto-index.txt" "clang-cl-thinlto-index"
+assert_contains "${action_dir}/thin-lto-index.txt" "LLVM_CLANG_CL="
+assert_contains "${action_dir}/thin-lto-index.txt" "LLVM_LLD_LINK="
+assert_contains "${action_dir}/thin-lto-index.txt" "llvm.stripped"
+assert_contains "${action_dir}/thin-lto-index.txt" "thinlto_index/bin/lld-link"
+assert_contains "${action_dir}/thin-lto-index.txt" "/clang:/MACHINE:X64"
+assert_contains "${action_dir}/thin-lto-index.txt" "/clang:/thinlto-index-only:"
+assert_contains "${action_dir}/thin-lto-index.txt" "/clang:/thinlto-emit-imports-files"
+assert_contains "${action_dir}/thin-lto-index.txt" "/clang:/thinlto-prefix-replace:"
+assert_contains "${action_dir}/thin-lto-index.txt" "/clang:/lto-obj-path:"
+assert_contains "${action_dir}/thin-lto-index.txt" ".lto.merged.obj"
+assert_absent "${action_dir}/thin-lto-index.txt" ".indexing.obj"
+assert_absent "${action_dir}/thin-lto-index.txt" "-Wl,"
+assert_absent "${action_dir}/thin-lto-index.txt" " -o "
+assert_absent "${action_dir}/thin-lto-index.txt" "-x ir"
+
+assert_contains "${action_dir}/thin-lto-link.txt" "bin/clang-cl"
+assert_contains "${action_dir}/thin-lto-link.txt" "bin/lld-link"
+assert_contains "${action_dir}/thin-lto-link.txt" "/clang:/MACHINE:X64"
+assert_contains "${action_dir}/thin-lto-link.txt" ".exe-lto-final.params"
+assert_contains "${action_dir}/thin-lto-link.txt" ".lto.merged.obj"
+assert_contains "${action_dir}/thin-lto-link.txt" "/Fe"
+assert_matches "${action_dir}/thin-lto-link.txt" "Command Line: \\(exec .*bin/clang-cl"
+assert_absent "${action_dir}/thin-lto-link.txt" "-Wl,"
+assert_absent "${action_dir}/thin-lto-link.txt" " -o "
+assert_absent "${action_dir}/thin-lto-link.txt" "-x ir"
 
 assert_contains "${action_dir}/def.txt" "DefParser"
 assert_contains "${action_dir}/def.txt" "msvc_def_parser"

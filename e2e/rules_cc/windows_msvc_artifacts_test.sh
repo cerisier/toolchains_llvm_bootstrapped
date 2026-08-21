@@ -33,6 +33,7 @@ LLVM_READOBJ="$(resolve "${LLVM_READOBJ}")"
 
 found_md=0
 found_mt=0
+found_thinlto=0
 found_dll_consumer=0
 found_import_library=0
 found_pdb=0
@@ -88,6 +89,9 @@ for artifact_key in ${ARTIFACTS}; do
       fi
       found_mt=1
       ;;
+    windows_msvc_libcxx_behavior_thinlto.exe)
+      found_thinlto=1
+      ;;
     windows_msvc_libcxx_behavior_debug.exe)
       debug_executable="${artifact}"
       ;;
@@ -121,6 +125,7 @@ done
 
 [[ "${found_md}" == 1 ]] || fail "missing /MD behavior executable"
 [[ "${found_mt}" == 1 ]] || fail "missing /MT behavior executable"
+[[ "${found_thinlto}" == 1 ]] || fail "missing ThinLTO behavior executable"
 [[ "${found_dll_consumer}" == 1 ]] || fail "missing DLL consumer executable"
 [[ "${found_import_library}" == 1 ]] || fail "missing declared import library"
 [[ "${found_pdb}" == 1 ]] || fail "missing declared PDB"

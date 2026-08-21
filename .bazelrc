@@ -49,7 +49,6 @@ common:release  --extra_execution_platforms=@llvm//:rbe_linux_x86_64,@llvm//:rbe
 common:windows_msvc_prebuilt  -c opt
 common:windows_msvc_prebuilt  --dynamic_mode=off
 common:windows_msvc_prebuilt  --extra_toolchains=//toolchain:all
-common:windows_msvc_prebuilt  --features=-thin_lto
 common:windows_msvc_prebuilt  --features=llvm_release_no_exceptions
 common:windows_msvc_prebuilt  --features=llvm_release_no_rtti
 common:windows_msvc_prebuilt  --features=llvm_release_omit_frame_pointer
