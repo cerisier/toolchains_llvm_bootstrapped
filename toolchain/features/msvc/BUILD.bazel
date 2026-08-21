@@ -231,11 +231,6 @@ cc_args(
 )
 
 cc_feature(
-    name = "no_use_lto_indexing_bitcode_file",
-    feature_name = "no_use_lto_indexing_bitcode_file",
-)
-
-cc_feature(
     name = "thin_lto",
     args = [
         ":thin_lto_compile_and_link_args",
@@ -251,12 +246,7 @@ cc_feature(
         ":thin_lto_backend_input_args",
     ],
     feature_name = "thin_lto",
-    # lld-link cannot consume Clang's minimized indexing bitcode. Use the full
-    # ThinLTO bitcode objects for COFF indexing and backend compilation.
-    implies = [
-        ":no_use_lto_indexing_bitcode_file",
-        ":supports_start_end_lib",
-    ],
+    implies = [":supports_start_end_lib"],
 )
 
 cc_feature_constraint(
@@ -1051,7 +1041,6 @@ cc_feature_set(
         ":llvm_release_no_rtti",
         ":llvm_release_omit_frame_pointer",
         ":link_defaults",
-        ":no_use_lto_indexing_bitcode_file",
         ":runtime_optimization",
         ":supported_configuration",
         ":supports_start_end_lib",
