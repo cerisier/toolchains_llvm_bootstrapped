@@ -40,6 +40,11 @@ def _msvc_cc_toolchain(name, tool_map, module_map, extra_args):
             # ABI validation and CRT selection are toolchain invariants, not
             # user-disableable features.
             "@llvm//toolchain/features/msvc:configuration_validation_args",
+            # Release policy precedes user compile flags so callers retain the
+            # usual last-flag-wins override behavior.
+            "@llvm//toolchain/features/msvc:llvm_release_no_exceptions_args",
+            "@llvm//toolchain/features/msvc:llvm_release_no_rtti_args",
+            "@llvm//toolchain/features/msvc:llvm_release_omit_frame_pointer_args",
         ] + select({
             "@llvm//toolchain/features/msvc:static_crt_config": [
                 "@llvm//toolchain/features/msvc:static_crt_compile_args",
@@ -175,6 +180,11 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = [], msvc = Fals
             "@llvm//toolchain:runtimes_stage1_hosted": ["@llvm//toolchain/runtimes:toolchain_args"],
             "//conditions:default": ["@llvm//toolchain:toolchain_args"],
         }) + [
+            # Release policy precedes user compile flags so callers retain the
+            # usual last-flag-wins override behavior.
+            "@llvm//toolchain/features:llvm_release_no_exceptions_args",
+            "@llvm//toolchain/features:llvm_release_no_rtti_args",
+            "@llvm//toolchain/features:llvm_release_omit_frame_pointer_args",
             # TODO: rules_cc passes extra args to these actions, ideally these would be fixed in rules_cc.
             "@llvm//toolchain/args:ignore_unused_command_line_argument",
         ] + extra_args,
@@ -204,7 +214,7 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = [], msvc = Fals
                 "@llvm//toolchain/features:fdo_optimize",
             ],
             "//conditions:default": [name + "_known_features"],
-        }),
+        }) + ["@llvm//toolchain/features:llvm_release_features"],
         enabled_features = select({
             "@llvm//toolchain:runtimes_none": [name + "_runtimes_only_enabled_features"],
             "@llvm//toolchain:runtimes_stage1": [name + "_runtimes_only_enabled_features"],

@@ -33,6 +33,51 @@ cc_feature(
     overrides = "@rules_cc//cc/toolchains/features:static_link_cpp_runtimes",
 )
 
+cc_args(
+    name = "llvm_release_no_exceptions_args",
+    actions = ["@rules_cc//cc/toolchains/actions:compile_actions"],
+    args = ["-fno-exceptions"],
+    requires_any_of = [":llvm_release_no_exceptions"],
+)
+
+cc_feature(
+    name = "llvm_release_no_exceptions",
+    feature_name = "llvm_release_no_exceptions",
+)
+
+cc_args(
+    name = "llvm_release_no_rtti_args",
+    actions = ["@rules_cc//cc/toolchains/actions:compile_actions"],
+    args = ["-fno-rtti"],
+    requires_any_of = [":llvm_release_no_rtti"],
+)
+
+cc_feature(
+    name = "llvm_release_no_rtti",
+    feature_name = "llvm_release_no_rtti",
+)
+
+cc_args(
+    name = "llvm_release_omit_frame_pointer_args",
+    actions = ["@rules_cc//cc/toolchains/actions:compile_actions"],
+    args = ["-fomit-frame-pointer"],
+    requires_any_of = [":llvm_release_omit_frame_pointer"],
+)
+
+cc_feature(
+    name = "llvm_release_omit_frame_pointer",
+    feature_name = "llvm_release_omit_frame_pointer",
+)
+
+cc_feature_set(
+    name = "llvm_release_features",
+    all_of = [
+        ":llvm_release_no_exceptions",
+        ":llvm_release_no_rtti",
+        ":llvm_release_omit_frame_pointer",
+    ],
+)
+
 cc_feature(
     name = "prefer_pic_for_opt_binaries",
     feature_name = "prefer_pic_for_opt_binaries",
@@ -419,6 +464,9 @@ cc_feature_set(
         ":llvm_coverage_map_format",
         ":gcc_coverage_map_format",
         ":fully_static_link",
+        ":llvm_release_no_exceptions",
+        ":llvm_release_no_rtti",
+        ":llvm_release_omit_frame_pointer",
     ] + select({
         "@platforms//os:windows": [
             ":copy_dynamic_libraries_to_binary",

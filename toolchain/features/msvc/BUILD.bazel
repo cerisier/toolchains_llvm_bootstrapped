@@ -22,7 +22,61 @@ _COMPILE_ACTIONS = [
     "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
 ]
 
+_CXX_COMPILE_ACTIONS = [
+    "@rules_cc//cc/toolchains/actions:cpp_compile",
+    "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
+    "@rules_cc//cc/toolchains/actions:linkstamp_compile",
+]
+
 _LINK_ACTIONS = ["@rules_cc//cc/toolchains/actions:link_actions"]
+
+cc_args(
+    name = "cxx17_args",
+    actions = _CXX_COMPILE_ACTIONS,
+    args = ["/std:c++17"],
+)
+
+cc_feature(
+    name = "cxx17",
+    args = [":cxx17_args"],
+    feature_name = "msvc_cxx17",
+)
+
+cc_args(
+    name = "llvm_release_no_exceptions_args",
+    actions = _CXX_COMPILE_ACTIONS,
+    args = ["/EHs-c-"],
+    requires_any_of = [":llvm_release_no_exceptions"],
+)
+
+cc_feature(
+    name = "llvm_release_no_exceptions",
+    feature_name = "llvm_release_no_exceptions",
+)
+
+cc_args(
+    name = "llvm_release_no_rtti_args",
+    actions = _CXX_COMPILE_ACTIONS,
+    args = ["/GR-"],
+    requires_any_of = [":llvm_release_no_rtti"],
+)
+
+cc_feature(
+    name = "llvm_release_no_rtti",
+    feature_name = "llvm_release_no_rtti",
+)
+
+cc_args(
+    name = "llvm_release_omit_frame_pointer_args",
+    actions = _COMPILE_ACTIONS,
+    args = ["/clang:-fomit-frame-pointer"],
+    requires_any_of = [":llvm_release_omit_frame_pointer"],
+)
+
+cc_feature(
+    name = "llvm_release_omit_frame_pointer",
+    feature_name = "llvm_release_omit_frame_pointer",
+)
 
 config_setting(
     name = "static_crt_config",
@@ -733,10 +787,14 @@ cc_feature_set(
         ":archive_param_file",
         ":compiler_param_file",
         ":copy_dynamic_libraries_to_binary",
+        ":cxx17",
         ":def_file",
         ":dynamic_link_msvcrt",
         ":generate_pdb_file",
         ":interface_library",
+        ":llvm_release_no_exceptions",
+        ":llvm_release_no_rtti",
+        ":llvm_release_omit_frame_pointer",
         ":link_defaults",
         ":runtime_optimization",
         ":supported_configuration",
@@ -758,6 +816,7 @@ cc_feature_set(
         ":archive_param_file",
         ":compiler_param_file",
         ":copy_dynamic_libraries_to_binary",
+        ":cxx17",
         ":def_file",
         ":dynamic_link_msvcrt",
         ":interface_library",
