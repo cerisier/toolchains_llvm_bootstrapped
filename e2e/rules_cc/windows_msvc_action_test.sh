@@ -20,6 +20,12 @@ assert_absent() {
   fi
 }
 
+assert_matches() {
+  local file="$1"
+  local pattern="$2"
+  grep -Eq -- "${pattern}" "${file}" || fail "${file} does not match: ${pattern}"
+}
+
 action_dir="$(mktemp -d "${RUNNER_TEMP:-/tmp}/windows-msvc-actions.XXXXXX")"
 common_flags=(
   "$@"
@@ -33,6 +39,31 @@ bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   --output=text \
   'mnemonic("CppCompile", //:windows_msvc_libcxx_behavior_md)' \
   >"${action_dir}/compile.txt"
+bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
+  --features=-compiler_param_file \
+  --output=commands \
+  'mnemonic("CppCompile", //:windows_msvc_generated_def_binary)' \
+  >"${action_dir}/default-compile-flags.txt"
+bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
+  --features=-compiler_param_file \
+  --features=llvm_release_no_exceptions \
+  --features=llvm_release_no_rtti \
+  --features=llvm_release_omit_frame_pointer \
+  --output=commands \
+  'mnemonic("CppCompile", //:windows_msvc_generated_def_binary)' \
+  >"${action_dir}/release-compile.txt"
+bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
+  --features=-compiler_param_file \
+  --features=llvm_release_no_exceptions \
+  --features=llvm_release_no_rtti \
+  --features=llvm_release_omit_frame_pointer \
+  --cxxopt=/EHsc \
+  --cxxopt=/GR \
+  --cxxopt=/clang:-fno-omit-frame-pointer \
+  --cxxopt=/std:c++20 \
+  --output=commands \
+  'mnemonic("CppCompile", //:windows_msvc_generated_def_binary)' \
+  >"${action_dir}/release-user-overrides.txt"
 bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   --include_param_files \
   --output=text \
@@ -77,6 +108,19 @@ assert_absent "${action_dir}/compile.txt" "clang++"
 assert_absent "${action_dir}/compile.txt" "-fPIC"
 assert_absent "${action_dir}/compile.txt" "_LIBCPP_NO_AUTO_LINK"
 assert_absent "${action_dir}/compile.txt" "msvc_include"
+
+assert_contains "${action_dir}/default-compile-flags.txt" "/std:c++17"
+assert_contains "${action_dir}/release-compile.txt" "/std:c++17"
+assert_contains "${action_dir}/release-compile.txt" "/EHs-c-"
+assert_contains "${action_dir}/release-compile.txt" "/GR-"
+assert_contains "${action_dir}/release-compile.txt" "/clang:-fomit-frame-pointer"
+assert_absent "${action_dir}/release-compile.txt" " -fno-exceptions"
+assert_absent "${action_dir}/release-compile.txt" " -fno-rtti"
+assert_absent "${action_dir}/release-compile.txt" " -fomit-frame-pointer"
+assert_matches "${action_dir}/release-user-overrides.txt" "/EHs-c-.* /EHsc "
+assert_matches "${action_dir}/release-user-overrides.txt" "/GR-.* /GR "
+assert_matches "${action_dir}/release-user-overrides.txt" "/clang:-fomit-frame-pointer.* /clang:-fno-omit-frame-pointer "
+assert_matches "${action_dir}/release-user-overrides.txt" "/std:c\\+\\+17.* /std:c\\+\\+20"
 
 assert_contains "${action_dir}/clang-static-config.txt" "CLANG_BUILD_STATIC"
 assert_contains "${action_dir}/clang-static-config.txt" "clang/Config/config.h"
