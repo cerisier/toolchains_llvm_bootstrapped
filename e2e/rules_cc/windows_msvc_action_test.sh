@@ -101,6 +101,13 @@ bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   --@llvm//toolchain:bootstrap_stage=stage1_from_source \
   --include_param_files \
   --output=text \
+  'mnemonic("CcLtoBackendCompile", //:windows_msvc_libcxx_behavior_md)' \
+  >"${action_dir}/thin-lto-backend.txt"
+bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
+  --features=thin_lto \
+  --@llvm//toolchain:bootstrap_stage=stage1_from_source \
+  --include_param_files \
+  --output=text \
   'mnemonic("CppLink", //:windows_msvc_libcxx_behavior_md)' \
   >"${action_dir}/thin-lto-link.txt"
 bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
@@ -200,8 +207,9 @@ assert_contains "${action_dir}/thin-lto-compile.txt" "/std:c++17"
 assert_contains "${action_dir}/thin-lto-compile.txt" "/clang:-flto=thin"
 assert_contains "${action_dir}/thin-lto-compile.txt" "/Fo"
 assert_contains "${action_dir}/thin-lto-compile.txt" ".obj"
+assert_contains "${action_dir}/thin-lto-compile.txt" "/clang:-fthin-link-bitcode="
+assert_contains "${action_dir}/thin-lto-compile.txt" ".indexing.o"
 assert_absent "${action_dir}/thin-lto-compile.txt" ".indexing.obj"
-assert_absent "${action_dir}/thin-lto-compile.txt" "-fthin-link-bitcode"
 
 assert_contains "${action_dir}/thin-lto-index.txt" "CppLTOIndexing"
 assert_contains "${action_dir}/thin-lto-index.txt" "llvm.stripped"
@@ -216,12 +224,23 @@ assert_contains "${action_dir}/thin-lto-index.txt" "/clang:/MACHINE:X64"
 assert_contains "${action_dir}/thin-lto-index.txt" "/clang:/thinlto-index-only:"
 assert_contains "${action_dir}/thin-lto-index.txt" "/clang:/thinlto-emit-imports-files"
 assert_contains "${action_dir}/thin-lto-index.txt" "/clang:/thinlto-prefix-replace:"
+assert_contains "${action_dir}/thin-lto-index.txt" "/clang:/thinlto-object-suffix-replace:.indexing.o;.obj"
 assert_contains "${action_dir}/thin-lto-index.txt" "/clang:/lto-obj-path:"
 assert_contains "${action_dir}/thin-lto-index.txt" ".lto.merged.o"
+assert_contains "${action_dir}/thin-lto-index.txt" ".indexing.o"
 assert_absent "${action_dir}/thin-lto-index.txt" ".indexing.obj"
 assert_absent "${action_dir}/thin-lto-index.txt" "-Wl,"
 assert_absent "${action_dir}/thin-lto-index.txt" " -o "
 assert_absent "${action_dir}/thin-lto-index.txt" "-x ir"
+
+assert_contains "${action_dir}/thin-lto-backend.txt" "CcLtoBackendCompile"
+assert_contains "${action_dir}/thin-lto-backend.txt" "bin/clang-cl"
+assert_contains "${action_dir}/thin-lto-backend.txt" "/clang:-fthinlto-index="
+assert_contains "${action_dir}/thin-lto-backend.txt" "windows_msvc_libcxx_behavior.obj"
+assert_absent "${action_dir}/thin-lto-backend.txt" ".indexing.o"
+assert_absent "${action_dir}/thin-lto-backend.txt" "-Wl,"
+assert_absent "${action_dir}/thin-lto-backend.txt" " -o "
+assert_absent "${action_dir}/thin-lto-backend.txt" "-x ir"
 
 assert_contains "${action_dir}/thin-lto-link.txt" "bin/clang-cl"
 assert_contains "${action_dir}/thin-lto-link.txt" "bin/lld-link"
