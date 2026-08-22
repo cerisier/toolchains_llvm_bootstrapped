@@ -96,6 +96,15 @@ matched its corresponding complete object at the semantic-summary level.
 Backends and final link parameter files reference complete target `.obj`
 files only. No LLVM or rules_cc production patch was required.
 
+The same complete direct Stage 3 ThinLTO/FDO graph also passed unchanged for
+LLVM 21.1.8: x86-64 invocation
+`7f44605b-6473-4f40-a852-9c35eba324c5` and ARM64 invocation
+`2efc19d0-758f-4377-bb73-575f0beff61b`. Their embedded version is 21.1.8 and
+their PE machine types are AMD64 and native ARM64 respectively. Materialized
+compile/index/link parameters retain the declared profile, minimized
+`.indexing.o` inputs, suffix mapping, complete `.obj` backend route, target
+triples, and `/MACHINE` values without a compatibility-specific change.
+
 ## Objective and non-goals
 
 The final supported path will package a ThinLTO-optimized, instrumentation-FDO
@@ -1213,6 +1222,9 @@ Completion evidence (2026-08-22):
   `20f7251b-b159-4217-97de-b271d4d0413d`) and ARM64 (invocation
   `cef15446-e68c-4e02-8141-cdf3a6533225`), with AMD64 and native ARM64 PE
   outputs respectively;
+- the same direct Stage 3 builds passed unchanged on LLVM 21.1.8 for x86-64
+  (invocation `7f44605b-6473-4f40-a852-9c35eba324c5`) and ARM64 (invocation
+  `2efc19d0-758f-4377-bb73-575f0beff61b`);
 - representative compile, index, and backend actions proved the intended
   split. Indexing declares `.indexing.o` and uses
   `/thinlto-object-suffix-replace:.indexing.o;.obj`; backends declare the
@@ -1753,9 +1765,9 @@ inspection above.
   system-library input while remaining uninstrumented target code;
 - profile coverage/hash differences between the instrumented Linux compiler
   and profile-applied Windows compiler for platform-conditional LLVM code;
-- whether LLVM 21.1.8 and 23.1.0-rc1 retain the minimized-index behavior proved
-  on the default LLVM 22.1.8 line; Step 9.1 did not rebuild those compatibility
-  lines;
+- whether LLVM 23.1.0-rc1 retains the minimized-index behavior proved on LLVM
+  21.1.8 and the default LLVM 22.1.8 line; Step 9.1 did not rebuild that
+  compatibility line;
 - final opt PE debug-directory/PDB behavior under the canonical release config;
 - whether native Windows execution of the MSVC-built prebuilt has a fully
   declared VCRuntime closure or depends on a runner-installed DLL;
