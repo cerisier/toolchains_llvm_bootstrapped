@@ -272,7 +272,8 @@ jobs:
 
           bazel --bazelrc=.bazelrc aquery \
             "${common_flags[@]}" \
-            --output=commands \
+            --include_param_files \
+            --output=text \
             'mnemonic("CppCompile", //:windows_msvc_libcxx_behavior_md)' \
             >"${RUNNER_TEMP}/msvc-compile-action.txt"
           grep -F "llvm-toolchain-minimal-windows-${{ matrix.repo_cpu }}" \
@@ -285,7 +286,8 @@ jobs:
           fi
           bazel --bazelrc=.bazelrc aquery \
             "${common_flags[@]}" \
-            --output=commands \
+            --include_param_files \
+            --output=text \
             'mnemonic("CppArchive", //:windows_msvc_libcxx_behavior_support)' \
             >"${RUNNER_TEMP}/msvc-archive-action.txt"
           grep -F "llvm-toolchain-minimal-windows-${{ matrix.repo_cpu }}" \
@@ -293,7 +295,8 @@ jobs:
           grep -F "llvm-ar.exe" "${RUNNER_TEMP}/msvc-archive-action.txt"
           bazel --bazelrc=.bazelrc aquery \
             "${common_flags[@]}" \
-            --output=commands \
+            --include_param_files \
+            --output=text \
             'mnemonic("CppLink", //:windows_msvc_libcxx_behavior_md)' \
             >"${RUNNER_TEMP}/msvc-link-action.txt"
           grep -F "llvm-toolchain-minimal-windows-${{ matrix.repo_cpu }}" \
