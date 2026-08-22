@@ -132,13 +132,15 @@ jobs:
       - name: Build and register unpublished MSVC prebuilt
         if: matrix.compiler == 'msvc'
         env:
-          MSYS2_ARG_CONV_EXCL: --shell_executable=
+          MSYS2_ARG_CONV_EXCL: "--shell_executable=;--action_env=PATH=;--host_action_env=PATH="
           USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
         shell: bash
         run: |
           common_flags=(
             --config=remote
             --config=release
+            --action_env=PATH=/bin:/usr/bin:/usr/local/bin
+            --host_action_env=PATH=/bin:/usr/bin:/usr/local/bin
             --jobs=300
             --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7
             --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1
