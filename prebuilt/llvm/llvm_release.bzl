@@ -6,7 +6,6 @@ load("//tools:defs.bzl", "TOOLCHAIN_BINARIES")
 def llvm_release(
         name,
         bin_suffix = "",
-        llvm_binary = "//toolchain/bootstrap/stage3:llvm",
         target_compatible_with = []):
     mtree_spec(
         name = name + "_builtin_headers_mtree_",
@@ -25,7 +24,7 @@ def llvm_release(
     )
 
     bin_files = {
-        llvm_binary: "bin/llvm" + bin_suffix,
+        "//toolchain/bootstrap/stage3:llvm": "bin/llvm" + bin_suffix,
         "@llvm-project//compiler-rt:asan_ignorelist": "lib/clang/{llvm_major}/share/asan_ignorelist.txt",
         "@llvm-project//compiler-rt:msan_ignorelist": "lib/clang/{llvm_major}/share/msan_ignorelist.txt",
     }
