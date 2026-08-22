@@ -128,21 +128,3 @@ cc_stage0_object = rule(
     fragments = ["cpp"],
     toolchains = use_cc_toolchain(),
 )
-
-def _stage0_files_impl(ctx):
-    return [DefaultInfo(files = depset(transitive = [
-        src[DefaultInfo].files
-        for src in ctx.attr.srcs
-    ]))]
-
-stage0_files = rule(
-    doc = "Forwards files built with the stage0 runtime toolchain configuration.",
-    implementation = _stage0_files_impl,
-    attrs = {
-        "srcs": attr.label_list(
-            allow_files = True,
-            mandatory = True,
-        ),
-    },
-    cfg = bootstrap_transition,
-)
