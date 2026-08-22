@@ -147,6 +147,14 @@ selects.config_setting_group(
 )
 
 selects.config_setting_group(
+    name = "windows_mingw",
+    match_any = [
+        "@llvm//platforms/config:windows_x86_64_mingw_compatible",
+        "@llvm//platforms/config:windows_aarch64_mingw_compatible",
+    ],
+)
+
+selects.config_setting_group(
     name = "windows_msvc_static_crt",
     match_all = [
         ":windows_msvc",
@@ -355,8 +363,6 @@ cc_library(
             "/clang:-Wno-covered-switch-default",
             "/clang:-Wno-suggest-override",
             "/clang:-Wno-macro-redefined",
-            "/clang:-Wno-pragma-pack",
-            "/clang:-Wno-unused-value",
         ],
         "//conditions:default": [
             "-faligned-allocation",
@@ -374,6 +380,16 @@ cc_library(
             "-Wno-covered-switch-default",
             "-Wno-suggest-override",
         ],
+    }) + select({
+        ":windows_msvc": [
+            "/clang:-Wno-pragma-pack",
+            "/clang:-Wno-unused-value",
+        ],
+        ":windows_mingw": [
+            "-Wno-pragma-pack",
+            "-Wno-unused-value",
+        ],
+        "//conditions:default": [],
     }) + select({
         # clang-cl's /MD and /MT defaults do not name the Microsoft C++
         # exception_ptr provider. Make libc++'s archive own that narrow ABI

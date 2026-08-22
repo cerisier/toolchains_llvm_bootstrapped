@@ -33,6 +33,16 @@ common_flags=(
   --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1
   --repo_env=BAZEL_WINDOWS_SDK_EULA=1
 )
+mingw_flags=(
+  "$@"
+  --platforms=@llvm//platforms:windows_x86_64
+)
+
+bazel --bazelrc=.bazelrc aquery "${mingw_flags[@]}" \
+  --features=-compiler_param_file \
+  --output=commands \
+  'inputs(".*libcxx/src/algorithm.cpp", mnemonic("CppCompile", deps(@llvm-project//libcxx:libcxx)))' \
+  >"${action_dir}/mingw-libcxx-compile.txt"
 
 bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   --include_param_files \
@@ -151,6 +161,11 @@ assert_absent "${action_dir}/compile.txt" "clang++"
 assert_absent "${action_dir}/compile.txt" "-fPIC"
 assert_absent "${action_dir}/compile.txt" "_LIBCPP_NO_AUTO_LINK"
 assert_absent "${action_dir}/compile.txt" "msvc_include"
+
+assert_contains "${action_dir}/mingw-libcxx-compile.txt" "-Wno-pragma-pack"
+assert_contains "${action_dir}/mingw-libcxx-compile.txt" "-Wno-unused-value"
+assert_absent "${action_dir}/mingw-libcxx-compile.txt" "/clang:-Wno-pragma-pack"
+assert_absent "${action_dir}/mingw-libcxx-compile.txt" "/clang:-Wno-unused-value"
 
 assert_contains "${action_dir}/default-compile-flags.txt" "/std:c++17"
 assert_contains "${action_dir}/release-compile.txt" "/std:c++17"
