@@ -235,7 +235,7 @@ jobs:
             --lockfile_mode=off
             --repository_cache=
             --repo_contents_cache=
-            --remote_cache=
+            --noremote_accept_cached
             --cache_test_results=no
             --jobs=50
             --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7
