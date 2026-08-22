@@ -290,13 +290,10 @@ filegroup(
     name = "builtins_x86_arch_sources",
     srcs = [
         "lib/builtins/cpu_model/x86.c",
-        "lib/builtins/i386/fp_mode.c",  #if (NOT MSVC)
-    ],
-)
-
-filegroup(
-    name = "builtins_x86_arch_sources_msvc",
-    srcs = ["lib/builtins/cpu_model/x86.c"],
+    ] + select({
+        ":windows_msvc": [],
+        "//conditions:default": ["lib/builtins/i386/fp_mode.c"],
+    }),
 )
 
 filegroup(
@@ -321,21 +318,17 @@ filegroup(
 
 filter_builtin_sources(
     name = "builtins_x86_64_sources",
-    srcs = select({
-        ":windows_msvc": [
-            "lib/builtins/x86_64/floatdidf.c",
-            "lib/builtins/x86_64/floatdisf.c",
-            ":builtins_generic_srcs",
-            ":builtins_x86_arch_sources_msvc",
-        ],
+    srcs = [
+        "builtins_generic_srcs",
+        "builtins_x86_arch_sources",
+        "lib/builtins/x86_64/floatdidf.c",
+        "lib/builtins/x86_64/floatdisf.c",
+    ] + select({
+        ":windows_msvc": [],
         "//conditions:default": [
-            "lib/builtins/x86_64/floatdidf.c",
-            "lib/builtins/x86_64/floatdisf.c",
+            "builtins_generic_tf_sources",
+            "builtins_x86_80_bit_sources",
             "lib/builtins/x86_64/floatdixf.c",  # if not ANDROID
-            ":builtins_generic_srcs",
-            ":builtins_generic_tf_sources",
-            ":builtins_x86_80_bit_sources",
-            ":builtins_x86_arch_sources",
         ],
     }) + select({
         ":windows_msvc": [],
