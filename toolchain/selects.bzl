@@ -62,6 +62,3 @@ def platform_cc_tool_map(exec_os, exec_cpu):
         "@rules_cc//cc/toolchains/args/archiver_flags:use_libtool_on_apple_setting": Label(tool_repo + ":tools_with_libtool_for_runtime"),
         "//conditions:default": Label(tool_repo + ":default_tools_for_runtime"),
     })
-
-def platform_msvc_cc_tool_map(exec_os, exec_cpu):
-    return Label(_tool_repo(exec_os, exec_cpu) + ":tools_for_msvc_for_runtime")

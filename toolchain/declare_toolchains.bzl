@@ -1,5 +1,5 @@
 load("//platforms:common.bzl", "SUPPORTED_EXECS", "SUPPORTED_TARGETS")
-load("//toolchain:selects.bzl", "msvc_resource_dir_arg", "platform_cc_tool_map", "platform_module_map", "platform_msvc_cc_tool_map", "resource_dir_arg")
+load("//toolchain:selects.bzl", "msvc_resource_dir_arg", "platform_cc_tool_map", "platform_module_map", "resource_dir_arg")
 load(":cc_toolchain.bzl", "cc_toolchain")
 
 def declare_toolchains(*, execs = SUPPORTED_EXECS, targets = SUPPORTED_TARGETS):
@@ -19,20 +19,11 @@ def declare_toolchains(*, execs = SUPPORTED_EXECS, targets = SUPPORTED_TARGETS):
             name = cc_toolchain_name,
             tool_map = platform_cc_tool_map(exec_os, exec_cpu),
             module_map = platform_module_map(exec_os, exec_cpu),
-            extra_args = [
-                resource_dir_arg(exec_os, exec_cpu),
-            ],
-        )
-
-        msvc_cc_toolchain_name = "{}_{}_msvc_cc_toolchain".format(exec_os, exec_cpu)
-        cc_toolchain(
-            name = msvc_cc_toolchain_name,
-            extra_args = [
-                msvc_resource_dir_arg(exec_os, exec_cpu),
-            ],
-            tool_map = platform_msvc_cc_tool_map(exec_os, exec_cpu),
-            module_map = platform_module_map(exec_os, exec_cpu),
-            msvc = True,
+            extra_args = select({
+                "@llvm//platforms/config:windows_x86_64_msvc": [msvc_resource_dir_arg(exec_os, exec_cpu)],
+                "@llvm//platforms/config:windows_aarch64_msvc": [msvc_resource_dir_arg(exec_os, exec_cpu)],
+                "//conditions:default": [resource_dir_arg(exec_os, exec_cpu)],
+            }),
         )
 
         for (target_os, target_cpu) in targets:
@@ -71,7 +62,7 @@ def declare_toolchains(*, execs = SUPPORTED_EXECS, targets = SUPPORTED_TARGETS):
                         "@llvm//toolchain:bootstrap_stage0_prebuilt_seed",
                         "@llvm//platforms/config:windows_{}_msvc".format(target_cpu),
                     ],
-                    toolchain = msvc_cc_toolchain_name,
+                    toolchain = cc_toolchain_name,
                     toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
                     visibility = ["//visibility:public"],
                 )

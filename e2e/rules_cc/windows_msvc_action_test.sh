@@ -132,6 +132,13 @@ bazel --bazelrc=.bazelrc cquery "${common_flags[@]}" \
   --starlark:expr='providers(target)' \
   '@llvm-project//clang:config' \
   >"${action_dir}/clang-dynamic-config.txt"
+bazel --bazelrc=.bazelrc cquery "${common_flags[@]}" \
+  --output=label \
+  'kind(".*cc_toolchain.*", deps(//:windows_msvc_crt_default_probe))' \
+  >"${action_dir}/resolved-toolchains.txt"
+
+assert_matches "${action_dir}/resolved-toolchains.txt" "@llvm_toolchains//:linux_(aarch64|x86_64)_cc_toolchain"
+assert_absent "${action_dir}/resolved-toolchains.txt" "_msvc_cc_toolchain"
 
 assert_contains "${action_dir}/compile.txt" "clang-cl"
 assert_contains "${action_dir}/compile.txt" "/MD"

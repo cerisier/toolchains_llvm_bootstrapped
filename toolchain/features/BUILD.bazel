@@ -2,6 +2,7 @@ load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains:feature.bzl", "cc_feature")
 load("@rules_cc//cc/toolchains:feature_set.bzl", "cc_feature_set")
+load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -20,6 +21,20 @@ _FINAL_LINK_ACTIONS = [
     "@rules_cc//cc/toolchains/actions:objc_executable",
 ]
 
+_MSVC_CXX_COMPILE_ACTIONS = [
+    "@rules_cc//cc/toolchains/actions:cpp_compile",
+    "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
+    "@rules_cc//cc/toolchains/actions:linkstamp_compile",
+]
+
+_MSVC_COMPILE_ACTIONS = [
+    "@rules_cc//cc/toolchains/actions:c_compile",
+    "@rules_cc//cc/toolchains/actions:cpp_compile",
+    "@rules_cc//cc/toolchains/actions:linkstamp_compile",
+    "@rules_cc//cc/toolchains/actions:preprocess_assemble",
+    "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
+]
+
 # [x] opt
 # [x] dbg
 # [] fastbuild
@@ -34,10 +49,25 @@ cc_feature(
 )
 
 cc_args(
-    name = "llvm_release_no_exceptions_args",
+    name = "llvm_release_no_exceptions_clang_args",
     actions = ["@rules_cc//cc/toolchains/actions:compile_actions"],
     args = ["-fno-exceptions"],
     requires_any_of = [":llvm_release_no_exceptions"],
+)
+
+cc_args(
+    name = "llvm_release_no_exceptions_clang_cl_args",
+    actions = _MSVC_CXX_COMPILE_ACTIONS,
+    args = ["/EHs-c-"],
+    requires_any_of = [":llvm_release_no_exceptions"],
+)
+
+cc_args_list(
+    name = "llvm_release_no_exceptions_args",
+    args = select({
+        "//constraints/windows/abi:msvc": [":llvm_release_no_exceptions_clang_cl_args"],
+        "//conditions:default": [":llvm_release_no_exceptions_clang_args"],
+    }),
 )
 
 cc_feature(
@@ -46,10 +76,25 @@ cc_feature(
 )
 
 cc_args(
-    name = "llvm_release_no_rtti_args",
+    name = "llvm_release_no_rtti_clang_args",
     actions = ["@rules_cc//cc/toolchains/actions:compile_actions"],
     args = ["-fno-rtti"],
     requires_any_of = [":llvm_release_no_rtti"],
+)
+
+cc_args(
+    name = "llvm_release_no_rtti_clang_cl_args",
+    actions = _MSVC_CXX_COMPILE_ACTIONS,
+    args = ["/GR-"],
+    requires_any_of = [":llvm_release_no_rtti"],
+)
+
+cc_args_list(
+    name = "llvm_release_no_rtti_args",
+    args = select({
+        "//constraints/windows/abi:msvc": [":llvm_release_no_rtti_clang_cl_args"],
+        "//conditions:default": [":llvm_release_no_rtti_clang_args"],
+    }),
 )
 
 cc_feature(
@@ -58,10 +103,25 @@ cc_feature(
 )
 
 cc_args(
-    name = "llvm_release_omit_frame_pointer_args",
+    name = "llvm_release_omit_frame_pointer_clang_args",
     actions = ["@rules_cc//cc/toolchains/actions:compile_actions"],
     args = ["-fomit-frame-pointer"],
     requires_any_of = [":llvm_release_omit_frame_pointer"],
+)
+
+cc_args(
+    name = "llvm_release_omit_frame_pointer_clang_cl_args",
+    actions = _MSVC_COMPILE_ACTIONS + ["@rules_cc//cc/toolchains/actions:lto_backend"],
+    args = ["/clang:-fomit-frame-pointer"],
+    requires_any_of = [":llvm_release_omit_frame_pointer"],
+)
+
+cc_args_list(
+    name = "llvm_release_omit_frame_pointer_args",
+    args = select({
+        "//constraints/windows/abi:msvc": [":llvm_release_omit_frame_pointer_clang_cl_args"],
+        "//conditions:default": [":llvm_release_omit_frame_pointer_clang_args"],
+    }),
 )
 
 cc_feature(
@@ -254,7 +314,7 @@ cc_feature(
     ],
     feature_name = "_underlying_dbg",
     implies = select({
-        "//constraints/windows/abi:msvc": ["//toolchain/features/msvc:generate_pdb_file"],
+        "//constraints/windows/abi:msvc": [":generate_pdb_file"],
         "//conditions:default": [],
     }),
     requires_any_of = [":dbg_stub"],
@@ -327,10 +387,13 @@ cc_args(
 
 cc_feature(
     name = "generate_pdb_file",
-    args = [
-        ":generate_pdb_file_compile_args",
-        ":generate_pdb_file_link_args",
-    ],
+    args = select({
+        "//constraints/windows/abi:msvc": ["//toolchain/features/msvc:pdb_args"],
+        "//conditions:default": [
+            ":generate_pdb_file_compile_args",
+            ":generate_pdb_file_link_args",
+        ],
+    }),
     feature_name = "generate_pdb_file",
 )
 
@@ -415,7 +478,7 @@ cc_feature(
 )
 
 cc_args(
-    name = "fdo_optimize_compile_args",
+    name = "fdo_optimize_clang_compile_args",
     actions = [
         "@rules_cc//cc/toolchains/actions:compile_actions",
     ],
@@ -428,6 +491,31 @@ cc_args(
         "fdo_profile_path": "@rules_cc//cc/toolchains/variables:fdo_profile_path",
     },
     requires_not_none = "@rules_cc//cc/toolchains/variables:fdo_profile_path",
+)
+
+cc_args(
+    name = "fdo_optimize_clang_cl_compile_args",
+    # Instrumentation profiles are consumed while producing ThinLTO bitcode.
+    # The backends consume the resulting profile metadata; rules_cc therefore
+    # does not expose fdo_profile_path to fdo_optimize backend actions.
+    actions = _MSVC_COMPILE_ACTIONS,
+    args = [
+        "/clang:-fprofile-use={fdo_profile_path}",
+        "/clang:-Wno-profile-instr-unprofiled",
+        "/clang:-Wno-profile-instr-out-of-date",
+    ],
+    format = {
+        "fdo_profile_path": "@rules_cc//cc/toolchains/variables:fdo_profile_path",
+    },
+    requires_not_none = "@rules_cc//cc/toolchains/variables:fdo_profile_path",
+)
+
+cc_args_list(
+    name = "fdo_optimize_compile_args",
+    args = select({
+        "//constraints/windows/abi:msvc": [":fdo_optimize_clang_cl_compile_args"],
+        "//conditions:default": [":fdo_optimize_clang_compile_args"],
+    }),
 )
 
 cc_args(

@@ -33,14 +33,12 @@ cc_args(
 )
 
 cc_args(
-    name = "target_flags",
+    name = "clang_target_flags",
     actions = [
         "@rules_cc//cc/toolchains/actions:compile_actions",
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
-    args = [
-        "-target",
-    ] + LLVM_TARGET_TRIPLE + select({
+    args = ["-target"] + LLVM_TARGET_TRIPLE + select({
         # We hardcode these for now given the complexity of RISC-V extensions.
         # TODO(cerisier): Support ISA configuration.
         "@platforms//cpu:riscv64": [
@@ -53,6 +51,27 @@ cc_args(
     }) + select({
         "//constraints/fpu:vfpv4-d16": ["-mfpu=vfpv4-d16"],
         "//conditions:default": [],
+    }),
+)
+
+cc_args(
+    name = "clang_cl_target_flags",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:compile_actions",
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = select({
+        "//platforms/config:windows_x86_64_msvc": ["--target=x86_64-pc-windows-msvc"],
+        "//platforms/config:windows_aarch64_msvc": ["--target=aarch64-pc-windows-msvc"],
+        "//conditions:default": [],
+    }),
+)
+
+cc_args_list(
+    name = "target_flags",
+    args = select({
+        "//constraints/windows/abi:msvc": [":clang_cl_target_flags"],
+        "//conditions:default": [":clang_target_flags"],
     }),
 )
 
@@ -81,20 +100,23 @@ cc_args(
     actions = [
         "@rules_cc//cc/toolchains/actions:compile_actions",
     ],
-    args = [
-        # With C++20, Clang defaults to using C++ rather than Clang modules,
-        # which breaks Bazel's `use_module_maps` feature, which is used by
-        # `layering_check`. Since Bazel doesn't support C++ modules yet, it
-        # is safe to disable them globally until the toolchain shipped by
-        # Bazel sets this flag on `use_module_maps`.
-        # https://github.com/llvm/llvm-project/commit/0556138624edf48621dd49a463dbe12e7101f17d
-        "-Xclang",
-        "-fno-cxx-modules",
-        "-Wno-module-import-in-extern-c",
-        # This warning would mean we had an error configuring the toolchain or modulemap
-        "-Werror=incomplete-umbrella",
-        "-Wno-modules-import-nested-redundant",
-    ],
+    args = select({
+        "//constraints/windows/abi:msvc": [],
+        "//conditions:default": [
+            # With C++20, Clang defaults to using C++ rather than Clang modules,
+            # which breaks Bazel's `use_module_maps` feature, which is used by
+            # `layering_check`. Since Bazel doesn't support C++ modules yet, it
+            # is safe to disable them globally until the toolchain shipped by
+            # Bazel sets this flag on `use_module_maps`.
+            # https://github.com/llvm/llvm-project/commit/0556138624edf48621dd49a463dbe12e7101f17d
+            "-Xclang",
+            "-fno-cxx-modules",
+            "-Wno-module-import-in-extern-c",
+            # This warning would mean we had an error configuring the toolchain or modulemap
+            "-Werror=incomplete-umbrella",
+            "-Wno-modules-import-nested-redundant",
+        ],
+    }),
 )
 
 cc_args(
@@ -188,16 +210,22 @@ cc_args(
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
-    args = [
-        "-fuse-ld=lld",
-        # lld will be used if it's next to clang.
-        # It would have been great to set the path explicitly.
-        # "--ld-path={lld_path}",
-    ],
+    args = select({
+        "//constraints/windows/abi:msvc": [
+            "-no-canonical-prefixes",
+            "/clang:-fuse-ld=lld",
+        ],
+        "//conditions:default": [
+            "-fuse-ld=lld",
+            # lld will be used if it's next to clang.
+            # It would have been great to set the path explicitly.
+            # "--ld-path={lld_path}",
+        ],
+    }),
 )
 
 cc_args(
-    name = "no_absolute_paths_for_builtins",
+    name = "no_absolute_paths_for_builtins_clang",
     actions = [
         "@rules_cc//cc/toolchains/actions:compile_actions",
     ],
@@ -210,7 +238,21 @@ cc_args(
 )
 
 cc_args(
-    name = "deterministic_compile_flags",
+    name = "no_absolute_paths_for_builtins_clang_cl",
+    actions = ["@rules_cc//cc/toolchains/actions:source_compile_actions"],
+    args = ["/clang:-no-canonical-prefixes"],
+)
+
+cc_args_list(
+    name = "no_absolute_paths_for_builtins",
+    args = select({
+        "//constraints/windows/abi:msvc": [":no_absolute_paths_for_builtins_clang_cl"],
+        "//conditions:default": [":no_absolute_paths_for_builtins_clang"],
+    }),
+)
+
+cc_args(
+    name = "deterministic_clang_compile_flags",
     actions = [
         "@rules_cc//cc/toolchains/actions:compile_actions",
     ],
@@ -223,6 +265,26 @@ cc_args(
         "-D__TIME__=\"redacted\"",
         "-ffile-compilation-dir=.",  # Avoid absolute paths in binaries
     ],
+)
+
+cc_args(
+    name = "deterministic_clang_cl_compile_flags",
+    actions = ["@rules_cc//cc/toolchains/actions:source_compile_actions"],
+    args = [
+        "/clang:-Wno-builtin-macro-redefined",
+        "/D__DATE__=\"redacted\"",
+        "/D__TIMESTAMP__=\"redacted\"",
+        "/D__TIME__=\"redacted\"",
+        "/clang:-ffile-compilation-dir=.",
+    ],
+)
+
+cc_args_list(
+    name = "deterministic_compile_flags",
+    args = select({
+        "//constraints/windows/abi:msvc": [":deterministic_clang_cl_compile_flags"],
+        "//conditions:default": [":deterministic_clang_compile_flags"],
+    }),
 )
 
 #######

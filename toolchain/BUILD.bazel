@@ -137,6 +137,11 @@ config_setting(
 cc_args_list(
     name = "default_link_flags",
     args = select({
+        "//constraints/windows/abi:msvc": ["//toolchain/args/msvc:default_link_flags"],
+        "//conditions:default": [],
+    }) + select({
+        "//platforms/config:windows_x86_64_msvc": [],
+        "//platforms/config:windows_aarch64_msvc": [],
         "@platforms//os:macos": [
             "//toolchain/args/macos:default_link_flags",
         ],
@@ -152,6 +157,8 @@ cc_args_list(
 cc_args_list(
     name = "default_startfiles",
     args = select({
+        "//platforms/config:windows_x86_64_msvc": [],
+        "//platforms/config:windows_aarch64_msvc": [],
         "@platforms//os:macos": [],
         "@platforms//os:linux": [
             "//toolchain/args:crt_search_directory",
@@ -165,14 +172,17 @@ cc_args_list(
 
 cc_args_list(
     name = "resource_dir",
-    args = [
-        "//toolchain/args:resource_dir",
-    ],
+    args = select({
+        "//constraints/windows/abi:msvc": ["//toolchain/args/msvc:resource_dir"],
+        "//conditions:default": ["//toolchain/args:resource_dir"],
+    }),
 )
 
 cc_args_list(
     name = "default_libs",
     args = select({
+        "//platforms/config:windows_x86_64_msvc": [],
+        "//platforms/config:windows_aarch64_msvc": [],
         "@platforms//os:macos": [
             "//toolchain/args/macos:default_libs",
         ],
@@ -190,6 +200,11 @@ cc_args_list(
 cc_args_list(
     name = "cxxstdlib_library_search_paths",
     args = select({
+        "//constraints/windows/abi:msvc": ["//toolchain/args/msvc:libcxx_library_search_path"],
+        "//conditions:default": [],
+    }) + select({
+        "//platforms/config:windows_x86_64_msvc": [],
+        "//platforms/config:windows_aarch64_msvc": [],
         # libc++ is provided by the macOS SDK.
         "@platforms//os:macos": [],
         "@platforms//os:linux": [
@@ -206,6 +221,8 @@ cc_args_list(
 cc_args_list(
     name = "libunwind_library_search_paths",
     args = select({
+        "//platforms/config:windows_x86_64_msvc": [],
+        "//platforms/config:windows_aarch64_msvc": [],
         "@platforms//os:macos": [
             # We want to provide the stubs for macOS.
             "//toolchain/args:libunwind_library_search_paths",
@@ -223,6 +240,7 @@ cc_args_list(
 cc_args_list(
     name = "sysroot_flags",
     args = select({
+        "//constraints/windows/abi:msvc": [],
         "@platforms//os:macos": [
             "//toolchain/args/macos:macos_sdk_sysroot",
         ],
@@ -235,6 +253,7 @@ cc_args_list(
 cc_args_list(
     name = "hermetic_compile_flags",
     args = select({
+        "//constraints/windows/abi:msvc": ["//toolchain/args/msvc:hermetic_compile"],
         "@platforms//os:macos": [],
         "//conditions:default": [
             "//toolchain/args:hermetic_compile_flags",
@@ -245,6 +264,7 @@ cc_args_list(
 cc_args_list(
     name = "stdlib",
     args = select({
+        "//constraints/windows/abi:msvc": [],
         "@platforms//os:macos": [],
         "//conditions:default": [
             "//toolchain/args:stdlib",
@@ -263,9 +283,10 @@ cc_args_list(
 
 cc_args_list(
     name = "unwindlib",
-    args = [
-        "//toolchain/args:unwindlib_none",
-    ],
+    args = select({
+        "//constraints/windows/abi:msvc": [],
+        "//conditions:default": ["//toolchain/args:unwindlib_none"],
+    }),
 )
 
 # TODO(cerisier): extract those into proper semantic args list.
@@ -317,10 +338,13 @@ cc_args_list(
 # TODO(zbarsky): This must match llvm/toolchains/llvm.bzl
 cc_args_list(
     name = "windows_toolchain_args",
-    args = [
-        "//toolchain/args:cxxstdlib_headers_include_search_paths",
-        "//toolchain/args/windows:mingw_headers_include_search_paths",
-    ],
+    args = select({
+        "//constraints/windows/abi:msvc": ["//toolchain/args/msvc:platform_compile_args"],
+        "//conditions:default": [
+            "//toolchain/args:cxxstdlib_headers_include_search_paths",
+            "//toolchain/args/windows:mingw_headers_include_search_paths",
+        ],
+    }),
 )
 
 cc_args_list(
