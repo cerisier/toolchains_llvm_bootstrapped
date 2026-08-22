@@ -1,7 +1,8 @@
 # Windows MSVC prebuilt LLVM execution plan
 
-Status: Steps 1-4 and 6-10 complete. Step 5 is intentionally skipped. Steps
-11-12 remain proposed and require separate implementation authorization.
+Status: Steps 1-4, 6-10, and 10.1 are complete. Step 5 is intentionally
+skipped. Step 11 is implemented locally; matching-Windows CI execution remains
+unproved. Step 12 remains proposed and requires separate authorization.
 
 Date: 2026-08-20 (Asia/Tokyo)
 Revised: 2026-08-22 (Asia/Tokyo)
@@ -24,8 +25,9 @@ Revised: 2026-08-22 (Asia/Tokyo)
   existing minimal-toolchain archive layout.
 
 The planning branch contains only this plan. This revision records completed
-implementation through Step 9.1 but does not authorize Steps 10-12, README
-edits, release publication, a new PR, or `gh stack` operations.
+local implementation through Step 11 but does not authorize pushing the
+implementation, triggering CI, release publication, README edits, a new PR, or
+`gh stack` operations.
 
 ## Implementation progress
 
@@ -70,6 +72,43 @@ Step 10 is implemented locally on the same branch through
   override, and unused `llvm_binary` parameter;
 - `1088aa68` adds default-LLVM canonical release package builds for both
   target CPUs to CI, recording each configured archive path and SHA-256.
+
+Step 10.1 is implemented locally through
+`e98a818bc4e5a4a4c9ae9a7809e97c20ddd87c77`; it is not yet pushed:
+
+- archive inspection exposed that the first accepted Stage 3 executables used
+  the ordinary consumer `/MD` default and imported `MSVCP140.dll`,
+  `VCRUNTIME140.dll`, and, on x86-64, `VCRUNTIME140_1.dll`, while the archives
+  intentionally contained no DLLs;
+- `b226292b` was the initial ownership attempt, selecting the static CRT from
+  Stage 3 through a new generic bootstrap attribute. Owner review rejected
+  that coupling. Follow-up `e98a818b` fully restores generic
+  `bootstrap_binary` and makes the existing `--config=release` disable
+  `dynamic_link_msvcrt` and enable `static_link_msvcrt` instead;
+- therefore every MSVC release product selects `/MT`, while ordinary MSVC
+  consumers outside `--config=release` retain `/MD`. The policy is expressed
+  at the product-configuration/toolchain boundary, not in bootstrap topology.
+
+Step 11 is implemented locally through
+`24379cfdca6ec768a870da082ac73d83bd86872f`; it is not yet pushed and its two
+native Windows cells have not run:
+
+- a CI helper creates an exact temporary minimal-prebuilt index entry using
+  the locally built archive's `file://` URL and computed SHA-256, then appends
+  a CI-only extension instance to the e2e module. No local URL or placeholder
+  release metadata enters the committed public index;
+- local x86-64 and ARM64 import proofs show that the existing version-neutral
+  Windows repository names and BUILD overlay consume the new archives
+  unchanged;
+- the Windows matrix keeps both existing MinGW rows and adds matching x86-64
+  and ARM64 MSVC rows. Each MSVC cell builds its unpublished archive remotely,
+  registers it only in that workspace, executes the prebuilt compiler on the
+  matching Windows runner, inspects selection/actions/imports, and runs the
+  existing `/MD`, `/MT`, and DLL behaviors;
+- the superseded standalone package-only job and Windows/macOS host-analysis
+  duplicates are removed. Linux x86-64 and ARM64 retain the source-bootstrap
+  action/artifact checks; native Windows runners now own completed-prebuilt
+  consumer execution.
 
 Both complete Stage 1 outputs were inspected: x86-64 is
 `IMAGE_FILE_MACHINE_AMD64`; ARM64 is `IMAGE_FILE_MACHINE_ARM64`, not ARM64EC.
@@ -149,14 +188,12 @@ release products. It will expose two explicit platform-transitioned labels:
 - `//prebuilt/llvm:for_windows_x86_64_msvc`
 - `//prebuilt/llvm:for_windows_aarch64_msvc`
 
-The directly configurable product label will be
+The directly configurable product label is
 `//prebuilt/llvm:windows_msvc_llvm_release`. Step 1 currently backs these manual
-labels with Stage 1 as temporary implementation scaffolding. They must remain
-dormant: do not publish, register, advertise, or add persistent package CI for
-their unoptimized archives. The first accepted MSVC archives are produced only
-after direct ThinLTO/FDO Stage 3 proof. The final product returns to the normal
-Stage 3 input and `--config=release`; all Stage-1-only configuration and release
-rule indirection is removal debt, not final architecture. The existing
+labels with Stage 1 only as temporary implementation scaffolding; Step 10 has
+removed that debt and made Stage 3 under `--config=release` the accepted
+product. Do not publish or advertise the archives until the separately
+authorized release-delivery step. The existing
 `//prebuilt/llvm:windows_llvm_release` and `for_windows_amd64`/
 `for_windows_arm64` remain the GNU/MinGW products and keep their current Stage
 3 behavior.
@@ -390,9 +427,9 @@ unreviewable long-lived branch:
   changes and inspects the produced action/artifact, not only command status.
 - a step that graduates a public feature or package boundary extends the
   existing MSVC action/analysis/artifact CI surface for default LLVM 22.1.8 in
-  the same merge. Step 12 expands that already-green default cell to the full
-  source-version matrix; it is not the first persistent coverage for Steps
-  7-11.
+  the same merge. After Step 11's native cells are green, Step 12 expands that
+  default coverage to the full source-version matrix; it is not the first
+  persistent coverage for Steps 7-11.
 
 At every step, run and retain the common regression gate in addition to that
 step's owning commands:
@@ -452,6 +489,9 @@ Step 1: Stage-1 MSVC release route/config
                     |
                     v
           Step 10: first Stage 3 packages + remove Step 1 debt
+                    |
+                    v
+          Step 10.1: self-contained release compiler CRT
                     |
                     v
           Step 11: register prebuilts + Windows consumer matrix
@@ -1542,6 +1582,56 @@ Risks/stop conditions:
 
 Upstream llvm-project patch expected: **no**.
 
+## Step 10.1 — Make release compiler archives runtime-self-contained
+
+**Codex-agent-ready goal:** Ensure accepted Windows MSVC release compilers do
+not depend on an ambient Visual C++ redistributable, while leaving the ordinary
+MSVC consumer default and the generic bootstrap graph unchanged.
+
+Owner review and final implementation (2026-08-22):
+
+- baseline Step 10 archive inspection showed `/MD`-built compilers importing
+  `MSVCP140.dll`, `VCRUNTIME140.dll`, and, on x86-64,
+  `VCRUNTIME140_1.dll`. Neither archive packaged Microsoft DLLs, so execution
+  on a GitHub Windows image would have relied on ambient machine state;
+- the first implementation, `b226292b`, added a `static_msvc_runtime`
+  attribute to generic `bootstrap_binary` and selected it only from Stage 3.
+  This produced self-contained executables but put product/ABI policy in a
+  generic bootstrap rule and covered only one product stage;
+- the accepted follow-up, `e98a818b`, removes that attribute and all Stage 3
+  selection. `common:release` now requests
+  `--features=-dynamic_link_msvcrt` followed by
+  `--features=static_link_msvcrt`. MSVC toolchains interpret those semantic
+  features as `/MT`; generic toolchains do not provide them and retain their
+  established release actions;
+- consumers that do not request `--config=release` retain the toolchain's
+  ordinary `/MD` default. The existing action test passed after the change,
+  beginning with invocation `1c5dc2a9-9224-4c97-9bfc-98360627622c` and
+  explicitly observing `/MD` on the representative consumer compile.
+
+The identical dual archive command from Step 10 then passed as invocation
+`ce05848d-268f-4fad-a43e-dcc203758bb3` with only top-level downloads:
+
+| Product | Archive bytes | Archive SHA-256 | `llvm.exe` SHA-256 | Machine |
+|---|---:|---|---|---|
+| x86-64 MSVC | 45,233,312 | `bc7731b9d0b661f646c8de4ec24598b18b85b456a375f6e744fcc24a4be8e868` | `c2c8c16042fb25e15dc26655cf80d35aacf4cb83a191ad69a62cf687fdbc1afe` | AMD64 |
+| ARM64 MSVC | 42,245,669 | `3fc3667774f3c8545411e5558601683f7705d6a8654d3c097c664c6acf4eb30a` | `10481ac9cc2555bdae0dbc341f0839fc65fc7ff536877d9884707f22d6e430bf` | native ARM64 |
+
+Fresh extraction plus `llvm readobj --file-headers --coff-imports` showed the
+same system-DLL-only import set for both executables: `VERSION.dll`,
+`ole32.dll`, `ntdll.dll`, `ADVAPI32.dll`, `SHELL32.dll`, `OLEAUT32.dll`, and
+`KERNEL32.dll`. Neither imports `MSVCP*` nor `VCRUNTIME*`; ARM64 is not
+ARM64EC. Buildifier passed as invocation
+`9ab328c9-1ad3-43b1-807b-3f5cc5732064`.
+
+**Completed finish line:** Windows MSVC products built under the canonical
+release config use the static retail CRT and are self-contained with respect to
+the Visual C++ redistributable. Generic bootstrap remains ABI-agnostic and
+ordinary MSVC consumers remain `/MD` unless their product configuration asks
+for static CRT semantics.
+
+Upstream patch expected: **no**.
+
 ## Step 11 — Register the MSVC-built prebuilts and exercise them as compiler toolchains
 
 **Codex-agent-ready goal:** Make the final Windows MSVC Stage 3 archives
@@ -1554,6 +1644,8 @@ Preconditions:
 
 - Step 10 produced and inspected the default LLVM 22.1.8 x86-64 and ARM64
   Stage 3 archives;
+- Step 10.1 proved that the accepted release executables do not depend on an
+  ambient MSVC redistributable;
 - local registration/testing may use an exact temporary index or repository
   override without publication;
 - committing release URLs and SHA-256 entries requires separately authorized,
@@ -1568,7 +1660,31 @@ Likely owned files after the registration path is proved:
   Windows repository selection cannot consume the archives unchanged;
 - `toolchain/llvm/llvm_release_windows.BUILD.bazel` or toolchain registration
   only for an exact exposed archive/tool mismatch;
-- `.github/workflows/ci.yaml` and the existing Windows consumer targets.
+- `.github/workflows/ci.yaml`, a narrow CI-local registration helper, and the
+  existing Windows consumer targets.
+
+Local implementation evidence (2026-08-22):
+
+- the helper derives the selected LLVM version from the root `MODULE.bazel`,
+  computes the archive SHA-256, changes exactly the corresponding
+  `windows-amd64` or `windows-arm64` entry in a generated index, and registers
+  all version-neutral repositories from a second CI-only extension instance;
+- a real x86-64 `http_archive` import using the generated index passed as
+  invocation `0dc7ed3a-1350-41d4-bacf-b2147732ed74`. The selected
+  version-neutral repository exposed the expected AMD64 compiler with
+  SHA-256
+  `c2c8c16042fb25e15dc26655cf80d35aacf4cb83a191ad69a62cf687fdbc1afe`;
+- the corresponding ARM64 import passed as invocation
+  `c3140e31-4544-4214-8277-a7c4d7a2357a` and exposed the expected native
+  ARM64 compiler with SHA-256
+  `10481ac9cc2555bdae0dbc341f0839fc65fc7ff536877d9884707f22d6e430bf`;
+- therefore no extension implementation, Windows BUILD overlay, public index,
+  tool map, repository name, or ABI-specific repository namespace changed;
+- workflow YAML parsing, helper execution against a fresh temporary module,
+  `git diff --check`, and buildifier passed locally. Matching-Windows compiler
+  execution, action selection, compile/link/archive behavior, and test
+  execution remain pending because the workflow commit has not been pushed or
+  run.
 
 Implementation shape:
 
@@ -1588,6 +1704,10 @@ Implementation shape:
 - inspect the selected `llvm.exe` imports before claiming the prebuilt is a
   portable Windows construction tool. Do not rely silently on an ambient
   VCRuntime DLL or redistribute Microsoft runtime payloads in the archive;
+- while the archive remains unpublished, build it as an ephemeral prerequisite
+  in each matching Windows consumer cell and register it through an exact
+  generated local index. Do not keep a separate package-only CI family whose
+  result is never consumed;
 - after publication is separately authorized and completed, replace the local
   proof with the real release URL/SHA index entry and rerun both consumer rows.
 
@@ -1762,7 +1882,8 @@ Rejected coupling:
 
 ## Final supported/unsupported matrix
 
-State to advertise only after all gates pass:
+Current evidence state. Do not advertise a pending row as supported; after all
+gates pass, the two Step 11 pending cells graduate to supported:
 
 | Surface | x86-64 MSVC | ARM64 MSVC | Notes |
 |---|---:|---:|---|
@@ -1771,12 +1892,12 @@ State to advertise only after all gates pass:
 | Stage 1 source build, opt, `/MD`, static libc++ | supported | supported | Independently proved checkpoint; clang-cl + llvm-ar + driver-selected lld-link. |
 | Stage 2 ThinLTO + instrumentation | supported | supported | Linux exec-platform compiler tools; MSVC target workloads. |
 | Stage 3 ThinLTO + FDO application | supported | supported | Final package input under `--config=release`. |
-| Matching-Windows prebuilt compiler consumer | supported | supported | Step 11 compilation row; does not rebuild LLVM from source. |
+| Matching-Windows prebuilt compiler consumer | pending native CI | pending native CI | Step 11 implementation exists locally; the matching-runner cells have not run. |
 | Cross-build on Linux x86-64 RBE | supported | supported | All three listed LLVM lines after matrix passes. |
 | Linux ARM64 FDO executor actions | supported | supported | Required where selected by the existing Stage 3 executor/profile graph. |
 | Native matching Windows source bootstrap | unclaimed | unclaimed | Only completed prebuilt compiler execution is tested on Windows. |
 | macOS construction host | unclaimed | unclaimed | May be added later with a full package build. |
-| `/MT` package variant | unsupported | unsupported | Layer 1 runtime route remains, but no package product is defined. |
+| Release compiler CRT | `/MT` | `/MT` | `--config=release` requests static MSVC CRT semantics; ordinary consumers retain `/MD`. |
 | Debug/PDB package | unsupported | unsupported | Opt EXE only; no orphan PDB/import library. |
 | Shared LLVM/shared libc++ | unsupported | unsupported | Static libc++ only. |
 | ThinLTO | supported | supported | Minimized `.indexing.o` summaries for indexing; complete bitcode `.obj` inputs for backends; COFF index/backend artifacts required. |
@@ -1830,10 +1951,11 @@ inspection above.
 - whether LLVM 23.1.0-rc1 retains the minimized-index behavior proved on LLVM
   21.1.8 and the default LLVM 22.1.8 line; Step 9.1 did not rebuild that
   compatibility line;
-- whether native Windows execution of the MSVC-built prebuilt has a fully
-  declared VCRuntime closure or depends on a runner-installed DLL;
-- whether the existing version-neutral Windows minimal repository keys can
-  register the new archives without a separate ABI-specific namespace.
+- whether matching x86-64 and ARM64 Windows runners execute the registered
+  static-CRT compilers and complete the representative `/MD`, `/MT`, and DLL
+  consumer tests exactly as the local action graph predicts. Archive imports
+  and repository registration are proved; native execution awaits the
+  unpushed Step 11 CI cells.
 
 These are not claimed defects. Convert an item into an implementation change
 only after an exact failing action/artifact identifies its owner.
