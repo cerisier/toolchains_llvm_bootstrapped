@@ -258,7 +258,7 @@ jobs:
             --output=files \
             "${compiler_repo}//:bin/llvm-readobj.exe")"
           sha256sum "${compiler}"
-          "${compiler}" --version
+          "${compiler}" clang-cl --version
           "${readobj}" \
             --file-headers \
             --coff-imports \
