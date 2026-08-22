@@ -12,7 +12,6 @@ llvm_release(
 llvm_release(
     name = "windows_msvc_llvm_release",
     bin_suffix = ".exe",
-    llvm_binary = "//toolchain/bootstrap/stage1:llvm",
     target_compatible_with = [
         "@platforms//os:windows",
         "//constraints/cxxstdlib:libcxx",
