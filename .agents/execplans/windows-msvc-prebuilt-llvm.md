@@ -69,6 +69,19 @@ Stage 1 archives (`fa08b192-ba5f-4e8d-a859-003f2c2bee9f`), but no packaging
 edit, commit, or delivery followed. The probe is evidence that the existing
 archive machinery works; it is not an accepted package checkpoint.
 
+A later temporary, uncommitted swap of the same package rule to the proved
+Stage 3 input built and extracted both LLVM 22.1.8 MSVC archives under the
+canonical release config (invocation
+`89586cd3-b4bd-4606-9612-591f3537a1f1`). The x86-64 archive is 45,082,317
+bytes with SHA-256
+`3aac82a3c61f12fdf8dcb4f37eaa12f9265a530f8ee4a35348a1ff740f521fcc`;
+the ARM64 archive is 42,094,158 bytes with SHA-256
+`a8f4d2ecc2a742f9ea3967cba0d334ca5d8b07c142500b0940142d3cc14bc588`.
+Both have the same 346-entry layout, 281 builtin headers, the expected
+multicall symlinks, and AMD64/native-ARM64 `llvm.exe` respectively. The probe
+was restored immediately and does not promote the dormant package labels or
+complete Step 10.
+
 Both complete source-backed ThinLTO LLVM monoliths were also built directly as
 `@llvm-project//llvm:llvm` with
 `--//toolchain:bootstrap_stage=stage1_from_source`: x86-64 invocation
