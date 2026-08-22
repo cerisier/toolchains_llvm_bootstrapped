@@ -341,6 +341,39 @@ jobs:
             --jobs=100 \
             --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7
 
+  windows_msvc_stage3_package:
+    strategy:
+      fail-fast: false
+      matrix:
+        target_cpu: [x86_64, aarch64]
+    runs-on: ubuntu-latest
+    name: Build Windows ${{ matrix.target_cpu }} MSVC Stage 3 package
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Build and identify Stage 3 package
+        shell: bash
+        run: |
+          common_flags=(
+            --config=remote
+            --config=release
+            --jobs=300
+            --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7
+            --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1
+            --repo_env=BAZEL_WINDOWS_SDK_EULA=1
+          )
+          target="//prebuilt/llvm:for_windows_${{ matrix.target_cpu }}_msvc"
+          bazel build \
+            "${common_flags[@]}" \
+            --remote_download_toplevel \
+            "${target}"
+          archive="$(bazel cquery \
+            "${common_flags[@]}" \
+            --output=files \
+            "${target}")"
+          sha256sum "${archive}"
+
   llvm_version_analysis:
     strategy:
       fail-fast: false
