@@ -1607,7 +1607,14 @@ Owner review and final implementation (2026-08-22):
 - consumers that do not request `--config=release` retain the toolchain's
   ordinary `/MD` default. The existing action test passed after the change,
   beginning with invocation `1c5dc2a9-9224-4c97-9bfc-98360627622c` and
-  explicitly observing `/MD` on the representative consumer compile.
+  explicitly observing `/MD` on the representative consumer compile;
+- a controlled GNU/MinGW comparison queried the same compile and link once
+  with the two MSVC release feature requests (invocation
+  `fdc25c52-6d8d-4aaf-9208-803d94be181b`) and once without them (invocation
+  `eaf4d25e-6a33-44c7-ad70-5118c72cc291`). Commands differed only in Bazel's
+  transitioned-configuration path segment; after normalizing that segment,
+  both command files have SHA-256
+  `8f5ef0203ceaddfa2ea951f6d5efcaa31eda4800d8af1259f24c282426f2751b`.
 
 The identical dual archive command from Step 10 then passed as invocation
 `ce05848d-268f-4fad-a43e-dcc203758bb3` with only top-level downloads:
