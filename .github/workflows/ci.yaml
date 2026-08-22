@@ -142,6 +142,7 @@ jobs:
             --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7
             --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1
             --repo_env=BAZEL_WINDOWS_SDK_EULA=1
+            --shell_executable=/bin/bash
           )
           target="//prebuilt/llvm:for_windows_${{ matrix.target_cpu }}_msvc"
           bazel build \
