@@ -1,5 +1,6 @@
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
+load("//windows:versions.bzl", "MSVC_COMPATIBILITY_VERSION")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -10,11 +11,8 @@ cc_args(
         "@rules_cc//cc/toolchains/actions:source_compile_actions",
     ],
     args = select({
-        "//platforms/config:windows_x86_64_msvc": [
-            "/clang:-fms-compatibility-version=19.50.35717",
-        ],
-        "//platforms/config:windows_aarch64_msvc": [
-            "/clang:-fms-compatibility-version=19.50.35717",
+        "//constraints/windows/abi:msvc": [
+            "/clang:-fms-compatibility-version={}".format(MSVC_COMPATIBILITY_VERSION),
         ],
         "//conditions:default": [],
     }),
