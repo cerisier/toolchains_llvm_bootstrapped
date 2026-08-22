@@ -235,6 +235,8 @@ jobs:
             --lockfile_mode=off
             --repository_cache=
             --repo_contents_cache=
+            --remote_cache=
+            --cache_test_results=no
             --jobs=50
             --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7
             --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1
