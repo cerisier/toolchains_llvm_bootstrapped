@@ -132,6 +132,7 @@ jobs:
       - name: Build and register unpublished MSVC prebuilt
         if: matrix.compiler == 'msvc'
         env:
+          MSYS2_ARG_CONV_EXCL: --shell_executable=
           USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
         shell: bash
         run: |
