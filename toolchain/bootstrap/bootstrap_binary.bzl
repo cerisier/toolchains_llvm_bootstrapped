@@ -9,12 +9,29 @@ _LLVM_RELEASE_FEATURES = [
     "llvm_release_omit_frame_pointer",
 ]
 
+_MSVC_CRT_FEATURES = [
+    "-dynamic_link_msvcrt",
+    "-static_link_msvcrt",
+    "dynamic_link_msvcrt",
+    "static_link_msvcrt",
+]
+
 def _append_unique(values, extra_values):
     result = list(values)
     for value in extra_values:
         if value not in result:
             result.append(value)
     return result
+
+def _select_static_msvc_runtime(features):
+    return [
+        feature
+        for feature in features
+        if feature not in _MSVC_CRT_FEATURES
+    ] + [
+        "-dynamic_link_msvcrt",
+        "static_link_msvcrt",
+    ]
 
 def _bootstrap_transition_impl(settings, attr):
     fdo_profile = getattr(attr, "fdo_profile", None)
@@ -23,6 +40,8 @@ def _bootstrap_transition_impl(settings, attr):
         fail("fdo_profile and fdo_instrumented are mutually exclusive")
 
     features = settings["//command_line_option:features"]
+    if getattr(attr, "static_msvc_runtime", False):
+        features = _select_static_msvc_runtime(features)
     is_after_stage1 = fdo_profile or fdo_instrumented
 
     if is_after_stage1:
@@ -107,6 +126,10 @@ bootstrap_binary = rule(
         "symlink": attr.bool(
             default = True,
             doc = "If set to False, will copy the tool instead of symlinking",
+        ),
+        "static_msvc_runtime": attr.bool(
+            default = False,
+            doc = "Builds MSVC-target bootstrap executables with the static retail CRT.",
         ),
         "fdo_profile": attr.label(
             default = None,
