@@ -1,7 +1,7 @@
 # Windows MSVC prebuilt LLVM execution plan
 
-Status: Steps 1-4 and 6-9.1 complete. Step 5 is intentionally skipped. Steps
-10-12 remain proposed and require separate implementation authorization.
+Status: Steps 1-4 and 6-10 complete. Step 5 is intentionally skipped. Steps
+11-12 remain proposed and require separate implementation authorization.
 
 Date: 2026-08-20 (Asia/Tokyo)
 Revised: 2026-08-22 (Asia/Tokyo)
@@ -62,6 +62,15 @@ Steps 8-9.1 are implemented locally on the same branch through
   indexing override and asserts the standard rules_cc dual-output contract:
   minimized `.indexing.o` for indexing, complete `.obj` for each backend.
 
+Step 10 is implemented locally on the same branch through
+`1088aa6898e5fd9e15fa3b3cca66def5932830eb`; it is not yet pushed:
+
+- `5aecdb5e` promotes both explicit MSVC package labels to the normal Stage 3
+  input and removes the temporary `windows_msvc_prebuilt` config, Stage 1
+  override, and unused `llvm_binary` parameter;
+- `1088aa68` adds default-LLVM canonical release package builds for both
+  target CPUs to CI, recording each configured archive path and SHA-256.
+
 Both complete Stage 1 outputs were inspected: x86-64 is
 `IMAGE_FILE_MACHINE_AMD64`; ARM64 is `IMAGE_FILE_MACHINE_ARM64`, not ARM64EC.
 An unchanged packaging feasibility probe also produced and extracted both
@@ -81,6 +90,18 @@ Both have the same 346-entry layout, 281 builtin headers, the expected
 multicall symlinks, and AMD64/native-ARM64 `llvm.exe` respectively. The probe
 was restored immediately and does not promote the dormant package labels or
 complete Step 10.
+
+The permanent Step 10 graph then rebuilt both accepted archives under only
+`--config=remote --config=release` (invocation
+`075d34a5-fc80-4821-813a-3b6d86adeae1`) and reproduced those exact sizes and
+hashes. Both archives have 346 entries in identical order, 281 extracted
+builtin-header files, 49 multicall symlinks plus the real `llvm.exe`, both
+ignorelists, fixed uid/gid/timestamps, and no packaged `.pdb`, `.dll`, or
+`.lib`. Their debug directories contain only a reproducibility entry and no
+PDB reference. Selective download of only the generated mtree spec
+(`b77486e0-d58b-430f-a72e-532dcd324eda`) proved that its real binary input is
+`//toolchain/bootstrap/stage3:llvm` and that it contains no absolute host path.
+The x86-64 binary is AMD64 and the ARM64 binary is native ARM64, not ARM64EC.
 
 Both complete source-backed ThinLTO LLVM monoliths were also built directly as
 `@llvm-project//llvm:llvm` with
@@ -1391,6 +1412,34 @@ switch the dormant MSVC package labels from the temporary Stage 1 route to the
 normal Stage 3 input, use the canonical `--config=release`, remove all obsolete
 Step 1 plumbing, build the first accepted MSVC archives, and inspect them.
 
+Completion evidence (2026-08-22):
+
+- baseline aquery `12089790-a7b2-4bea-8a7c-645e678f0852` showed the MSVC
+  package backed by Stage 1 with no FDO merge. Post-change aquery
+  `b19129b1-47f9-453b-85a8-e11151920fa8` shows Stage 3, four configured profile
+  merges, minimized ThinLTO indexing, complete-object backends, and the normal
+  clang-cl/lld-link final route;
+- pre/post GNU x86-64 package aquery dumps from
+  `75b7ad7f-c1e6-4fee-9502-169a9267801b` and
+  `cad7df14-a027-466c-88ec-3a7e26c0c64f` are byte-identical, SHA-256
+  `e9f900490307c0d57cc8d691e33f0c07feda19ecfd697545cf2cd985e00b5c6a`;
+- the dual-package build, archive sizes/hashes, PE metadata, layout, imports,
+  debug directories, fixed metadata, stable path ordering, and absence of
+  unexpected packaged outputs are recorded under Implementation progress;
+- representative x86-64 and ARM64 params retain their MSVC triples,
+  `/std:c++17`, ordered release-policy flags, declared MSVC profile use,
+  minimized `.indexing.o` output, complete `.obj` backend route, `/MACHINE`,
+  `/Fe`, SDK/runtime library directories, deterministic `llvm-ar rcsD`,
+  sentinel `LIB`, and no ambient host path or raw GNU linker protocol;
+- buildifier (`cd0ce6d6-9f09-4822-9f13-6cfc0330bf41`), Gazelle diff
+  (`e2d3a748-c7bb-425b-9c2e-da0e3aec6cae`), public Starlark docs
+  (`602b4a63-af8f-4409-8e54-3083b250dce8` and
+  `ba2174b9-cb51-4f6c-943a-2c2aec033361`), focused action/analysis checks, and
+  both artifact tests (`31073324-5e9f-450d-ae1a-e533d72e0425`) passed;
+- commits `5aecdb5e` and `1088aa68` implement the promotion/cleanup and CI
+  enforcement separately. They have not been pushed and CI has not been
+  triggered or monitored.
+
 Likely owned files:
 
 - `.bazelrc`;
@@ -1478,7 +1527,7 @@ Success criteria:
 - existing GNU Windows wrappers still select GNU platforms and their original
   generic Stage 3 graph.
 
-**Potentially mergeable finish line:** This is the final product merge point:
+**Completed finish line:** This is the final product merge point:
 one canonical release config and the same truthful optimized bootstrap topology
 for generic and MSVC products, with platform-specific action dialects only.
 No temporary Step 1 mechanism remains.
@@ -1781,7 +1830,6 @@ inspection above.
 - whether LLVM 23.1.0-rc1 retains the minimized-index behavior proved on LLVM
   21.1.8 and the default LLVM 22.1.8 line; Step 9.1 did not rebuild that
   compatibility line;
-- final opt PE debug-directory/PDB behavior under the canonical release config;
 - whether native Windows execution of the MSVC-built prebuilt has a fully
   declared VCRuntime closure or depends on a runner-installed DLL;
 - whether the existing version-neutral Windows minimal repository keys can
