@@ -1,20 +1,29 @@
 load("@llvm//:defs.bzl", "exec_test")
-load("@rules_go//go:def.bzl", "go_binary", "go_test")
+load("@llvm//toolchain/runtimes:cc_runtime_binary.bzl", "cc_runtime_complete_binary")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
 
 package(default_visibility = ["//visibility:public"])
 
-go_binary(
+cc_library(
+    name = "windows_case_copy_lib",
+    srcs = ["copy.cc"],
+    hdrs = ["copy.h"],
+    deps = ["//tools/windows_case:common"],
+)
+
+cc_runtime_complete_binary(
     name = "windows_case_copy",
-    srcs = ["main.go"],
-    pure = "on",
+    srcs = ["main.cc"],
+    deps = ["windows_case_copy_lib"],
 )
 
 exec_test(
     name = "test",
-    srcs = [
-        "main.go",
-        "main_test.go",
+    srcs = ["copy_test.cc"],
+    rule = cc_test,
+    deps = [
+        "windows_case_copy_lib",
+        "//tools/windows_case:common",
     ],
-    pure = "on",
-    rule = go_test,
 )
