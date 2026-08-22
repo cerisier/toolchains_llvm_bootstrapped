@@ -89,9 +89,9 @@ Step 10.1 is implemented locally through
   consumers outside `--config=release` retain `/MD`. The policy is expressed
   at the product-configuration/toolchain boundary, not in bootstrap topology.
 
-Step 11 is implemented locally through
-`24379cfdca6ec768a870da082ac73d83bd86872f`; it is not yet pushed and its two
-native Windows cells have not run:
+Step 11 is complete and pushed through
+`faad2d85db1d736eb6935a5d5b6f29e470db0b69`. Final CI run
+`32566192209` passed both matching-Windows consumer jobs:
 
 - a CI helper creates an exact temporary minimal-prebuilt index entry using
   the locally built archive's `file://` URL and computed SHA-256, then appends
@@ -100,15 +100,33 @@ native Windows cells have not run:
 - local x86-64 and ARM64 import proofs show that the existing version-neutral
   Windows repository names and BUILD overlay consume the new archives
   unchanged;
-- the Windows matrix keeps both existing MinGW rows and adds matching x86-64
-  and ARM64 MSVC rows. Each MSVC cell builds its unpublished archive remotely,
-  registers it only in that workspace, executes the prebuilt compiler on the
-  matching Windows runner, inspects selection/actions/imports, and runs the
-  existing `/MD`, `/MT`, and DLL behaviors;
+- one Linux/RBE producer builds both unpublished archives once and uploads
+  them as short-lived workflow artifacts. The Windows matrix keeps both
+  existing MinGW rows and adds matching x86-64 and ARM64 MSVC consumer rows.
+  Each MSVC row only downloads its exact matching archive, registers it in
+  that workspace, executes the prebuilt compiler on the matching Windows
+  runner, inspects selection/actions/imports, and runs the existing `/MD`,
+  `/MT`, and DLL behaviors. Windows does not build a prebuilt archive;
 - the superseded standalone package-only job and Windows/macOS host-analysis
   duplicates are removed. Linux x86-64 and ARM64 retain the source-bootstrap
   action/artifact checks; native Windows runners now own completed-prebuilt
-  consumer execution.
+  consumer execution;
+- the x86-64 consumer job `97016411771` selected archive SHA-256
+  `bc7731b9d0b661f646c8de4ec24598b18b85b456a375f6e744fcc24a4be8e868`,
+  executed compiler SHA-256
+  `c2c8c16042fb25e15dc26655cf80d35aacf4cb83a191ad69a62cf687fdbc1afe`,
+  and inspected `IMAGE_FILE_MACHINE_AMD64`;
+- the ARM64 consumer job `97016411795` selected archive SHA-256
+  `3fc3667774f3c8545411e5558601683f7705d6a8654d3c097c664c6acf4eb30a`,
+  executed compiler SHA-256
+  `10481ac9cc2555bdae0dbc341f0839fc65fc7ff536877d9884707f22d6e430bf`,
+  and inspected native `IMAGE_FILE_MACHINE_ARM64`;
+- both jobs rejected remote action-cache hits and disabled test-result caching.
+  Their expanded action graphs selected the registered `clang-cl.exe`,
+  `llvm-ar.exe`, and `lld-link.exe`, retained `/MD` for the ordinary consumer,
+  used the matching `/MACHINE`, and contained no source-built `toolchain/stage`
+  fallback. Both runners locally built and executed the `/MD`, DLL, and `/MT`
+  behavior tests successfully.
 
 Both complete Stage 1 outputs were inspected: x86-64 is
 `IMAGE_FILE_MACHINE_AMD64`; ARM64 is `IMAGE_FILE_MACHINE_ARM64`, not ARM64EC.
@@ -1688,10 +1706,30 @@ Local implementation evidence (2026-08-22):
 - therefore no extension implementation, Windows BUILD overlay, public index,
   tool map, repository name, or ABI-specific repository namespace changed;
 - workflow YAML parsing, helper execution against a fresh temporary module,
-  `git diff --check`, and buildifier passed locally. Matching-Windows compiler
-  execution, action selection, compile/link/archive behavior, and test
-  execution remain pending because the workflow commit has not been pushed or
-  run.
+  `git diff --check`, and buildifier passed locally. CI run `32561867814`
+  proved the Linux/RBE producer, exact artifact transfer, archive registration,
+  and native execution of both multicall dispatchers. It stopped before
+  consumer actions because bare `llvm.exe --version` correctly returned the
+  multicall help with status 1. Commit `ccc0cf06` selects the `clang-cl`
+  personality;
+- run `32563547577` proved both compiler personalities and PE/import checks,
+  then exposed that `aquery --output=commands` leaves compile flags inside an
+  unexpanded response file. Commit `82df822f` reuses the repository's existing
+  `--include_param_files --output=text` inspection protocol;
+- run `32564452344` passed the Linux producer, both existing MinGW jobs,
+  buildifier, and both matching-Windows MSVC jobs. Its test results were remote
+  cache hits, which did not prove native program execution;
+- clearing `--remote_cache` in commit `33fb608c` incorrectly disabled the gRPC
+  endpoint required by the configured remote downloader and failed before any
+  consumer action in run `32565512325`. Commit `faad2d85` instead preserves the
+  endpoint, rejects remote action-cache hits with `--noremote_accept_cached`,
+  and disables test-result caching;
+- final run `32566192209` passed. The Linux/RBE producer job `97015077097`
+  built both ephemeral archives. x86-64 job `97016411771` and ARM64 job
+  `97016411795` downloaded and registered only their exact matching artifacts,
+  executed Clang 22.1.8 natively, inspected compile/archive/link actions, and
+  locally built and ran the existing `/MD`, DLL, and `/MT` tests. The test
+  summaries are `PASSED`, not `(cached)`.
 
 Implementation shape:
 
@@ -1711,10 +1749,12 @@ Implementation shape:
 - inspect the selected `llvm.exe` imports before claiming the prebuilt is a
   portable Windows construction tool. Do not rely silently on an ambient
   VCRuntime DLL or redistribute Microsoft runtime payloads in the archive;
-- while the archive remains unpublished, build it as an ephemeral prerequisite
-  in each matching Windows consumer cell and register it through an exact
-  generated local index. Do not keep a separate package-only CI family whose
-  result is never consumed;
+- while the archive remains unpublished, build both archives once in a
+  Linux-hosted producer backed by Linux RBE, pass them as short-lived workflow
+  artifacts, and register the exact matching artifact in each Windows consumer
+  cell through a generated local index. Windows runners only consume and
+  exercise the prebuilts; they do not construct archives. Do not keep a
+  separate package-only CI family whose result is never consumed;
 - after publication is separately authorized and completed, replace the local
   proof with the real release URL/SHA index entry and rerun both consumer rows.
 
@@ -1889,8 +1929,7 @@ Rejected coupling:
 
 ## Final supported/unsupported matrix
 
-Current evidence state. Do not advertise a pending row as supported; after all
-gates pass, the two Step 11 pending cells graduate to supported:
+Current evidence state after Step 11:
 
 | Surface | x86-64 MSVC | ARM64 MSVC | Notes |
 |---|---:|---:|---|
@@ -1899,7 +1938,7 @@ gates pass, the two Step 11 pending cells graduate to supported:
 | Stage 1 source build, opt, `/MD`, static libc++ | supported | supported | Independently proved checkpoint; clang-cl + llvm-ar + driver-selected lld-link. |
 | Stage 2 ThinLTO + instrumentation | supported | supported | Linux exec-platform compiler tools; MSVC target workloads. |
 | Stage 3 ThinLTO + FDO application | supported | supported | Final package input under `--config=release`. |
-| Matching-Windows prebuilt compiler consumer | pending native CI | pending native CI | Step 11 implementation exists locally; the matching-runner cells have not run. |
+| Matching-Windows prebuilt compiler consumer | supported | supported | Final run `32566192209`; exact archive registration, compiler execution, action selection, and non-cached native `/MD`, DLL, and `/MT` tests. |
 | Cross-build on Linux x86-64 RBE | supported | supported | All three listed LLVM lines after matrix passes. |
 | Linux ARM64 FDO executor actions | supported | supported | Required where selected by the existing Stage 3 executor/profile graph. |
 | Native matching Windows source bootstrap | unclaimed | unclaimed | Only completed prebuilt compiler execution is tested on Windows. |
@@ -1958,11 +1997,6 @@ inspection above.
 - whether LLVM 23.1.0-rc1 retains the minimized-index behavior proved on LLVM
   21.1.8 and the default LLVM 22.1.8 line; Step 9.1 did not rebuild that
   compatibility line;
-- whether matching x86-64 and ARM64 Windows runners execute the registered
-  static-CRT compilers and complete the representative `/MD`, `/MT`, and DLL
-  consumer tests exactly as the local action graph predicts. Archive imports
-  and repository registration are proved; native execution awaits the
-  unpushed Step 11 CI cells.
 
 These are not claimed defects. Convert an item into an implementation change
 only after an exact failing action/artifact identifies its owner.
