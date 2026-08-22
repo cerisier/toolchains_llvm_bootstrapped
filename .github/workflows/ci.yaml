@@ -88,22 +88,80 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, windows-11-arm]
-        bazel_version: [latest]
-        folder:
-          - "e2e/rules_cc"
-          # - "e2e/rules_foreign_cc" TODO: Current tests only support linux
-          # - "e2e/rules_rust" - Need a bazel nightly with https://github.com/bazelbuild/bazel/pull/28038
-          - "e2e/cross_compilation"
+        include:
+          - os: windows-latest
+            bazel_version: latest
+            compiler: mingw
+            folder: e2e/rules_cc
+          - os: windows-11-arm
+            bazel_version: latest
+            compiler: mingw
+            folder: e2e/rules_cc
+          - os: windows-latest
+            bazel_version: latest
+            compiler: default
+            folder: e2e/cross_compilation
+          - os: windows-11-arm
+            bazel_version: latest
+            compiler: default
+            folder: e2e/cross_compilation
+          - os: windows-latest
+            bazel_version: latest
+            compiler: msvc
+            folder: e2e/rules_cc
+            link_machine: X64
+            machine: AMD64
+            repo_cpu: amd64
+            target_cpu: x86_64
+          - os: windows-11-arm
+            bazel_version: latest
+            compiler: msvc
+            folder: e2e/rules_cc
+            link_machine: ARM64
+            machine: ARM64
+            repo_cpu: arm64
+            target_cpu: aarch64
     runs-on: ${{ matrix.os }}
 
     # Configure a human readable name for each job
-    name: Test ${{ matrix.folder }} with Bazel ${{ matrix.bazel_version }} on ${{ matrix.os }}
+    name: Test ${{ matrix.folder }} with ${{ matrix.compiler }} on ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v6
 
+      - name: Build and register unpublished MSVC prebuilt
+        if: matrix.compiler == 'msvc'
+        env:
+          USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
+        shell: bash
+        run: |
+          common_flags=(
+            --config=remote
+            --config=release
+            --jobs=300
+            --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7
+            --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1
+            --repo_env=BAZEL_WINDOWS_SDK_EULA=1
+          )
+          target="//prebuilt/llvm:for_windows_${{ matrix.target_cpu }}_msvc"
+          bazel build \
+            "${common_flags[@]}" \
+            --remote_download_toplevel \
+            "${target}"
+          archive="$(bazel cquery \
+            "${common_flags[@]}" \
+            --output=files \
+            "${target}")"
+          python .github/workflows/register-local-llvm-prebuilt.py \
+            --archive "${archive}" \
+            --index extensions/llvm_toolchain_minimal_index.json \
+            --llvm-version-module MODULE.bazel \
+            --module e2e/rules_cc/MODULE.bazel \
+            --output-index e2e/rules_cc/llvm_toolchain_minimal_index.local.json \
+            --target windows-${{ matrix.repo_cpu }}
+
       - name: bazel test //...
+        if: matrix.compiler != 'msvc'
         id: bazel_test
         env:
           USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
@@ -125,6 +183,97 @@ jobs:
             --jobs=100 \
             $EXTRA_ARGS \
             //...
+
+      - name: Exercise unpublished MSVC prebuilt natively
+        if: matrix.compiler == 'msvc'
+        env:
+          USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
+        working-directory: e2e/rules_cc
+        shell: bash
+        run: |
+          common_flags=(
+            --lockfile_mode=off
+            --repository_cache=
+            --repo_contents_cache=
+            --jobs=50
+            --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7
+            --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1
+            --repo_env=BAZEL_WINDOWS_SDK_EULA=1
+            --extra_execution_platforms=@platforms//host:host,@llvm//platforms:windows_${{ matrix.target_cpu }}_msvc
+            --platforms=@llvm//platforms:windows_${{ matrix.target_cpu }}_msvc
+            --spawn_strategy=local
+          )
+          compiler_repo="@llvm-toolchain-minimal-windows-${{ matrix.repo_cpu }}"
+          bazel --bazelrc=.bazelrc build \
+            "${common_flags[@]}" \
+            "${compiler_repo}//:bin/llvm.exe" \
+            "${compiler_repo}//:bin/llvm-readobj.exe"
+          output_base="$(bazel --bazelrc=.bazelrc info output_base)"
+          compiler="${output_base}/$(bazel --bazelrc=.bazelrc cquery \
+            "${common_flags[@]}" \
+            --output=files \
+            "${compiler_repo}//:bin/llvm.exe")"
+          readobj="${output_base}/$(bazel --bazelrc=.bazelrc cquery \
+            "${common_flags[@]}" \
+            --output=files \
+            "${compiler_repo}//:bin/llvm-readobj.exe")"
+          sha256sum "${compiler}"
+          "${compiler}" --version
+          "${readobj}" \
+            --file-headers \
+            --coff-imports \
+            "${compiler}" | tee "${RUNNER_TEMP}/llvm-readobj.txt"
+          grep -F "IMAGE_FILE_MACHINE_${{ matrix.machine }}" \
+            "${RUNNER_TEMP}/llvm-readobj.txt"
+          if grep -Eiq 'MSVCP[0-9]+|VCRUNTIME[0-9]+' "${RUNNER_TEMP}/llvm-readobj.txt"; then
+            echo "Prebuilt compiler unexpectedly depends on the MSVC redistributable" >&2
+            exit 1
+          fi
+
+          bazel --bazelrc=.bazelrc aquery \
+            "${common_flags[@]}" \
+            --output=commands \
+            'mnemonic("CppCompile", //:windows_msvc_libcxx_behavior_md)' \
+            >"${RUNNER_TEMP}/msvc-compile-action.txt"
+          grep -F "llvm-toolchain-minimal-windows-${{ matrix.repo_cpu }}" \
+            "${RUNNER_TEMP}/msvc-compile-action.txt"
+          grep -F "clang-cl.exe" "${RUNNER_TEMP}/msvc-compile-action.txt"
+          grep -F "/MD" "${RUNNER_TEMP}/msvc-compile-action.txt"
+          if grep -Fq "toolchain/stage" "${RUNNER_TEMP}/msvc-compile-action.txt"; then
+            echo "MSVC consumer unexpectedly selected a source-built compiler" >&2
+            exit 1
+          fi
+          bazel --bazelrc=.bazelrc aquery \
+            "${common_flags[@]}" \
+            --output=commands \
+            'mnemonic("CppArchive", //:windows_msvc_libcxx_behavior_support)' \
+            >"${RUNNER_TEMP}/msvc-archive-action.txt"
+          grep -F "llvm-toolchain-minimal-windows-${{ matrix.repo_cpu }}" \
+            "${RUNNER_TEMP}/msvc-archive-action.txt"
+          grep -F "llvm-ar.exe" "${RUNNER_TEMP}/msvc-archive-action.txt"
+          bazel --bazelrc=.bazelrc aquery \
+            "${common_flags[@]}" \
+            --output=commands \
+            'mnemonic("CppLink", //:windows_msvc_libcxx_behavior_md)' \
+            >"${RUNNER_TEMP}/msvc-link-action.txt"
+          grep -F "llvm-toolchain-minimal-windows-${{ matrix.repo_cpu }}" \
+            "${RUNNER_TEMP}/msvc-link-action.txt"
+          grep -F "clang-cl.exe" "${RUNNER_TEMP}/msvc-link-action.txt"
+          grep -F "lld-link.exe" "${RUNNER_TEMP}/msvc-link-action.txt"
+          grep -F "/MACHINE:${{ matrix.link_machine }}" \
+            "${RUNNER_TEMP}/msvc-link-action.txt"
+
+          bazel --bazelrc=.bazelrc test \
+            "${common_flags[@]}" \
+            --strategy=TestRunner=local \
+            //:windows_msvc_libcxx_behavior_md \
+            //:windows_msvc_dll_behavior
+          bazel --bazelrc=.bazelrc test \
+            "${common_flags[@]}" \
+            --features=-dynamic_link_msvcrt \
+            --features=static_link_msvcrt \
+            --strategy=TestRunner=local \
+            //:windows_msvc_libcxx_behavior_mt
 
   # macOS: smoke build (//:main_default) plus the supported sanitizer e2e tests.
   test_macos:
@@ -205,18 +354,6 @@ jobs:
           - os: ubuntu-24.04-arm
             bazel_version: last_rc
             target_cpu: aarch64
-          - os: macos-15-intel
-            bazel_version: last_rc
-            target_cpu: x86_64
-          - os: macos-15
-            bazel_version: last_rc
-            target_cpu: aarch64
-          - os: windows-latest
-            bazel_version: latest
-            target_cpu: x86_64
-          - os: windows-11-arm
-            bazel_version: latest
-            target_cpu: aarch64
     runs-on: ${{ matrix.os }}
     name: Windows MSVC Layer 1 on ${{ matrix.os }}
 
@@ -261,45 +398,6 @@ jobs:
             --spawn_strategy=local \
             //:windows_msvc_libcxx_behavior_mt
 
-      - name: Execute native MSVC behavior
-        if: runner.os == 'Windows'
-        env:
-          USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
-        working-directory: e2e/rules_cc
-        shell: bash
-        run: |
-          bazel \
-            --bazelrc=.bazelrc \
-            test \
-            --repository_cache= \
-            --repo_contents_cache= \
-            --jobs=50 \
-            --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
-            --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
-            --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
-            --extra_execution_platforms=@platforms//host:host,@llvm//platforms:windows_${{ matrix.target_cpu }}_msvc \
-            --platforms=@llvm//platforms:windows_${{ matrix.target_cpu }}_msvc \
-            --spawn_strategy=local \
-            --strategy=TestRunner=local \
-            //:windows_msvc_libcxx_behavior_md \
-            //:windows_msvc_dll_behavior
-          bazel \
-            --bazelrc=.bazelrc \
-            test \
-            --repository_cache= \
-            --repo_contents_cache= \
-            --jobs=50 \
-            --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
-            --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
-            --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
-            --extra_execution_platforms=@platforms//host:host,@llvm//platforms:windows_${{ matrix.target_cpu }}_msvc \
-            --platforms=@llvm//platforms:windows_${{ matrix.target_cpu }}_msvc \
-            --features=-dynamic_link_msvcrt \
-            --features=static_link_msvcrt \
-            --spawn_strategy=local \
-            --strategy=TestRunner=local \
-            //:windows_msvc_libcxx_behavior_mt
-
       - name: Inspect representative MSVC artifacts
         if: runner.os == 'Linux'
         env:
@@ -340,39 +438,6 @@ jobs:
             --config=remote \
             --jobs=100 \
             --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7
-
-  windows_msvc_stage3_package:
-    strategy:
-      fail-fast: false
-      matrix:
-        target_cpu: [x86_64, aarch64]
-    runs-on: ubuntu-latest
-    name: Build Windows ${{ matrix.target_cpu }} MSVC Stage 3 package
-
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Build and identify Stage 3 package
-        shell: bash
-        run: |
-          common_flags=(
-            --config=remote
-            --config=release
-            --jobs=300
-            --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7
-            --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1
-            --repo_env=BAZEL_WINDOWS_SDK_EULA=1
-          )
-          target="//prebuilt/llvm:for_windows_${{ matrix.target_cpu }}_msvc"
-          bazel build \
-            "${common_flags[@]}" \
-            --remote_download_toplevel \
-            "${target}"
-          archive="$(bazel cquery \
-            "${common_flags[@]}" \
-            --output=files \
-            "${target}")"
-          sha256sum "${archive}"
 
   llvm_version_analysis:
     strategy:
