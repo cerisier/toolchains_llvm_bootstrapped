@@ -4,20 +4,6 @@ load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 package(default_visibility = ["//visibility:public"])
 
 cc_args(
-    name = "target",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:lto_backend",
-        "@rules_cc//cc/toolchains/actions:source_compile_actions",
-        "@rules_cc//cc/toolchains/actions:link_actions",
-    ],
-    args = select({
-        "//platforms/config:windows_x86_64_msvc": ["--target=x86_64-pc-windows-msvc"],
-        "//platforms/config:windows_aarch64_msvc": ["--target=aarch64-pc-windows-msvc"],
-        "//conditions:default": [],
-    }),
-)
-
-cc_args(
     name = "compatibility",
     actions = [
         "@rules_cc//cc/toolchains/actions:lto_backend",
@@ -42,9 +28,15 @@ cc_args(
     args = [
         "/clang:-nostdlibinc",
         "/clang:-nobuiltininc",
-        # Keep compiler-resource paths relative in .d files so Bazel can match
-        # them against declared tool inputs on remote execution hosts.
-        "/clang:-no-canonical-prefixes",
+    ],
+)
+
+cc_args(
+    name = "compile_defaults",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:source_compile_actions",
+    ],
+    args = [
         "/nologo",
         "/Brepro",
         "/Z7",
@@ -57,26 +49,7 @@ cc_args(
         "/D_CRT_SECURE_NO_WARNINGS",
         "/D_CRT_STDIO_ISO_WIDE_SPECIFIERS",
         "/D_LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS",
-        "/clang:-Wno-builtin-macro-redefined",
-        "/D__DATE__=\"redacted\"",
-        "/D__TIMESTAMP__=\"redacted\"",
-        "/D__TIME__=\"redacted\"",
-        "/clang:-ffile-compilation-dir=.",
         "/clang:-gno-codeview-command-line",
-    ],
-)
-
-# clang-cl owns final links and selects the declared sibling lld-link. The
-# direct spelling is required for InstalledDir discovery before /clang: flags
-# are translated for cc1.
-cc_args(
-    name = "driver_link",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:link_actions",
-    ],
-    args = [
-        "-no-canonical-prefixes",
-        "/clang:-fuse-ld=lld",
     ],
 )
 
@@ -92,22 +65,6 @@ cc_args(
     format = {
         "resource_dir": "//runtimes:resource_directory",
     },
-)
-
-cc_args(
-    name = "runtime_optimization_flags",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:source_compile_actions",
-    ],
-    args = select({
-        "//config:runtimes_optimization_mode_debug": [
-            "/Od",
-        ],
-        "//conditions:default": [
-            "/DNDEBUG",
-            "/O2",
-        ],
-    }),
 )
 
 cc_args(
@@ -266,32 +223,29 @@ cc_args(
 )
 
 cc_args_list(
-    name = "toolchain_prefix_args",
+    name = "platform_compile_args",
     args = [
-        ":target",
         ":compatibility",
-        ":hermetic_compile",
+        ":compile_defaults",
         ":libcxx_include",
-        ":driver_link",
     ],
 )
 
 cc_args_list(
-    name = "toolchain_suffix_args",
+    name = "sdk_compile_args",
     args = [
         ":sdk_case_overlay",
         ":sdk_includes",
+    ],
+)
+
+cc_args_list(
+    name = "default_link_flags",
+    args = [
         ":sdk_library_paths",
         ":msvc_com_support_library_path",
     ] + select({
         "//toolchain/features/msvc:static_crt_config": [":msvc_static_runtime_library_path"],
         "//conditions:default": [":msvc_dynamic_runtime_library_path"],
-    }) + select({
-        "//toolchain:runtimes_all": [
-            ":resource_dir",
-            "@llvm//toolchain/args:rtlib_compiler_rt",
-            ":libcxx_library_search_path",
-        ],
-        "//conditions:default": [],
     }),
 )

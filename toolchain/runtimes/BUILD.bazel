@@ -6,6 +6,7 @@ load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 cc_args_list(
     name = "hermetic_link_flags",
     args = select({
+        "//constraints/windows/abi:msvc": [],
         "@platforms//os:macos": [],
         "//conditions:default": [
             "//toolchain/runtimes/args:hermetic_link_flags",
@@ -16,6 +17,7 @@ cc_args_list(
 cc_args_list(
     name = "default_link_flags",
     args = select({
+        "//constraints/windows/abi:msvc": ["//toolchain:default_link_flags"],
         "@platforms//os:macos": [
             "//toolchain/args/macos:default_link_flags",
         ],
@@ -50,9 +52,10 @@ cc_args_list(
 
 cc_args_list(
     name = "windows_hosted_c_toolchain_args",
-    args = [
-        "//toolchain/args/windows:mingw_headers_include_search_paths",
-    ],
+    args = select({
+        "//constraints/windows/abi:msvc": ["//toolchain:windows_toolchain_args"],
+        "//conditions:default": ["//toolchain/args/windows:mingw_headers_include_search_paths"],
+    }),
     visibility = ["//toolchain:__subpackages__"],
 )
 
@@ -74,13 +77,21 @@ cc_args_list(
 )
 
 cc_args_list(
+    name = "windows_platform_specific_args",
+    args = select({
+        "//constraints/windows/abi:msvc": ["//toolchain:windows_toolchain_args"],
+        "//conditions:default": [],
+    }),
+)
+
+cc_args_list(
     name = "platform_specific_args",
     args = select({
         "@platforms//os:macos": [
             "//toolchain:macos_toolchain_args",
         ],
         "@platforms//os:linux": [],
-        "@platforms//os:windows": [],
+        "@platforms//os:windows": [":windows_platform_specific_args"],
         "@platforms//os:none": [],
     }),
     visibility = ["//toolchain:__subpackages__"],
@@ -149,7 +160,7 @@ cc_args_list(
 #TODO(cerisier): Maybe with a _gt_x select we could reuse this everywhere.
 
 cc_args_list(
-    name = "resource_dir",
+    name = "generic_resource_dir",
     args = select({
         "//toolchain:runtimes_all": [],
         "//toolchain:runtimes_stage1": ["//toolchain:resource_dir"],
@@ -159,7 +170,23 @@ cc_args_list(
 )
 
 cc_args_list(
-    name = "default_startfiles",
+    name = "msvc_resource_dir",
+    args = select({
+        "//toolchain:runtimes_all": ["//toolchain:resource_dir"],
+        "//conditions:default": [],
+    }),
+)
+
+cc_args_list(
+    name = "resource_dir",
+    args = select({
+        "//constraints/windows/abi:msvc": [":msvc_resource_dir"],
+        "//conditions:default": [":generic_resource_dir"],
+    }),
+)
+
+cc_args_list(
+    name = "generic_default_startfiles",
     args = select({
         "//toolchain:runtimes_all": [],
         "//toolchain:runtimes_stage1": ["//toolchain:default_startfiles"],
@@ -169,7 +196,15 @@ cc_args_list(
 )
 
 cc_args_list(
-    name = "rtlib",
+    name = "default_startfiles",
+    args = select({
+        "//constraints/windows/abi:msvc": [],
+        "//conditions:default": [":generic_default_startfiles"],
+    }),
+)
+
+cc_args_list(
+    name = "generic_rtlib",
     args = select({
         "//toolchain:runtimes_all": [],
         "//toolchain:runtimes_stage1": [
@@ -182,9 +217,25 @@ cc_args_list(
     }),
 )
 
+cc_args_list(
+    name = "msvc_rtlib",
+    args = select({
+        "//toolchain:runtimes_all": ["//toolchain:rtlib"],
+        "//conditions:default": [],
+    }),
+)
+
+cc_args_list(
+    name = "rtlib",
+    args = select({
+        "//constraints/windows/abi:msvc": [":msvc_rtlib"],
+        "//conditions:default": [":generic_rtlib"],
+    }),
+)
+
 #TODO(cerisier): Need a level of indirection to handle OS differences between stages.
 cc_args_list(
-    name = "default_libs",
+    name = "generic_default_libs",
     args = select({
         "//toolchain:runtimes_all": [],
         "//toolchain:runtimes_stage1": [
@@ -194,6 +245,14 @@ cc_args_list(
             "//toolchain:default_libs",
         ],
         "//toolchain:runtimes_none": [],
+    }),
+)
+
+cc_args_list(
+    name = "default_libs",
+    args = select({
+        "//constraints/windows/abi:msvc": [],
+        "//conditions:default": [":generic_default_libs"],
     }),
 )
 

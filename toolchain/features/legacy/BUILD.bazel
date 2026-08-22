@@ -6,11 +6,14 @@ load("@rules_cc//cc/toolchains:nested_args.bzl", "cc_nested_args")
 cc_args(
     name = "legacy_default_cxx_compile_flags",
     actions = [
-        "@rules_cc//cc/toolchains/actions:cpp_compile_actions",
+        "@rules_cc//cc/toolchains/actions:cpp_compile",
+        "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
+        "@rules_cc//cc/toolchains/actions:linkstamp_compile",
     ],
-    args = [
-        "-std=c++17",
-    ],
+    args = select({
+        "//constraints/windows/abi:msvc": ["/std:c++17"],
+        "//conditions:default": ["-std=c++17"],
+    }),
 )
 
 cc_args(
@@ -19,24 +22,28 @@ cc_args(
         "@rules_cc//cc/toolchains/actions:compile_actions",
     ],
     args = select({
+        "//constraints/windows/abi:msvc": [],
         "@platforms//os:none": [],
         "//conditions:default": ["-fstack-protector"],
-    }) + [
-        # All warnings are enabled.
-        "-Wall",
-        # Enable a few more warnings that aren't part of -Wall.
-        "-Wthread-safety",
-        "-Wself-assign",
-        # Disable problematic warnings.
-        "-Wunused-but-set-parameter",
-        # has false positives
-        "-Wno-free-nonheap-object",
-        # Enable coloring even if there's no attached terminal. Bazel removes the
-        # escape sequences if --nocolor is specified.
-        "-fcolor-diagnostics",
-        # Keep stack frames for debugging, even in opt mode.
-        "-fno-omit-frame-pointer",
-    ],
+    }) + select({
+        "//constraints/windows/abi:msvc": [],
+        "//conditions:default": [
+            # All warnings are enabled.
+            "-Wall",
+            # Enable a few more warnings that aren't part of -Wall.
+            "-Wthread-safety",
+            "-Wself-assign",
+            # Disable problematic warnings.
+            "-Wunused-but-set-parameter",
+            # has false positives
+            "-Wno-free-nonheap-object",
+            # Enable coloring even if there's no attached terminal. Bazel removes the
+            # escape sequences if --nocolor is specified.
+            "-fcolor-diagnostics",
+            # Keep stack frames for debugging, even in opt mode.
+            "-fno-omit-frame-pointer",
+        ],
+    }),
 )
 
 cc_feature(
@@ -89,10 +96,7 @@ cc_feature(
 
 cc_feature_set(
     name = "all_legacy_builtin_features",
-    all_of = select({
-        "//constraints/windows/abi:msvc": [],
-        "//conditions:default": [":default_compile_flags"],
-    }),
+    all_of = [":default_compile_flags"],
     visibility = ["//visibility:public"],
 )
 

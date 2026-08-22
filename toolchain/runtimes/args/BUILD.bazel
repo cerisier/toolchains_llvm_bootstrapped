@@ -14,7 +14,7 @@ OPT_FLAGS_COMPILE_ACTIONS = [
 
 # libc must be compiled with optimizations (should match with above)
 cc_args(
-    name = "opt_compile_flags",
+    name = "opt_clang_compile_flags",
     # compile_actions minus assemble_actions (only preprocess_assemble)
     actions = OPT_FLAGS_COMPILE_ACTIONS,
     args = [
@@ -24,13 +24,44 @@ cc_args(
 )
 
 cc_args(
-    name = "dbg_compile_flags",
+    name = "opt_clang_cl_compile_flags",
+    actions = ["@rules_cc//cc/toolchains/actions:source_compile_actions"],
+    args = [
+        "/DNDEBUG",
+        "/O2",
+    ],
+)
+
+cc_args_list(
+    name = "opt_compile_flags",
+    args = select({
+        "//constraints/windows/abi:msvc": [":opt_clang_cl_compile_flags"],
+        "//conditions:default": [":opt_clang_compile_flags"],
+    }),
+)
+
+cc_args(
+    name = "dbg_clang_compile_flags",
     actions = OPT_FLAGS_COMPILE_ACTIONS,
     args = [
         "-D_DEBUG",
         "-O0",
         "-g",
     ],
+)
+
+cc_args(
+    name = "dbg_clang_cl_compile_flags",
+    actions = ["@rules_cc//cc/toolchains/actions:source_compile_actions"],
+    args = ["/Od"],
+)
+
+cc_args_list(
+    name = "dbg_compile_flags",
+    args = select({
+        "//constraints/windows/abi:msvc": [":dbg_clang_cl_compile_flags"],
+        "//conditions:default": [":dbg_clang_compile_flags"],
+    }),
 )
 
 cc_args_list(

@@ -10,6 +10,7 @@ load("@rules_cc//cc/toolchains:feature_constraint.bzl", "cc_feature_constraint")
 load("@rules_cc//cc/toolchains:feature_set.bzl", "cc_feature_set")
 load("@rules_cc//cc/toolchains:mutually_exclusive_category.bzl", "cc_mutually_exclusive_category")
 load("@rules_cc//cc/toolchains:nested_args.bzl", "cc_nested_args")
+load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 load("//config:defs.bzl", "SANITIZERS")
 load(":validation.bzl", "msvc_configuration_validation")
 
@@ -23,12 +24,6 @@ _COMPILE_ACTIONS = [
     "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
 ]
 
-_CXX_COMPILE_ACTIONS = [
-    "@rules_cc//cc/toolchains/actions:cpp_compile",
-    "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
-    "@rules_cc//cc/toolchains/actions:linkstamp_compile",
-]
-
 _LINK_ACTIONS = ["@rules_cc//cc/toolchains/actions:link_actions"]
 
 _LTO_INDEX_ACTIONS = [
@@ -36,77 +31,6 @@ _LTO_INDEX_ACTIONS = [
     "@rules_cc//cc/toolchains/actions:lto_index_for_executable",
     "@rules_cc//cc/toolchains/actions:lto_index_for_nodeps_dynamic_library",
 ]
-
-cc_args(
-    name = "cxx17_args",
-    actions = _CXX_COMPILE_ACTIONS,
-    args = ["/std:c++17"],
-)
-
-cc_feature(
-    name = "cxx17",
-    args = [":cxx17_args"],
-    feature_name = "msvc_cxx17",
-)
-
-cc_args(
-    name = "llvm_release_no_exceptions_args",
-    actions = _CXX_COMPILE_ACTIONS,
-    args = ["/EHs-c-"],
-    requires_any_of = [":llvm_release_no_exceptions"],
-)
-
-cc_feature(
-    name = "llvm_release_no_exceptions",
-    feature_name = "llvm_release_no_exceptions",
-)
-
-cc_args(
-    name = "llvm_release_no_rtti_args",
-    actions = _CXX_COMPILE_ACTIONS,
-    args = ["/GR-"],
-    requires_any_of = [":llvm_release_no_rtti"],
-)
-
-cc_feature(
-    name = "llvm_release_no_rtti",
-    feature_name = "llvm_release_no_rtti",
-)
-
-cc_args(
-    name = "llvm_release_omit_frame_pointer_args",
-    actions = _COMPILE_ACTIONS + ["@rules_cc//cc/toolchains/actions:lto_backend"],
-    args = ["/clang:-fomit-frame-pointer"],
-    requires_any_of = [":llvm_release_omit_frame_pointer"],
-)
-
-cc_feature(
-    name = "llvm_release_omit_frame_pointer",
-    feature_name = "llvm_release_omit_frame_pointer",
-)
-
-cc_args(
-    name = "fdo_optimize_compile_args",
-    # Instrumentation profiles are consumed while producing ThinLTO bitcode.
-    # The backends consume the resulting profile metadata; rules_cc therefore
-    # does not expose fdo_profile_path to fdo_optimize backend actions.
-    actions = _COMPILE_ACTIONS,
-    args = [
-        "/clang:-fprofile-use={fdo_profile_path}",
-        "/clang:-Wno-profile-instr-unprofiled",
-        "/clang:-Wno-profile-instr-out-of-date",
-    ],
-    format = {
-        "fdo_profile_path": "@rules_cc//cc/toolchains/variables:fdo_profile_path",
-    },
-    requires_not_none = "@rules_cc//cc/toolchains/variables:fdo_profile_path",
-)
-
-cc_feature(
-    name = "fdo_optimize",
-    args = [":fdo_optimize_compile_args"],
-    overrides = "@rules_cc//cc/toolchains/features/legacy:fdo_optimize",
-)
 
 cc_feature(
     name = "supports_start_end_lib",
@@ -252,83 +176,6 @@ cc_feature(
 cc_feature_constraint(
     name = "thin_lto_disabled",
     none_of = [":thin_lto"],
-)
-
-config_setting(
-    name = "static_crt_config",
-    values = {"features": "static_link_msvcrt"},
-)
-
-cc_args(
-    name = "opt_compile_args",
-    actions = _COMPILE_ACTIONS + ["@rules_cc//cc/toolchains/actions:lto_backend"],
-    args = [
-        "/O2",
-        "/DNDEBUG",
-        "/Gy",
-        "/Gw",
-        "/Zc:inline",
-    ],
-)
-
-cc_args(
-    name = "dbg_compile_args",
-    actions = _COMPILE_ACTIONS + ["@rules_cc//cc/toolchains/actions:lto_backend"],
-    args = [
-        "/Od",
-        "/Z7",
-    ],
-)
-
-cc_feature(
-    name = "opt",
-    args = select({
-        "//toolchain:runtimes_none": [],
-        "//toolchain:runtimes_stage1": [],
-        "//toolchain:runtimes_stage1_hosted": [],
-        "//conditions:default": [":opt_compile_args"],
-    }),
-    feature_name = "_underlying_msvc_opt",
-    requires_any_of = [":opt_stub"],
-)
-
-cc_feature(
-    name = "opt_stub",
-    overrides = "@rules_cc//cc/toolchains/features:opt",
-)
-
-cc_feature(
-    name = "dbg",
-    args = select({
-        "//toolchain:runtimes_none": [],
-        "//toolchain:runtimes_stage1": [],
-        "//toolchain:runtimes_stage1_hosted": [],
-        "//conditions:default": [":dbg_compile_args"],
-    }),
-    feature_name = "_underlying_msvc_dbg",
-    implies = [":generate_pdb_file"],
-    requires_any_of = [":dbg_stub"],
-)
-
-cc_feature(
-    name = "dbg_stub",
-    overrides = "@rules_cc//cc/toolchains/features:dbg",
-)
-
-cc_feature(
-    name = "runtime_optimization",
-    args = select({
-        "//toolchain:runtimes_none": ["//toolchain/args/msvc:runtime_optimization_flags"],
-        "//toolchain:runtimes_stage1": ["//toolchain/args/msvc:runtime_optimization_flags"],
-        "//toolchain:runtimes_stage1_hosted": ["//toolchain/args/msvc:runtime_optimization_flags"],
-        "//conditions:default": [],
-    }),
-    feature_name = "msvc_runtime_optimization",
-)
-
-cc_feature(
-    name = "no_legacy_features",
-    feature_name = "no_legacy_features",
 )
 
 _UNSUPPORTED_FEATURES = [
@@ -895,6 +742,11 @@ cc_feature(
     overrides = "@rules_cc//cc/toolchains/features:static_linking_mode",
 )
 
+config_setting(
+    name = "static_crt_config",
+    values = {"features": "static_link_msvcrt"},
+)
+
 cc_args(
     name = "static_crt_compile_args",
     actions = _COMPILE_ACTIONS + _LINK_ACTIONS,
@@ -915,6 +767,14 @@ cc_args(
 cc_feature(
     name = "dynamic_link_msvcrt",
     feature_name = "dynamic_link_msvcrt",
+)
+
+cc_args_list(
+    name = "crt_compile_args",
+    args = select({
+        ":static_crt_config": [":static_crt_compile_args"],
+        "//conditions:default": [":dynamic_crt_compile_args"],
+    }),
 )
 
 cc_args(
@@ -995,19 +855,8 @@ cc_args(
 )
 
 cc_feature(
-    name = "generate_pdb_file",
-    args = [":pdb_args"],
-    feature_name = "generate_pdb_file",
-)
-
-cc_feature(
     name = "compiler_param_file",
     feature_name = "compiler_param_file",
-)
-
-cc_feature(
-    name = "archive_param_file",
-    feature_name = "archive_param_file",
 )
 
 cc_feature(
@@ -1015,42 +864,21 @@ cc_feature(
     feature_name = "windows_quoting_for_param_files",
 )
 
-cc_feature(
-    name = "targets_windows",
-    feature_name = "targets_windows",
-)
-
-cc_feature(
-    name = "copy_dynamic_libraries_to_binary",
-    feature_name = "copy_dynamic_libraries_to_binary",
-)
-
 cc_feature_set(
-    name = "known_features",
+    name = "adapter_known_features",
     all_of = [
-        ":archive_param_file",
         ":compiler_param_file",
-        ":copy_dynamic_libraries_to_binary",
-        ":cxx17",
         ":def_file",
         ":dynamic_link_msvcrt",
-        ":fdo_optimize",
-        ":generate_pdb_file",
         ":interface_library",
-        ":llvm_release_no_exceptions",
-        ":llvm_release_no_rtti",
-        ":llvm_release_omit_frame_pointer",
         ":link_defaults",
-        ":runtime_optimization",
         ":supported_configuration",
         ":supports_start_end_lib",
         ":static_link_msvcrt",
+        ":dynamic_linking_mode",
         ":static_linking_mode",
-        ":targets_windows",
         ":thin_lto",
         ":windows_quoting_for_param_files",
-        "@llvm//toolchain/features:no_windows_export_all_symbols",
-        "@llvm//toolchain/features:windows_export_all_symbols",
     ] + [
         ":unsupported_" + feature
         for feature in _UNSUPPORTED_FEATURES
@@ -1058,19 +886,14 @@ cc_feature_set(
 )
 
 cc_feature_set(
-    name = "enabled_features",
+    name = "adapter_enabled_features",
     all_of = [
-        ":archive_param_file",
         ":compiler_param_file",
-        ":copy_dynamic_libraries_to_binary",
-        ":cxx17",
         ":def_file",
         ":dynamic_link_msvcrt",
         ":interface_library",
         ":link_defaults",
-        ":runtime_optimization",
         ":supported_configuration",
-        ":targets_windows",
         ":windows_quoting_for_param_files",
     ],
 )

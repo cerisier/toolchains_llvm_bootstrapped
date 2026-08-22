@@ -1,88 +1,71 @@
 load("@rules_cc//cc/toolchains:feature_set.bzl", "cc_feature_set")
 load("@rules_cc//cc/toolchains:toolchain.bzl", _cc_toolchain = "cc_toolchain")
+load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 
-def _msvc_cc_toolchain(name, tool_map, module_map, extra_args):
+def cc_toolchain(name, tool_map, module_map = None, extra_args = None):
+    extra_args = extra_args or []
     cc_feature_set(
-        name = name + "_known_features",
+        name = name + "_msvc_known_features",
         all_of = [
-            "@llvm//toolchain/features/msvc:opt",
-            "@llvm//toolchain/features/msvc:opt_stub",
-            "@llvm//toolchain/features/msvc:dbg",
-            "@llvm//toolchain/features/msvc:dbg_stub",
+            "@llvm//toolchain/features:opt",
+            "@llvm//toolchain/features:opt_stub",
+            "@llvm//toolchain/features:dbg",
+            "@llvm//toolchain/features:dbg_stub",
+            "@llvm//toolchain/features:archive_param_file",
+            "@llvm//toolchain/features:copy_dynamic_libraries_to_binary",
+            "@llvm//toolchain/features:fdo_optimize",
+            "@llvm//toolchain/features:generate_pdb_file",
+            "@llvm//toolchain/features:llvm_release_features",
+            "@llvm//toolchain/features:no_windows_export_all_symbols",
             "@llvm//toolchain/features:static_link_cpp_runtimes",
-            "@llvm//toolchain/features/msvc:known_features",
-            "@llvm//toolchain/features/msvc:legacy_replacements",
-            "@llvm//toolchain/features/msvc:no_legacy_features",
-            "@llvm//toolchain/features/msvc:dynamic_linking_mode",
+            "@llvm//toolchain/features:targets_windows",
+            "@llvm//toolchain/features:windows_export_all_symbols",
+            "@llvm//toolchain/features/legacy:all_legacy_builtin_features",
+            "@llvm//toolchain/features/legacy:experimental_replace_legacy_action_config_features",
+            "@llvm//toolchain/features/msvc:adapter_known_features",
         ],
     )
 
     cc_feature_set(
-        name = name + "_enabled_features",
+        name = name + "_msvc_enabled_features",
         all_of = [
-            "@llvm//toolchain/features/msvc:opt",
-            "@llvm//toolchain/features/msvc:dbg",
+            "@llvm//toolchain/features:opt",
+            "@llvm//toolchain/features:dbg",
+            "@llvm//toolchain/features:archive_param_file",
             "@llvm//toolchain/features:static_link_cpp_runtimes",
-            "@llvm//toolchain/features/msvc:enabled_features",
-            "@llvm//toolchain/features/msvc:no_legacy_features",
+            "@llvm//toolchain/features:targets_windows",
+            "@llvm//toolchain/features/legacy:all_legacy_builtin_features",
+            "@llvm//toolchain/features/msvc:adapter_enabled_features",
             # Always last: contains user compile/link arguments.
-            "@llvm//toolchain/features/msvc:legacy_replacements",
+            "@llvm//toolchain/features/legacy:experimental_replace_legacy_action_config_features",
         ],
     )
 
-    _cc_toolchain(
-        name = name,
-        # libc++, Clang's resource headers, then VC/UCRT. This keeps libc++'s
-        # C wrapper headers first while include_next <stddef.h> reaches
-        # Clang's max_align_t before the UCRT compatibility header.
-        args = [
-            "@llvm//toolchain/args/msvc:toolchain_prefix_args",
-            # ABI validation and CRT selection are toolchain invariants, not
-            # user-disableable features.
-            "@llvm//toolchain/features/msvc:configuration_validation_args",
-            # Release policy precedes user compile flags so callers retain the
-            # usual last-flag-wins override behavior.
-            "@llvm//toolchain/features/msvc:llvm_release_no_exceptions_args",
-            "@llvm//toolchain/features/msvc:llvm_release_no_rtti_args",
-            "@llvm//toolchain/features/msvc:llvm_release_omit_frame_pointer_args",
-        ] + select({
-            "@llvm//toolchain/features/msvc:static_crt_config": [
-                "@llvm//toolchain/features/msvc:static_crt_compile_args",
-            ],
-            "//conditions:default": [
-                "@llvm//toolchain/features/msvc:dynamic_crt_compile_args",
-            ],
-        }) + extra_args + [
-            "@llvm//toolchain/args/msvc:toolchain_suffix_args",
-        ],
-        artifact_name_patterns = [
-            "@llvm//toolchain:windows_msvc_object_file_pattern",
-            "@llvm//toolchain:windows_msvc_static_library_pattern",
-            "@llvm//toolchain:windows_msvc_alwayslink_static_library_pattern",
-            "@llvm//toolchain:windows_executable_pattern",
-            "@llvm//toolchain:windows_dynamic_library_pattern",
-            "@llvm//toolchain:windows_interface_library_pattern",
-        ],
-        compiler = "clang-cl",
-        # The MSVC driver finds static-only libc++ through its declared library
-        # directory and libc++'s COFF auto-link directive. Neither rules_cc
-        # runtime attribute owns this configuration-wide input.
-        dynamic_runtime_lib = "@llvm//runtimes:none",
-        enabled_features = [name + "_enabled_features"],
-        known_features = [name + "_known_features"],
-        module_map = module_map,
-        static_runtime_lib = "@llvm//runtimes:none",
-        supports_header_parsing = False,
-        supports_param_files = True,
-        tool_map = tool_map,
-    )
-
-def cc_toolchain(name, tool_map, module_map = None, extra_args = [], msvc = False):
-    if msvc:
-        _msvc_cc_toolchain(name, tool_map, module_map, extra_args)
-        return
     cc_feature_set(
-        name = name + "_known_features",
+        name = name + "_msvc_runtimes_enabled_features",
+        all_of = [
+            "@llvm//toolchain/features:archive_param_file",
+            "@llvm//toolchain/features:static_link_cpp_runtimes",
+            "@llvm//toolchain/features:targets_windows",
+            "@llvm//toolchain/features/legacy:all_legacy_builtin_features",
+            "@llvm//toolchain/features/msvc:adapter_enabled_features",
+            # Always last: contains user compile/link arguments.
+            "@llvm//toolchain/features/legacy:experimental_replace_legacy_action_config_features",
+        ],
+    )
+
+    cc_feature_set(
+        name = name + "_msvc_selected_enabled_features",
+        all_of = select({
+            "@llvm//toolchain:runtimes_none": [name + "_msvc_runtimes_enabled_features"],
+            "@llvm//toolchain:runtimes_stage1": [name + "_msvc_runtimes_enabled_features"],
+            "@llvm//toolchain:runtimes_stage1_hosted": [name + "_msvc_runtimes_enabled_features"],
+            "//conditions:default": [name + "_msvc_enabled_features"],
+        }),
+    )
+
+    cc_feature_set(
+        name = name + "_generic_known_features",
         all_of = [
             "@rules_cc//cc/toolchains/args/layering_check:layering_check",
             "@rules_cc//cc/toolchains/args/layering_check:use_module_maps",
@@ -117,7 +100,7 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = [], msvc = Fals
     )
 
     cc_feature_set(
-        name = name + "_enabled_features",
+        name = name + "_generic_enabled_features",
         all_of = select({
             "@platforms//os:linux": [
                 "@llvm//toolchain/features/interface_libraries:feature",
@@ -160,7 +143,7 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = [], msvc = Fals
     )
 
     cc_feature_set(
-        name = name + "_runtimes_only_enabled_features",
+        name = name + "_generic_runtimes_only_enabled_features",
         all_of = [
             "@llvm//toolchain/features:prefer_pic_for_opt_binaries",
             "@llvm//toolchain/features:sanitize_pwd",
@@ -172,35 +155,9 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = [], msvc = Fals
         ],
     )
 
-    _cc_toolchain(
-        name = name,
-        args = select({
-            "@llvm//toolchain:runtimes_none": ["@llvm//toolchain/runtimes:toolchain_args"],
-            "@llvm//toolchain:runtimes_stage1": ["@llvm//toolchain/runtimes:toolchain_args"],
-            "@llvm//toolchain:runtimes_stage1_hosted": ["@llvm//toolchain/runtimes:toolchain_args"],
-            "//conditions:default": ["@llvm//toolchain:toolchain_args"],
-        }) + [
-            # Release policy precedes user compile flags so callers retain the
-            # usual last-flag-wins override behavior.
-            "@llvm//toolchain/features:llvm_release_no_exceptions_args",
-            "@llvm//toolchain/features:llvm_release_no_rtti_args",
-            "@llvm//toolchain/features:llvm_release_omit_frame_pointer_args",
-            # TODO: rules_cc passes extra args to these actions, ideally these would be fixed in rules_cc.
-            "@llvm//toolchain/args:ignore_unused_command_line_argument",
-        ] + extra_args,
-        supports_header_parsing = True,
-        supports_param_files = True,
-        artifact_name_patterns = select({
-            "@platforms//os:macos": [
-                "@llvm//toolchain:macos_dynamic_library_pattern",
-                "@llvm//toolchain:macos_interface_library_pattern",
-            ],
-            "@platforms//os:windows": [
-                "@llvm//toolchain:windows_executable_pattern",
-            ],
-            "//conditions:default": [],
-        }),
-        known_features = select({
+    cc_feature_set(
+        name = name + "_generic_selected_known_features",
+        all_of = select({
             "@llvm//toolchain:runtimes_none": [
                 "@llvm//toolchain/features:external_include_paths",
                 "@llvm//toolchain/features:fdo_optimize",
@@ -213,27 +170,147 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = [], msvc = Fals
                 "@llvm//toolchain/features:external_include_paths",
                 "@llvm//toolchain/features:fdo_optimize",
             ],
-            "//conditions:default": [name + "_known_features"],
+            "//conditions:default": [name + "_generic_known_features"],
         }) + ["@llvm//toolchain/features:llvm_release_features"],
-        enabled_features = select({
-            "@llvm//toolchain:runtimes_none": [name + "_runtimes_only_enabled_features"],
-            "@llvm//toolchain:runtimes_stage1": [name + "_runtimes_only_enabled_features"],
-            "@llvm//toolchain:runtimes_stage1_hosted": [name + "_runtimes_only_enabled_features"],
-            "//conditions:default": [name + "_enabled_features"],
+    )
+
+    cc_feature_set(
+        name = name + "_generic_selected_enabled_features",
+        all_of = select({
+            "@llvm//toolchain:runtimes_none": [name + "_generic_runtimes_only_enabled_features"],
+            "@llvm//toolchain:runtimes_stage1": [name + "_generic_runtimes_only_enabled_features"],
+            "@llvm//toolchain:runtimes_stage1_hosted": [name + "_generic_runtimes_only_enabled_features"],
+            "//conditions:default": [name + "_generic_enabled_features"],
         }),
-        tool_map = tool_map,
-        module_map = module_map,
-        static_runtime_lib = select({
+    )
+
+    cc_feature_set(
+        name = name + "_selected_known_features",
+        all_of = select({
+            "@llvm//constraints/windows/abi:msvc": [name + "_msvc_known_features"],
+            "//conditions:default": [name + "_generic_selected_known_features"],
+        }),
+    )
+
+    cc_feature_set(
+        name = name + "_selected_enabled_features",
+        all_of = select({
+            "@llvm//constraints/windows/abi:msvc": [name + "_msvc_selected_enabled_features"],
+            "//conditions:default": [name + "_generic_selected_enabled_features"],
+        }),
+    )
+
+    cc_args_list(
+        name = name + "_semantic_args",
+        args = select({
+            "@llvm//toolchain:runtimes_none": ["@llvm//toolchain/runtimes:toolchain_args"],
+            "@llvm//toolchain:runtimes_stage1": ["@llvm//toolchain/runtimes:toolchain_args"],
+            "@llvm//toolchain:runtimes_stage1_hosted": ["@llvm//toolchain/runtimes:toolchain_args"],
+            "//conditions:default": ["@llvm//toolchain:toolchain_args"],
+        }) + select({
+            # ABI validation is a toolchain invariant, not a user-disableable
+            # feature.
+            "@llvm//constraints/windows/abi:msvc": ["@llvm//toolchain/features/msvc:configuration_validation_args"],
+            "//conditions:default": [],
+        }) + [
+            # Release policy precedes user compile flags so callers retain the
+            # usual last-flag-wins override behavior.
+            "@llvm//toolchain/features:llvm_release_no_exceptions_args",
+            "@llvm//toolchain/features:llvm_release_no_rtti_args",
+            "@llvm//toolchain/features:llvm_release_omit_frame_pointer_args",
+        ] + select({
+            "@llvm//constraints/windows/abi:msvc": ["@llvm//toolchain/features/msvc:crt_compile_args"],
+            "//conditions:default": [
+                # TODO: rules_cc passes extra args to these actions, ideally these would be fixed in rules_cc.
+                "@llvm//toolchain/args:ignore_unused_command_line_argument",
+            ],
+        }),
+    )
+
+    native.alias(
+        name = name + "_generic_static_runtime_lib",
+        actual = select({
             "@llvm//toolchain:runtimes_none": "@llvm//runtimes:none",
             "@llvm//toolchain:runtimes_stage1": "@llvm//runtimes:none",
             "@llvm//toolchain:runtimes_stage1_hosted": "@llvm//runtimes:none",
             "//conditions:default": "@llvm//runtimes:static_runtime_lib",
         }),
-        dynamic_runtime_lib = select({
+    )
+
+    native.alias(
+        name = name + "_static_runtime_lib",
+        actual = select({
+            "@llvm//constraints/windows/abi:msvc": "@llvm//runtimes:none",
+            "//conditions:default": name + "_generic_static_runtime_lib",
+        }),
+    )
+
+    native.alias(
+        name = name + "_generic_dynamic_runtime_lib",
+        actual = select({
             "@llvm//toolchain:runtimes_none": "@llvm//runtimes:none",
             "@llvm//toolchain:runtimes_stage1": "@llvm//runtimes:none",
             "@llvm//toolchain:runtimes_stage1_hosted": "@llvm//runtimes:none",
             "//conditions:default": "@llvm//runtimes:dynamic_runtime_lib",
         }),
-        compiler = "clang",
+    )
+
+    native.alias(
+        name = name + "_dynamic_runtime_lib",
+        actual = select({
+            "@llvm//constraints/windows/abi:msvc": "@llvm//runtimes:none",
+            "//conditions:default": name + "_generic_dynamic_runtime_lib",
+        }),
+    )
+
+    _cc_toolchain(
+        name = name,
+        # libc++ headers are part of semantic platform args. Keep Clang's
+        # declared resource headers between them and VC/UCRT so libc++
+        # include_next wrappers resolve Clang definitions first.
+        args = [name + "_semantic_args"] + extra_args + select({
+            "@llvm//constraints/windows/abi:msvc": ["@llvm//toolchain/args/msvc:sdk_compile_args"],
+            "//conditions:default": [],
+        }),
+        supports_header_parsing = select({
+            "@llvm//constraints/windows/abi:msvc": False,
+            "//conditions:default": True,
+        }),
+        supports_param_files = True,
+        artifact_name_patterns = select({
+            "@llvm//platforms/config:windows_x86_64_msvc": [
+                "@llvm//toolchain:windows_msvc_object_file_pattern",
+                "@llvm//toolchain:windows_msvc_static_library_pattern",
+                "@llvm//toolchain:windows_msvc_alwayslink_static_library_pattern",
+                "@llvm//toolchain:windows_executable_pattern",
+                "@llvm//toolchain:windows_dynamic_library_pattern",
+                "@llvm//toolchain:windows_interface_library_pattern",
+            ],
+            "@llvm//platforms/config:windows_aarch64_msvc": [
+                "@llvm//toolchain:windows_msvc_object_file_pattern",
+                "@llvm//toolchain:windows_msvc_static_library_pattern",
+                "@llvm//toolchain:windows_msvc_alwayslink_static_library_pattern",
+                "@llvm//toolchain:windows_executable_pattern",
+                "@llvm//toolchain:windows_dynamic_library_pattern",
+                "@llvm//toolchain:windows_interface_library_pattern",
+            ],
+            "@platforms//os:macos": [
+                "@llvm//toolchain:macos_dynamic_library_pattern",
+                "@llvm//toolchain:macos_interface_library_pattern",
+            ],
+            "@platforms//os:windows": [
+                "@llvm//toolchain:windows_executable_pattern",
+            ],
+            "//conditions:default": [],
+        }),
+        known_features = [name + "_selected_known_features"],
+        enabled_features = [name + "_selected_enabled_features"],
+        tool_map = tool_map,
+        module_map = module_map,
+        static_runtime_lib = name + "_static_runtime_lib",
+        dynamic_runtime_lib = name + "_dynamic_runtime_lib",
+        compiler = select({
+            "@llvm//constraints/windows/abi:msvc": "clang-cl",
+            "//conditions:default": "clang",
+        }),
     )
