@@ -84,6 +84,57 @@ jobs:
         shell: bash
         run: ./coverage_lcov_test.sh --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7
 
+  windows_msvc_prebuilt_for_consumers:
+    runs-on: ubuntu-latest
+    name: Prepare unpublished Windows MSVC prebuilts
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Build unpublished MSVC prebuilts
+        shell: bash
+        run: |
+          common_flags=(
+            --config=remote
+            --config=release
+            --jobs=300
+            --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7
+            --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1
+            --repo_env=BAZEL_WINDOWS_SDK_EULA=1
+          )
+          x64_target="//prebuilt/llvm:for_windows_x86_64_msvc"
+          arm64_target="//prebuilt/llvm:for_windows_aarch64_msvc"
+          bazel build \
+            "${common_flags[@]}" \
+            --remote_download_toplevel \
+            "${x64_target}" \
+            "${arm64_target}"
+          x64_archive="$(bazel cquery \
+            "${common_flags[@]}" \
+            --output=files \
+            "${x64_target}")"
+          arm64_archive="$(bazel cquery \
+            "${common_flags[@]}" \
+            --output=files \
+            "${arm64_target}")"
+          sha256sum "${x64_archive}" "${arm64_archive}"
+          cp "${x64_archive}" windows-msvc-prebuilt-amd64.tar.zst
+          cp "${arm64_archive}" windows-msvc-prebuilt-arm64.tar.zst
+
+      - uses: actions/upload-artifact@v7
+        with:
+          archive: false
+          if-no-files-found: error
+          path: windows-msvc-prebuilt-amd64.tar.zst
+          retention-days: 1
+
+      - uses: actions/upload-artifact@v7
+        with:
+          archive: false
+          if-no-files-found: error
+          path: windows-msvc-prebuilt-arm64.tar.zst
+          retention-days: 1
+
   test_windows:
     strategy:
       fail-fast: false
@@ -105,67 +156,13 @@ jobs:
             bazel_version: latest
             compiler: default
             folder: e2e/cross_compilation
-          - os: windows-latest
-            bazel_version: latest
-            compiler: msvc
-            folder: e2e/rules_cc
-            link_machine: X64
-            machine: AMD64
-            repo_cpu: amd64
-            target_cpu: x86_64
-          - os: windows-11-arm
-            bazel_version: latest
-            compiler: msvc
-            folder: e2e/rules_cc
-            link_machine: ARM64
-            machine: ARM64
-            repo_cpu: arm64
-            target_cpu: aarch64
     runs-on: ${{ matrix.os }}
-
-    # Configure a human readable name for each job
     name: Test ${{ matrix.folder }} with ${{ matrix.compiler }} on ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v6
 
-      - name: Build and register unpublished MSVC prebuilt
-        if: matrix.compiler == 'msvc'
-        env:
-          MSYS2_ARG_CONV_EXCL: "--shell_executable=;--action_env=PATH=;--host_action_env=PATH="
-          USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
-        shell: bash
-        run: |
-          common_flags=(
-            --config=remote
-            --config=release
-            --action_env=PATH=/bin:/usr/bin:/usr/local/bin
-            --host_action_env=PATH=/bin:/usr/bin:/usr/local/bin
-            --jobs=300
-            --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7
-            --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1
-            --repo_env=BAZEL_WINDOWS_SDK_EULA=1
-            --shell_executable=/bin/bash
-          )
-          target="//prebuilt/llvm:for_windows_${{ matrix.target_cpu }}_msvc"
-          bazel build \
-            "${common_flags[@]}" \
-            --remote_download_toplevel \
-            "${target}"
-          archive="$(bazel cquery \
-            "${common_flags[@]}" \
-            --output=files \
-            "${target}")"
-          python .github/workflows/register-local-llvm-prebuilt.py \
-            --archive "${archive}" \
-            --index extensions/llvm_toolchain_minimal_index.json \
-            --llvm-version-module MODULE.bazel \
-            --module e2e/rules_cc/MODULE.bazel \
-            --output-index e2e/rules_cc/llvm_toolchain_minimal_index.local.json \
-            --target windows-${{ matrix.repo_cpu }}
-
       - name: bazel test //...
-        if: matrix.compiler != 'msvc'
         id: bazel_test
         env:
           USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
@@ -188,8 +185,47 @@ jobs:
             $EXTRA_ARGS \
             //...
 
+  test_windows_msvc_prebuilt:
+    needs: windows_msvc_prebuilt_for_consumers
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            bazel_version: latest
+            link_machine: X64
+            machine: AMD64
+            repo_cpu: amd64
+            target_cpu: x86_64
+          - os: windows-11-arm
+            bazel_version: latest
+            link_machine: ARM64
+            machine: ARM64
+            repo_cpu: arm64
+            target_cpu: aarch64
+    runs-on: ${{ matrix.os }}
+    name: Test MSVC prebuilt on ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: windows-msvc-prebuilt-${{ matrix.repo_cpu }}.tar.zst
+          path: .ci-prebuilt
+
+      - name: Register unpublished MSVC prebuilt
+        shell: bash
+        run: |
+          python .github/workflows/register-local-llvm-prebuilt.py \
+            --archive ".ci-prebuilt/windows-msvc-prebuilt-${{ matrix.repo_cpu }}.tar.zst" \
+            --index extensions/llvm_toolchain_minimal_index.json \
+            --llvm-version-module MODULE.bazel \
+            --module e2e/rules_cc/MODULE.bazel \
+            --output-index e2e/rules_cc/llvm_toolchain_minimal_index.local.json \
+            --target windows-${{ matrix.repo_cpu }}
+
       - name: Exercise unpublished MSVC prebuilt natively
-        if: matrix.compiler == 'msvc'
         env:
           USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
         working-directory: e2e/rules_cc
