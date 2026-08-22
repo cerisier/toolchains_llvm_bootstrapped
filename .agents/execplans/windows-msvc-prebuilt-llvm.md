@@ -90,8 +90,8 @@ Step 10.1 is implemented locally through
   at the product-configuration/toolchain boundary, not in bootstrap topology.
 
 Step 11 is complete and pushed through
-`faad2d85db1d736eb6935a5d5b6f29e470db0b69`. Final CI run
-`32566192209` passed both matching-Windows consumer jobs:
+`faad2d85db1d736eb6935a5d5b6f29e470db0b69`. The Step 11 lanes in final CI
+run `32566192209` passed, including both matching-Windows consumer jobs:
 
 - a CI helper creates an exact temporary minimal-prebuilt index entry using
   the locally built archive's `file://` URL and computed SHA-256, then appends
@@ -1724,12 +1724,18 @@ Local implementation evidence (2026-08-22):
   consumer action in run `32565512325`. Commit `faad2d85` instead preserves the
   endpoint, rejects remote action-cache hits with `--noremote_accept_cached`,
   and disables test-result caching;
-- final run `32566192209` passed. The Linux/RBE producer job `97015077097`
-  built both ephemeral archives. x86-64 job `97016411771` and ARM64 job
-  `97016411795` downloaded and registered only their exact matching artifacts,
-  executed Clang 22.1.8 natively, inspected compile/archive/link actions, and
-  locally built and ran the existing `/MD`, DLL, and `/MT` tests. The test
-  summaries are `PASSED`, not `(cached)`.
+- the Step 11 lanes in final run `32566192209` passed. The Linux/RBE producer
+  job `97015077097` built both ephemeral archives. x86-64 job `97016411771`
+  and ARM64 job `97016411795` downloaded and registered only their exact
+  matching artifacts, executed Clang 22.1.8 natively, inspected
+  compile/archive/link actions, and locally built and ran the existing `/MD`,
+  DLL, and `/MT` tests. The test summaries are `PASSED`, not `(cached)`;
+- the overall workflow concluded failure for two non-Step-11 jobs. Linux ARM64
+  `//tests/...` job `97015077248` repeated a Bazel JVM heap exhaustion also
+  seen in the preceding run; generic Linux x86-64 e2e/rules_cc job
+  `97015077384` failed with transient BuildBuddy
+  `UNAVAILABLE: Network closed for unknown reason`. Neither failure shares the
+  Windows consumer configuration or changed Step 11 path.
 
 Implementation shape:
 
