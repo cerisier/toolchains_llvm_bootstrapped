@@ -159,7 +159,9 @@ cmd=("$tool")
 for arg in "$@"; do
     case "$arg" in
         "$source_placeholder")
-            cmd+=("${extra_flags[@]}")
+            if [ "${#extra_flags[@]}" -gt 0 ]; then
+                cmd+=("${extra_flags[@]}")
+            fi
             cmd+=("$source")
             ;;
         "$output_placeholder")
@@ -261,7 +263,9 @@ compile_cmd=("$compile_tool")
 for arg in "${compile_args[@]}"; do
     case "$arg" in
         "$source_placeholder")
-            compile_cmd+=("${compile_extra_flags[@]}")
+            if [ "${#compile_extra_flags[@]}" -gt 0 ]; then
+                compile_cmd+=("${compile_extra_flags[@]}")
+            fi
             compile_cmd+=("$source")
             ;;
         "$object_placeholder")
@@ -285,7 +289,9 @@ for arg in "$@"; do
     esac
 done
 link_cmd+=("$object")
-link_cmd+=("${link_extra_flags[@]}")
+if [ "${#link_extra_flags[@]}" -gt 0 ]; then
+    link_cmd+=("${link_extra_flags[@]}")
+fi
 
 if "${compile_cmd[@]}" >"$log" 2>&1 && "${link_cmd[@]}" >>"$log" 2>&1; then
     echo true > "$result"

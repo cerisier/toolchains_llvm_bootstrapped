@@ -182,3 +182,20 @@ cc_runtime_stage1_shared_library(
         ":libunwind",
     ],
 )
+
+cc_runtime_stage1_shared_library(
+    name = "libgcc_s.shared",
+    additional_linker_inputs = [
+        "@llvm//3rd_party/llvm-project/x.x/libunwind:libgcc_s.version",
+    ],
+    shared_lib_name = "libgcc_s.so.1",
+    user_link_flags = [
+        "-Wl,-soname,libgcc_s.so.1",
+        "-Wl,--version-script,$(location @llvm//3rd_party/llvm-project/x.x/libunwind:libgcc_s.version)",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":libunwind",
+        "@llvm-project//compiler-rt:gcc_s_builtins",
+    ],
+)

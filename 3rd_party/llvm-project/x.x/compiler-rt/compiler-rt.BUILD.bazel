@@ -859,7 +859,12 @@ cc_library(
     name = "libcxx_headers",
     deps = select({
         "@platforms//os:macos": [],
-        "@platforms//os:linux": [
+        "@llvm//runtimes/cxxstdlib:libstdcxx_linux": [
+            # do not sort: linux_libc_headers have to come after libstdcxx
+            "@gcc//:build_headers",
+            ":linux_libc_headers",
+        ],
+        "@llvm//runtimes/cxxstdlib:libcxx_linux": [
             # do not sort: linux_libc_headers have to come after libcxx
             "@llvm-project//libcxx:headers",
             "@llvm-project//libcxxabi:headers",
@@ -872,6 +877,53 @@ cc_library(
         ],
         "//conditions:default": [],
     }),
+)
+
+cc_library(
+    name = "gcc_s_builtins",
+    srcs = [
+        "lib/builtins/addtf3.c",
+        "lib/builtins/comparetf2.c",
+        "lib/builtins/divtf3.c",
+        "lib/builtins/extendsftf2.c",
+        "lib/builtins/floatditf.c",
+        "lib/builtins/floatsitf.c",
+        "lib/builtins/floatunditf.c",
+        "lib/builtins/mulsc3.c",
+        "lib/builtins/multf3.c",
+        "lib/builtins/popcountdi2.c",
+        "lib/builtins/subtf3.c",
+        "lib/builtins/trunctfdf2.c",
+        "lib/builtins/trunctfsf2.c",
+        "lib/builtins/udivmodti4.c",
+        "lib/builtins/udivti3.c",
+    ] + select({
+        "@platforms//cpu:aarch64": ["lib/builtins/aarch64/fp_mode.c"],
+        "@platforms//cpu:x86_64": ["lib/builtins/i386/fp_mode.c"],
+        "//conditions:default": ["lib/builtins/fp_mode.c"],
+    }),
+    hdrs = [
+        "lib/builtins/fp_extend.h",
+        "lib/builtins/fp_lib.h",
+        "lib/builtins/fp_mode.h",
+        "lib/builtins/fp_trunc.h",
+        "lib/builtins/int_endianness.h",
+        "lib/builtins/int_lib.h",
+        "lib/builtins/int_math.h",
+        "lib/builtins/int_types.h",
+        "lib/builtins/int_util.h",
+    ],
+    copts = ["-fvisibility=default"],
+    textual_hdrs = [
+        "lib/builtins/fp_add_impl.inc",
+        "lib/builtins/fp_compare_impl.inc",
+        "lib/builtins/fp_div_impl.inc",
+        "lib/builtins/fp_extend_impl.inc",
+        "lib/builtins/fp_mul_impl.inc",
+        "lib/builtins/fp_trunc_impl.inc",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [":linux_libc_headers"],
 )
 
 ###

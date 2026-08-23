@@ -158,6 +158,21 @@ cc_binary(
 )
 
 cc_binary(
+    name = "libstdcxx_main_default",
+    srcs = ["main.cc"],
+    target_compatible_with = select({
+        "@llvm//constraints/cxxstdlib:libstdcxx": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }) + select({
+        "@platforms//os:linux": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }) + select({
+        "@llvm//constraints/libc:musl": ["@platforms//:incompatible"],
+        "//conditions:default": [],
+    }),
+)
+
+cc_binary(
     name = "libstdcxx_main_dynamic_with_linkopts",
     srcs = ["main.cc"],
     linkopts = [
@@ -255,6 +270,32 @@ platform_transition_filegroup(
 )
 
 platform_transition_filegroup(
+    name = "libstdcxx_main_default_linux_x86_64",
+    srcs = [":libstdcxx_main_default"],
+    target_compatible_with = _LIBSTDCXX_E2E_TARGET_COMPATIBLE_WITH,
+    target_platform = ":linux_x86_64_libstdcxx",
+)
+
+platform_transition_filegroup(
+    name = "libstdcxx_main_default_linux_aarch64",
+    srcs = [":libstdcxx_main_default"],
+    target_compatible_with = _LIBSTDCXX_E2E_TARGET_COMPATIBLE_WITH,
+    target_platform = ":linux_aarch64_libstdcxx",
+)
+
+platform_transition_filegroup(
+    name = "glibc_2_39_pthread_compat_stubs",
+    srcs = ["@llvm//runtimes/glibc:libpthread.s"],
+    target_platform = "@llvm//platforms:linux_x86_64_gnu.2.39",
+)
+
+platform_transition_filegroup(
+    name = "glibc_2_39_dl_compat_stubs",
+    srcs = ["@llvm//runtimes/glibc:libdl.s"],
+    target_platform = "@llvm//platforms:linux_x86_64_gnu.2.39",
+)
+
+platform_transition_filegroup(
     name = "libstdcxx_main_dynamic_with_linkopts_linux_x86_64",
     srcs = [":libstdcxx_main_dynamic_with_linkopts"],
     target_compatible_with = _LIBSTDCXX_E2E_TARGET_COMPATIBLE_WITH,
@@ -304,6 +345,49 @@ exec_test(
         "@platforms//os:linux": [],
         "//conditions:default": ["@platforms//:incompatible"],
     }),
+)
+
+exec_test(
+    name = "libstdcxx_main_default_output_test",
+    srcs = ["libstdcxx_main_dynamic_output_test.sh"],
+    data = [":libstdcxx_main_default_linux_x86_64"],
+    env = {"BINARY": "$(rootpath :libstdcxx_main_default_linux_x86_64)"},
+    rule = sh_test,
+    target_compatible_with = select({
+        "@platforms//cpu:x86_64": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }) + select({
+        "@platforms//os:linux": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+)
+
+exec_test(
+    name = "libstdcxx_main_default_aarch64_output_test",
+    srcs = ["libstdcxx_main_dynamic_output_test.sh"],
+    data = [":libstdcxx_main_default_linux_aarch64"],
+    env = {"BINARY": "$(rootpath :libstdcxx_main_default_linux_aarch64)"},
+    rule = sh_test,
+    target_compatible_with = select({
+        "@platforms//cpu:aarch64": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }) + select({
+        "@platforms//os:linux": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+)
+
+sh_test(
+    name = "glibc_merged_libraries_compat_test",
+    srcs = ["glibc_merged_libraries_compat_test.sh"],
+    args = [
+        "$(rootpath :glibc_2_39_pthread_compat_stubs)",
+        "$(rootpath :glibc_2_39_dl_compat_stubs)",
+    ],
+    data = [
+        ":glibc_2_39_dl_compat_stubs",
+        ":glibc_2_39_pthread_compat_stubs",
+    ],
 )
 
 exec_test(
