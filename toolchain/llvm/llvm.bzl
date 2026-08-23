@@ -160,32 +160,43 @@ def declare_llvm_targets(*, suffix = ""):
 
     # MSVC ABI actions use the CL/LINK dialect directly. Keep this map separate
     # from MinGW so target ABI, never execution OS, selects the personality.
+    MSVC_TOOLS = {
+        "@rules_cc//cc/toolchains/actions:c_compile": ":clang-cl",
+        "@rules_cc//cc/toolchains/actions:cpp_compile": ":clang-cl",
+        "@rules_cc//cc/toolchains/actions:linkstamp_compile": ":clang-cl",
+        "@rules_cc//cc/toolchains/actions:lto_backend": ":clang-cl",
+        "@rules_cc//cc/toolchains/actions:preprocess_assemble": ":clang-cl",
+        "@rules_cc//cc/toolchains/actions:cpp_header_parsing": ":clang-cl",
+        "@rules_cc//cc/toolchains/actions:generate_def_file": ":msvc_def_parser",
+        "@rules_cc//cc/toolchains/actions:ar_actions": ":llvm-ar",
+        "@rules_cc//cc/toolchains/actions:cpp_link_executable": ":clang-cl",
+        "@rules_cc//cc/toolchains/actions:cpp_link_dynamic_library": ":clang-cl",
+        "@rules_cc//cc/toolchains/actions:cpp_link_nodeps_dynamic_library": ":clang-cl",
+        "@rules_cc//cc/toolchains/actions:objc_executable": ":clang-cl",
+        "@rules_cc//cc/toolchains/actions:lto_index_for_executable": ":clang-cl",
+        "@rules_cc//cc/toolchains/actions:lto_index_for_dynamic_library": ":clang-cl",
+        "@rules_cc//cc/toolchains/actions:lto_index_for_nodeps_dynamic_library": ":clang-cl",
+        "@rules_cc//cc/toolchains/actions:strip": ":llvm-strip",
+    }
+
     cc_tool_map(
         name = "tools_for_msvc",
-        tools = {
-            "@rules_cc//cc/toolchains/actions:c_compile": ":clang-cl",
-            "@rules_cc//cc/toolchains/actions:cpp_compile": ":clang-cl",
-            "@rules_cc//cc/toolchains/actions:linkstamp_compile": ":clang-cl",
-            "@rules_cc//cc/toolchains/actions:lto_backend": ":clang-cl",
-            "@rules_cc//cc/toolchains/actions:preprocess_assemble": ":clang-cl",
-            "@rules_cc//cc/toolchains/actions:cpp_header_parsing": ":clang-cl",
-            "@rules_cc//cc/toolchains/actions:generate_def_file": ":msvc_def_parser",
-            "@rules_cc//cc/toolchains/actions:ar_actions": ":llvm-ar",
-            "@rules_cc//cc/toolchains/actions:cpp_link_executable": ":clang-cl",
-            "@rules_cc//cc/toolchains/actions:cpp_link_dynamic_library": ":clang-cl",
-            "@rules_cc//cc/toolchains/actions:cpp_link_nodeps_dynamic_library": ":clang-cl",
-            "@rules_cc//cc/toolchains/actions:objc_executable": ":clang-cl",
-            "@rules_cc//cc/toolchains/actions:lto_index_for_executable": ":clang-cl",
-            "@rules_cc//cc/toolchains/actions:lto_index_for_dynamic_library": ":clang-cl",
-            "@rules_cc//cc/toolchains/actions:lto_index_for_nodeps_dynamic_library": ":clang-cl",
-            "@rules_cc//cc/toolchains/actions:strip": ":llvm-strip",
-        } | _VALIDATE_STATIC_LIBRARY_TOOL,
+        tools = MSVC_TOOLS | _VALIDATE_STATIC_LIBRARY_TOOL,
+        visibility = ["//visibility:public"],
+    )
+
+    cc_tool_map(
+        name = "staged_tools_for_msvc",
+        tools = MSVC_TOOLS,
         visibility = ["//visibility:public"],
     )
 
     native.alias(
         name = "tools_for_msvc_for_runtime",
-        actual = ":tools_for_msvc",
+        actual = select({
+            "@llvm//toolchain:runtimes_all": ":tools_for_msvc",
+            "//conditions:default": ":staged_tools_for_msvc",
+        }),
         visibility = ["//visibility:public"],
     )
 
