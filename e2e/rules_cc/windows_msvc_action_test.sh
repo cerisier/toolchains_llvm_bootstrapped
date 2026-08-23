@@ -88,6 +88,14 @@ bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   'mnemonic("CppArchive", //:windows_msvc_libcxx_behavior_support)' \
   >"${action_dir}/archive.txt"
 bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
+  --output=text \
+  'mnemonic("ValidateStaticLibrary", deps(@llvm-project//libcxx:libcxx.static.msvc))' \
+  >"${action_dir}/staged-runtime-validation.txt"
+bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
+  --output=text \
+  'mnemonic("ValidateStaticLibrary", deps(//:comm_symbol_static_lib))' \
+  >"${action_dir}/complete-runtime-validation.txt"
+bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   --include_param_files \
   --output=text \
   'mnemonic("CppLink", //:windows_msvc_libcxx_behavior_md)' \
@@ -197,6 +205,9 @@ assert_contains "${action_dir}/archive.txt" "llvm-ar"
 assert_contains "${action_dir}/archive.txt" "rcsD"
 assert_contains "${action_dir}/archive.txt" "windows_msvc_libcxx_behavior_support.lib"
 assert_absent "${action_dir}/archive.txt" "llvm-lib"
+assert_absent "${action_dir}/staged-runtime-validation.txt" "Mnemonic: ValidateStaticLibrary"
+assert_contains "${action_dir}/complete-runtime-validation.txt" "Mnemonic: ValidateStaticLibrary"
+assert_contains "${action_dir}/complete-runtime-validation.txt" "static-library-validator"
 
 assert_contains "${action_dir}/link.txt" "bin/clang-cl"
 assert_contains "${action_dir}/link.txt" "bin/lld-link"
