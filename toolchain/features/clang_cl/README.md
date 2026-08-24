@@ -26,15 +26,13 @@ tool's semantics, as clang-cl does for lld-link here.
 
 The package is intentionally temporary. These implementations should be
 upstreamed to rules_cc rather than remain a hermetic-llvm-specific adapter.
-When upstreamed, compiler-personality implementations should live beside the
-corresponding rules_cc argument features (for example, generic Clang beside
-clang-cl), instead of preserving this standalone package shape. Toolchain
-assembly must choose the implementation from an explicit compiler-personality
-input: a feature used to define the current C++ toolchain cannot itself consult
-that toolchain's compiler setting without creating a dependency cycle. The
-lld-link/COFF ThinLTO and library bridge must remain visibly constrained to
-that linker/toolchain capability rather than being assumed for every clang-cl
-toolchain.
+The upstream package shape is intentionally undecided. What is proved here is
+that toolchain assembly must choose the implementation from an explicit
+compiler-personality input: a feature used to define the current C++ toolchain
+cannot itself consult that toolchain's compiler setting without creating a
+dependency cycle. The lld-link/COFF ThinLTO and library bridge must remain
+visibly constrained to that linker/toolchain capability rather than being
+assumed for every clang-cl toolchain.
 
 Module maps, layering checks, and header parsing are not implemented for this
 protocol yet. Their names are temporarily tolerated because the repository's

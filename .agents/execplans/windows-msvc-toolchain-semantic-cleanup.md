@@ -430,10 +430,9 @@ Owner decisions:
 
 - keep the globally requested `layering_check` as an explicit temporary no-op
   instead of failing while dialect-correct support is planned next;
-- introduce `//toolchain/features/clang_cl`, with a README recording that its
-  final upstream rules_cc form belongs inline with the corresponding argument
-  packages and exposes concrete compiler-personality implementations for
-  explicit toolchain assembly;
+- introduce `//toolchain/features/clang_cl`, with a README recording the proved
+  explicit compiler-personality assembly boundary while deliberately leaving
+  the final upstream rules_cc package shape undecided;
 - keep generic and clang-cl/MSVC known, enabled, runtime, and legacy orderings
   explicitly duplicated instead of creating shared feature-set abstractions.
 
