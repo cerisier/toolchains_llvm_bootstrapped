@@ -23,7 +23,9 @@ cc_args_list(
     ] + select({
         "//toolchain/features/msvc:static_crt_config": ["//toolchain/args/windows/msvc:msvc_static_runtime_library_path"],
         "//conditions:default": ["//toolchain/args/windows/msvc:msvc_dynamic_runtime_library_path"],
-    }),
+    }) + [
+        "//toolchain/args/windows/msvc:default_console_subsystem_link_flags",
+    ],
 )
 
 cc_args_list(
@@ -112,7 +114,10 @@ cc_args_list(
 cc_args_list(
     name = "target_flags",
     args = ["//toolchain/args:target_flags"] + select({
-        "//constraints/windows/abi:msvc": ["//toolchain/args/windows/msvc:compatibility"],
+        "//constraints/windows/abi:msvc": [
+            "//toolchain/args/windows/msvc:compatibility",
+            "//toolchain/args/windows/msvc:target_machine_link_flags",
+        ],
         "//conditions:default": [],
     }),
 )
@@ -125,6 +130,14 @@ cc_args_list(
             "//toolchain/args/windows/msvc:reproducible_codeview",
         ],
         "//conditions:default": [],
+    }),
+)
+
+cc_args_list(
+    name = "deterministic_link_flags",
+    args = select({
+        "//constraints/windows/abi:msvc": ["//toolchain/args/windows/msvc:deterministic_link_flags"],
+        "//conditions:default": ["//toolchain/args/windows/mingw:deterministic_link_flags"],
     }),
 )
 

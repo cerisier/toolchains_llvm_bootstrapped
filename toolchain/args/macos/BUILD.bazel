@@ -92,10 +92,20 @@ cc_args(
         "-lc++",
         "-headerpad_max_install_names",
         "-Wl,-no_warn_duplicate_libraries",
-        "-Wl,-oso_prefix,.",  # Strip absolute paths from debug info file references
+    ],
+)
+
+cc_args(
+    name = "deterministic_link_flags",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = [
+        # Strip the execution root from N_OSO debug-map paths.
+        "-Wl,-oso_prefix,.",
     ],
     env = {
-        # Required for hermetic links on macOS
+        # Zero N_OSO debug-map modification timestamps.
         "ZERO_AR_DATE": "1",
     },
 )

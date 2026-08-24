@@ -55,6 +55,11 @@ bazel --bazelrc=.bazelrc aquery "${mingw_flags[@]}" \
   --output=commands \
   'inputs(".*libcxx/src/algorithm.cpp", mnemonic("CppCompile", deps(@llvm-project//libcxx:libcxx)))' \
   >"${action_dir}/mingw-libcxx-compile.txt"
+bazel --bazelrc=.bazelrc aquery "${mingw_flags[@]}" \
+  --features=-compiler_param_file \
+  --output=commands \
+  'mnemonic("CppLink", //:windows_test)' \
+  >"${action_dir}/mingw-link.txt"
 bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   --features=-compiler_param_file \
   --output=commands \
@@ -210,6 +215,7 @@ assert_contains "${action_dir}/mingw-libcxx-compile.txt" "-Wno-unused-value"
 assert_contains "${action_dir}/mingw-libcxx-compile.txt" "-Xclang=-Wno-thread-safety-analysis"
 assert_absent "${action_dir}/mingw-libcxx-compile.txt" "/clang:-Wno-pragma-pack"
 assert_absent "${action_dir}/mingw-libcxx-compile.txt" "/clang:-Wno-unused-value"
+assert_contains "${action_dir}/mingw-link.txt" "-Wl,--no-insert-timestamp"
 assert_contains "${action_dir}/msvc-libcxx-compile.txt" "bin/clang-cl"
 assert_matches "${action_dir}/msvc-libcxx-compile.txt" "/clang:-Wthread-safety.*-Xclang=-Wno-thread-safety-analysis"
 
@@ -293,6 +299,12 @@ assert_contains "${action_dir}/link.txt" "libcxx_msvc_library_search_directory"
 assert_contains "${action_dir}/link.txt" "msvc_com_support_libraries"
 assert_contains "${action_dir}/link.txt" "/clang:-Xlinker"
 assert_contains "${action_dir}/link.txt" "/clang:/MACHINE:X64"
+assert_contains "${action_dir}/link.txt" "/Brepro"
+assert_contains "${action_dir}/link.txt" "/clang:/INCREMENTAL:NO"
+assert_contains "${action_dir}/link.txt" "/clang:/lldignoreenv"
+assert_contains "${action_dir}/link.txt" "/clang:/PDBALTPATH:%_PDB%"
+assert_contains "${action_dir}/link.txt" "/clang:/pdbsourcepath:."
+assert_contains "${action_dir}/link.txt" "/clang:/SUBSYSTEM:CONSOLE"
 assert_contains "${action_dir}/link.txt" "/clang:/WHOLEARCHIVE:"
 assert_contains "${action_dir}/link.txt" "/clang:/OPT:REF"
 assert_contains "${action_dir}/link.txt" "/Fe"
