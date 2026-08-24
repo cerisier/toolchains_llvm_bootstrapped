@@ -30,38 +30,56 @@ cc_args(
 )
 
 cc_args(
-    name = "compile_defaults",
+    name = "reproducible_coff_objects",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:source_compile_actions",
+    ],
+    args = ["/Brepro"],
+)
+
+cc_args(
+    name = "large_coff_objects",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:source_compile_actions",
+    ],
+    args = ["/bigobj"],
+)
+
+cc_args(
+    name = "windows_sdk_compile_defines",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:source_compile_actions",
+    ],
+    args = ["/DNOMINMAX"],
+)
+
+cc_args(
+    name = "msvc_crt_compile_defines",
     actions = [
         "@rules_cc//cc/toolchains/actions:source_compile_actions",
     ],
     args = [
-        "/nologo",
-        "/Brepro",
-        "/EHsc",
-        "/GR",
-        "/bigobj",
-        "/DNOMINMAX",
         "/D_CRT_NONSTDC_NO_WARNINGS",
         "/D_CRT_SECURE_NO_DEPRECATE",
         "/D_CRT_SECURE_NO_WARNINGS",
         "/D_CRT_STDIO_ISO_WIDE_SPECIFIERS",
-        "/D_LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS",
-        "/clang:-gno-codeview-command-line",
     ],
 )
 
-# Keep the option and path in one response-file token. clang-cl's CL-mode
-# response parser does not associate a value placed on the following line.
 cc_args(
-    name = "resource_dir",
+    name = "libcxx_compile_defines",
     actions = [
-        "@rules_cc//cc/toolchains/actions:link_actions",
+        "@rules_cc//cc/toolchains/actions:source_compile_actions",
     ],
-    args = ["-resource-dir={resource_dir}"],
-    data = ["//runtimes:resource_directory"],
-    format = {
-        "resource_dir": "//runtimes:resource_directory",
-    },
+    args = ["/D_LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS"],
+)
+
+cc_args(
+    name = "reproducible_codeview",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:source_compile_actions",
+    ],
+    args = ["/clang:-gno-codeview-command-line"],
 )
 
 cc_args(
@@ -223,7 +241,15 @@ cc_args_list(
     name = "platform_compile_args",
     args = [
         ":compatibility",
-        ":compile_defaults",
+        "//toolchain/args:clang_cl_suppress_compiler_banner",
+        ":reproducible_coff_objects",
+        "//toolchain/args:clang_cl_default_exception_handling",
+        "//toolchain/args:clang_cl_default_rtti",
+        ":large_coff_objects",
+        ":windows_sdk_compile_defines",
+        ":msvc_crt_compile_defines",
+        ":libcxx_compile_defines",
+        ":reproducible_codeview",
         ":libcxx_include",
     ],
 )

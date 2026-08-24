@@ -172,8 +172,11 @@ cc_args_list(
 
 cc_args_list(
     name = "resource_dir",
+    # The current supported MSVC ABI route fixes the compiler personality to
+    # clang-cl. Keep that route binding here rather than making a low-level
+    # argument infer compiler personality from target ABI.
     args = select({
-        "//constraints/windows/abi:msvc": ["//toolchain/args/msvc:resource_dir"],
+        "//constraints/windows/abi:msvc": ["//toolchain/args:clang_cl_resource_dir"],
         "//conditions:default": ["//toolchain/args:resource_dir"],
     }),
 )
