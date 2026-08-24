@@ -99,7 +99,7 @@ filegroup(
     srcs = select({
         ":libstdcxx_linux": [":libstdcxx_static_runtime_lib"],
         ":libstdcxx_windows": [":libstdcxx_windows_unsupported"],
-        ":libcxx_windows_msvc": ["@llvm-project//libcxx:libcxx.static.msvc"],
+        ":libcxx_windows_msvc": ["//runtimes/libcxx:libcxx.static"],
         ":libcxx_linux": [
             "@llvm-project//libcxx:libcxx.static",
             "@llvm-project//libcxxabi:libcxxabi.static",
@@ -124,7 +124,7 @@ filegroup(
         ":libstdcxx_windows": [":libstdcxx_windows_unsupported"],
         # Windows MSVC libc++ is configuration-wide static even when ordinary
         # dependency linkage selects dynamic libraries.
-        ":libcxx_windows_msvc": ["@llvm-project//libcxx:libcxx.static.msvc"],
+        ":libcxx_windows_msvc": ["//runtimes/libcxx:libcxx.static"],
         ":libcxx_linux": [
             "@llvm-project//libcxx:libcxx.shared",
             "@llvm-project//libcxxabi:libcxxabi.shared",

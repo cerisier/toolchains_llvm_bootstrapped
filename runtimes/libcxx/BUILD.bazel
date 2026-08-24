@@ -44,7 +44,7 @@ copy_to_directory(
 
 copy_to_directory(
     name = "libcxx_msvc_library_search_directory",
-    srcs = ["@llvm-project//libcxx:libcxx.static.msvc"],
+    srcs = [":libcxx.static"],
     include_external_repositories = ["**"],
     root_paths = ["**/libcxx"],
     visibility = ["//visibility:public"],

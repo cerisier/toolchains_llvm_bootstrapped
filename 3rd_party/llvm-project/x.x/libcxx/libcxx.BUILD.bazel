@@ -453,7 +453,13 @@ cc_library(
         "include",
         "src",
     ],
-    linkstatic = True,
+    # The MSVC route exposes only the purpose-built static libc++ archive.
+    # Generic routes retain the cc_library default so the shared-runtime rule
+    # can preserve the pre-MSVC implementation graph.
+    linkstatic = select({
+        ":windows_msvc": True,
+        "//conditions:default": False,
+    }),
     local_defines = [
         "LIBC_NAMESPACE=__llvm_libc_common_utils",
         "_LIBCPP_BUILDING_LIBRARY",
