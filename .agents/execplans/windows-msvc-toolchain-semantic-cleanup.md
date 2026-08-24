@@ -1,6 +1,7 @@
 # Windows MSVC toolchain semantic cleanup plan
 
-Status: active; Batch 1 complete, remaining batches await owner selection.
+Status: active; Batch 1 implementation and consolidated proof complete,
+remaining batches await owner selection.
 
 Date: 2026-08-24 (Asia/Tokyo)
 
@@ -19,6 +20,17 @@ This is a cleanup and regression-correction phase, not a new capability phase.
 It does not authorize prebuilt publication, release-index changes, MSVC host
 toolchain support, Microsoft STL, dynamic libc++, debug CRT, sanitizers,
 header-parsing graduation, or new CI lanes.
+
+## Tracking model
+
+- This plan is the detailed implementation checklist. Keep cross-package work
+  here instead of adding speculative `TODO` comments at individual call sites.
+- GitHub issue #156, “Support Native MSVC ABI targets,” is the natural umbrella
+  issue for the target-toolchain, prebuilt-publication, and future host-toolchain
+  milestones. Issue #24 remains the broader Windows-support umbrella.
+- Issue #714 already tracks the RTTI/exceptions build-setting design that
+  overlaps the deferred Batch 6 policy checkpoint. Do not create a duplicate
+  issue for R18, R41, or R49.
 
 ## How successor agents use this plan
 
@@ -335,8 +347,8 @@ once. Implementation packages continue to contain no platform selects.
 
 Items: R09, R10, R12-R14, R19-R20, R22-R25.
 
-Status: complete on 2026-08-24 in commits `9cb67778` and the immediately
-following runtime/test/plan commit.
+Status: implementation complete on 2026-08-24 in commits `9cb67778` and
+`708e5da8`; consolidated proof complete on the same branch and date.
 
 Evidence:
 
@@ -358,8 +370,33 @@ Evidence:
   `5237d415-f159-4e79-a072-a85eb1e5075a`; generic ThinLTO backend invocation
   `79b86a93-1235-4c69-83d3-70d16a442a1e` again contains `-std=c++17`.
 - The unsupported-configuration analysis suite, buildifier, and
-  `git diff --check` passed. No full LLVM rebuild was run for this batch, per
-  the consolidated verification policy below.
+  `git diff --check` passed.
+- The final artifact matrix passed for x86-64 and ARM64 as invocation
+  `15388ca8-9d27-4926-a6c3-8915fef7e0a1`, covering `/MD`, `/MT`, static
+  libc++, ThinLTO, archives, PE/COFF, PDB, DLL/DEF/import libraries, and
+  alwayslink behavior.
+- Representative generic builds remained successful: Linux `//:main` as
+  invocation `616198d6-f9ad-4f7c-98cb-93205b4df5b5`, and MinGW
+  `//:windows_test` plus `//:windows_unicode_test` as invocation
+  `e10d0a0a-6e04-4f3e-ba2f-e71d3747e4c1`.
+- The complete release prebuilt targets for both MSVC architectures passed as
+  invocation `3407be8c-51e2-443b-9832-895c4488a113` (112,081 actions). The
+  downloaded archives have SHA-256 values
+  `89e98cc6926a341da472ec54762775e22afd32908b9c455ceef4f95e02627da0`
+  for x86-64 and
+  `ed2b29275eb9164ac728d7f028844d82894637506f3ae1fc8e185311e8ed5afe`
+  for ARM64. Extracted `bin/llvm.exe` reports
+  `IMAGE_FILE_MACHINE_AMD64` and `IMAGE_FILE_MACHINE_ARM64`, respectively;
+  the ARM64 binary is not ARM64EC. The four representative driver names in
+  each archive have identical hashes, proving the intended multicall payload.
+- A full generic `//...` test request cannot be reproduced faithfully from a
+  Darwin host with Linux targets because several tests are intentionally
+  local-only: invocations `a093a78e-4325-4a6e-ac7d-c95efeb73cd5` and
+  `9f9b264d-a407-4f7b-a94b-430f5e08e14b` failed only by trying to execute the
+  opposite host format, while forcing `TestRunner` remote was rejected in
+  `1b423980-56b8-4718-a262-5f49f1b7f399`. Keep the ordinary `//...` run on
+  its existing Linux CI hosts; this is an environment boundary, not a product
+  regression.
 
 Purpose: fix the demonstrated generic C++ action regression and normalize the
 repeated `cc_args` shape before changing package hierarchy. Work per semantic
