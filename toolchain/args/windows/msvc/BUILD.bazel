@@ -35,14 +35,6 @@ cc_args(
 )
 
 cc_args(
-    name = "large_coff_objects",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:source_compile_actions",
-    ],
-    args = ["/bigobj"],
-)
-
-cc_args(
     name = "windows_sdk_compile_defines",
     actions = [
         "@rules_cc//cc/toolchains/actions:source_compile_actions",
