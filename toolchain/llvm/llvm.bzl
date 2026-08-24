@@ -65,7 +65,16 @@ def declare_llvm_targets(*, suffix = ""):
     cc_args(
         name = "compile_resource_dir",
         actions = [
-            "@rules_cc//cc/toolchains/actions:compile_actions",
+            "@rules_cc//cc/toolchains/actions:clif_match",
+            "@rules_cc//cc/toolchains/actions:cpp_compile",
+            "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
+            "@rules_cc//cc/toolchains/actions:cpp_module_codegen",
+            "@rules_cc//cc/toolchains/actions:cpp_module_compile",
+            "@rules_cc//cc/toolchains/actions:linkstamp_compile",
+            "@rules_cc//cc/toolchains/actions:objcpp_compile",
+            "@rules_cc//cc/toolchains/actions:c_compile",
+            "@rules_cc//cc/toolchains/actions:preprocess_assemble",
+            "@rules_cc//cc/toolchains/actions:objc_compile",
         ],
         allowlist_include_directories = [
             ":builtin_resource_include_dir",
@@ -91,12 +100,25 @@ def declare_llvm_targets(*, suffix = ""):
     cc_args(
         name = "compile_resource_dir_msvc",
         actions = [
-            "@rules_cc//cc/toolchains/actions:source_compile_actions",
+            "@rules_cc//cc/toolchains/actions:clif_match",
+            "@rules_cc//cc/toolchains/actions:cpp_compile",
+            "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
+            "@rules_cc//cc/toolchains/actions:cpp_module_codegen",
+            "@rules_cc//cc/toolchains/actions:cpp_module_compile",
+            "@rules_cc//cc/toolchains/actions:linkstamp_compile",
+            "@rules_cc//cc/toolchains/actions:objcpp_compile",
+            "@rules_cc//cc/toolchains/actions:c_compile",
+            "@rules_cc//cc/toolchains/actions:preprocess_assemble",
+            "@rules_cc//cc/toolchains/actions:objc_compile",
         ],
         allowlist_include_directories = [
             ":builtin_resource_include_dir",
         ],
         args = [
+            # clang-cl otherwise inserts builtin headers before every /imsvc
+            # path. Suppress that implicit path, then re-add the declared
+            # resource directory between libc++ and VC/UCRT headers.
+            "/clang:-nobuiltininc",
             "/imsvc{resource_dir}",
         ],
         data = [

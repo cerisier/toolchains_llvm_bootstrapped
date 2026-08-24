@@ -45,7 +45,7 @@ cc_args_list(
 cc_args_list(
     name = "cxxstdlib_library_search_paths",
     args = select({
-        "//constraints/windows/abi:msvc": ["//toolchain/args/windows/msvc:libcxx_library_search_path"],
+        "//constraints/windows/abi:msvc": ["//toolchain/args:clang_cl_cxxstdlib_library_search_paths"],
         "//conditions:default": ["//toolchain/args:cxxstdlib_library_search_paths"],
     }),
 )
@@ -69,7 +69,7 @@ cc_args_list(
 cc_args_list(
     name = "hermetic_compile_flags",
     args = select({
-        "//constraints/windows/abi:msvc": ["//toolchain/args/windows/msvc:hermetic_compile"],
+        "//constraints/windows/abi:msvc": ["//toolchain/args:clang_cl_hermetic_compile_flags"],
         "//conditions:default": ["//toolchain/args:hermetic_compile_flags"],
     }),
 )

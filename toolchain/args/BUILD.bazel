@@ -903,17 +903,40 @@ cc_args_list(
 cc_args(
     name = "hermetic_compile_flags",
     actions = [
-        "@rules_cc//cc/toolchains/actions:cpp_compile_actions",
-        "@rules_cc//cc/toolchains/actions:c_compile_actions",
-        # -nostdlibinc triggers a warning for assemble (no preprocess)
+        "@rules_cc//cc/toolchains/actions:clif_match",
+        "@rules_cc//cc/toolchains/actions:cpp_compile",
+        "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
+        "@rules_cc//cc/toolchains/actions:cpp_module_codegen",
+        "@rules_cc//cc/toolchains/actions:cpp_module_compile",
+        "@rules_cc//cc/toolchains/actions:linkstamp_compile",
+        "@rules_cc//cc/toolchains/actions:objcpp_compile",
+        "@rules_cc//cc/toolchains/actions:c_compile",
         "@rules_cc//cc/toolchains/actions:preprocess_assemble",
         "@rules_cc//cc/toolchains/actions:objc_compile",
-        "@rules_cc//cc/toolchains/actions:objcpp_compile",
     ],
     args = [
         # We want to disable everything except builtin headers since they are
         # provided as part of the compiler toolchain repository.
         "-nostdlibinc",
+    ],
+)
+
+cc_args(
+    name = "clang_cl_hermetic_compile_flags",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:clif_match",
+        "@rules_cc//cc/toolchains/actions:cpp_compile",
+        "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
+        "@rules_cc//cc/toolchains/actions:cpp_module_codegen",
+        "@rules_cc//cc/toolchains/actions:cpp_module_compile",
+        "@rules_cc//cc/toolchains/actions:linkstamp_compile",
+        "@rules_cc//cc/toolchains/actions:objcpp_compile",
+        "@rules_cc//cc/toolchains/actions:c_compile",
+        "@rules_cc//cc/toolchains/actions:preprocess_assemble",
+        "@rules_cc//cc/toolchains/actions:objc_compile",
+    ],
+    args = [
+        "/clang:-nostdlibinc",
     ],
 )
 
@@ -985,6 +1008,25 @@ cc_args(
     ],
     args = [
         "-L{cxxstdlib_library_search_path}",
+    ],
+    data = [
+        "//runtimes/cxxstdlib:library_search_directory",
+    ],
+    format = {
+        "cxxstdlib_library_search_path": "//runtimes/cxxstdlib:library_search_directory",
+    },
+)
+
+cc_args(
+    name = "clang_cl_cxxstdlib_library_search_paths",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    # clang-cl rejects the common -L spelling in CL mode. Keep the common
+    # declared directory model, but translate it to clang-cl/link syntax.
+    args = [
+        "/clang:-Xlinker",
+        "/clang:/LIBPATH:{cxxstdlib_library_search_path}",
     ],
     data = [
         "//runtimes/cxxstdlib:library_search_directory",
