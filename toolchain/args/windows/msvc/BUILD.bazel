@@ -16,7 +16,7 @@ cc_args(
 )
 
 cc_args(
-    name = "reproducible_coff_objects",
+    name = "deterministic_coff_object_flags",
     actions = [
         "@rules_cc//cc/toolchains/actions:source_compile_actions",
     ],
@@ -45,7 +45,7 @@ cc_args(
 )
 
 cc_args(
-    name = "reproducible_codeview",
+    name = "deterministic_codeview_flags",
     actions = [
         "@rules_cc//cc/toolchains/actions:source_compile_actions",
     ],
@@ -91,24 +91,6 @@ cc_args(
         "/clang:-Xlinker",
         "/clang:/SUBSYSTEM:CONSOLE",
     ],
-)
-
-cc_args(
-    name = "libcxx_include",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:source_compile_actions",
-    ],
-    args = select({
-        "//toolchain:runtimes_all": ["/imsvc{libcxx_include}"],
-        "//conditions:default": [],
-    }),
-    data = select({
-        "//toolchain:runtimes_all": ["//runtimes/cxxstdlib:headers_include_search_directory"],
-        "//conditions:default": [],
-    }),
-    format = {
-        "libcxx_include": "//runtimes/cxxstdlib:headers_include_search_directory",
-    },
 )
 
 cc_args(
@@ -166,52 +148,52 @@ cc_args(
 )
 
 cc_args(
-    name = "msvc_com_support_library_path",
+    name = "com_support_library_search_paths",
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
     args = [
         "/clang:-Xlinker",
-        "/clang:/LIBPATH:{msvc_com_support_lib}",
+        "/clang:/LIBPATH:{com_support_library_search_path}",
     ],
     data = ["//windows:msvc_com_support_libraries"],
     format = {
-        "msvc_com_support_lib": "//windows:msvc_com_support_libraries",
+        "com_support_library_search_path": "//windows:msvc_com_support_libraries",
     },
 )
 
 cc_args(
-    name = "msvc_dynamic_runtime_library_path",
+    name = "dynamic_crt_library_search_paths",
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
     args = [
         "/clang:-Xlinker",
-        "/clang:/LIBPATH:{msvc_dynamic_lib}",
+        "/clang:/LIBPATH:{dynamic_crt_library_search_path}",
     ],
     data = ["//windows:msvc_dynamic_runtime_libraries"],
     format = {
-        "msvc_dynamic_lib": "//windows:msvc_dynamic_runtime_libraries",
+        "dynamic_crt_library_search_path": "//windows:msvc_dynamic_runtime_libraries",
     },
 )
 
 cc_args(
-    name = "msvc_static_runtime_library_path",
+    name = "static_crt_library_search_paths",
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
     args = [
         "/clang:-Xlinker",
-        "/clang:/LIBPATH:{msvc_static_lib}",
+        "/clang:/LIBPATH:{static_crt_library_search_path}",
     ],
     data = ["//windows:msvc_static_runtime_libraries"],
     format = {
-        "msvc_static_lib": "//windows:msvc_static_runtime_libraries",
+        "static_crt_library_search_path": "//windows:msvc_static_runtime_libraries",
     },
 )
 
 cc_args(
-    name = "sdk_library_paths",
+    name = "sdk_library_search_paths",
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
@@ -244,10 +226,10 @@ cc_args_list(
 cc_args_list(
     name = "default_libs",
     args = [
-        "sdk_library_paths",
-        "msvc_com_support_library_path",
+        "sdk_library_search_paths",
+        "com_support_library_search_paths",
     ] + select({
-        "//toolchain/features/msvc:static_crt_config": ["msvc_static_runtime_library_path"],
-        "//conditions:default": ["msvc_dynamic_runtime_library_path"],
+        "//toolchain/features/msvc:static_crt_config": ["static_crt_library_search_paths"],
+        "//conditions:default": ["dynamic_crt_library_search_paths"],
     }),
 )

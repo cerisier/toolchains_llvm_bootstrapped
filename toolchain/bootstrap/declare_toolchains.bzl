@@ -195,7 +195,7 @@ def declare_tool_map(exec_os, exec_cpu, prefix = None, fdo_profile = None, fdo_i
     )
 
     cc_args(
-        name = prefix + "/compile_resource_dir_msvc",
+        name = prefix + "/clang_cl_compile_resource_dir",
         actions = [
             "@rules_cc//cc/toolchains/actions:clif_match",
             "@rules_cc//cc/toolchains/actions:cpp_compile",
@@ -520,8 +520,8 @@ def declare_toolchains(*, execs = None, targets = SUPPORTED_TARGETS):
             cc_toolchain(
                 name = cc_toolchain_name,
                 extra_args = select({
-                    "@llvm//platforms/config:windows_x86_64_msvc": [":%s/compile_resource_dir_msvc" % tool_prefix],
-                    "@llvm//platforms/config:windows_aarch64_msvc": [":%s/compile_resource_dir_msvc" % tool_prefix],
+                    "@llvm//platforms/config:windows_x86_64_msvc": [":%s/clang_cl_compile_resource_dir" % tool_prefix],
+                    "@llvm//platforms/config:windows_aarch64_msvc": [":%s/clang_cl_compile_resource_dir" % tool_prefix],
                     "//conditions:default": [],
                 }),
                 tool_map = select({

@@ -98,7 +98,7 @@ def declare_llvm_targets(*, suffix = ""):
     )
 
     cc_args(
-        name = "compile_resource_dir_msvc",
+        name = "clang_cl_compile_resource_dir",
         actions = [
             "@rules_cc//cc/toolchains/actions:clif_match",
             "@rules_cc//cc/toolchains/actions:cpp_compile",
