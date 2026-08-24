@@ -599,7 +599,70 @@ Completed approved implementation:
   argument labels had no consumers outside this repository, so no aliases were
   added.
 
+Post-review semantic correction:
+
+- commit `6211fb89` removes the invented `msvc_target_compile_args` and maps
+  every retained default to an existing semantic position: target
+  compatibility in `target_flags`, `/Brepro` and deterministic CodeView in
+  `deterministic_compile_flags`, `/DNOMINMAX` in SDK compile arguments, and
+  clang-cl banner/exception/RTTI defaults in the existing compiler-personality
+  legacy feature. Only `/bigobj` keeps a precise Windows COFF semantic target;
+- `_LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS` is no longer a global toolchain
+  define on every source compile. The generated libc++ `__config_site` now
+  encodes it for the supported configuration-wide static-libc++ Windows MSVC
+  route, matching upstream libc++'s static Windows configuration behavior.
+  The existing local define used while compiling libc++ itself is retained;
+- selecting the generated definition with the runtime-internal
+  `:windows_static` condition was rejected by proof: public headers are
+  configured in the consumer configuration, outside the runtime linkmode
+  transition. Invocation `4c46350e-594d-48af-ad03-ea531a905131` therefore
+  failed the new public-header assertion. Selecting the exact supported
+  `:windows_msvc` tuple makes the configuration-wide static-libc++ contract
+  explicit without coupling it to ordinary consumer `/MD` versus `/MT`;
+- this correction does not complete R05. The remaining Stage 0 target naming,
+  ASan distinction, and final COFF auto-link copy documentation stay in Batch
+  4. R11/R42 remain deferred, and R44 remains an implementation no-op.
+
 Evidence:
+
+- baseline MSVC compile action `aa285157-224b-4293-bb50-c97921339285`
+  contained the required compatibility, clang-cl default, deterministic COFF,
+  large-object, and SDK flags plus a global
+  `/D_LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS`; baseline generated-config
+  invocation `bdcd250b-d783-4821-a7be-503d343d5bc7` did not define the libc++
+  setting;
+- corrected MSVC action invocation
+  `a3ca047d-0304-4f2a-a32a-87e0a66bdc4a` retains every required flag while
+  removing the global libc++ define. Generated-config and support-library
+  invocation `3b7a012b-3ae0-48a7-8b41-58e61cd0eb67` produces a config site
+  containing `_LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS` and proves ordinary
+  public-header consumers observe it;
+- ordinary libc++ and DLL/import-library consumers built for x86-64 as
+  invocation `3e3ab940-fe90-4fc5-a0d9-2f349f0192d5` and ARM64 as
+  `ea0b399b-9e66-462d-ab57-954a506ebc23`;
+- the focused Windows MSVC action suite passed from invocation
+  `8c4939d2-cf09-4c1a-be1e-57ce7facfd8e` through
+  `65d6cea7-2313-4771-80ab-247a0c263299`. The negative suite preserved all
+  five expected failures as invocations
+  `e7c78f9d-df1e-4350-8675-9d3d55c322d9`,
+  `98610d1d-c5cc-49cc-8e9a-a7a9684b17de`,
+  `e659259f-6cc8-4f6c-91cb-c9c6176086b7`,
+  `32367cba-70f0-4d52-98ba-c8fbb7f7a199`, and
+  `00e68814-fa8d-4543-8109-1799635cee18`;
+- MinGW and Linux action captures from invocations
+  `352c4f10-83b1-4ab1-98fd-5e5861ee8a5b` and
+  `5385bbe4-d99d-4802-a662-ea1d7b540dbe` are byte-for-byte identical to their
+  pre-correction captures, with SHA-256 values
+  `dce1aac81511fb528fa725dd25a38ec19ab12f5940fe494ff2bf6fefc3abe388`
+  and `c3075d0eb95ea6dec2f33653231cf533804931d470e7517c9dd83e7561875cdc`.
+  Their representative builds passed as invocations
+  `a6ea5ad3-b5a4-43b4-a868-75845fcae913` and
+  `a95529b3-3e13-4b7d-9abe-86c303168ebb`;
+- repository buildifier passed as invocation
+  `6274e2cf-2c4a-47ed-888b-f278eec7399c`; `git diff --check` also passed. No
+  Stage 3 rebuild was needed because the changed ownership is directly proved
+  by the focused x86-64/ARM64 consumers and generated actions, while generic
+  rendered actions are identical.
 
 - final configured-graph queries prove x86-64 MSVC, ARM64 MSVC, and MinGW all
   select `//toolchain:windows_toolchain_args` as invocations
