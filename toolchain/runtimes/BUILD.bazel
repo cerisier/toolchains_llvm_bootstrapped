@@ -20,7 +20,7 @@ cc_args_list(
         "@platforms//os:macos": [
             "//toolchain/args/macos:default_link_flags",
         ],
-        "@platforms//os:windows": ["//toolchain:windows_default_link_flags"],
+        "@platforms//os:windows": ["//toolchain/args/windows:default_link_flags"],
         "//conditions:default": [],
     }),
 )
@@ -52,7 +52,7 @@ cc_args_list(
 
 cc_args_list(
     name = "windows_hosted_c_toolchain_args",
-    args = ["//toolchain:windows_hosted_c_toolchain_args"],
+    args = ["//toolchain/args/windows:hosted_c_toolchain_args"],
     visibility = ["//toolchain:__subpackages__"],
 )
 
@@ -75,7 +75,7 @@ cc_args_list(
 
 cc_args_list(
     name = "windows_platform_specific_args",
-    args = ["//toolchain:windows_runtime_toolchain_args"],
+    args = ["//toolchain/args/windows:runtime_toolchain_args"],
 )
 
 cc_args_list(

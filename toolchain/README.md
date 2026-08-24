@@ -18,26 +18,46 @@ Groups are defined at the level of the most constrained targets, so that more fe
 ### Package structure
 
 **//toolchain/args:BUILD.bazel**:
-- Defines the canonical meaning of each argument group.
-- Groups may be empty, but must exist.
-- No platform select() logic.
+- Defines generic argument implementations and reusable compiler-personality
+  implementations.
+- Groups may be empty, but their semantic meaning must remain stable.
+- Does not own the final target-OS/platform-family route.
 
-This package defines what each group means, independent of platform or environment.
+This package provides the generic and personality-specific pieces from which a
+platform family builds its implementation.
 
 **//toolchain/args/\<platform\>:BUILD.bazel**:
-- Defines platform-specific implementations of argument groups.
-- May replace or extend canonical groups where platform semantics differ.
-- No platform select() logic.
+- Defines the semantic implementation for one target OS/platform family.
+- May select and compose platform-local axes such as ABI, CRT, SDK, runtime
+  family, or intentional empty implementations.
+- References concrete variant leaves rather than embedding raw flags.
 
-These packages adjust how a canonical group is implemented on a given platform, without changing its semantic intent.
+For example, `//toolchain/args/windows` owns the Windows choice between MinGW
+and the native MSVC ABI route, while preserving the canonical meaning of each
+group.
+
+**//toolchain/args/\<platform\>/\<variant\>:BUILD.bazel**:
+- Defines concrete flags, action bindings, inputs, and data for one platform
+  variant.
+- Contains no selection between target OS, ABI, CRT, SDK, or runtime families.
+- May still condition a concrete implementation on non-routing semantics such
+  as a runtime build stage.
+
+This is what “no platform select logic” means: concrete leaves do not decide
+which platform variant applies. Their parent platform package owns that route.
+Compiler personality is a separate axis and remains in reusable compiler
+argument/feature layers; a supported toolchain route composes it explicitly
+with the selected target platform implementation.
 
 **//toolchain:BUILD.bazel**:
-- Assembles the final toolchain by selecting between argument groups.
+- Assembles the final toolchain by selecting the top-level target OS/platform
+  family once for each canonical group.
 - Contains only cc_args_list targets.
 - No raw flags or action bindings.
-- **All platform selection lives here.**
+- Does not select subordinate platform-local ABI, CRT, SDK, or runtime variants.
 
-This package answers which groups apply on which platforms, and nothing else.
+This package answers which platform-family implementation applies. The selected
+platform package answers which of its local variants applies.
 
 TODO(cerisier): Support macOS specific flags (objc and frameworks). Still needed ?
 

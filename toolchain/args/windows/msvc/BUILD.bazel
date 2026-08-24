@@ -2,7 +2,7 @@ load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 load("//windows:versions.bzl", "MSVC_COMPATIBILITY_VERSION")
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//toolchain/args/windows:__pkg__"])
 
 cc_args(
     name = "compatibility",
@@ -10,12 +10,9 @@ cc_args(
         "@rules_cc//cc/toolchains/actions:lto_backend",
         "@rules_cc//cc/toolchains/actions:source_compile_actions",
     ],
-    args = select({
-        "//constraints/windows/abi:msvc": [
-            "/clang:-fms-compatibility-version={}".format(MSVC_COMPATIBILITY_VERSION),
-        ],
-        "//conditions:default": [],
-    }),
+    args = [
+        "/clang:-fms-compatibility-version={}".format(MSVC_COMPATIBILITY_VERSION),
+    ],
 )
 
 cc_args(
@@ -238,61 +235,18 @@ cc_args(
 )
 
 cc_args_list(
-    name = "target_compile_args",
-    args = [
-        ":compatibility",
-        "//toolchain/args:clang_cl_suppress_compiler_banner",
-        ":reproducible_coff_objects",
-        "//toolchain/args:clang_cl_default_exception_handling",
-        "//toolchain/args:clang_cl_default_rtti",
-        ":large_coff_objects",
-        ":windows_sdk_compile_defines",
-    ],
-)
-
-cc_args_list(
-    name = "crt_compile_args",
-    args = [
-        ":msvc_crt_compile_defines",
-    ],
-)
-
-cc_args_list(
-    name = "cxxstdlib_compile_args",
-    args = [
-        ":libcxx_compile_defines",
-    ],
-)
-
-cc_args_list(
-    name = "deterministic_codeview_compile_args",
-    args = [
-        ":reproducible_codeview",
-    ],
-)
-
-cc_args_list(
-    name = "cxxstdlib_headers_include_search_paths",
-    args = [
-        ":libcxx_include",
-    ],
-)
-
-cc_args_list(
     name = "sdk_compile_args",
     args = [
-        ":sdk_case_overlay",
-        ":sdk_includes",
+        "sdk_case_overlay",
+        "sdk_includes",
     ],
+    visibility = ["//visibility:public"],
 )
 
 cc_args_list(
-    name = "default_link_flags",
+    name = "common_default_link_flags",
     args = [
-        ":sdk_library_paths",
-        ":msvc_com_support_library_path",
-    ] + select({
-        "//toolchain/features/msvc:static_crt_config": [":msvc_static_runtime_library_path"],
-        "//conditions:default": [":msvc_dynamic_runtime_library_path"],
-    }),
+        "sdk_library_paths",
+        "msvc_com_support_library_path",
+    ],
 )
