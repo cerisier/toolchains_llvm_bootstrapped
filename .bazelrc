@@ -68,8 +68,8 @@ common:remote --jobs=800
 common:remote --extra_execution_platforms=@llvm//:rbe_platform
 common:remote --rewind_lost_inputs
 
-common --per_file_copt=external/.*llvm-project.*@-Wno-thread-safety-analysis
-common --host_per_file_copt=external/.*llvm-project.*@-Wno-thread-safety-analysis
+common --per_file_copt=external/.*llvm-project.*@-Xclang=-Wno-thread-safety-analysis
+common --host_per_file_copt=external/.*llvm-project.*@-Xclang=-Wno-thread-safety-analysis
 
 # Load any settings specific to the current user.
 # .bazelrc.user should appear in .gitignore so that settings are not shared with team members

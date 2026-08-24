@@ -43,6 +43,11 @@ bazel --bazelrc=.bazelrc aquery "${mingw_flags[@]}" \
   --output=commands \
   'inputs(".*libcxx/src/algorithm.cpp", mnemonic("CppCompile", deps(@llvm-project//libcxx:libcxx)))' \
   >"${action_dir}/mingw-libcxx-compile.txt"
+bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
+  --features=-compiler_param_file \
+  --output=commands \
+  'inputs(".*libcxx/src/algorithm.cpp", mnemonic("CppCompile", deps(@llvm-project//libcxx:libcxx.static.msvc)))' \
+  >"${action_dir}/msvc-libcxx-compile.txt"
 
 bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   --include_param_files \
@@ -54,6 +59,18 @@ bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   --output=commands \
   'mnemonic("CppCompile", //:windows_msvc_generated_def_binary)' \
   >"${action_dir}/default-compile-flags.txt"
+bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
+  -c opt \
+  --features=-compiler_param_file \
+  --output=commands \
+  'mnemonic("CppCompile", //:windows_msvc_generated_def_binary)' \
+  >"${action_dir}/opt-compile-flags.txt"
+bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
+  -c dbg \
+  --features=-compiler_param_file \
+  --output=commands \
+  'mnemonic("CppCompile", //:windows_msvc_generated_def_binary)' \
+  >"${action_dir}/dbg-compile-flags.txt"
 bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   --features=-compiler_param_file \
   --features=llvm_release_no_exceptions \
@@ -172,10 +189,31 @@ assert_absent "${action_dir}/compile.txt" "msvc_include"
 
 assert_contains "${action_dir}/mingw-libcxx-compile.txt" "-Wno-pragma-pack"
 assert_contains "${action_dir}/mingw-libcxx-compile.txt" "-Wno-unused-value"
+assert_contains "${action_dir}/mingw-libcxx-compile.txt" "-Xclang=-Wno-thread-safety-analysis"
 assert_absent "${action_dir}/mingw-libcxx-compile.txt" "/clang:-Wno-pragma-pack"
 assert_absent "${action_dir}/mingw-libcxx-compile.txt" "/clang:-Wno-unused-value"
+assert_contains "${action_dir}/msvc-libcxx-compile.txt" "bin/clang-cl"
+assert_matches "${action_dir}/msvc-libcxx-compile.txt" "/clang:-Wthread-safety.*-Xclang=-Wno-thread-safety-analysis"
 
 assert_contains "${action_dir}/default-compile-flags.txt" "/std:c++17"
+assert_contains "${action_dir}/default-compile-flags.txt" "/GS"
+assert_contains "${action_dir}/default-compile-flags.txt" "/clang:-Wall"
+assert_contains "${action_dir}/default-compile-flags.txt" "/clang:-Wthread-safety"
+assert_contains "${action_dir}/default-compile-flags.txt" "/clang:-fcolor-diagnostics"
+assert_contains "${action_dir}/default-compile-flags.txt" "/clang:-fno-omit-frame-pointer"
+assert_absent "${action_dir}/default-compile-flags.txt" "/Z7"
+assert_contains "${action_dir}/opt-compile-flags.txt" "/O2"
+assert_contains "${action_dir}/opt-compile-flags.txt" "/DNDEBUG"
+assert_contains "${action_dir}/opt-compile-flags.txt" "/Gy"
+assert_contains "${action_dir}/opt-compile-flags.txt" "/Gw"
+assert_contains "${action_dir}/opt-compile-flags.txt" "/Zc:inline"
+assert_absent "${action_dir}/opt-compile-flags.txt" "/Z7"
+assert_absent "${action_dir}/opt-compile-flags.txt" "/D_DEBUG"
+assert_contains "${action_dir}/dbg-compile-flags.txt" "/Od"
+assert_contains "${action_dir}/dbg-compile-flags.txt" "/Z7"
+assert_absent "${action_dir}/dbg-compile-flags.txt" "/O2"
+assert_absent "${action_dir}/dbg-compile-flags.txt" "/DNDEBUG"
+assert_absent "${action_dir}/dbg-compile-flags.txt" "/D_DEBUG"
 assert_contains "${action_dir}/release-compile.txt" "/std:c++17"
 assert_contains "${action_dir}/release-compile.txt" "/EHs-c-"
 assert_contains "${action_dir}/release-compile.txt" "/GR-"
@@ -189,6 +227,9 @@ assert_matches "${action_dir}/release-user-overrides.txt" "/clang:-fomit-frame-p
 assert_matches "${action_dir}/release-user-overrides.txt" "/std:c\\+\\+17.* /std:c\\+\\+20"
 assert_contains "${action_dir}/release-libcxxabi-compile.txt" "libcxxabi/src/private_typeinfo.cpp"
 assert_contains "${action_dir}/release-libcxxabi-compile.txt" "-funwind-tables"
+assert_contains "${action_dir}/release-libcxxabi-compile.txt" "/DNDEBUG"
+assert_contains "${action_dir}/release-libcxxabi-compile.txt" "/O2"
+assert_absent "${action_dir}/release-libcxxabi-compile.txt" "/D_DEBUG"
 assert_absent "${action_dir}/release-libcxxabi-compile.txt" " -fno-exceptions"
 assert_absent "${action_dir}/release-libcxxabi-compile.txt" " -fno-rtti"
 assert_absent "${action_dir}/release-libcxxabi-compile.txt" " -fomit-frame-pointer"

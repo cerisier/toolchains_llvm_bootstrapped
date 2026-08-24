@@ -3,8 +3,10 @@ load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 
 package(default_visibility = ["//toolchain/runtimes:__subpackages__"])
 
-# compile_actions minus assemble_actions (only preprocess_assemble)
-OPT_FLAGS_COMPILE_ACTIONS = [
+# Runtime optimization/debug policy applies to the same logical source actions
+# for every compiler driver dialect. Raw assemble actions stay excluded because
+# they do not consume C-family optimization or preprocessor semantics.
+RUNTIME_SOURCE_COMPILE_ACTIONS = [
     "@rules_cc//cc/toolchains/actions:cpp_compile_actions",
     "@rules_cc//cc/toolchains/actions:c_compile_actions",
     "@rules_cc//cc/toolchains/actions:preprocess_assemble",
@@ -12,55 +14,50 @@ OPT_FLAGS_COMPILE_ACTIONS = [
     "@rules_cc//cc/toolchains/actions:objcpp_compile",
 ]
 
-# libc must be compiled with optimizations (should match with above)
 cc_args(
-    name = "opt_clang_compile_flags",
-    # compile_actions minus assemble_actions (only preprocess_assemble)
-    actions = OPT_FLAGS_COMPILE_ACTIONS,
-    args = [
-        "-DNDEBUG",
-        "-O2",
-    ],
-)
-
-cc_args(
-    name = "opt_clang_cl_compile_flags",
-    actions = ["@rules_cc//cc/toolchains/actions:source_compile_actions"],
-    args = [
-        "/DNDEBUG",
-        "/O2",
-    ],
-)
-
-cc_args_list(
-    name = "opt_compile_flags",
+    name = "opt_disable_assertions",
+    actions = RUNTIME_SOURCE_COMPILE_ACTIONS,
     args = select({
-        "//constraints/windows/abi:msvc": [":opt_clang_cl_compile_flags"],
-        "//conditions:default": [":opt_clang_compile_flags"],
+        "//constraints/windows/abi:msvc": ["/DNDEBUG"],
+        "//conditions:default": ["-DNDEBUG"],
     }),
 )
 
 cc_args(
-    name = "dbg_clang_compile_flags",
-    actions = OPT_FLAGS_COMPILE_ACTIONS,
-    args = [
-        "-D_DEBUG",
-        "-O0",
-        "-g",
-    ],
+    name = "opt_optimization_level",
+    actions = RUNTIME_SOURCE_COMPILE_ACTIONS,
+    args = select({
+        "//constraints/windows/abi:msvc": ["/O2"],
+        "//conditions:default": ["-O2"],
+    }),
 )
 
 cc_args(
-    name = "dbg_clang_cl_compile_flags",
-    actions = ["@rules_cc//cc/toolchains/actions:source_compile_actions"],
-    args = ["/Od"],
+    name = "dbg_runtime_debug_define",
+    actions = RUNTIME_SOURCE_COMPILE_ACTIONS,
+    args = select({
+        # The MSVC route declares retail CRTs only. _DEBUG must remain absent
+        # until a debug CRT becomes a supported, declared runtime choice.
+        "//constraints/windows/abi:msvc": [],
+        "//conditions:default": ["-D_DEBUG"],
+    }),
 )
 
-cc_args_list(
-    name = "dbg_compile_flags",
+cc_args(
+    name = "dbg_no_optimization",
+    actions = RUNTIME_SOURCE_COMPILE_ACTIONS,
     args = select({
-        "//constraints/windows/abi:msvc": [":dbg_clang_cl_compile_flags"],
-        "//conditions:default": [":dbg_clang_compile_flags"],
+        "//constraints/windows/abi:msvc": ["/Od"],
+        "//conditions:default": ["-O0"],
+    }),
+)
+
+cc_args(
+    name = "dbg_debug_info",
+    actions = RUNTIME_SOURCE_COMPILE_ACTIONS,
+    args = select({
+        "//constraints/windows/abi:msvc": ["/Z7"],
+        "//conditions:default": ["-g"],
     }),
 )
 
@@ -68,10 +65,13 @@ cc_args_list(
     name = "optimization_flags",
     args = select({
         "//config:runtimes_optimization_mode_debug": [
-            ":dbg_compile_flags",
+            ":dbg_runtime_debug_define",
+            ":dbg_no_optimization",
+            ":dbg_debug_info",
         ],
         "//conditions:default": [
-            ":opt_compile_flags",
+            ":opt_disable_assertions",
+            ":opt_optimization_level",
         ],
     }),
 )
