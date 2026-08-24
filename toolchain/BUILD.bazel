@@ -313,17 +313,17 @@ cc_args_list(
 cc_args_list(
     name = "platform_specific_args",
     args = select({
-        # Platform specific flags.
         "@platforms//os:macos": [":macos_toolchain_args"],
         "@platforms//os:linux": [":linux_toolchain_args"],
-        "@platforms//os:windows": ["//toolchain/args/windows:toolchain_args"],
+        # Windows uses the complete :windows_toolchain_args composition below.
+        "@platforms//os:windows": [],
         "@platforms//os:none": [],
         "//conditions:default": [],
     }),
 )
 
 cc_args_list(
-    name = "toolchain_args",
+    name = "generic_toolchain_args",
     args = [
         # Common default compile flags.
         "//toolchain/args:target_flags",
@@ -372,6 +372,74 @@ cc_args_list(
         ":default_startfiles",
         ":default_libs",
     ],
+)
+
+# Keep the complete Windows composition explicit while its individual
+# compiler-personality, object-format, ABI, and runtime semantics are being
+# normalized. This mirrors :generic_toolchain_args instead of appending a bag
+# of Windows-only arguments through :platform_specific_args.
+cc_args_list(
+    name = "windows_toolchain_args",
+    args = [
+        # Common default compile flags.
+        "//toolchain/args:target_flags",
+        "//toolchain/args:no_absolute_paths_for_builtins",
+        "//toolchain/args:deterministic_compile_flags",
+        "//toolchain/args:module_map",
+        ":sysroot_flags",
+        ":hermetic_compile_flags",
+
+        # Keep external -isystem directories before the toolchain C and C++
+        # -isystem directories below.
+        "@rules_cc//cc/toolchains/args/external_include_paths:external_include_paths",
+
+        # Windows compiler, ABI, CRT, object-format, and C++ runtime semantics.
+        "//toolchain/args/windows:target_compile_args",
+        "//toolchain/args/windows:crt_compile_args",
+        "//toolchain/args/windows:cxxstdlib_compile_args",
+        "//toolchain/args/windows:deterministic_codeview_compile_args",
+        "//toolchain/args/windows:cxxstdlib_headers_include_search_paths",
+        "//toolchain/args/windows:headers_before_compiler_resource",
+
+        # Optional sanitizers
+        "//toolchain/args:ubsan_flags",
+        "//toolchain/args:cfi_flags",
+        "//toolchain/args:msan_flags",
+        "//toolchain/args:dfsan_flags",
+        "//toolchain/args:nsan_flags",
+        "//toolchain/args:safestack_flags",
+        "//toolchain/args:rtsan_flags",
+        "//toolchain/args:tysan_flags",
+        "//toolchain/args:tsan_flags",
+        "//toolchain/args:asan_flags",
+        "//toolchain/args:lsan_flags",
+        "//toolchain/args:xray_flags",
+        "//toolchain/args:fuzzer_flags",
+        "//toolchain/args:profile_flags",
+
+        # Common default link flags.
+        "//toolchain/args:fuse_ld",
+        "//toolchain/args:lto_plugin_target_flags",
+        ":cxxstdlib_library_search_paths",
+        ":libunwind_library_search_paths",
+        ":rtlib",
+        ":stdlib",
+        ":unwindlib",
+        ":resource_dir",
+        "//toolchain/args:validate_static_library_args",
+        ":default_link_flags",
+        # Needs to stay out of resource_dir since clang does not always search for crtstuff for all targets.
+        ":default_startfiles",
+        ":default_libs",
+    ],
+)
+
+cc_args_list(
+    name = "toolchain_args",
+    args = select({
+        "@platforms//os:windows": [":windows_toolchain_args"],
+        "//conditions:default": [":generic_toolchain_args"],
+    }),
     visibility = ["//visibility:public"],
 )
 

@@ -143,11 +143,10 @@ cc_feature(
     feature_name = "prefer_pic_for_opt_binaries",
 )
 
-# Allow external repositories to get included with -isystem instead of -I
-# in order to silence warnings from external headers. //toolchain:toolchain_args
-# and //toolchain/runtimes:toolchain_args expand external_include_paths before
-# //toolchain:platform_specific_args and
-# //toolchain/runtimes:staged_platform_specific_args, respectively.
+# Allow external repositories to get included with -isystem instead of -I in
+# order to silence warnings from external headers. The complete generic and
+# Windows toolchain compositions expand external_include_paths before their
+# target C and C++ include semantics.
 cc_feature(
     name = "external_include_paths",
     feature_name = "external_include_paths",
