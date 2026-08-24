@@ -1,7 +1,7 @@
 # Windows MSVC toolchain semantic cleanup plan
 
-Status: active; Batch 1 implementation and consolidated proof complete,
-remaining batches await owner selection.
+Status: active; Batches 1 and 2 implementation and proof complete, remaining
+batches await owner selection.
 
 Date: 2026-08-24 (Asia/Tokyo)
 
@@ -111,13 +111,13 @@ order so later agents can map plan state back to PR #711.
 
 ### Shared argument and feature semantics
 
-- [ ] **R07 — Make module behavior an explicit unsupported MSVC boundary.**
+- [x] **R07 — Make module behavior an explicit unsupported MSVC boundary.**
   Keep generic module flags unchanged. Do not pass raw GNU flags to clang-cl or
   claim module/header-parsing support. Represent the empty MSVC implementation
   explicitly, and ensure requests for layering/module parsing fail or remain
   disabled coherently until R43 is separately graduated.
 
-- [ ] **R08 — Isolate and re-prove link-time `-no-canonical-prefixes`.**
+- [x] **R08 — Isolate and re-prove link-time `-no-canonical-prefixes`.**
   Move it out of the linker-choice group into a named staged-linker discovery
   semantic. Compare source-built clang-cl link actions with and without it. If
   sibling `lld-link` remains selected hermetically, remove it; otherwise retain
@@ -153,13 +153,13 @@ order so later agents can map plan state back to PR #711.
   exact warning policy; do not approximate `-Wall` blindly with an unrelated
   MSVC warning level or leave one blanket empty MSVC branch.
 
-- [ ] **R15 — Rebuild legacy replacements as an ordered common spine.**
+- [x] **R15 — Rebuild legacy replacements as an ordered common spine.**
   Classify every generic replacement as shared, dialect-replaced,
   target-inapplicable, or explicitly unsupported. Preserve common ordering,
   especially user flags before compiler input/output and the linker parameter
   protocol. Do not maintain an independent approximate MSVC ordering.
 
-- [ ] **R16 — Split compiler-dialect features from Windows/MSVC ABI features.**
+- [x] **R16 — Split compiler-dialect features from Windows/MSVC ABI features.**
   Move CL spelling, response, dependency, `/D`, `/I`, `/Fo`, and `/clang:`
   behavior into a clang-cl adapter layer. Keep COFF artifacts, `/MACHINE`, DLL,
   DEF/import library, PDB, CRT, SDK closure, and ABI validation in a
@@ -276,20 +276,23 @@ once. Implementation packages continue to contain no platform selects.
 
 ### Feature-set and toolchain-constructor semantics
 
-- [ ] **R38 — Make MSVC known features exhaustive by classification.**
+- [x] **R38 — Make MSVC known features exhaustive by classification.**
   Compose shared supported features, clang-cl/MSVC replacements, and explicit
   unsupported sentinels. Account for parsing, layering, external includes,
   runtime search, coverage, sanitizers, and ThinLTO rather than relying on a
   hand-written list that merely analyzes for current tests.
 
-- [ ] **R39 — Compose enabled features from a shared ordered baseline.**
-  Add explicit target/dialect deltas for MSVC response files, DEF, CRT, link
-  defaults, and validation. Record intentional omissions such as PIC/module
-  maps instead of duplicating the generic list.
+- [x] **R39 — Keep enabled features as explicit ordered dialect/ABI lists.**
+  The owner explicitly preferred duplication over an early shared feature-set
+  abstraction. Keep the generic and MSVC lists independently readable, while
+  composing the clang-cl response protocol separately from DEF, CRT, link
+  defaults, and ABI validation. Record intentional omissions such as PIC and
+  module maps.
 
-- [ ] **R40 — Compose runtime enabled features from the same baseline.**
+- [x] **R40 — Keep runtime enabled features explicitly ordered.**
   Preserve the intentional absence of ordinary opt/dbg features where runtime
-  rules own optimization. Express all other MSVC differences as named deltas.
+  rules own optimization. Duplicate the short runtime list explicitly rather
+  than hiding stage differences behind a premature shared abstraction.
 
 - [ ] **R41 — Rename or replace `llvm_release_features` at Batch 6.**
   If the marker mechanism remains temporarily, rename the set to reflect that
@@ -301,7 +304,7 @@ once. Implementation packages continue to contain no platform selects.
   overlay and VC/UCRT includes through the named Windows/MSVC include-search
   implementation while preserving the established search order.
 
-- [ ] **R43 — Keep header parsing explicitly temporary and unsupported.**
+- [x] **R43 — Keep header parsing explicitly temporary and unsupported.**
   Do not flip `supports_header_parsing` in this cleanup. Replace the unexplained
   boolean with a named target/decision boundary and state the future positive
   proof required: dialect-correct parse-only action plus coherent module-map
@@ -418,6 +421,75 @@ Items: R07-R08, R15-R16, R38-R40, R43.
 Purpose: split clang-cl protocol from Windows/MSVC ABI ownership, restore
 ordered legacy-feature composition, and make supported/unsupported feature
 sets auditable. Keep header parsing unsupported.
+
+Status: implementation and grouped proof complete on 2026-08-24.
+
+Owner decisions:
+
+- keep the globally requested `layering_check` as an explicit temporary no-op
+  instead of failing while dialect-correct support is planned next;
+- introduce `//toolchain/features/clang_cl`, with a README recording that its
+  final upstream rules_cc form belongs inline with the corresponding argument
+  packages and selects concrete spellings by compiler;
+- keep generic and clang-cl/MSVC known, enabled, runtime, and legacy orderings
+  explicitly duplicated instead of creating shared feature-set abstractions.
+
+Evidence:
+
+- Baseline x86-64 and ARM64 action captures passed as invocations
+  `7b192c17-ed21-465f-aa10-932dbfdfe15b` and
+  `f5f3ec73-7144-4837-9765-0d9eedbe6032`. Baseline MinGW and Linux captures
+  were `4ab0673b-acf9-4e7d-8cbe-6bdaba4e3e77` and
+  `4370c90e-0820-4422-a2cf-00768e5a39a5`.
+- R08 removed only the raw link-time `-no-canonical-prefixes`. Source-backed
+  focused consumers built for x86-64 and ARM64 as invocations
+  `107c88ce-714a-4413-bfd6-3d14ae7f3fdc` and
+  `d5cc0225-f07f-4cb1-a4fa-82704340236b`; their actions retain declared
+  Stage 1 `clang-cl`, its sibling `lld-link`, and `/clang:-fuse-ld=lld`.
+  Compile-time `/clang:-no-canonical-prefixes` remains unchanged.
+- `//toolchain/features/clang_cl` now owns CL compile/input/output, dependency,
+  include/define, response-file, link-forwarding, and ThinLTO protocol.
+  `//toolchain/features/msvc` retains ABI validation, CRT, llvm-ar COFF
+  archives, `/MACHINE`, DEF/import-library, PDB, and deterministic link policy.
+  Compatibility labels preserve the previous adapter entry points.
+- The two explicit legacy lists follow the same logical slot order. New focused
+  assertions prove user compile flags precede compiler input/output and user
+  link flags precede `/Fe`; these assertions fail against the previous MSVC
+  ordering and pass after the change.
+- Materialized x86-64 and ARM64 compile/link/archive response files are ASCII,
+  carry the correct target triples, `/MACHINE:X64` or `/MACHINE:ARM64`, `/Fe`,
+  `/WHOLEARCHIVE`, `.obj`/`.lib`, and deterministic `llvm-ar rcsD`. No GNU
+  `-Wl,`, `-o`, ambient SDK path, or host-CPU target token appears.
+- The focused Windows MSVC action and negative-boundary suites pass. A
+  `layering_check` request renders no GNU module flags; an explicit
+  `parse_headers` request fails with the Layer 1 unsupported-feature message.
+- A complete focused clang-cl/COFF ThinLTO consumer built as invocation
+  `6f233181-571c-415f-a41b-c1a0608bdb77`. ARM64 ThinLTO action inspection as
+  invocation `65491f4f-cf7d-4012-9a79-1331a99db58f` shows source-backed
+  `clang-cl`/`lld-link`, ARM64 target and machine, COFF index/backend protocol,
+  and no GNU linker/output/language tokens.
+- Post-change MinGW and Linux actions from invocations
+  `b2496c39-1180-4cfb-a7cb-45a3dc0354e2` and
+  `23ddbfe3-99b9-414c-9fdc-430fc3d65b17` are byte-for-byte identical to their
+  baseline captures.
+- The full focused Windows artifact matrix passed for both CPUs as invocation
+  `e856563b-2597-4702-8f09-e72b48c3b09a`, without disabling the globally
+  requested `layering_check`. It covered `/MD`, `/MT`, ThinLTO, static
+  archives, PE/COFF machine types, PDB, DLL/DEF/import libraries, and
+  alwayslink behavior.
+- The final package-compatibility query passed as invocation
+  `b15c92de-20da-4fa0-8c85-2e0dccbe498a`: every moved former
+  `//toolchain/features/msvc:*` label still resolves through an alias. After
+  returning COFF-only no-op/link semantics to the MSVC package, the final
+  x86-64 source-backed action capture from invocation
+  `490d9801-1d45-4b25-b81c-f1acbb929969` remained byte-for-byte identical to
+  the proved post-split capture.
+- The final action suite passed with the globally requested `layering_check`.
+  The final negative suite also passed; its explicit `parse_headers` boundary
+  was invocation `23af7870-b007-4eb8-90b7-823ed19baf66`.
+- Existing warnings from the test target applying `/std:c++20` to its C and
+  assembly sources remain visible; the baseline action already contained the
+  same target-local option and Batch 2 does not change that test policy.
 
 Lightweight gate:
 
@@ -597,11 +669,11 @@ Stop and request owner direction before:
 
 ## Recommended starting point
 
-Batch 1 is complete. Continue with **Batch 2 — Normalize dialect and feature
-protocol** after owner approval.
+Batches 1 and 2 are complete. Continue with **Batch 3 — Restore target semantic
+hierarchy** only after owner approval.
 
-The shared argument/action spine is now correct, so the next owning boundary is
-the clang-cl action protocol and supported-feature classification. Completing
-that before target hierarchy or package moves avoids carrying the current
-parallel legacy-replacement and known/enabled feature structure into those
-relocations.
+The shared argument policy and clang-cl action protocol are now separated from
+the Windows MSVC ABI. The next owning boundary is root target selection:
+canonical Windows semantics should choose MinGW versus MSVC implementations
+before artifact-pattern and SDK include specialization are moved out of the
+toolchain constructor.
