@@ -17,10 +17,10 @@ cc_args_list(
 cc_args_list(
     name = "default_link_flags",
     args = select({
-        "//constraints/windows/abi:msvc": ["//toolchain:default_link_flags"],
         "@platforms//os:macos": [
             "//toolchain/args/macos:default_link_flags",
         ],
+        "@platforms//os:windows": ["//toolchain:windows_default_link_flags"],
         "//conditions:default": [],
     }),
 )
@@ -52,10 +52,7 @@ cc_args_list(
 
 cc_args_list(
     name = "windows_hosted_c_toolchain_args",
-    args = select({
-        "//constraints/windows/abi:msvc": ["//toolchain:windows_toolchain_args"],
-        "//conditions:default": ["//toolchain/args/windows:mingw_headers_include_search_paths"],
-    }),
+    args = ["//toolchain:windows_hosted_c_toolchain_args"],
     visibility = ["//toolchain:__subpackages__"],
 )
 
@@ -78,10 +75,7 @@ cc_args_list(
 
 cc_args_list(
     name = "windows_platform_specific_args",
-    args = select({
-        "//constraints/windows/abi:msvc": ["//toolchain:windows_toolchain_args"],
-        "//conditions:default": [],
-    }),
+    args = ["//toolchain:windows_runtime_toolchain_args"],
 )
 
 cc_args_list(
@@ -197,10 +191,7 @@ cc_args_list(
 
 cc_args_list(
     name = "default_startfiles",
-    args = select({
-        "//constraints/windows/abi:msvc": [],
-        "//conditions:default": [":generic_default_startfiles"],
-    }),
+    args = ["generic_default_startfiles"],
 )
 
 cc_args_list(
@@ -250,10 +241,7 @@ cc_args_list(
 
 cc_args_list(
     name = "default_libs",
-    args = select({
-        "//constraints/windows/abi:msvc": [],
-        "//conditions:default": [":generic_default_libs"],
-    }),
+    args = ["generic_default_libs"],
 )
 
 bzl_library(
