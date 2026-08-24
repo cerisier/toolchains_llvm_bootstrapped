@@ -135,13 +135,80 @@ config_setting(
 ]
 
 cc_args_list(
-    name = "default_link_flags",
+    name = "windows_default_link_flags",
     args = select({
         "//constraints/windows/abi:msvc": ["//toolchain/args/msvc:default_link_flags"],
         "//conditions:default": [],
-    }) + select({
-        "//platforms/config:windows_x86_64_msvc": [],
-        "//platforms/config:windows_aarch64_msvc": [],
+    }),
+)
+
+cc_args_list(
+    name = "windows_default_startfiles",
+    args = select({
+        "//constraints/windows/abi:msvc": [],
+        "//conditions:default": ["//toolchain/args:crt_search_directory"],
+    }),
+)
+
+cc_args_list(
+    name = "windows_default_libs",
+    args = select({
+        "//constraints/windows/abi:msvc": [],
+        "//conditions:default": ["//toolchain/args/windows:default_libs"],
+    }),
+)
+
+cc_args_list(
+    name = "windows_cxxstdlib_library_search_paths",
+    args = select({
+        "//constraints/windows/abi:msvc": ["//toolchain/args/msvc:libcxx_library_search_path"],
+        "//conditions:default": ["//toolchain/args:cxxstdlib_library_search_paths"],
+    }),
+)
+
+cc_args_list(
+    name = "windows_libunwind_library_search_paths",
+    args = select({
+        "//constraints/windows/abi:msvc": [],
+        "//conditions:default": ["//toolchain/args:libunwind_library_search_paths"],
+    }),
+)
+
+cc_args_list(
+    name = "windows_sysroot_flags",
+    args = select({
+        "//constraints/windows/abi:msvc": [],
+        "//conditions:default": ["//toolchain/args:empty_sysroot_flags"],
+    }),
+)
+
+cc_args_list(
+    name = "windows_hermetic_compile_flags",
+    args = select({
+        "//constraints/windows/abi:msvc": ["//toolchain/args/msvc:hermetic_compile"],
+        "//conditions:default": ["//toolchain/args:hermetic_compile_flags"],
+    }),
+)
+
+cc_args_list(
+    name = "windows_stdlib",
+    args = select({
+        "//constraints/windows/abi:msvc": [],
+        "//conditions:default": ["//toolchain/args:stdlib"],
+    }),
+)
+
+cc_args_list(
+    name = "windows_unwindlib",
+    args = select({
+        "//constraints/windows/abi:msvc": [],
+        "//conditions:default": ["//toolchain/args:unwindlib_none"],
+    }),
+)
+
+cc_args_list(
+    name = "default_link_flags",
+    args = select({
         "@platforms//os:macos": [
             "//toolchain/args/macos:default_link_flags",
         ],
@@ -149,7 +216,7 @@ cc_args_list(
             "//toolchain/args/linux:default_link_flags",
             "//toolchain/args/linux:non_pie_executable_link_flags",
         ],
-        "@platforms//os:windows": [],
+        "@platforms//os:windows": ["windows_default_link_flags"],
         "@platforms//os:none": [],
     }),
 )
@@ -157,15 +224,11 @@ cc_args_list(
 cc_args_list(
     name = "default_startfiles",
     args = select({
-        "//platforms/config:windows_x86_64_msvc": [],
-        "//platforms/config:windows_aarch64_msvc": [],
         "@platforms//os:macos": [],
         "@platforms//os:linux": [
             "//toolchain/args:crt_search_directory",
         ],
-        "@platforms//os:windows": [
-            "//toolchain/args:crt_search_directory",
-        ],
+        "@platforms//os:windows": ["windows_default_startfiles"],
         "@platforms//os:none": [],
     }),
 )
@@ -184,17 +247,13 @@ cc_args_list(
 cc_args_list(
     name = "default_libs",
     args = select({
-        "//platforms/config:windows_x86_64_msvc": [],
-        "//platforms/config:windows_aarch64_msvc": [],
         "@platforms//os:macos": [
             "//toolchain/args/macos:default_libs",
         ],
         "@platforms//os:linux": [
             "//toolchain/args/linux:default_libs",
         ],
-        "@platforms//os:windows": [
-            "//toolchain/args/windows:default_libs",
-        ],
+        "@platforms//os:windows": ["windows_default_libs"],
         "//conditions:default": [],
     }),
 )
@@ -203,19 +262,12 @@ cc_args_list(
 cc_args_list(
     name = "cxxstdlib_library_search_paths",
     args = select({
-        "//constraints/windows/abi:msvc": ["//toolchain/args/msvc:libcxx_library_search_path"],
-        "//conditions:default": [],
-    }) + select({
-        "//platforms/config:windows_x86_64_msvc": [],
-        "//platforms/config:windows_aarch64_msvc": [],
         # libc++ is provided by the macOS SDK.
         "@platforms//os:macos": [],
         "@platforms//os:linux": [
             "//toolchain/args:cxxstdlib_library_search_paths",
         ],
-        "@platforms//os:windows": [
-            "//toolchain/args:cxxstdlib_library_search_paths",
-        ],
+        "@platforms//os:windows": ["windows_cxxstdlib_library_search_paths"],
         "//conditions:default": [],
     }),
 )
@@ -224,8 +276,6 @@ cc_args_list(
 cc_args_list(
     name = "libunwind_library_search_paths",
     args = select({
-        "//platforms/config:windows_x86_64_msvc": [],
-        "//platforms/config:windows_aarch64_msvc": [],
         "@platforms//os:macos": [
             # We want to provide the stubs for macOS.
             "//toolchain/args:libunwind_library_search_paths",
@@ -233,9 +283,7 @@ cc_args_list(
         "@platforms//os:linux": [
             "//toolchain/args:libunwind_library_search_paths",
         ],
-        "@platforms//os:windows": [
-            "//toolchain/args:libunwind_library_search_paths",
-        ],
+        "@platforms//os:windows": ["windows_libunwind_library_search_paths"],
         "//conditions:default": [],
     }),
 )
@@ -243,10 +291,10 @@ cc_args_list(
 cc_args_list(
     name = "sysroot_flags",
     args = select({
-        "//constraints/windows/abi:msvc": [],
         "@platforms//os:macos": [
             "//toolchain/args/macos:macos_sdk_sysroot",
         ],
+        "@platforms//os:windows": ["windows_sysroot_flags"],
         "//conditions:default": [
             "//toolchain/args:empty_sysroot_flags",
         ],
@@ -256,8 +304,8 @@ cc_args_list(
 cc_args_list(
     name = "hermetic_compile_flags",
     args = select({
-        "//constraints/windows/abi:msvc": ["//toolchain/args/msvc:hermetic_compile"],
         "@platforms//os:macos": [],
+        "@platforms//os:windows": ["windows_hermetic_compile_flags"],
         "//conditions:default": [
             "//toolchain/args:hermetic_compile_flags",
         ],
@@ -267,8 +315,8 @@ cc_args_list(
 cc_args_list(
     name = "stdlib",
     args = select({
-        "//constraints/windows/abi:msvc": [],
         "@platforms//os:macos": [],
+        "@platforms//os:windows": ["windows_stdlib"],
         "//conditions:default": [
             "//toolchain/args:stdlib",
         ],
@@ -287,7 +335,7 @@ cc_args_list(
 cc_args_list(
     name = "unwindlib",
     args = select({
-        "//constraints/windows/abi:msvc": [],
+        "@platforms//os:windows": ["windows_unwindlib"],
         "//conditions:default": ["//toolchain/args:unwindlib_none"],
     }),
 )
@@ -337,16 +385,90 @@ cc_args_list(
     ],
 )
 
-# TODO(cerisier): extract those into proper semantic args list.
-# TODO(zbarsky): This must match llvm/toolchains/llvm.bzl
+cc_args_list(
+    name = "windows_target_compile_args",
+    args = select({
+        "//constraints/windows/abi:msvc": ["//toolchain/args/msvc:target_compile_args"],
+        "//conditions:default": [],
+    }),
+)
+
+cc_args_list(
+    name = "windows_crt_compile_args",
+    args = select({
+        "//constraints/windows/abi:msvc": ["//toolchain/args/msvc:crt_compile_args"],
+        "//conditions:default": [],
+    }),
+)
+
+cc_args_list(
+    name = "windows_cxxstdlib_compile_args",
+    args = select({
+        "//constraints/windows/abi:msvc": ["//toolchain/args/msvc:cxxstdlib_compile_args"],
+        "//conditions:default": [],
+    }),
+)
+
+cc_args_list(
+    name = "windows_deterministic_codeview_compile_args",
+    args = select({
+        "//constraints/windows/abi:msvc": ["//toolchain/args/msvc:deterministic_codeview_compile_args"],
+        "//conditions:default": [],
+    }),
+)
+
+cc_args_list(
+    name = "windows_cxxstdlib_headers_include_search_paths",
+    args = select({
+        "//constraints/windows/abi:msvc": ["//toolchain/args/msvc:cxxstdlib_headers_include_search_paths"],
+        "//conditions:default": ["//toolchain/args:cxxstdlib_headers_include_search_paths"],
+    }),
+)
+
+# MinGW target headers already preceded the compiler resource directory before
+# the MSVC route existed. Preserve that order while the MSVC VC/UCRT headers
+# remain after Clang's resource headers for libc++ include_next compatibility.
+cc_args_list(
+    name = "windows_headers_before_compiler_resource",
+    args = select({
+        "//constraints/windows/abi:msvc": [],
+        "//conditions:default": ["//toolchain/args/windows:mingw_headers_include_search_paths"],
+    }),
+)
+
 cc_args_list(
     name = "windows_toolchain_args",
+    args = [
+        "windows_target_compile_args",
+        "windows_crt_compile_args",
+        "windows_cxxstdlib_compile_args",
+        "windows_deterministic_codeview_compile_args",
+        "windows_cxxstdlib_headers_include_search_paths",
+        "windows_headers_before_compiler_resource",
+    ],
+)
+
+cc_args_list(
+    name = "windows_hosted_c_toolchain_args",
+    args = [
+        "windows_target_compile_args",
+        "windows_crt_compile_args",
+        "windows_deterministic_codeview_compile_args",
+        "windows_headers_before_compiler_resource",
+    ],
+)
+
+cc_args_list(
+    name = "windows_runtime_toolchain_args",
     args = select({
-        "//constraints/windows/abi:msvc": ["//toolchain/args/msvc:platform_compile_args"],
-        "//conditions:default": [
-            "//toolchain/args:cxxstdlib_headers_include_search_paths",
-            "//toolchain/args/windows:mingw_headers_include_search_paths",
+        "//constraints/windows/abi:msvc": [
+            "windows_target_compile_args",
+            "windows_crt_compile_args",
+            "windows_cxxstdlib_compile_args",
+            "windows_deterministic_codeview_compile_args",
+            "windows_cxxstdlib_headers_include_search_paths",
         ],
+        "//conditions:default": [],
     }),
 )
 

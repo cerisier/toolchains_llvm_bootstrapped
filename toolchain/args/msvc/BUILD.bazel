@@ -238,7 +238,7 @@ cc_args(
 )
 
 cc_args_list(
-    name = "platform_compile_args",
+    name = "target_compile_args",
     args = [
         ":compatibility",
         "//toolchain/args:clang_cl_suppress_compiler_banner",
@@ -247,9 +247,33 @@ cc_args_list(
         "//toolchain/args:clang_cl_default_rtti",
         ":large_coff_objects",
         ":windows_sdk_compile_defines",
+    ],
+)
+
+cc_args_list(
+    name = "crt_compile_args",
+    args = [
         ":msvc_crt_compile_defines",
+    ],
+)
+
+cc_args_list(
+    name = "cxxstdlib_compile_args",
+    args = [
         ":libcxx_compile_defines",
+    ],
+)
+
+cc_args_list(
+    name = "deterministic_codeview_compile_args",
+    args = [
         ":reproducible_codeview",
+    ],
+)
+
+cc_args_list(
+    name = "cxxstdlib_headers_include_search_paths",
+    args = [
         ":libcxx_include",
     ],
 )
