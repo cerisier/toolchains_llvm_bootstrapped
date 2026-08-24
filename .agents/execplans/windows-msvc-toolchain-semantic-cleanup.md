@@ -55,8 +55,9 @@ header-parsing graduation, or new CI lanes.
 
 1. `toolchain/README.md` remains the architecture contract:
    canonical argument groups have stable meanings; implementation packages
-   contain concrete spellings; root toolchain assembly owns platform/ABI
-   selection and contains no raw flags.
+   contain concrete spellings; root toolchain assembly selects the top-level
+   target OS/platform family; each platform package owns its subordinate ABI,
+   CRT, SDK, and runtime routing; root assembly contains no raw flags.
 2. Compiler driver dialect, target OS, target ABI, C++ standard library, CRT,
    and execution platform are independent axes even when today's supported
    configurations make some combinations coincide.
@@ -239,12 +240,14 @@ order so later agents can map plan state back to PR #711.
   documentation. State that these helpers must not enter construction of the
   execution platform's own runtimes.
 
-### Root target semantics
+### Target/platform semantic hierarchy
 
-For R30-R37, keep all platform selection in `toolchain/BUILD.bazel` as required
-by the README. Introduce named `windows_<semantic>` `cc_args_list` targets that
-select MSVC versus MinGW implementations; canonical targets then select the OS
-once. Implementation packages continue to contain no platform selects.
+For R30-R37, canonical targets in `toolchain/BUILD.bazel` select the target OS
+once. `toolchain/args/windows` then selects and composes Windows-local ABI, CRT,
+SDK, and runtime implementations. Concrete `windows/mingw` and `windows/msvc`
+leaves contain flags, actions, inputs, and data without choosing between those
+platform variants. Compiler-personality implementations remain separate and
+are composed explicitly at the supported route boundary.
 
 - [x] **R30 — Windows default link flags.**
   Select MSVC SDK/CRT link defaults versus the existing MinGW implementation
@@ -548,49 +551,66 @@ Lightweight gate:
 
 Completed approved implementation:
 
-- named root Windows semantic groups now own MSVC-versus-MinGW selection for
-  target/CRT/C++/deterministic-CodeView compile policy, hosted-C/runtime
-  arguments, link
-  defaults, startfiles, libraries, C++ library search, sysroot, hermetic
-  includes, standard-library selection, and unwind-library selection;
-- the MSVC implementation aggregate was decomposed by meaning. The runtime
-  package consumes the same named root semantics instead of selecting between
-  a MinGW header leaf and the full MSVC aggregate;
+- commit `ecba116b` corrects the package hierarchy: canonical targets in
+  `toolchain/BUILD.bazel` select the target OS once and delegate their Windows
+  branch to `toolchain/args/windows`;
+- `toolchain/args/windows` owns Windows-local ABI, CRT, SDK, C++ runtime, and
+  intentional-empty composition. Concrete flags/actions/data live under
+  `toolchain/args/windows/mingw` and `toolchain/args/windows/msvc`; the former
+  `toolchain/args/windows` MinGW-only package and top-level sibling
+  `toolchain/args/msvc` package no longer exist;
+- MinGW CRT library selection and native MSVC static-versus-dynamic CRT search
+  path selection now occur in the Windows aggregation package. Concrete leaf
+  packages contain no OS/ABI/CRT-family routing; the remaining MSVC leaf select
+  is only the existing runtime-build-stage condition for libc++ headers;
+- reusable clang-cl defaults remain in `toolchain/args` and are composed
+  explicitly with the native MSVC-ABI target implementation at the supported
+  Windows route boundary. No reusable clang-cl action protocol moved into a
+  Windows package;
+- runtime toolchain assembly consumes the same Windows semantic package rather
+  than routing through compensating root `windows_*` targets;
 - the `compiler_resource_include_args` experiment was fully reverted by owner
   decision. The existing `extra_args` constructor input and raw post-resource
-  MSVC SDK append remain unchanged; R11 and R42 stay open;
+  MSVC SDK append remain unchanged except for the concrete leaf's relocated
+  label; R11 and R42 stay open;
 - R44 required no implementation by owner decision. The existing explicit
-  artifact-pattern selection remains unchanged.
+  artifact-pattern selection remains unchanged. The removed unpublished
+  argument labels had no consumers outside this repository, so no aliases were
+  added.
 
 Evidence:
 
-- Baseline semantic cqueries were invocations
-  `377f063b-6a68-4bb7-8c84-fe6aa0db2a5b` (x86-64 MSVC),
-  `bae7d339-247a-4f5f-9d03-5462031ba77f` (ARM64 MSVC),
-  `ab0028e3-1188-4c19-a304-2623595e9f69` (MinGW), and
-  `a5b80330-46bf-4a19-895b-9374a393d93c` (Linux). Post-change cqueries passed
-  as `160abba1-7aff-4192-a11d-7f2c7a5cfaca`,
-  `5d767e3b-468f-45a1-b58e-8477352e1c2c`,
-  `357d73e9-e7cd-4dc1-b22c-27fb9d3d40b8`, and
-  `21d63de1-46ce-4380-bad6-02e7bc016136`, showing the named Windows hierarchy;
+- Pre-correction semantic cqueries were invocations
+  `6cd30cbb-7151-4549-8141-0aa6a0fc6dd9` (x86-64 MSVC),
+  `70036af0-5506-4ced-bc61-7d7e0a6c7fa1` (ARM64 MSVC),
+  `23c76e00-daeb-470d-9307-28544458499a` (MinGW), and
+  `36b6917b-5470-44c4-b19b-9dc950ac0a47` (Linux). Corrected cqueries passed as
+  `e8f3badb-a9a2-4486-ae57-df25028e3b4e`,
+  `121c2e0a-234e-47e6-8d3e-b2427f606535`,
+  `34e8af95-1053-4613-a4a8-5e418bc3b63e`, and
+  `6e1d8c61-5ea0-4948-9a91-acb222a9eb70`. The configured Windows graph now
+  reads root canonical target -> Windows semantic target -> selected concrete
+  MinGW/MSVC leaf;
 - expanded representative MSVC, MinGW, and Linux compile/link action captures
-  are byte-for-byte identical before and after. Their SHA-256 values remain
+  from pre-correction invocations `6cf48fbb-7059-4657-a02a-c1dfbfd8c5cd`,
+  `d627d395-5239-4bc3-a1d4-8379f50fc0e3`, and
+  `f6553304-fdc5-43e6-b2ca-ecce0d6fd9f4` are byte-for-byte identical to
+  corrected invocations `5599e097-fea3-426b-8123-9b933d5eaa16`,
+  `a697daf0-6d15-4a74-a063-c2b5a5616267`, and
+  `4d50a82b-a0e7-40ae-b070-9be6c7830b7b`. Their SHA-256 values remain
   `5bf5372a8774440414a14ddb0c198fa87b5ad6982035871b2787f0575f8b38bc`,
   `dce1aac81511fb528fa725dd25a38ec19ab12f5940fe494ff2bf6fefc3abe388`,
   and `c3075d0eb95ea6dec2f33653231cf533804931d470e7517c9dd83e7561875cdc`.
   MSVC retains libc++ headers, Clang resource headers, then VC/UCRT headers;
-- final post-revert captures passed as invocations
-  `042bc7f8-c1d6-43f6-8757-52a0069391f6`,
-  `a3ae09ae-ff64-4ed3-8799-20947a68c57f`, and
-  `de6d09dd-8953-4e2b-8b1b-3ce62375649d`, with those same hashes;
 - ordinary and DLL/import-library consumers built for x86-64 MSVC as
-  invocation `f021f577-be95-4769-879e-85ca560f470d` and ARM64 MSVC as
-  `ff7f4a02-4b8d-4810-a0e6-a9627bb29235`;
+  invocation `f6560b2f-8af1-4283-b001-17eb5e155567` and ARM64 MSVC as
+  `dbbbefe1-6147-4308-900b-d5d0012d2191`;
 - the focused Windows MSVC action and negative-analysis scripts passed. The
   representative MinGW and Linux builds passed as invocations
-  `bf633f24-4c11-4044-9c5b-2177e84f0fc7` and
-  `0ec74a2d-7a61-435d-acff-db532003da4a`. Existing MinGW definition-generation
-  warnings and target-local `/std:c++20` warnings remain unchanged.
+  `6515cca0-5fb3-4a2a-a35a-f1dec07b2cbb` and
+  `9797abf1-cc98-420b-a9ee-c72785b238b4`. Existing target-local `/std:c++20`
+  warnings remain unchanged. No Stage 3 rebuild was needed because every
+  representative rendered action remained identical.
 
 ### Batch 4 — Clarify runtime and overlay ownership
 
