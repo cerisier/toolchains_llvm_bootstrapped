@@ -46,6 +46,15 @@ expect_failure \
   //:windows_msvc_unsupported_feature_probe
 
 expect_failure \
+  windows-msvc-header-parsing \
+  "MSVC ABI Layer 1 does not support feature(s): parse_headers" \
+  "${common_flags[@]}" \
+  --features=-layering_check \
+  --features=parse_headers \
+  --platforms=@llvm//platforms:windows_x86_64_msvc \
+  //:windows_msvc_crt_default_probe
+
+expect_failure \
   windows-msvc-dynamic-libcxx \
   "is incompatible" \
   "${common_flags[@]}" \

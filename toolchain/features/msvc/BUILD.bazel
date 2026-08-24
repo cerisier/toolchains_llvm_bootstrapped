@@ -1,12 +1,6 @@
 load("@bazel_lib//:bzl_library.bzl", "bzl_library")
-
-# Expansion structure independently adapted from hermetic-llvm PR 187,
-# commit ef1eb169508b7f0461463c442e0e100ef575a90a,
-# toolchain/features/legacy/BUILD.bazel (Apache-2.0). Phase 0 contracts replace
-# its ShowIncludes, debug-CRT, sanitizer, module, and llvm-lib behavior.
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains:feature.bzl", "cc_feature")
-load("@rules_cc//cc/toolchains:feature_constraint.bzl", "cc_feature_constraint")
 load("@rules_cc//cc/toolchains:feature_set.bzl", "cc_feature_set")
 load("@rules_cc//cc/toolchains:mutually_exclusive_category.bzl", "cc_mutually_exclusive_category")
 load("@rules_cc//cc/toolchains:nested_args.bzl", "cc_nested_args")
@@ -26,158 +20,6 @@ _COMPILE_ACTIONS = [
 
 _LINK_ACTIONS = ["@rules_cc//cc/toolchains/actions:link_actions"]
 
-_LTO_INDEX_ACTIONS = [
-    "@rules_cc//cc/toolchains/actions:lto_index_for_dynamic_library",
-    "@rules_cc//cc/toolchains/actions:lto_index_for_executable",
-    "@rules_cc//cc/toolchains/actions:lto_index_for_nodeps_dynamic_library",
-]
-
-cc_feature(
-    name = "supports_start_end_lib",
-    feature_name = "supports_start_end_lib",
-)
-
-cc_args(
-    name = "thin_lto_compile_and_link_args",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:c_compile",
-        "@rules_cc//cc/toolchains/actions:cpp_compile",
-    ] + _LTO_INDEX_ACTIONS + _LINK_ACTIONS,
-    args = ["/clang:-flto=thin"],
-)
-
-cc_args(
-    name = "thin_lto_indexing_bitcode_args",
-    actions = ["@rules_cc//cc/toolchains/actions:compile_actions"],
-    args = [
-        "/clang:-Xclang",
-        "/clang:-fthin-link-bitcode={lto_indexing_bitcode_file}",
-    ],
-    format = {
-        "lto_indexing_bitcode_file": "@rules_cc//cc/toolchains/variables:lto_indexing_bitcode_file",
-    },
-    requires_not_none = "@rules_cc//cc/toolchains/variables:lto_indexing_bitcode_file",
-)
-
-cc_args(
-    name = "thin_lto_indexing_param_args",
-    actions = _LTO_INDEX_ACTIONS,
-    args = [
-        "/clang:-Xlinker",
-        "/clang:/thinlto-index-only:{thinlto_indexing_param_file}",
-    ],
-    format = {
-        "thinlto_indexing_param_file": "@rules_cc//cc/toolchains/variables:thinlto_indexing_param_file",
-    },
-    requires_not_none = "@rules_cc//cc/toolchains/variables:thinlto_indexing_param_file",
-)
-
-cc_args(
-    name = "thin_lto_emit_imports_args",
-    actions = _LTO_INDEX_ACTIONS,
-    args = [
-        "/clang:-Xlinker",
-        "/clang:/thinlto-emit-imports-files",
-    ],
-)
-
-cc_args(
-    name = "thin_lto_prefix_replace_args",
-    actions = _LTO_INDEX_ACTIONS,
-    args = [
-        "/clang:-Xlinker",
-        "/clang:/thinlto-prefix-replace:{thinlto_prefix_replace}",
-    ],
-    format = {
-        "thinlto_prefix_replace": "@rules_cc//cc/toolchains/variables:thinlto_prefix_replace",
-    },
-    requires_not_none = "@rules_cc//cc/toolchains/variables:thinlto_prefix_replace",
-)
-
-cc_args(
-    name = "thin_lto_object_suffix_replace_args",
-    actions = _LTO_INDEX_ACTIONS,
-    args = [
-        "/clang:-Xlinker",
-        "/clang:/thinlto-object-suffix-replace:{thinlto_object_suffix_replace}",
-    ],
-    format = {
-        "thinlto_object_suffix_replace": "@rules_cc//cc/toolchains/variables:thinlto_object_suffix_replace",
-    },
-    requires_not_none = "@rules_cc//cc/toolchains/variables:thinlto_object_suffix_replace",
-)
-
-cc_args(
-    name = "thin_lto_merged_object_args",
-    actions = _LTO_INDEX_ACTIONS,
-    args = [
-        "/clang:-Xlinker",
-        "/clang:/lto-obj-path:{thinlto_merged_object_file}",
-    ],
-    format = {
-        "thinlto_merged_object_file": "@rules_cc//cc/toolchains/variables:thinlto_merged_object_file",
-    },
-    requires_not_none = "@rules_cc//cc/toolchains/variables:thinlto_merged_object_file",
-)
-
-cc_args(
-    name = "thin_lto_backend_compile_args",
-    actions = ["@rules_cc//cc/toolchains/actions:lto_backend"],
-    args = ["/c"],
-)
-
-cc_args(
-    name = "thin_lto_backend_index_args",
-    actions = ["@rules_cc//cc/toolchains/actions:lto_backend"],
-    args = ["/clang:-fthinlto-index={thinlto_index}"],
-    format = {"thinlto_index": "@rules_cc//cc/toolchains/variables:thinlto_index"},
-    requires_not_none = "@rules_cc//cc/toolchains/variables:thinlto_index",
-)
-
-cc_args(
-    name = "thin_lto_backend_output_args",
-    actions = ["@rules_cc//cc/toolchains/actions:lto_backend"],
-    args = ["/Fo{thinlto_output_object_file}"],
-    format = {
-        "thinlto_output_object_file": "@rules_cc//cc/toolchains/variables:thinlto_output_object_file",
-    },
-    requires_not_none = "@rules_cc//cc/toolchains/variables:thinlto_output_object_file",
-)
-
-cc_args(
-    name = "thin_lto_backend_input_args",
-    actions = ["@rules_cc//cc/toolchains/actions:lto_backend"],
-    args = ["{thinlto_input_bitcode_file}"],
-    format = {
-        "thinlto_input_bitcode_file": "@rules_cc//cc/toolchains/variables:thinlto_input_bitcode_file",
-    },
-    requires_not_none = "@rules_cc//cc/toolchains/variables:thinlto_input_bitcode_file",
-)
-
-cc_feature(
-    name = "thin_lto",
-    args = [
-        ":thin_lto_compile_and_link_args",
-        ":thin_lto_indexing_bitcode_args",
-        ":thin_lto_indexing_param_args",
-        ":thin_lto_emit_imports_args",
-        ":thin_lto_prefix_replace_args",
-        ":thin_lto_object_suffix_replace_args",
-        ":thin_lto_merged_object_args",
-        ":thin_lto_backend_compile_args",
-        ":thin_lto_backend_index_args",
-        ":thin_lto_backend_output_args",
-        ":thin_lto_backend_input_args",
-    ],
-    feature_name = "thin_lto",
-    implies = [":supports_start_end_lib"],
-)
-
-cc_feature_constraint(
-    name = "thin_lto_disabled",
-    none_of = [":thin_lto"],
-)
-
 _UNSUPPORTED_FEATURES = [
     "asan",
     "cfi",
@@ -193,6 +35,7 @@ _UNSUPPORTED_FEATURES = [
     "nsan",
     "objc_arc",
     "openmp",
+    "parse_headers",
     "per_object_debug_info",
     "profile",
     "rtsan",
@@ -261,118 +104,8 @@ cc_args(
     data = [":configuration_validation"],
 )
 
-cc_args(
-    name = "preprocessor_defines_args",
-    actions = _COMPILE_ACTIONS,
-    args = ["/D{preprocessor_defines}"],
-    format = {"preprocessor_defines": "@rules_cc//cc/toolchains/variables:preprocessor_defines"},
-    iterate_over = "@rules_cc//cc/toolchains/variables:preprocessor_defines",
-)
-
-cc_feature(
-    name = "preprocessor_defines",
-    args = [":preprocessor_defines_args"],
-    overrides = "@rules_cc//cc/toolchains/features/legacy:preprocessor_defines",
-)
-
-cc_args(
-    name = "quote_include_paths_args",
-    actions = _COMPILE_ACTIONS,
-    args = ["/I{quote_include_paths}"],
-    format = {"quote_include_paths": "@rules_cc//cc/toolchains/variables:quote_include_paths"},
-    iterate_over = "@rules_cc//cc/toolchains/variables:quote_include_paths",
-)
-
-cc_args(
-    name = "include_paths_args",
-    actions = _COMPILE_ACTIONS,
-    args = ["/I{include_paths}"],
-    format = {"include_paths": "@rules_cc//cc/toolchains/variables:include_paths"},
-    iterate_over = "@rules_cc//cc/toolchains/variables:include_paths",
-)
-
-cc_args(
-    name = "system_include_paths_args",
-    actions = _COMPILE_ACTIONS,
-    args = ["/imsvc{system_include_paths}"],
-    format = {"system_include_paths": "@rules_cc//cc/toolchains/variables:system_include_paths"},
-    iterate_over = "@rules_cc//cc/toolchains/variables:system_include_paths",
-)
-
-cc_args(
-    name = "forced_includes_args",
-    actions = _COMPILE_ACTIONS,
-    args = ["/FI{includes}"],
-    format = {"includes": "@rules_cc//cc/toolchains/variables:includes"},
-    iterate_over = "@rules_cc//cc/toolchains/variables:includes",
-    requires_not_none = "@rules_cc//cc/toolchains/variables:includes",
-)
-
-cc_feature(
-    name = "include_paths",
-    args = [
-        ":quote_include_paths_args",
-        ":include_paths_args",
-        ":system_include_paths_args",
-    ],
-    overrides = "@rules_cc//cc/toolchains/features/legacy:include_paths",
-)
-
-cc_feature(
-    name = "forced_includes",
-    args = [":forced_includes_args"],
-    overrides = "@rules_cc//cc/toolchains/features/legacy:includes",
-)
-
-cc_args(
-    name = "compiler_output_args",
-    actions = _COMPILE_ACTIONS,
-    args = ["/Fo{output_file}"],
-    format = {"output_file": "@rules_cc//cc/toolchains/variables:output_file"},
-    requires_not_none = "@rules_cc//cc/toolchains/variables:output_file",
-)
-
-cc_args(
-    name = "compiler_input_args",
-    actions = _COMPILE_ACTIONS,
-    args = [
-        "/c",
-        "{source_file}",
-    ],
-    format = {"source_file": "@rules_cc//cc/toolchains/variables:source_file"},
-    requires_not_none = "@rules_cc//cc/toolchains/variables:source_file",
-)
-
-cc_feature(
-    name = "compiler_output",
-    args = [":compiler_output_args"],
-    overrides = "@rules_cc//cc/toolchains/features/legacy:compiler_output_flags",
-)
-
-cc_feature(
-    name = "compiler_input",
-    args = [":compiler_input_args"],
-    overrides = "@rules_cc//cc/toolchains/features/legacy:compiler_input_flags",
-)
-
-cc_args(
-    name = "dependency_file_args",
-    actions = _COMPILE_ACTIONS,
-    args = [
-        "/clang:-MD",
-        "/clang:-MF",
-        "/clang:{dependency_file}",
-    ],
-    format = {"dependency_file": "@rules_cc//cc/toolchains/variables:dependency_file"},
-    requires_not_none = "@rules_cc//cc/toolchains/variables:dependency_file",
-)
-
-cc_feature(
-    name = "dependency_file",
-    args = [":dependency_file_args"],
-    overrides = "@rules_cc//cc/toolchains/features/legacy:dependency_file",
-)
-
+# The MSVC ABI route still archives COFF objects with llvm-ar. This is an
+# artifact/tool contract, not clang-cl command-line syntax.
 cc_args(
     name = "archive_create_args",
     actions = ["@rules_cc//cc/toolchains/actions:cpp_link_static_library"],
@@ -426,236 +159,30 @@ cc_feature(
     overrides = "@rules_cc//cc/toolchains/features/legacy:archiver_flags",
 )
 
-cc_nested_args(
-    name = "link_object_group",
-    args = ["{object_file}"],
-    format = {"object_file": "@rules_cc//cc/toolchains/variables:libraries_to_link.object_files"},
-    iterate_over = "@rules_cc//cc/toolchains/variables:libraries_to_link.object_files",
-    requires_equal = "@rules_cc//cc/toolchains/variables:libraries_to_link.type",
-    requires_equal_value = "object_file_group",
-)
-
-cc_nested_args(
-    name = "thin_link_object_group_start",
-    args = [
-        "/clang:-Xlinker",
-        "/clang:/start-lib",
-    ],
-    requires_false = "@rules_cc//cc/toolchains/variables:libraries_to_link.is_whole_archive",
-)
-
-cc_nested_args(
-    name = "thin_link_object_group_members",
-    args = ["{object_file}"],
-    format = {"object_file": "@rules_cc//cc/toolchains/variables:libraries_to_link.object_files"},
-    iterate_over = "@rules_cc//cc/toolchains/variables:libraries_to_link.object_files",
-)
-
-cc_nested_args(
-    name = "thin_link_object_group_end",
-    args = [
-        "/clang:-Xlinker",
-        "/clang:/end-lib",
-    ],
-    requires_false = "@rules_cc//cc/toolchains/variables:libraries_to_link.is_whole_archive",
-)
-
-cc_nested_args(
-    name = "thin_link_object_group",
-    nested = [
-        ":thin_link_object_group_start",
-        ":thin_link_object_group_members",
-        ":thin_link_object_group_end",
-    ],
-    requires_equal = "@rules_cc//cc/toolchains/variables:libraries_to_link.type",
-    requires_equal_value = "object_file_group",
-)
-
-cc_nested_args(
-    name = "link_object",
-    args = ["{library}"],
-    format = {"library": "@rules_cc//cc/toolchains/variables:libraries_to_link.name"},
-    requires_equal = "@rules_cc//cc/toolchains/variables:libraries_to_link.type",
-    requires_equal_value = "object_file",
-)
-
-cc_nested_args(
-    name = "link_interface_library",
-    args = ["{library}"],
-    format = {"library": "@rules_cc//cc/toolchains/variables:libraries_to_link.name"},
-    requires_equal = "@rules_cc//cc/toolchains/variables:libraries_to_link.type",
-    requires_equal_value = "interface_library",
-)
-
-cc_nested_args(
-    name = "link_static_library_plain",
-    args = ["{library}"],
-    format = {"library": "@rules_cc//cc/toolchains/variables:libraries_to_link.name"},
-    requires_false = "@rules_cc//cc/toolchains/variables:libraries_to_link.is_whole_archive",
-)
-
-cc_nested_args(
-    name = "link_static_library_whole",
-    args = [
-        "/clang:-Xlinker",
-        "/clang:/WHOLEARCHIVE:{library}",
-    ],
-    format = {"library": "@rules_cc//cc/toolchains/variables:libraries_to_link.name"},
-    requires_true = "@rules_cc//cc/toolchains/variables:libraries_to_link.is_whole_archive",
-)
-
-cc_nested_args(
-    name = "link_static_library",
-    nested = [
-        ":link_static_library_plain",
-        ":link_static_library_whole",
-    ],
-    requires_equal = "@rules_cc//cc/toolchains/variables:libraries_to_link.type",
-    requires_equal_value = "static_library",
-)
-
-cc_nested_args(
-    name = "link_dynamic_library",
-    args = ["{library}"],
-    format = {"library": "@rules_cc//cc/toolchains/variables:libraries_to_link.name"},
-    requires_equal = "@rules_cc//cc/toolchains/variables:libraries_to_link.type",
-    requires_equal_value = "dynamic_library",
-)
-
-cc_nested_args(
-    name = "libraries_expansion",
-    iterate_over = "@rules_cc//cc/toolchains/variables:libraries_to_link",
-    nested = [
-        ":link_object_group",
-        ":link_object",
-        ":link_interface_library",
-        ":link_static_library",
-        ":link_dynamic_library",
-    ],
-)
-
-cc_nested_args(
-    name = "thin_libraries_expansion",
-    iterate_over = "@rules_cc//cc/toolchains/variables:libraries_to_link",
-    nested = [
-        ":thin_link_object_group",
-        ":link_object",
-        ":link_interface_library",
-        ":link_static_library",
-        ":link_dynamic_library",
-    ],
-)
-
-cc_nested_args(
-    name = "thin_lto_final_param_file",
-    args = ["@{thinlto_param_file}"],
-    format = {"thinlto_param_file": "@rules_cc//cc/toolchains/variables:thinlto_param_file"},
-    requires_not_none = "@rules_cc//cc/toolchains/variables:thinlto_param_file",
-)
-
-cc_args(
-    name = "libraries_to_link_args",
-    actions = _LINK_ACTIONS,
-    nested = [":libraries_expansion"],
-    requires_any_of = [":thin_lto_disabled"],
-    requires_not_none = "@rules_cc//cc/toolchains/variables:libraries_to_link",
-)
-
-cc_args(
-    name = "thin_libraries_to_link_args",
-    actions = _LINK_ACTIONS,
-    nested = [
-        ":thin_lto_final_param_file",
-        ":thin_libraries_expansion",
-    ],
-    requires_any_of = [":thin_lto"],
-    requires_not_none = "@rules_cc//cc/toolchains/variables:libraries_to_link",
+cc_feature(
+    name = "pic",
+    # COFF has no PIC/non-PIC object distinction.
+    overrides = "@rules_cc//cc/toolchains/features/legacy:pic",
 )
 
 cc_feature(
-    name = "libraries_to_link",
-    args = [
-        ":libraries_to_link_args",
-        ":thin_libraries_to_link_args",
-    ],
-    overrides = "@rules_cc//cc/toolchains/features/legacy:libraries_to_link",
-)
-
-cc_args(
-    name = "output_execpath_args",
-    actions = _LINK_ACTIONS,
-    args = ["/Fe{output_execpath}"],
-    format = {"output_execpath": "@rules_cc//cc/toolchains/variables:output_execpath"},
-    requires_not_none = "@rules_cc//cc/toolchains/variables:output_execpath",
-)
-
-cc_args(
-    name = "legacy_link_flags_args",
-    actions = _LINK_ACTIONS,
-    args = [
-        "/clang:-Xlinker",
-        "/clang:{legacy_link_flags}",
-    ],
-    format = {"legacy_link_flags": "@rules_cc//cc/toolchains/variables:legacy_link_flags"},
-    iterate_over = "@rules_cc//cc/toolchains/variables:legacy_link_flags",
-    requires_not_none = "@rules_cc//cc/toolchains/variables:legacy_link_flags",
-)
-
-cc_args(
-    name = "user_link_flags_args",
-    actions = _LINK_ACTIONS,
-    args = [
-        "/clang:-Xlinker",
-        "/clang:{user_link_flags}",
-    ],
-    format = {"user_link_flags": "@rules_cc//cc/toolchains/variables:user_link_flags"},
-    iterate_over = "@rules_cc//cc/toolchains/variables:user_link_flags",
-    requires_not_none = "@rules_cc//cc/toolchains/variables:user_link_flags",
-)
-
-cc_feature(
-    name = "legacy_link_flags",
-    args = [":legacy_link_flags_args"],
-    overrides = "@rules_cc//cc/toolchains/features/legacy:legacy_link_flags",
-)
-
-cc_feature(
-    name = "user_link_flags",
-    args = [":user_link_flags_args"],
-    overrides = "@rules_cc//cc/toolchains/features/legacy:user_link_flags",
-)
-
-cc_feature(
-    name = "output_execpath_flags",
-    args = [":output_execpath_args"],
-    overrides = "@rules_cc//cc/toolchains/features/legacy:output_execpath_flags",
+    name = "force_pic",
+    # COFF has no PIC/non-PIC object distinction.
+    overrides = "@rules_cc//cc/toolchains/features/legacy:force_pic_flags",
 )
 
 cc_feature_set(
-    name = "link_flags",
+    name = "pic_flags",
     all_of = [
-        ":legacy_link_flags",
-        ":user_link_flags",
-        ":output_execpath_flags",
+        ":pic",
+        ":force_pic",
     ],
-)
-
-cc_args(
-    name = "library_search_directories_args",
-    actions = _LINK_ACTIONS,
-    args = [
-        "/clang:-Xlinker",
-        "/clang:/LIBPATH:{library_search_directories}",
-    ],
-    format = {"library_search_directories": "@rules_cc//cc/toolchains/variables:library_search_directories"},
-    iterate_over = "@rules_cc//cc/toolchains/variables:library_search_directories",
-    requires_not_none = "@rules_cc//cc/toolchains/variables:library_search_directories",
 )
 
 cc_feature(
-    name = "library_search_directories",
-    args = [":library_search_directories_args"],
-    overrides = "@rules_cc//cc/toolchains/features/legacy:library_search_directories",
+    name = "runtime_library_search_directories",
+    # PE/COFF does not encode ELF-style runtime library search directories.
+    overrides = "@rules_cc//cc/toolchains/features/legacy:runtime_library_search_directories",
 )
 
 cc_args(
@@ -674,28 +201,6 @@ cc_feature(
 )
 
 cc_args(
-    name = "def_file_args",
-    actions = _LINK_ACTIONS,
-    args = [
-        "/clang:-Xlinker",
-        "/clang:/DEF:{def_file_path}",
-    ],
-    format = {"def_file_path": "@rules_cc//cc/toolchains/variables:def_file_path"},
-    requires_not_none = "@rules_cc//cc/toolchains/variables:def_file_path",
-)
-
-cc_feature(
-    name = "def_file",
-    args = [":def_file_args"],
-    feature_name = "msvc_def_file",
-)
-
-cc_feature(
-    name = "random_seed",
-    overrides = "@rules_cc//cc/toolchains/features/legacy:random_seed",
-)
-
-cc_args(
     name = "strip_debug_symbols_args",
     actions = _LINK_ACTIONS,
     args = [
@@ -711,25 +216,27 @@ cc_feature(
     overrides = "@rules_cc//cc/toolchains/features/legacy:strip_debug_symbols",
 )
 
-cc_feature_set(
-    name = "legacy_replacements",
-    all_of = [
-        ":archiver_flags",
-        ":compiler_output",
-        ":compiler_input",
-        ":dependency_file",
-        ":forced_includes",
-        ":include_paths",
-        ":libraries_to_link",
-        ":library_search_directories",
-        ":link_flags",
-        ":preprocessor_defines",
-        ":random_seed",
-        ":shared_flag",
-        ":strip_debug_symbols",
-        "@rules_cc//cc/toolchains/args/compile_flags:feature",
-        "@rules_cc//cc/toolchains/args/linker_param_file:feature",
+cc_feature(
+    name = "set_soname",
+    # PE/COFF has neither ELF SONAME nor Mach-O install-name semantics.
+    feature_name = "set_soname",
+)
+
+cc_args(
+    name = "def_file_args",
+    actions = _LINK_ACTIONS,
+    args = [
+        "/clang:-Xlinker",
+        "/clang:/DEF:{def_file_path}",
     ],
+    format = {"def_file_path": "@rules_cc//cc/toolchains/variables:def_file_path"},
+    requires_not_none = "@rules_cc//cc/toolchains/variables:def_file_path",
+)
+
+cc_feature(
+    name = "def_file",
+    args = [":def_file_args"],
+    feature_name = "msvc_def_file",
 )
 
 cc_feature(
@@ -854,31 +361,17 @@ cc_args(
     ],
 )
 
-cc_feature(
-    name = "compiler_param_file",
-    feature_name = "compiler_param_file",
-)
-
-cc_feature(
-    name = "windows_quoting_for_param_files",
-    feature_name = "windows_quoting_for_param_files",
-)
-
 cc_feature_set(
-    name = "adapter_known_features",
+    name = "abi_known_features",
     all_of = [
-        ":compiler_param_file",
         ":def_file",
         ":dynamic_link_msvcrt",
+        ":dynamic_linking_mode",
         ":interface_library",
         ":link_defaults",
-        ":supported_configuration",
-        ":supports_start_end_lib",
         ":static_link_msvcrt",
-        ":dynamic_linking_mode",
         ":static_linking_mode",
-        ":thin_lto",
-        ":windows_quoting_for_param_files",
+        ":supported_configuration",
     ] + [
         ":unsupported_" + feature
         for feature in _UNSUPPORTED_FEATURES
@@ -886,16 +379,105 @@ cc_feature_set(
 )
 
 cc_feature_set(
-    name = "adapter_enabled_features",
+    name = "abi_enabled_features",
     all_of = [
-        ":compiler_param_file",
         ":def_file",
         ":dynamic_link_msvcrt",
         ":interface_library",
         ":link_defaults",
         ":supported_configuration",
-        ":windows_quoting_for_param_files",
     ],
+)
+
+# Compatibility for the adapter labels introduced by the initial MSVC route.
+# New assembly should depend on the compiler-dialect and ABI sets separately.
+cc_feature_set(
+    name = "adapter_known_features",
+    all_of = [
+        "//toolchain/features/clang_cl:known_features",
+        ":abi_known_features",
+    ],
+)
+
+cc_feature_set(
+    name = "adapter_enabled_features",
+    all_of = [
+        "//toolchain/features/clang_cl:enabled_features",
+        ":abi_enabled_features",
+    ],
+)
+
+_CLANG_CL_COMPATIBILITY_LABELS = [
+    "compiler_input",
+    "compiler_input_args",
+    "compiler_output",
+    "compiler_output_args",
+    "compiler_param_file",
+    "dependency_file",
+    "dependency_file_args",
+    "forced_includes",
+    "forced_includes_args",
+    "include_paths",
+    "include_paths_args",
+    "legacy_link_flags",
+    "legacy_link_flags_args",
+    "libraries_expansion",
+    "libraries_to_link",
+    "libraries_to_link_args",
+    "library_search_directories",
+    "library_search_directories_args",
+    "link_dynamic_library",
+    "link_flags",
+    "link_interface_library",
+    "link_object",
+    "link_object_group",
+    "link_static_library",
+    "link_static_library_plain",
+    "link_static_library_whole",
+    "output_execpath_args",
+    "output_execpath_flags",
+    "preprocessor_defines",
+    "preprocessor_defines_args",
+    "quote_include_paths_args",
+    "random_seed",
+    "supports_start_end_lib",
+    "system_include_paths_args",
+    "thin_libraries_expansion",
+    "thin_libraries_to_link_args",
+    "thin_link_object_group",
+    "thin_link_object_group_end",
+    "thin_link_object_group_members",
+    "thin_link_object_group_start",
+    "thin_lto",
+    "thin_lto_backend_compile_args",
+    "thin_lto_backend_index_args",
+    "thin_lto_backend_input_args",
+    "thin_lto_backend_output_args",
+    "thin_lto_compile_and_link_args",
+    "thin_lto_disabled",
+    "thin_lto_emit_imports_args",
+    "thin_lto_final_param_file",
+    "thin_lto_indexing_bitcode_args",
+    "thin_lto_indexing_param_args",
+    "thin_lto_merged_object_args",
+    "thin_lto_object_suffix_replace_args",
+    "thin_lto_prefix_replace_args",
+    "user_link_flags",
+    "user_link_flags_args",
+    "windows_quoting_for_param_files",
+]
+
+[
+    alias(
+        name = label,
+        actual = "//toolchain/features/clang_cl:" + label,
+    )
+    for label in _CLANG_CL_COMPATIBILITY_LABELS
+]
+
+alias(
+    name = "legacy_replacements",
+    actual = "//toolchain/features/legacy:clang_cl_windows_msvc_legacy_replacements",
 )
 
 bzl_library(
