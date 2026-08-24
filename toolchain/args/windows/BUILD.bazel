@@ -1,69 +1,212 @@
-load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
+load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 
 package(default_visibility = ["//visibility:public"])
 
-cc_args(
-    name = "mingw_headers_include_search_paths",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:compile_actions",
-    ],
-    allowlist_include_directories = [
-        "@mingw//:mingw_generated_headers_crt_directory",
-        "@mingw//:mingw_w64_headers_include_directory",
-        "@mingw//:mingw_w64_headers_crt_directory",
-        "@mingw//:mingw_w64_winpthreads_include_directory",
-    ],
+# This package owns Windows platform-family semantics. It selects and composes
+# Windows-local ABI, CRT, SDK, and runtime implementations. Concrete MinGW and
+# MSVC leaves remain selection-free in their respective subpackages.
+
+cc_args_list(
+    name = "mingw_default_libs",
     args = [
-        "-isystem",
-        "{mingw_w64_winpthreads_include}",
-        "-isystem",
-        "{mingw_generated_headers_crt}",
-        "-isystem",
-        "{mingw_w64_headers_include}",
-        "-isystem",
-        "{mingw_w64_headers_crt}",
-    ],
-    data = [
-        "@mingw//:mingw_generated_headers_crt_directory",
-        "@mingw//:mingw_w64_headers_crt_directory",
-        "@mingw//:mingw_w64_headers_include_directory",
-        "@mingw//:mingw_w64_winpthreads_include_directory",
-    ],
-    format = {
-        "mingw_generated_headers_crt": "@mingw//:mingw_generated_headers_crt_directory",
-        "mingw_w64_headers_include": "@mingw//:mingw_w64_headers_include_directory",
-        "mingw_w64_headers_crt": "@mingw//:mingw_w64_headers_crt_directory",
-        "mingw_w64_winpthreads_include": "@mingw//:mingw_w64_winpthreads_include_directory",
-    },
+        "//toolchain/args/windows/mingw:default_library_search_paths",
+    ] + select({
+        "//constraints/windows/crt:msvcrt": ["//toolchain/args/windows/mingw:msvcrt_default_libs"],
+        "//constraints/windows/crt:ucrt": ["//toolchain/args/windows/mingw:ucrt_default_libs"],
+    }),
 )
 
-cc_args(
-    name = "default_libs",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:link_actions",
-    ],
+cc_args_list(
+    name = "msvc_default_link_flags",
     args = [
-        "-L{mingw_import_library_search_path}",
-        "-L{mingw_crt_library_search_path}",
-
-        # Clang will respect the user's chosen CRT variant.
+        "//toolchain/args/windows/msvc:common_default_link_flags",
     ] + select({
-        "//constraints/windows/crt:msvcrt": [
-            # msvcrt.dll plus compatibility objects provided by mingw-w64.
-            "-lmsvcrt_common",
-            "-lmsvcrt_extra",
-            "-lmsvcrt",
-        ],
-        "//constraints/windows/crt:ucrt": [
-            "-lucrt",
-        ],
+        "//toolchain/features/msvc:static_crt_config": ["//toolchain/args/windows/msvc:msvc_static_runtime_library_path"],
+        "//conditions:default": ["//toolchain/args/windows/msvc:msvc_dynamic_runtime_library_path"],
     }),
-    data = [
-        "//runtimes/mingw:mingw_crt_library_search_directory",
-        "//runtimes/mingw:mingw_import_libraries_directory",
+)
+
+cc_args_list(
+    name = "default_link_flags",
+    args = select({
+        "//constraints/windows/abi:msvc": ["msvc_default_link_flags"],
+        "//conditions:default": [],
+    }),
+)
+
+cc_args_list(
+    name = "default_startfiles",
+    args = select({
+        "//constraints/windows/abi:msvc": [],
+        "//conditions:default": ["//toolchain/args:crt_search_directory"],
+    }),
+)
+
+cc_args_list(
+    name = "resource_dir",
+    # The fixed native MSVC-ABI route uses the clang-cl personality. Keep the
+    # personality implementation outside this package and compose it here at
+    # the supported Windows route boundary.
+    args = select({
+        "//constraints/windows/abi:msvc": ["//toolchain/args:clang_cl_resource_dir"],
+        "//conditions:default": ["//toolchain/args:resource_dir"],
+    }),
+)
+
+cc_args_list(
+    name = "default_libs",
+    args = select({
+        "//constraints/windows/abi:msvc": [],
+        "//conditions:default": ["mingw_default_libs"],
+    }),
+)
+
+cc_args_list(
+    name = "cxxstdlib_library_search_paths",
+    args = select({
+        "//constraints/windows/abi:msvc": ["//toolchain/args/windows/msvc:libcxx_library_search_path"],
+        "//conditions:default": ["//toolchain/args:cxxstdlib_library_search_paths"],
+    }),
+)
+
+cc_args_list(
+    name = "libunwind_library_search_paths",
+    args = select({
+        "//constraints/windows/abi:msvc": [],
+        "//conditions:default": ["//toolchain/args:libunwind_library_search_paths"],
+    }),
+)
+
+cc_args_list(
+    name = "sysroot_flags",
+    args = select({
+        "//constraints/windows/abi:msvc": [],
+        "//conditions:default": ["//toolchain/args:empty_sysroot_flags"],
+    }),
+)
+
+cc_args_list(
+    name = "hermetic_compile_flags",
+    args = select({
+        "//constraints/windows/abi:msvc": ["//toolchain/args/windows/msvc:hermetic_compile"],
+        "//conditions:default": ["//toolchain/args:hermetic_compile_flags"],
+    }),
+)
+
+cc_args_list(
+    name = "stdlib",
+    args = select({
+        "//constraints/windows/abi:msvc": [],
+        "//conditions:default": ["//toolchain/args:stdlib"],
+    }),
+)
+
+cc_args_list(
+    name = "unwindlib",
+    args = select({
+        "//constraints/windows/abi:msvc": [],
+        "//conditions:default": ["//toolchain/args:unwindlib_none"],
+    }),
+)
+
+# The supported native MSVC-ABI route composes the clang-cl personality with
+# Windows/MSVC target policy. Keep the two axes explicit while preserving the
+# established argument order.
+cc_args_list(
+    name = "msvc_target_compile_args",
+    args = [
+        "//toolchain/args/windows/msvc:compatibility",
+        "//toolchain/args:clang_cl_suppress_compiler_banner",
+        "//toolchain/args/windows/msvc:reproducible_coff_objects",
+        "//toolchain/args:clang_cl_default_exception_handling",
+        "//toolchain/args:clang_cl_default_rtti",
+        "//toolchain/args/windows/msvc:large_coff_objects",
+        "//toolchain/args/windows/msvc:windows_sdk_compile_defines",
     ],
-    format = {
-        "mingw_crt_library_search_path": "//runtimes/mingw:mingw_crt_library_search_directory",
-        "mingw_import_library_search_path": "//runtimes/mingw:mingw_import_libraries_directory",
-    },
+)
+
+cc_args_list(
+    name = "target_compile_args",
+    args = select({
+        "//constraints/windows/abi:msvc": ["msvc_target_compile_args"],
+        "//conditions:default": [],
+    }),
+)
+
+cc_args_list(
+    name = "crt_compile_args",
+    args = select({
+        "//constraints/windows/abi:msvc": ["//toolchain/args/windows/msvc:msvc_crt_compile_defines"],
+        "//conditions:default": [],
+    }),
+)
+
+cc_args_list(
+    name = "cxxstdlib_compile_args",
+    args = select({
+        "//constraints/windows/abi:msvc": ["//toolchain/args/windows/msvc:libcxx_compile_defines"],
+        "//conditions:default": [],
+    }),
+)
+
+cc_args_list(
+    name = "deterministic_codeview_compile_args",
+    args = select({
+        "//constraints/windows/abi:msvc": ["//toolchain/args/windows/msvc:reproducible_codeview"],
+        "//conditions:default": [],
+    }),
+)
+
+cc_args_list(
+    name = "cxxstdlib_headers_include_search_paths",
+    args = select({
+        "//constraints/windows/abi:msvc": ["//toolchain/args/windows/msvc:libcxx_include"],
+        "//conditions:default": ["//toolchain/args:cxxstdlib_headers_include_search_paths"],
+    }),
+)
+
+# MinGW target headers already precede the compiler resource directory. The
+# MSVC SDK headers remain in cc_toolchain's deferred post-resource append.
+cc_args_list(
+    name = "headers_before_compiler_resource",
+    args = select({
+        "//constraints/windows/abi:msvc": [],
+        "//conditions:default": ["//toolchain/args/windows/mingw:mingw_headers_include_search_paths"],
+    }),
+)
+
+cc_args_list(
+    name = "toolchain_args",
+    args = [
+        "target_compile_args",
+        "crt_compile_args",
+        "cxxstdlib_compile_args",
+        "deterministic_codeview_compile_args",
+        "cxxstdlib_headers_include_search_paths",
+        "headers_before_compiler_resource",
+    ],
+)
+
+cc_args_list(
+    name = "hosted_c_toolchain_args",
+    args = [
+        "target_compile_args",
+        "crt_compile_args",
+        "deterministic_codeview_compile_args",
+        "headers_before_compiler_resource",
+    ],
+)
+
+cc_args_list(
+    name = "runtime_toolchain_args",
+    args = select({
+        "//constraints/windows/abi:msvc": [
+            "target_compile_args",
+            "crt_compile_args",
+            "cxxstdlib_compile_args",
+            "deterministic_codeview_compile_args",
+            "cxxstdlib_headers_include_search_paths",
+        ],
+        "//conditions:default": [],
+    }),
 )

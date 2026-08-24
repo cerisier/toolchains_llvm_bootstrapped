@@ -451,7 +451,7 @@ def declare_llvm_targets(*, suffix = ""):
         }),
     )
 
-    # this must match //toolchain:windows_toolchain_args
+    # This must match //toolchain/args/windows:toolchain_args.
     include_path(
         name = "windows_target_headers",
         srcs = [

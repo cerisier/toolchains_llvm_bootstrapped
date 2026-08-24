@@ -289,7 +289,7 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = None):
         # declared resource headers between them and VC/UCRT so libc++
         # include_next wrappers resolve Clang definitions first.
         args = [name + "_semantic_args"] + extra_args + select({
-            "@llvm//constraints/windows/abi:msvc": ["@llvm//toolchain/args/msvc:sdk_compile_args"],
+            "@llvm//constraints/windows/abi:msvc": ["@llvm//toolchain/args/windows/msvc:sdk_compile_args"],
             "//conditions:default": [],
         }),
         # clang-cl header parsing remains a named unsupported boundary. It can
