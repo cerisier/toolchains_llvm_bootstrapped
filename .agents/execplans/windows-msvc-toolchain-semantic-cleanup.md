@@ -1,8 +1,8 @@
 # Windows MSVC toolchain semantic cleanup plan
 
-Status: active; Batches 1 and 2 and the approved target-semantic portion of
-Batch 3 are implemented and proved. R11/R42 remain open by owner decision;
-remaining batches await owner selection.
+Status: active; Batches 1 and 2 and the approved target-semantic portion and
+post-review leaf cleanup of Batch 3 are implemented and proved. R11/R42 remain
+open by owner decision; remaining batches await owner selection.
 
 Date: 2026-08-24 (Asia/Tokyo)
 
@@ -734,6 +734,51 @@ Evidence:
   `9797abf1-cc98-420b-a9ee-c72785b238b4`. Existing target-local `/std:c++20`
   warnings remain unchanged. No Stage 3 rebuild was needed because every
   representative rendered action remained identical.
+
+Post-review compiler-personality and leaf naming completion:
+
+- [x] Commit `b9d1bea2` places reusable clang-cl hermetic-include and C++
+  runtime library-search spellings beside their generic Clang counterparts.
+  `/clang:-nobuiltininc` now stays with explicit clang-cl resource-header
+  injection because it exists to enforce libc++ -> resource -> VC/UCRT order,
+  not to define generic hermetic compilation;
+- [x] The remaining clang-cl C++ runtime header-search implementation moves
+  out of the MSVC ABI leaf as
+  `clang_cl_cxxstdlib_headers_include_search_paths`. Prebuilt and source-built
+  `compile_resource_dir_msvc` targets and their selector helper are renamed for
+  their actual clang-cl personality ownership;
+- [x] Directly affected MSVC leaf labels now use their semantic names:
+  deterministic COFF-object/CodeView flags and COM-support, dynamic/static
+  CRT, and SDK library search paths. Flags, actions, data, selection, and
+  ordering are unchanged;
+- [x] No compatibility aliases are added. Repository-wide label search proves
+  all renamed labels are internal to this unpublished implementation.
+
+Evidence:
+
+- Item 5's focused Windows action suite passed from invocation
+  `b06c69b2-8453-45bf-88af-66af333ecc63` through
+  `63d500a3-4294-4e05-b79d-ba9f58e61d71`. Linux ThinLTO action query
+  `9c52cb8e-c09a-4a2f-88f6-8b08b7e95cc9` keeps `-nostdlibinc` and the
+  declared resource headers on source compilation and omits header-search
+  flags from the backend;
+- pre-rename x86-64 MSVC compile/link captures were invocations
+  `810a1cd3-321f-4944-adaa-1f9f9f0ef302` and
+  `8acd63cb-2ee5-4d22-b6cd-c25cd622c177`. Post-rename captures
+  `7518046d-0e41-4deb-b682-13e8cbdf522e` and
+  `930e5d48-b14c-42ba-a26c-0c9d2d8b793e` are byte-for-byte identical, with
+  SHA-256 values `28778084e1d7abc78113af19c9cb3673c0c4acd1155ad5ea207605a5739c6e37`
+  and `001c8669175fade2aedca4162dcf409e9f5a261a1b877377b1562d6726e2c944`;
+- ARM64 action query `0ef833c3-5473-4828-98b9-3478528c7f90` resolves the
+  renamed resource target and retains the native target triple, `.obj`
+  output, libc++ -> resource -> VC/UCRT include order, and declared SDK
+  inputs;
+- the grouped Windows MSVC action suite passed from invocation
+  `37c955eb-90bc-4647-8ef6-d2834a94b3db` through
+  `cdd0e33c-a62b-487d-aba3-5123224c1504`. Buildifier and
+  `git diff --check` passed. No Stage 3 rebuild was needed because the complete
+  representative commands are byte-identical and both target CPUs resolve
+  the renamed graph.
 
 ### Batch 4 — Clarify runtime and overlay ownership
 

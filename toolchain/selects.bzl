@@ -43,8 +43,8 @@ def platform_module_map(exec_os, exec_cpu):
 def resource_dir_arg(exec_os, exec_cpu):
     return Label(_tool_repo(exec_os, exec_cpu) + ":compile_resource_dir")
 
-def msvc_resource_dir_arg(exec_os, exec_cpu):
-    return Label(_tool_repo(exec_os, exec_cpu) + ":compile_resource_dir_msvc")
+def clang_cl_resource_dir_arg(exec_os, exec_cpu):
+    return Label(_tool_repo(exec_os, exec_cpu) + ":clang_cl_compile_resource_dir")
 
 def platform_cc_tool_map(exec_os, exec_cpu):
     tool_repo = _tool_repo(exec_os, exec_cpu)
