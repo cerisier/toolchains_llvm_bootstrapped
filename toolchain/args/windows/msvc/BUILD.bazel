@@ -64,6 +64,47 @@ cc_args(
 )
 
 cc_args(
+    name = "target_machine_link_flags",
+    actions = ["@rules_cc//cc/toolchains/actions:link_actions"],
+    args = select({
+        "//platforms/config:windows_x86_64_msvc": [
+            "/clang:-Xlinker",
+            "/clang:/MACHINE:X64",
+        ],
+        "//platforms/config:windows_aarch64_msvc": [
+            "/clang:-Xlinker",
+            "/clang:/MACHINE:ARM64",
+        ],
+        "//conditions:default": [],
+    }),
+)
+
+cc_args(
+    name = "deterministic_link_flags",
+    actions = ["@rules_cc//cc/toolchains/actions:link_actions"],
+    args = [
+        "/Brepro",
+        "/clang:-Xlinker",
+        "/clang:/INCREMENTAL:NO",
+        "/clang:-Xlinker",
+        "/clang:/lldignoreenv",
+        "/clang:-Xlinker",
+        "/clang:/PDBALTPATH:%_PDB%",
+        "/clang:-Xlinker",
+        "/clang:/pdbsourcepath:.",
+    ],
+)
+
+cc_args(
+    name = "default_console_subsystem_link_flags",
+    actions = ["@rules_cc//cc/toolchains/actions:link_executable_actions"],
+    args = [
+        "/clang:-Xlinker",
+        "/clang:/SUBSYSTEM:CONSOLE",
+    ],
+)
+
+cc_args(
     name = "libcxx_include",
     actions = [
         "@rules_cc//cc/toolchains/actions:source_compile_actions",

@@ -57,6 +57,12 @@ cc_args(
 )
 
 cc_args(
+    name = "deterministic_link_flags",
+    actions = ["@rules_cc//cc/toolchains/actions:link_actions"],
+    args = ["-Wl,--no-insert-timestamp"],
+)
+
+cc_args(
     name = "msvcrt_default_libs",
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",

@@ -225,57 +225,6 @@ cc_args_list(
 )
 
 cc_args(
-    name = "machine_args",
-    actions = _LINK_ACTIONS,
-    args = select({
-        "//platforms/config:windows_x86_64_msvc": [
-            "/clang:-Xlinker",
-            "/clang:/MACHINE:X64",
-        ],
-        "//platforms/config:windows_aarch64_msvc": [
-            "/clang:-Xlinker",
-            "/clang:/MACHINE:ARM64",
-        ],
-        "//conditions:default": [],
-    }),
-)
-
-cc_args(
-    name = "deterministic_link_args",
-    actions = _LINK_ACTIONS,
-    args = [
-        "/Brepro",
-        "/clang:-Xlinker",
-        "/clang:/INCREMENTAL:NO",
-        "/clang:-Xlinker",
-        "/clang:/lldignoreenv",
-        "/clang:-Xlinker",
-        "/clang:/PDBALTPATH:%_PDB%",
-        "/clang:-Xlinker",
-        "/clang:/pdbsourcepath:.",
-    ],
-)
-
-cc_args(
-    name = "console_subsystem_args",
-    actions = ["@rules_cc//cc/toolchains/actions:link_executable_actions"],
-    args = [
-        "/clang:-Xlinker",
-        "/clang:/SUBSYSTEM:CONSOLE",
-    ],
-)
-
-cc_feature(
-    name = "link_defaults",
-    args = [
-        ":machine_args",
-        ":deterministic_link_args",
-        ":console_subsystem_args",
-    ],
-    feature_name = "msvc_link_defaults",
-)
-
-cc_args(
     name = "interface_library_args",
     actions = ["@rules_cc//cc/toolchains/actions:dynamic_library_link_actions"],
     args = [
@@ -307,7 +256,6 @@ cc_feature_set(
         ":dynamic_link_msvcrt",
         ":dynamic_linking_mode",
         ":interface_library",
-        ":link_defaults",
         ":static_link_msvcrt",
         ":static_linking_mode",
         ":supported_configuration",
@@ -322,7 +270,6 @@ cc_feature_set(
     all_of = [
         ":dynamic_link_msvcrt",
         ":interface_library",
-        ":link_defaults",
         ":supported_configuration",
     ],
 )
