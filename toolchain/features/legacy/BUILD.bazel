@@ -5,11 +5,17 @@ load("@rules_cc//cc/toolchains:nested_args.bzl", "cc_nested_args")
 
 cc_args(
     name = "legacy_default_cxx_compile_flags",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:cpp_compile",
-        "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
-        "@rules_cc//cc/toolchains/actions:linkstamp_compile",
-    ],
+    actions = select({
+        # Header parsing remains registered but unsupported; modules, ObjC++,
+        # and CLIF are unsupported, while the LTO backend consumes IR rather
+        # than a C++ source-language default.
+        "//constraints/windows/abi:msvc": [
+            "@rules_cc//cc/toolchains/actions:cpp_compile",
+            "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
+            "@rules_cc//cc/toolchains/actions:linkstamp_compile",
+        ],
+        "//conditions:default": ["@rules_cc//cc/toolchains/actions:cpp_compile_actions"],
+    }),
     args = select({
         "//constraints/windows/abi:msvc": ["/std:c++17"],
         "//conditions:default": ["-std=c++17"],
@@ -17,32 +23,57 @@ cc_args(
 )
 
 cc_args(
-    name = "legacy_default_compile_flags",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:compile_actions",
-    ],
+    name = "legacy_default_stack_protector",
+    actions = ["@rules_cc//cc/toolchains/actions:source_compile_actions"],
     args = select({
-        "//constraints/windows/abi:msvc": [],
+        "//constraints/windows/abi:msvc": ["/GS"],
         "@platforms//os:none": [],
         "//conditions:default": ["-fstack-protector"],
-    }) + select({
-        "//constraints/windows/abi:msvc": [],
+    }),
+)
+
+cc_args(
+    name = "legacy_default_warning_flags",
+    actions = ["@rules_cc//cc/toolchains/actions:source_compile_actions"],
+    # Keep one Clang diagnostic policy. clang-cl receives the same flags
+    # through its explicit Clang passthrough instead of an approximate /W level.
+    args = select({
+        "//constraints/windows/abi:msvc": [
+            "/clang:-Wall",
+            "/clang:-Wthread-safety",
+            "/clang:-Wself-assign",
+            "/clang:-Wunused-but-set-parameter",
+            "/clang:-Wno-free-nonheap-object",
+        ],
         "//conditions:default": [
-            # All warnings are enabled.
             "-Wall",
-            # Enable a few more warnings that aren't part of -Wall.
             "-Wthread-safety",
             "-Wself-assign",
-            # Disable problematic warnings.
             "-Wunused-but-set-parameter",
-            # has false positives
             "-Wno-free-nonheap-object",
-            # Enable coloring even if there's no attached terminal. Bazel removes the
-            # escape sequences if --nocolor is specified.
-            "-fcolor-diagnostics",
-            # Keep stack frames for debugging, even in opt mode.
-            "-fno-omit-frame-pointer",
         ],
+    }),
+)
+
+cc_args(
+    name = "legacy_default_color_diagnostics",
+    actions = ["@rules_cc//cc/toolchains/actions:source_compile_actions"],
+    # Enable coloring even without an attached terminal. Bazel removes the
+    # escape sequences if --nocolor is specified.
+    args = select({
+        "//constraints/windows/abi:msvc": ["/clang:-fcolor-diagnostics"],
+        "//conditions:default": ["-fcolor-diagnostics"],
+    }),
+)
+
+cc_args(
+    name = "legacy_default_frame_pointer",
+    actions = ["@rules_cc//cc/toolchains/actions:compile_actions"],
+    # Keep stack frames for debugging, even in opt mode. Product-specific
+    # release policy may deliberately override this later in argument order.
+    args = select({
+        "//constraints/windows/abi:msvc": ["/clang:-fno-omit-frame-pointer"],
+        "//conditions:default": ["-fno-omit-frame-pointer"],
     }),
 )
 
@@ -50,7 +81,10 @@ cc_feature(
     name = "default_compile_flags",
     args = [
         ":legacy_default_cxx_compile_flags",
-        ":legacy_default_compile_flags",
+        ":legacy_default_stack_protector",
+        ":legacy_default_warning_flags",
+        ":legacy_default_color_diagnostics",
+        ":legacy_default_frame_pointer",
     ],
     overrides = "@rules_cc//cc/toolchains/features/legacy:default_compile_flags",
 )

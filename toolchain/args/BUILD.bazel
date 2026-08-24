@@ -225,65 +225,39 @@ cc_args(
 )
 
 cc_args(
-    name = "no_absolute_paths_for_builtins_clang",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:compile_actions",
-    ],
-    args = [
-        # If the compiler sometimes rewrites paths in the .d files without symlinks
-        # (ie when they're shorter), it confuses Bazel's logic for verifying all
-        # #included header files are listed as inputs to the action.
-        "-no-canonical-prefixes",
-    ],
-)
-
-cc_args(
-    name = "no_absolute_paths_for_builtins_clang_cl",
-    actions = ["@rules_cc//cc/toolchains/actions:source_compile_actions"],
-    args = ["/clang:-no-canonical-prefixes"],
-)
-
-cc_args_list(
     name = "no_absolute_paths_for_builtins",
+    actions = ["@rules_cc//cc/toolchains/actions:source_compile_actions"],
     args = select({
-        "//constraints/windows/abi:msvc": [":no_absolute_paths_for_builtins_clang_cl"],
-        "//conditions:default": [":no_absolute_paths_for_builtins_clang"],
+        "//constraints/windows/abi:msvc": ["/clang:-no-canonical-prefixes"],
+        # If the compiler sometimes rewrites paths in the .d files without
+        # symlinks (for example, when they are shorter), Bazel can no longer
+        # match included headers to declared action inputs.
+        "//conditions:default": ["-no-canonical-prefixes"],
     }),
 )
 
 cc_args(
-    name = "deterministic_clang_compile_flags",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:compile_actions",
-    ],
-    args = [
+    name = "deterministic_compile_flags",
+    actions = ["@rules_cc//cc/toolchains/actions:source_compile_actions"],
+    args = select({
+        "//constraints/windows/abi:msvc": ["/clang:-Wno-builtin-macro-redefined"],
+        "//conditions:default": ["-Wno-builtin-macro-redefined"],
+    }) + select({
         # Make C++ compilation deterministic. Use linkstamping instead of these
         # compiler symbols.
-        "-Wno-builtin-macro-redefined",
-        "-D__DATE__=\"redacted\"",
-        "-D__TIMESTAMP__=\"redacted\"",
-        "-D__TIME__=\"redacted\"",
-        "-ffile-compilation-dir=.",  # Avoid absolute paths in binaries
-    ],
-)
-
-cc_args(
-    name = "deterministic_clang_cl_compile_flags",
-    actions = ["@rules_cc//cc/toolchains/actions:source_compile_actions"],
-    args = [
-        "/clang:-Wno-builtin-macro-redefined",
-        "/D__DATE__=\"redacted\"",
-        "/D__TIMESTAMP__=\"redacted\"",
-        "/D__TIME__=\"redacted\"",
-        "/clang:-ffile-compilation-dir=.",
-    ],
-)
-
-cc_args_list(
-    name = "deterministic_compile_flags",
-    args = select({
-        "//constraints/windows/abi:msvc": [":deterministic_clang_cl_compile_flags"],
-        "//conditions:default": [":deterministic_clang_compile_flags"],
+        "//constraints/windows/abi:msvc": [
+            "/D__DATE__=\"redacted\"",
+            "/D__TIMESTAMP__=\"redacted\"",
+            "/D__TIME__=\"redacted\"",
+        ],
+        "//conditions:default": [
+            "-D__DATE__=\"redacted\"",
+            "-D__TIMESTAMP__=\"redacted\"",
+            "-D__TIME__=\"redacted\"",
+        ],
+    }) + select({
+        "//constraints/windows/abi:msvc": ["/clang:-ffile-compilation-dir=."],
+        "//conditions:default": ["-ffile-compilation-dir=."],  # Avoid absolute paths in binaries
     }),
 )
 
