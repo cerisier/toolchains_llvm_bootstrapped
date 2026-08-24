@@ -16,7 +16,7 @@ def _case_insensitive_copy_directory_impl(ctx):
         inputs = source.transitive_files,
         outputs = [output],
         mnemonic = "WindowsCaseCopy",
-        progress_message = "Case-folding Windows inputs %{label}",
+        progress_message = "Case-folding directory inputs %{label}",
     )
     directory = create_directory_info(
         entries = {},

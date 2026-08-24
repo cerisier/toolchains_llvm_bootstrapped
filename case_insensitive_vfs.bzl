@@ -1,4 +1,4 @@
-"""Generates a case-insensitive Clang VFS view of declared Windows inputs."""
+"""Generates a case-insensitive Clang VFS view of declared directory inputs."""
 
 load("@bazel_skylib//rules/directory:providers.bzl", "DirectoryInfo")
 
@@ -18,7 +18,7 @@ def _case_insensitive_vfs_overlay_impl(ctx):
         inputs = depset(transitive = inputs),
         outputs = [output],
         mnemonic = "WindowsCaseVFS",
-        progress_message = "Generating case-insensitive Windows VFS %{label}",
+        progress_message = "Generating case-insensitive VFS %{label}",
     )
     return [DefaultInfo(files = depset([output]))]
 
