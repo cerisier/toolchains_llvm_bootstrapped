@@ -2,9 +2,9 @@ load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 
 package(default_visibility = ["//visibility:public"])
 
-# This package owns Windows platform-family semantics. It selects and composes
-# Windows-local ABI, CRT, SDK, and runtime implementations. Concrete MinGW and
-# MSVC leaves remain selection-free in their respective subpackages.
+# This package owns Windows semantic implementations and selects their
+# Windows-local ABI, CRT, SDK, and runtime variants. Complete rules_cc argument
+# ordering and composition remains in //toolchain and //toolchain/runtimes.
 
 cc_args_list(
     name = "mingw_default_libs",
@@ -172,41 +172,5 @@ cc_args_list(
     args = select({
         "//constraints/windows/abi:msvc": [],
         "//conditions:default": ["//toolchain/args/windows/mingw:mingw_headers_include_search_paths"],
-    }),
-)
-
-cc_args_list(
-    name = "toolchain_args",
-    args = [
-        "target_compile_args",
-        "crt_compile_args",
-        "cxxstdlib_compile_args",
-        "deterministic_codeview_compile_args",
-        "cxxstdlib_headers_include_search_paths",
-        "headers_before_compiler_resource",
-    ],
-)
-
-cc_args_list(
-    name = "hosted_c_toolchain_args",
-    args = [
-        "target_compile_args",
-        "crt_compile_args",
-        "deterministic_codeview_compile_args",
-        "headers_before_compiler_resource",
-    ],
-)
-
-cc_args_list(
-    name = "runtime_toolchain_args",
-    args = select({
-        "//constraints/windows/abi:msvc": [
-            "target_compile_args",
-            "crt_compile_args",
-            "cxxstdlib_compile_args",
-            "deterministic_codeview_compile_args",
-            "cxxstdlib_headers_include_search_paths",
-        ],
-        "//conditions:default": [],
     }),
 )

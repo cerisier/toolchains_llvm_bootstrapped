@@ -17,24 +17,40 @@ Groups are defined at the level of the most constrained targets, so that more fe
 
 ### Package structure
 
+**//toolchain:BUILD.bazel**:
+- Owns complete rules_cc argument-list ordering and composition.
+- Exposes the public `toolchain_args` target consumed by `cc_toolchain`.
+- Selects between complete generic and Windows compositions at the target-OS
+  boundary.
+- References named semantic implementations; it contains no raw flags or
+  action bindings.
+
+`windows_toolchain_args` is intentionally a complete composition rather than a
+late platform-specific delta. Its semantic slots may use generic
+implementations unchanged or select Windows, clang-cl, COFF, MSVC ABI, CRT, and
+SDK implementations as appropriate. This explicit duplication is temporary
+while those semantics are normalized. `platform_specific_args` remains only as
+a legacy holder for generic platform behavior that has not yet been decomposed;
+it is not the Windows extension point.
+
 **//toolchain/args:BUILD.bazel**:
 - Defines generic argument implementations and reusable compiler-personality
   implementations.
 - Groups may be empty, but their semantic meaning must remain stable.
-- Does not own the final target-OS/platform-family route.
+- Does not own complete toolchain ordering.
 
-This package provides the generic and personality-specific pieces from which a
-platform family builds its implementation.
+This package provides generic and personality-specific semantic pieces for the
+top-level compositions.
 
 **//toolchain/args/\<platform\>:BUILD.bazel**:
-- Defines the semantic implementation for one target OS/platform family.
-- May select and compose platform-local axes such as ABI, CRT, SDK, runtime
-  family, or intentional empty implementations.
-- References concrete variant leaves rather than embedding raw flags.
+- Defines named semantic overrides for one target OS/platform family.
+- May select a platform-local implementation for one semantic—such as ABI,
+  CRT, SDK/runtime family, or an intentional empty implementation.
+- Does not define the complete rules_cc argument list or its ordering.
 
-For example, `//toolchain/args/windows` owns the Windows choice between MinGW
-and the native MSVC ABI route, while preserving the canonical meaning of each
-group.
+For example, `//toolchain/args/windows:unwindlib` selects the applicable
+Windows implementation of that one semantic. `//toolchain:windows_toolchain_args`
+composes it in the complete Windows toolchain.
 
 **//toolchain/args/\<platform\>/\<variant\>:BUILD.bazel**:
 - Defines concrete flags, action bindings, inputs, and data for one platform
@@ -43,21 +59,20 @@ group.
 - May still condition a concrete implementation on non-routing semantics such
   as a runtime build stage.
 
-This is what “no platform select logic” means: concrete leaves do not decide
-which platform variant applies. Their parent platform package owns that route.
-Compiler personality is a separate axis and remains in reusable compiler
-argument/feature layers; a supported toolchain route composes it explicitly
-with the selected target platform implementation.
+This is what “no platform select logic” means for concrete leaves: they do not
+decide which target OS or platform variant applies. The named semantic override
+and the complete top-level composition own that routing.
 
-**//toolchain:BUILD.bazel**:
-- Assembles the final toolchain by selecting the top-level target OS/platform
-  family once for each canonical group.
-- Contains only cc_args_list targets.
-- No raw flags or action bindings.
-- Does not select subordinate platform-local ABI, CRT, SDK, or runtime variants.
+Compiler personality is a separate axis from target OS, object format, ABI,
+CRT, SDK/runtime family, C++ runtime, and execution platform. Reusable clang-cl
+grammar stays in compiler-personality argument and feature layers. A supported
+Windows composition explicitly combines that grammar with its COFF and MSVC
+target semantics.
 
-This package answers which platform-family implementation applies. The selected
-platform package answers which of its local variants applies.
+**//toolchain/runtimes:BUILD.bazel** follows the same ownership rule for staged
+runtime toolchains: its public `toolchain_args` selects complete generic or
+Windows runtime compositions, while concrete runtime compiler/linker semantics
+remain in argument implementation packages.
 
 TODO(cerisier): Support macOS specific flags (objc and frameworks). Still needed ?
 
