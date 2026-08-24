@@ -25,8 +25,9 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = None):
             "@llvm//toolchain/features:static_link_cpp_runtimes",
             "@llvm//toolchain/features:targets_windows",
             "@llvm//toolchain/features:windows_export_all_symbols",
-            "@llvm//toolchain/features/legacy:all_legacy_builtin_features",
+            "@llvm//toolchain/features/legacy:clang_cl_all_legacy_builtin_features",
             "@llvm//toolchain/features/legacy:experimental_replace_legacy_action_config_features",
+
             # LLVM CL-driver protocol: response files, layering-check
             # tolerance, CL command-line replacements, and the intentional
             # clang-cl-to-lld-link/COFF ThinLTO bridge.
@@ -45,7 +46,10 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = None):
             "@llvm//toolchain/features:archive_param_file",
             "@llvm//toolchain/features:static_link_cpp_runtimes",
             "@llvm//toolchain/features:targets_windows",
-            "@llvm//toolchain/features/legacy:all_legacy_builtin_features",
+            "@llvm//toolchain/features/legacy:clang_cl_all_legacy_builtin_features",
+
+            # Protocol defaults precede target defaults. Keep the legacy
+            # replacement set last so user arguments retain their ordering.
             "@llvm//toolchain/features/clang_cl:enabled_features",
             "@llvm//toolchain/features/msvc:abi_enabled_features",
             # Always last: contains user compile/link arguments.
@@ -59,7 +63,10 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = None):
             "@llvm//toolchain/features:archive_param_file",
             "@llvm//toolchain/features:static_link_cpp_runtimes",
             "@llvm//toolchain/features:targets_windows",
-            "@llvm//toolchain/features/legacy:all_legacy_builtin_features",
+            "@llvm//toolchain/features/legacy:clang_cl_all_legacy_builtin_features",
+
+            # Runtime construction uses the same protocol/target ordering but
+            # intentionally omits ordinary opt/dbg defaults.
             "@llvm//toolchain/features/clang_cl:enabled_features",
             "@llvm//toolchain/features/msvc:abi_enabled_features",
             # Always last: contains user compile/link arguments.

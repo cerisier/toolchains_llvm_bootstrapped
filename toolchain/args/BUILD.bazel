@@ -33,6 +33,42 @@ cc_args(
 )
 
 cc_args(
+    name = "clang_cl_resource_dir",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    # clang-cl's response parser requires the option and its value in one
+    # token. Keep the personality-specific implementation separate so it can
+    # be chosen while constructing the toolchain without consulting the
+    # current-toolchain compiler flag and creating a dependency cycle.
+    args = ["-resource-dir={resource_dir}"],
+    data = [
+        "//runtimes:resource_directory",
+    ],
+    format = {
+        "resource_dir": "//runtimes:resource_directory",
+    },
+)
+
+cc_args(
+    name = "clang_cl_suppress_compiler_banner",
+    actions = ["@rules_cc//cc/toolchains/actions:source_compile_actions"],
+    args = ["/nologo"],
+)
+
+cc_args(
+    name = "clang_cl_default_exception_handling",
+    actions = ["@rules_cc//cc/toolchains/actions:source_compile_actions"],
+    args = ["/EHsc"],
+)
+
+cc_args(
+    name = "clang_cl_default_rtti",
+    actions = ["@rules_cc//cc/toolchains/actions:source_compile_actions"],
+    args = ["/GR"],
+)
+
+cc_args(
     name = "clang_target_flags",
     actions = [
         "@rules_cc//cc/toolchains/actions:compile_actions",
