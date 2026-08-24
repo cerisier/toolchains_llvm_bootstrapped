@@ -151,6 +151,43 @@ cc_feature(
 )
 
 cc_feature(
+    name = "coff_runtime_library_search_directories",
+    # PE/COFF does not encode ELF-style runtime library search directories.
+    overrides = "@rules_cc//cc/toolchains/features/legacy:runtime_library_search_directories",
+)
+
+cc_args(
+    name = "clang_cl_shared_flag_args",
+    actions = ["@rules_cc//cc/toolchains/actions:dynamic_library_link_actions"],
+    args = [
+        "/clang:-Xlinker",
+        "/clang:/DLL",
+    ],
+)
+
+cc_feature(
+    name = "clang_cl_shared_flag",
+    args = [":clang_cl_shared_flag_args"],
+    overrides = "@rules_cc//cc/toolchains/features/legacy:shared_flag",
+)
+
+cc_args(
+    name = "clang_cl_strip_debug_symbols_args",
+    actions = ["@rules_cc//cc/toolchains/actions:link_actions"],
+    args = [
+        "/clang:-Xlinker",
+        "/clang:/DEBUG:NONE",
+    ],
+    requires_not_none = "@rules_cc//cc/toolchains/variables:strip_debug_symbols",
+)
+
+cc_feature(
+    name = "clang_cl_strip_debug_symbols",
+    args = [":clang_cl_strip_debug_symbols_args"],
+    overrides = "@rules_cc//cc/toolchains/features/legacy:strip_debug_symbols",
+)
+
+cc_feature(
     name = "no_legacy_features",
     feature_name = "no_legacy_features",
 )
@@ -170,10 +207,10 @@ cc_feature_set(
 )
 
 # Inlined from rules_cc to avoid problematic features that can't be overridden.
-# Keep the two ordered lists explicit until rules_cc owns compiler-dialect
-# selects inside the individual argument packages. This duplication makes
-# every unsupported or target-inapplicable clang-cl slot auditable without an
-# early shared-list abstraction.
+# Keep the two ordered lists explicit until rules_cc exposes compiler-specific
+# implementations that toolchain assembly can select from an explicit compiler
+# personality. This duplication makes every unsupported or target-inapplicable
+# clang-cl slot auditable without an early shared-list abstraction.
 # https://github.com/bazelbuild/rules_cc/blob/541eda5d72e9b5f18e6a24e8d14975afcd865717/cc/toolchains/args/BUILD#L6-L42
 cc_feature_set(
     name = "generic_legacy_replacements",
@@ -225,13 +262,12 @@ cc_feature_set(
         "@rules_cc//cc/toolchains/args/linker_param_file:feature",
         "//toolchain/features/clang_cl:preprocessor_defines",
         "//toolchain/features/clang_cl:random_seed",
-
-        "//toolchain/features/msvc:runtime_library_search_directories",
-        "//toolchain/features/msvc:shared_flag",
-        "//toolchain/features/msvc:strip_debug_symbols",
+        ":coff_runtime_library_search_directories",
+        ":clang_cl_shared_flag",
+        ":clang_cl_strip_debug_symbols",
         # The generic strip action protocol is not registered for this route.
         # ObjC ARC and fission are explicit unsupported MSVC features.
-        "//toolchain/features/msvc:set_soname",
+        ":set_soname",
 
         # static_libgcc remains intentionally omitted for every dialect.
         "//toolchain/features/clang_cl:forced_includes",
@@ -253,12 +289,17 @@ cc_feature_set(
     name = "experimental_replace_legacy_action_config_features",
     all_of = [
         ":no_legacy_features",
-    ] + select({
-        # The current supported clang-cl toolchain targets the Windows MSVC
-        # ABI. Upstream rules_cc should select each spelling by compiler.
-        "//constraints/windows/abi:msvc": [":clang_cl_windows_msvc_legacy_replacements"],
-        "//conditions:default": [":generic_legacy_replacements"],
-    }),
+        ":generic_legacy_replacements",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+cc_feature_set(
+    name = "clang_cl_experimental_replace_legacy_action_config_features",
+    all_of = [
+        ":no_legacy_features",
+        ":clang_cl_windows_msvc_legacy_replacements",
+    ],
     visibility = ["//visibility:public"],
 )
 

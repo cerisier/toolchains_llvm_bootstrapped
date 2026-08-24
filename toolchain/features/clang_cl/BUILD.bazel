@@ -541,6 +541,23 @@ cc_feature(
     feature_name = "windows_quoting_for_param_files",
 )
 
+cc_args(
+    name = "def_file_args",
+    actions = _LINK_ACTIONS,
+    args = [
+        "/clang:-Xlinker",
+        "/clang:/DEF:{def_file_path}",
+    ],
+    format = {"def_file_path": "@rules_cc//cc/toolchains/variables:def_file_path"},
+    requires_not_none = "@rules_cc//cc/toolchains/variables:def_file_path",
+)
+
+cc_feature(
+    name = "def_file",
+    args = [":def_file_args"],
+    feature_name = "def_file",
+)
+
 # Temporary compatibility boundary. The repository's e2e configuration
 # requests layering_check globally, but CL-mode module-map and header-parsing
 # actions have not yet been implemented. Register the names without enabling
@@ -559,6 +576,7 @@ cc_feature_set(
     name = "known_features",
     all_of = [
         ":compiler_param_file",
+        ":def_file",
         ":pending_layering_check",
         ":pending_use_module_maps",
         ":supports_start_end_lib",
@@ -571,6 +589,7 @@ cc_feature_set(
     name = "enabled_features",
     all_of = [
         ":compiler_param_file",
+        ":def_file",
         ":windows_quoting_for_param_files",
     ],
 )

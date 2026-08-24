@@ -180,66 +180,6 @@ cc_feature_set(
 )
 
 cc_feature(
-    name = "runtime_library_search_directories",
-    # PE/COFF does not encode ELF-style runtime library search directories.
-    overrides = "@rules_cc//cc/toolchains/features/legacy:runtime_library_search_directories",
-)
-
-cc_args(
-    name = "shared_flag_args",
-    actions = ["@rules_cc//cc/toolchains/actions:dynamic_library_link_actions"],
-    args = [
-        "/clang:-Xlinker",
-        "/clang:/DLL",
-    ],
-)
-
-cc_feature(
-    name = "shared_flag",
-    args = [":shared_flag_args"],
-    overrides = "@rules_cc//cc/toolchains/features/legacy:shared_flag",
-)
-
-cc_args(
-    name = "strip_debug_symbols_args",
-    actions = _LINK_ACTIONS,
-    args = [
-        "/clang:-Xlinker",
-        "/clang:/DEBUG:NONE",
-    ],
-    requires_not_none = "@rules_cc//cc/toolchains/variables:strip_debug_symbols",
-)
-
-cc_feature(
-    name = "strip_debug_symbols",
-    args = [":strip_debug_symbols_args"],
-    overrides = "@rules_cc//cc/toolchains/features/legacy:strip_debug_symbols",
-)
-
-cc_feature(
-    name = "set_soname",
-    # PE/COFF has neither ELF SONAME nor Mach-O install-name semantics.
-    feature_name = "set_soname",
-)
-
-cc_args(
-    name = "def_file_args",
-    actions = _LINK_ACTIONS,
-    args = [
-        "/clang:-Xlinker",
-        "/clang:/DEF:{def_file_path}",
-    ],
-    format = {"def_file_path": "@rules_cc//cc/toolchains/variables:def_file_path"},
-    requires_not_none = "@rules_cc//cc/toolchains/variables:def_file_path",
-)
-
-cc_feature(
-    name = "def_file",
-    args = [":def_file_args"],
-    feature_name = "msvc_def_file",
-)
-
-cc_feature(
     name = "dynamic_linking_mode",
     overrides = "@rules_cc//cc/toolchains/features:dynamic_linking_mode",
 )
@@ -364,7 +304,6 @@ cc_args(
 cc_feature_set(
     name = "abi_known_features",
     all_of = [
-        ":def_file",
         ":dynamic_link_msvcrt",
         ":dynamic_linking_mode",
         ":interface_library",
@@ -381,103 +320,11 @@ cc_feature_set(
 cc_feature_set(
     name = "abi_enabled_features",
     all_of = [
-        ":def_file",
         ":dynamic_link_msvcrt",
         ":interface_library",
         ":link_defaults",
         ":supported_configuration",
     ],
-)
-
-# Compatibility for the adapter labels introduced by the initial MSVC route.
-# New assembly should depend on the compiler-dialect and ABI sets separately.
-cc_feature_set(
-    name = "adapter_known_features",
-    all_of = [
-        "//toolchain/features/clang_cl:known_features",
-        ":abi_known_features",
-    ],
-)
-
-cc_feature_set(
-    name = "adapter_enabled_features",
-    all_of = [
-        "//toolchain/features/clang_cl:enabled_features",
-        ":abi_enabled_features",
-    ],
-)
-
-_CLANG_CL_COMPATIBILITY_LABELS = [
-    "compiler_input",
-    "compiler_input_args",
-    "compiler_output",
-    "compiler_output_args",
-    "compiler_param_file",
-    "dependency_file",
-    "dependency_file_args",
-    "forced_includes",
-    "forced_includes_args",
-    "include_paths",
-    "include_paths_args",
-    "legacy_link_flags",
-    "legacy_link_flags_args",
-    "libraries_expansion",
-    "libraries_to_link",
-    "libraries_to_link_args",
-    "library_search_directories",
-    "library_search_directories_args",
-    "link_dynamic_library",
-    "link_flags",
-    "link_interface_library",
-    "link_object",
-    "link_object_group",
-    "link_static_library",
-    "link_static_library_plain",
-    "link_static_library_whole",
-    "output_execpath_args",
-    "output_execpath_flags",
-    "preprocessor_defines",
-    "preprocessor_defines_args",
-    "quote_include_paths_args",
-    "random_seed",
-    "supports_start_end_lib",
-    "system_include_paths_args",
-    "thin_libraries_expansion",
-    "thin_libraries_to_link_args",
-    "thin_link_object_group",
-    "thin_link_object_group_end",
-    "thin_link_object_group_members",
-    "thin_link_object_group_start",
-    "thin_lto",
-    "thin_lto_backend_compile_args",
-    "thin_lto_backend_index_args",
-    "thin_lto_backend_input_args",
-    "thin_lto_backend_output_args",
-    "thin_lto_compile_and_link_args",
-    "thin_lto_disabled",
-    "thin_lto_emit_imports_args",
-    "thin_lto_final_param_file",
-    "thin_lto_indexing_bitcode_args",
-    "thin_lto_indexing_param_args",
-    "thin_lto_merged_object_args",
-    "thin_lto_object_suffix_replace_args",
-    "thin_lto_prefix_replace_args",
-    "user_link_flags",
-    "user_link_flags_args",
-    "windows_quoting_for_param_files",
-]
-
-[
-    alias(
-        name = label,
-        actual = "//toolchain/features/clang_cl:" + label,
-    )
-    for label in _CLANG_CL_COMPATIBILITY_LABELS
-]
-
-alias(
-    name = "legacy_replacements",
-    actual = "//toolchain/features/legacy:clang_cl_windows_msvc_legacy_replacements",
 )
 
 bzl_library(
