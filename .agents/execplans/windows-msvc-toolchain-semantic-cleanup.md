@@ -1,7 +1,7 @@
 # Windows MSVC toolchain semantic cleanup plan
 
-Status: active; Batches 1 and 2 implementation and proof complete, remaining
-batches await owner selection.
+Status: active; Batches 1 and 2, including the post-review semantic correction,
+are implemented and proved. Remaining batches await owner selection.
 
 Date: 2026-08-24 (Asia/Tokyo)
 
@@ -161,10 +161,12 @@ order so later agents can map plan state back to PR #711.
 
 - [x] **R16 — Split compiler-dialect features from Windows/MSVC ABI features.**
   Move CL spelling, response, dependency, `/D`, `/I`, `/Fo`, and `/clang:`
-  behavior into a clang-cl adapter layer. Keep COFF artifacts, `/MACHINE`, DLL,
-  DEF/import library, PDB, CRT, SDK closure, and ABI validation in a
-  Windows/MSVC target layer. Keep only genuinely combined forwarding in a
-  small named bridge.
+  behavior into a clang-cl adapter layer. Keep PE/COFF artifact naming,
+  `/MACHINE`, import-library and PDB contracts, CRT, SDK closure, and ABI
+  validation in a Windows/MSVC target layer. Express shared, strip, DEF,
+  runtime-search, and SONAME through their canonical feature semantics; only
+  their concrete clang-cl-to-lld-link rendering belongs to the compiler/linker
+  bridge.
 
 - [x] **R17 — Validation reminder has no actionable request yet.**
   Do not infer work from the placeholder PR comment. Reopen this item only when
@@ -430,9 +432,24 @@ Owner decisions:
   instead of failing while dialect-correct support is planned next;
 - introduce `//toolchain/features/clang_cl`, with a README recording that its
   final upstream rules_cc form belongs inline with the corresponding argument
-  packages and selects concrete spellings by compiler;
+  packages and exposes concrete compiler-personality implementations for
+  explicit toolchain assembly;
 - keep generic and clang-cl/MSVC known, enabled, runtime, and legacy orderings
   explicitly duplicated instead of creating shared feature-set abstractions.
+
+Post-review semantic correction:
+
+- commits `20e05026` and `c851093f` split compiler-personality defaults from
+  Windows SDK, CRT, libc++, and PE/COFF policy, then move linker behavior under
+  canonical legacy/clang-cl feature ownership;
+- toolchain assembly chooses explicit generic or clang-cl implementations. A
+  feature used to construct the current toolchain must not select on
+  `@rules_cc//cc/compiler`, because that setting depends on the toolchain being
+  constructed;
+- the generic and clang-cl legacy feature sets remain intentionally duplicated
+  and ordered. No shared-list abstraction or feature-set flattening was added;
+- the unreleased `msvc` adapter aliases were removed. There is no compatibility
+  contract to preserve before this PR is released.
 
 Evidence:
 
@@ -448,10 +465,11 @@ Evidence:
   Stage 1 `clang-cl`, its sibling `lld-link`, and `/clang:-fuse-ld=lld`.
   Compile-time `/clang:-no-canonical-prefixes` remains unchanged.
 - `//toolchain/features/clang_cl` now owns CL compile/input/output, dependency,
-  include/define, response-file, link-forwarding, and ThinLTO protocol.
-  `//toolchain/features/msvc` retains ABI validation, CRT, llvm-ar COFF
-  archives, `/MACHINE`, DEF/import-library, PDB, and deterministic link policy.
-  Compatibility labels preserve the previous adapter entry points.
+  include/define, response-file, DEF rendering, link-forwarding, and ThinLTO
+  protocol. `//toolchain/features/msvc` retains ABI validation, CRT, llvm-ar
+  COFF archives, `/MACHINE`, import-library/PDB contracts, and deterministic
+  link policy. Canonical legacy features own shared, strip, runtime-search, and
+  SONAME semantics.
 - The two explicit legacy lists follow the same logical slot order. New focused
   assertions prove user compile flags precede compiler input/output and user
   link flags precede `/Fe`; these assertions fail against the previous MSVC
@@ -477,16 +495,24 @@ Evidence:
   requested `layering_check`. It covered `/MD`, `/MT`, ThinLTO, static
   archives, PE/COFF machine types, PDB, DLL/DEF/import libraries, and
   alwayslink behavior.
-- The final package-compatibility query passed as invocation
-  `b15c92de-20da-4fa0-8c85-2e0dccbe498a`: every moved former
-  `//toolchain/features/msvc:*` label still resolves through an alias. After
-  returning COFF-only no-op/link semantics to the MSVC package, the final
-  x86-64 source-backed action capture from invocation
-  `490d9801-1d45-4b25-b81c-f1acbb929969` remained byte-for-byte identical to
-  the proved post-split capture.
+- The first attempt to select clang-cl spellings through
+  `@rules_cc//cc/compiler:clang-cl` failed with a current-toolchain dependency
+  cycle in invocation `05091cd8-6c47-4f3c-9fcf-888f0e2a95ac`. Explicit
+  compiler-personality implementations at toolchain assembly remove that
+  cycle without marker features.
+- Final x86-64 MSVC, ARM64 MSVC, MinGW x86-64, and Linux x86-64 action captures
+  from invocations `c6306e43-38e3-4cf6-9bb9-1d369f872210`,
+  `8e3ab994-46b0-4e94-af73-59cde371ae92`,
+  `cfaa5525-4cce-4ded-bf05-2852fe948fe8`, and
+  `de817042-d3e5-47a1-940d-1be8e9f1b956` are byte-for-byte identical to the
+  saved pre-correction captures.
 - The final action suite passed with the globally requested `layering_check`.
   The final negative suite also passed; its explicit `parse_headers` boundary
   was invocation `23af7870-b007-4eb8-90b7-823ed19baf66`.
+- The post-correction focused action and negative-analysis scripts both passed.
+  The artifact matrix passed for x86-64 and ARM64 as invocation
+  `05e62972-2138-4279-bfca-1a2c04907207`; repository buildifier passed as
+  invocation `6f39c2fa-c556-4cf2-9a8f-dcd6249ea541`.
 - Existing warnings from the test target applying `/std:c++20` to its C and
   assembly sources remain visible; the baseline action already contained the
   same target-local option and Batch 2 does not change that test policy.
