@@ -844,6 +844,43 @@ Evidence:
   `26028098-7211-4b1f-aae5-54868965579e`; buildifier passed in invocation
   `979f1c2b-d9c9-4f0c-811b-30d01af62894`.
 
+Heavyweight closeout:
+
+- the exact existing release-prebuilt lane built both complete FDO+ThinLTO
+  archives in invocation `ab83f95f-f6f7-4e2a-b744-f9e37e7f5539`: 112,037
+  actions completed, including fresh source-backed Stage 3 links. The x86-64
+  archive SHA-256 is
+  `39be722a34369dbc5a588f33a97f1ffdc39dbf5e775deaefc6451a8fbf76fe9a`;
+  the ARM64 archive SHA-256 is
+  `618c40f6d9cfcb2eddb5a0a2192cc4117d30f2b08bcdacbaa6d2f204643e3fe9`;
+- both archives contain `llvm.exe`, `clang-cl.exe`, `lld-link.exe`,
+  `llvm-ar.exe`, and `llvm-readobj.exe`. `llvm readobj --file-headers` reports
+  `IMAGE_FILE_MACHINE_AMD64` for x86-64 and native
+  `IMAGE_FILE_MACHINE_ARM64` for ARM64, not ARM64EC;
+- the existing two-CPU artifact matrix passed in invocation
+  `f3d64dd7-ba6a-4d69-b72f-f72ef45696b8`. It exercised `/MD`, `/MT`,
+  DLL/import-library/DEF/PDB behavior, compiler-rt boundaries, archive members,
+  COFF machines, and source-backed ThinLTO;
+- `e2e/rules_cc/windows_msvc_action_test.sh` and
+  `windows_msvc_analysis_test.sh` both exited successfully. Generated actions
+  reference the relocated `runtimes/msvc` payloads while retaining exec-host
+  clang-cl, llvm-ar, and lld-link. Expected negative-boundary invocations were
+  `1605166d-f150-47f0-babb-b504779edc86` (libstdc++),
+  `6d8d45d2-c193-4f51-9559-09b70d5a6b4b` (missing CRT),
+  `6b75cd0e-7f10-48e0-a319-23b139a7ad72` (unsupported feature),
+  `ab74636f-97a0-4cb8-ba9d-47d6bb6052e9` (header parsing), and
+  `2386d1e4-fd75-4be5-aebe-c72bf8a84f76` (dynamic libc++);
+- existing warnings remained non-fatal: generic FDO workloads report unused
+  `-nostdlibinc`, MinGW `.def` preprocessing reports extra directive tokens,
+  zstd workloads report duplicate CRT defines/unused helpers, and clang-cl
+  ThinLTO backends report source-only include flags as unused. None is owned by
+  this package relocation, so this batch does not suppress or otherwise alter
+  them;
+- native execution of the produced compiler and consumer binaries remains the
+  existing Windows CI lane. It was not run from this macOS checkout because PE
+  tools cannot execute locally, and this batch was not pushed or used to
+  trigger CI.
+
 ### Batch 6 — Release-policy design checkpoint
 
 Items: R18, R41, R49.
