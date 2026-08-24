@@ -135,48 +135,92 @@ cc_feature_set(
 )
 
 # Inlined from rules_cc to avoid problematic features that can't be overridden.
+# Keep the two ordered lists explicit until rules_cc owns compiler-dialect
+# selects inside the individual argument packages. This duplication makes
+# every unsupported or target-inapplicable clang-cl slot auditable without an
+# early shared-list abstraction.
 # https://github.com/bazelbuild/rules_cc/blob/541eda5d72e9b5f18e6a24e8d14975afcd865717/cc/toolchains/args/BUILD#L6-L42
+cc_feature_set(
+    name = "generic_legacy_replacements",
+    all_of = [
+        "@rules_cc//cc/toolchains/args/archiver_flags:feature",
+        "@rules_cc//cc/toolchains/args/pic_flags:feature",
+        "@rules_cc//cc/toolchains/args/libraries_to_link:feature",
+        "@rules_cc//cc/toolchains/args/linker_param_file:feature",
+        "@rules_cc//cc/toolchains/args/preprocessor_defines:feature",
+        "@rules_cc//cc/toolchains/args/random_seed:feature",
+        "@rules_cc//cc/toolchains/args/runtime_library_search_directories:feature",
+        "@rules_cc//cc/toolchains/args/shared_flag:feature",
+        ":strip_debug_symbols",
+        "@rules_cc//cc/toolchains/args/strip_flags:feature",
+        "@rules_cc//cc/toolchains/args/objc_arc_flags:feature",
+        # Inlined below as it isn't visible and also has an issue upstream.
+        # TODO: Use upstream version after https://github.com/bazelbuild/rules_cc/pull/797
+        ":set_soname",
+        # Intentionally omitted since we link runtime libraries ourselves and
+        # including this flag just raises a warning.
+        # "@rules_cc//cc/toolchains/args/static_libgcc:feature",
+        "@rules_cc//cc/toolchains/args/include_flags:feature",
+        "@rules_cc//cc/toolchains/args/fission_flags:feature",
+        "@rules_cc//cc/toolchains/args/link_flags:feature",
+        "@rules_cc//cc/toolchains/args/linkstamp_flags:feature",
+        "@rules_cc//cc/toolchains/args/library_search_directories:feature",
+        "@rules_cc//cc/toolchains/args/dependency_file:feature",
+
+        # aka user_compile_flags_feature.
+        # NOTE: This should come last as it must be able to override other features but before compiler inputs.
+        "@rules_cc//cc/toolchains/args/compile_flags:feature",
+
+        # NOTE: This should come after user compile flags since some flags need to be added before the input file (e.g., -x lang)
+        "@rules_cc//cc/toolchains/args/compiler_input_flags:feature",
+        "@rules_cc//cc/toolchains/args/compiler_output_flags:feature",
+    ],
+)
+
+cc_feature_set(
+    name = "clang_cl_windows_msvc_legacy_replacements",
+    all_of = [
+        # Target ABI/tool protocol: llvm-ar writes deterministic COFF archives.
+        "//toolchain/features/msvc:archiver_flags",
+        # Target-inapplicable under COFF: registered empty implementations.
+        "//toolchain/features/msvc:pic_flags",
+        # Driver-dialect replacements, kept in the same order as the generic
+        # rules_cc spine above.
+        "//toolchain/features/clang_cl:libraries_to_link",
+        "@rules_cc//cc/toolchains/args/linker_param_file:feature",
+        "//toolchain/features/clang_cl:preprocessor_defines",
+        "//toolchain/features/clang_cl:random_seed",
+        "//toolchain/features/msvc:runtime_library_search_directories",
+        "//toolchain/features/msvc:shared_flag",
+        "//toolchain/features/msvc:strip_debug_symbols",
+        # The generic strip action protocol is not registered for this route.
+        # ObjC ARC and fission are explicit unsupported MSVC features.
+        "//toolchain/features/msvc:set_soname",
+        # static_libgcc remains intentionally omitted for every dialect.
+        "//toolchain/features/clang_cl:forced_includes",
+        "//toolchain/features/clang_cl:include_paths",
+        "//toolchain/features/clang_cl:link_flags",
+        # Linkstamp inputs are raw object paths and are dialect-independent.
+        "@rules_cc//cc/toolchains/args/linkstamp_flags:feature",
+        "//toolchain/features/clang_cl:library_search_directories",
+        "//toolchain/features/clang_cl:dependency_file",
+
+        # User flags remain last among policy arguments, before input/output.
+        "@rules_cc//cc/toolchains/args/compile_flags:feature",
+        "//toolchain/features/clang_cl:compiler_input",
+        "//toolchain/features/clang_cl:compiler_output",
+    ],
+)
+
 cc_feature_set(
     name = "experimental_replace_legacy_action_config_features",
     all_of = [
         ":no_legacy_features",
     ] + select({
-        "//constraints/windows/abi:msvc": [
-            "//toolchain/features/msvc:legacy_replacements",
-        ],
-        "//conditions:default": [
-            "@rules_cc//cc/toolchains/args/archiver_flags:feature",
-            "@rules_cc//cc/toolchains/args/pic_flags:feature",
-            "@rules_cc//cc/toolchains/args/libraries_to_link:feature",
-            "@rules_cc//cc/toolchains/args/linker_param_file:feature",
-            "@rules_cc//cc/toolchains/args/preprocessor_defines:feature",
-            "@rules_cc//cc/toolchains/args/random_seed:feature",
-            "@rules_cc//cc/toolchains/args/runtime_library_search_directories:feature",
-            "@rules_cc//cc/toolchains/args/shared_flag:feature",
-            ":strip_debug_symbols",
-            "@rules_cc//cc/toolchains/args/strip_flags:feature",
-            "@rules_cc//cc/toolchains/args/objc_arc_flags:feature",
-            # Inlined below as it isn't visible and also has an issue upstream.
-            # TODO: Use upstream version after https://github.com/bazelbuild/rules_cc/pull/797
-            ":set_soname",
-            # Intentionally omitted since we link runtime libraries ourselves and
-            # including this flag just raises a warning.
-            # "@rules_cc//cc/toolchains/args/static_libgcc:feature",
-            "@rules_cc//cc/toolchains/args/include_flags:feature",
-            "@rules_cc//cc/toolchains/args/fission_flags:feature",
-            "@rules_cc//cc/toolchains/args/link_flags:feature",
-            "@rules_cc//cc/toolchains/args/linkstamp_flags:feature",
-            "@rules_cc//cc/toolchains/args/library_search_directories:feature",
-            "@rules_cc//cc/toolchains/args/dependency_file:feature",
-
-            # aka user_compile_flags_feature.
-            # NOTE: This should come last as it must be able to override other features but before compiler inputs.
-            "@rules_cc//cc/toolchains/args/compile_flags:feature",
-
-            # NOTE: This should come after user compile flags since some flags need to be added before the input file (e.g., -x lang)
-            "@rules_cc//cc/toolchains/args/compiler_input_flags:feature",
-            "@rules_cc//cc/toolchains/args/compiler_output_flags:feature",
-        ],
+        # The current supported clang-cl toolchain targets the Windows MSVC
+        # ABI. Upstream rules_cc should select each spelling by compiler.
+        "//constraints/windows/abi:msvc": [":clang_cl_windows_msvc_legacy_replacements"],
+        "//conditions:default": [":generic_legacy_replacements"],
     }),
     visibility = ["//visibility:public"],
 )

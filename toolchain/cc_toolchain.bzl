@@ -2,6 +2,8 @@ load("@rules_cc//cc/toolchains:feature_set.bzl", "cc_feature_set")
 load("@rules_cc//cc/toolchains:toolchain.bzl", _cc_toolchain = "cc_toolchain")
 load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 
+_WINDOWS_MSVC_SUPPORTS_HEADER_PARSING = False
+
 def cc_toolchain(name, tool_map, module_map = None, extra_args = None):
     extra_args = extra_args or []
     cc_feature_set(
@@ -13,6 +15,9 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = None):
             "@llvm//toolchain/features:dbg_stub",
             "@llvm//toolchain/features:archive_param_file",
             "@llvm//toolchain/features:copy_dynamic_libraries_to_binary",
+            # The semantic feature is valid: clang-cl renders external include
+            # directories through its /imsvc include-path replacement.
+            "@llvm//toolchain/features:external_include_paths",
             "@llvm//toolchain/features:fdo_optimize",
             "@llvm//toolchain/features:generate_pdb_file",
             "@llvm//toolchain/features:llvm_release_features",
@@ -22,7 +27,12 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = None):
             "@llvm//toolchain/features:windows_export_all_symbols",
             "@llvm//toolchain/features/legacy:all_legacy_builtin_features",
             "@llvm//toolchain/features/legacy:experimental_replace_legacy_action_config_features",
-            "@llvm//toolchain/features/msvc:adapter_known_features",
+            # Compiler-dialect protocol: response files, layering-check
+            # tolerance, ThinLTO, and CL command-line replacements.
+            "@llvm//toolchain/features/clang_cl:known_features",
+            # Target ABI: COFF link policy, CRT, validation, and explicit
+            # unsupported coverage/sanitizer/header-parsing boundaries.
+            "@llvm//toolchain/features/msvc:abi_known_features",
         ],
     )
 
@@ -35,7 +45,8 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = None):
             "@llvm//toolchain/features:static_link_cpp_runtimes",
             "@llvm//toolchain/features:targets_windows",
             "@llvm//toolchain/features/legacy:all_legacy_builtin_features",
-            "@llvm//toolchain/features/msvc:adapter_enabled_features",
+            "@llvm//toolchain/features/clang_cl:enabled_features",
+            "@llvm//toolchain/features/msvc:abi_enabled_features",
             # Always last: contains user compile/link arguments.
             "@llvm//toolchain/features/legacy:experimental_replace_legacy_action_config_features",
         ],
@@ -48,7 +59,8 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = None):
             "@llvm//toolchain/features:static_link_cpp_runtimes",
             "@llvm//toolchain/features:targets_windows",
             "@llvm//toolchain/features/legacy:all_legacy_builtin_features",
-            "@llvm//toolchain/features/msvc:adapter_enabled_features",
+            "@llvm//toolchain/features/clang_cl:enabled_features",
+            "@llvm//toolchain/features/msvc:abi_enabled_features",
             # Always last: contains user compile/link arguments.
             "@llvm//toolchain/features/legacy:experimental_replace_legacy_action_config_features",
         ],
@@ -272,8 +284,11 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = None):
             "@llvm//constraints/windows/abi:msvc": ["@llvm//toolchain/args/msvc:sdk_compile_args"],
             "//conditions:default": [],
         }),
+        # clang-cl header parsing remains a named unsupported boundary. It can
+        # become true only with a dialect-correct parse-only action and proved
+        # module-map/layering behavior.
         supports_header_parsing = select({
-            "@llvm//constraints/windows/abi:msvc": False,
+            "@llvm//constraints/windows/abi:msvc": _WINDOWS_MSVC_SUPPORTS_HEADER_PARSING,
             "//conditions:default": True,
         }),
         supports_param_files = True,

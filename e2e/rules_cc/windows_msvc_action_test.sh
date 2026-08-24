@@ -26,6 +26,18 @@ assert_matches() {
   grep -Eq -- "${pattern}" "${file}" || fail "${file} does not match: ${pattern}"
 }
 
+assert_before() {
+  local file="$1"
+  local first="$2"
+  local second="$3"
+  local first_line
+  local second_line
+  first_line="$(grep -Fnm1 -- "${first}" "${file}" | cut -d: -f1 || true)"
+  second_line="$(grep -Fnm1 -- "${second}" "${file}" | cut -d: -f1 || true)"
+  [[ -n "${first_line}" && -n "${second_line}" && "${first_line}" -lt "${second_line}" ]] ||
+    fail "${file} does not order ${first} before ${second}"
+}
+
 action_dir="$(mktemp -d "${RUNNER_TEMP:-/tmp}/windows-msvc-actions.XXXXXX")"
 common_flags=(
   "$@"
@@ -59,6 +71,12 @@ bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   --output=commands \
   'mnemonic("CppCompile", //:windows_msvc_generated_def_binary)' \
   >"${action_dir}/default-compile-flags.txt"
+bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
+  --features=layering_check \
+  --features=-compiler_param_file \
+  --output=commands \
+  'mnemonic("CppCompile", //:windows_msvc_generated_def_binary)' \
+  >"${action_dir}/pending-layering-check.txt"
 bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   -c opt \
   --features=-compiler_param_file \
@@ -202,6 +220,10 @@ assert_contains "${action_dir}/default-compile-flags.txt" "/clang:-Wthread-safet
 assert_contains "${action_dir}/default-compile-flags.txt" "/clang:-fcolor-diagnostics"
 assert_contains "${action_dir}/default-compile-flags.txt" "/clang:-fno-omit-frame-pointer"
 assert_absent "${action_dir}/default-compile-flags.txt" "/Z7"
+assert_contains "${action_dir}/pending-layering-check.txt" "clang-cl"
+assert_absent "${action_dir}/pending-layering-check.txt" "-fmodules-strict-decluse"
+assert_absent "${action_dir}/pending-layering-check.txt" "-Wprivate-header"
+assert_absent "${action_dir}/pending-layering-check.txt" "-fmodule-map-file="
 assert_contains "${action_dir}/opt-compile-flags.txt" "/O2"
 assert_contains "${action_dir}/opt-compile-flags.txt" "/DNDEBUG"
 assert_contains "${action_dir}/opt-compile-flags.txt" "/Gy"
@@ -225,6 +247,7 @@ assert_matches "${action_dir}/release-user-overrides.txt" "/EHs-c-.* /EHsc "
 assert_matches "${action_dir}/release-user-overrides.txt" "/GR-.* /GR "
 assert_matches "${action_dir}/release-user-overrides.txt" "/clang:-fomit-frame-pointer.* /clang:-fno-omit-frame-pointer "
 assert_matches "${action_dir}/release-user-overrides.txt" "/std:c\\+\\+17.* /std:c\\+\\+20"
+assert_matches "${action_dir}/release-user-overrides.txt" "/std:c\\+\\+20.* /c .* /Fo"
 assert_contains "${action_dir}/release-libcxxabi-compile.txt" "libcxxabi/src/private_typeinfo.cpp"
 assert_contains "${action_dir}/release-libcxxabi-compile.txt" "-funwind-tables"
 assert_contains "${action_dir}/release-libcxxabi-compile.txt" "/DNDEBUG"
@@ -264,6 +287,8 @@ assert_contains "${action_dir}/link.txt" "/clang:/MACHINE:X64"
 assert_contains "${action_dir}/link.txt" "/clang:/WHOLEARCHIVE:"
 assert_contains "${action_dir}/link.txt" "/clang:/OPT:REF"
 assert_contains "${action_dir}/link.txt" "/Fe"
+assert_before "${action_dir}/link.txt" "/clang:/DEBUG:NONE" "/clang:/OPT:REF"
+assert_before "${action_dir}/link.txt" "/clang:/OPT:REF" "/Fe"
 assert_absent "${action_dir}/link.txt" "/NODEFAULTLIB"
 assert_absent "${action_dir}/link.txt" "libc++.lib"
 assert_absent "${action_dir}/link.txt" "clang_rt.builtins.lib"

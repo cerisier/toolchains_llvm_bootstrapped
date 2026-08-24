@@ -212,7 +212,6 @@ cc_args(
     ],
     args = select({
         "//constraints/windows/abi:msvc": [
-            "-no-canonical-prefixes",
             "/clang:-fuse-ld=lld",
         ],
         "//conditions:default": [
