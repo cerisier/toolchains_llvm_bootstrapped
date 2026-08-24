@@ -382,9 +382,9 @@ cc_args_list(
     name = "windows_toolchain_args",
     args = [
         # Common default compile flags.
-        "//toolchain/args:target_flags",
+        "//toolchain/args/windows:target_flags",
         "//toolchain/args:no_absolute_paths_for_builtins",
-        "//toolchain/args:deterministic_compile_flags",
+        "//toolchain/args/windows:deterministic_compile_flags",
         "//toolchain/args:module_map",
         ":sysroot_flags",
         ":hermetic_compile_flags",
@@ -394,10 +394,8 @@ cc_args_list(
         "@rules_cc//cc/toolchains/args/external_include_paths:external_include_paths",
 
         # Windows compiler, ABI, CRT, object-format, and C++ runtime semantics.
-        "//toolchain/args/windows:target_compile_args",
+        "//toolchain/args/windows:large_object_compile_flags",
         "//toolchain/args/windows:crt_compile_args",
-        "//toolchain/args/windows:cxxstdlib_compile_args",
-        "//toolchain/args/windows:deterministic_codeview_compile_args",
         "//toolchain/args/windows:cxxstdlib_headers_include_search_paths",
         "//toolchain/args/windows:headers_before_compiler_resource",
 

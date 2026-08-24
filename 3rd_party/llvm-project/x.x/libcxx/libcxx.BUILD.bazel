@@ -59,6 +59,10 @@ _CONFIG_SITE_THREAD_API_PTHREAD_LINES = [
     "#define _LIBCPP_HAS_THREAD_API_WIN32   0",
 ]
 
+_CONFIG_SITE_WINDOWS_MSVC_STATIC_LIBCXX_LINES = [
+    "#define _LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS",
+]
+
 _CONFIG_SITE_PREAMBLE_LINES = [
     "// Generated from this LLVM line's libcxx/include/__config_site.in.",
     "#ifndef _LIBCPP___CONFIG_SITE",
@@ -171,6 +175,14 @@ write_file(
               select({
                   ":windows_msvc": _CONFIG_SITE_ABI_MSVC_LINES,
                   "//conditions:default": _CONFIG_SITE_ABI_DEFAULT_LINES,
+              }) +
+              select({
+                  # The supported Windows MSVC route is configuration-wide
+                  # static libc++, including for ordinary /MD consumers.
+                  # Public headers are configured outside the runtime build's
+                  # linkmode transition, so encode that route contract here.
+                  ":windows_msvc": _CONFIG_SITE_WINDOWS_MSVC_STATIC_LIBCXX_LINES,
+                  "//conditions:default": [],
               }) +
               select({
                   "@llvm//constraints/libc:musl": _CONFIG_SITE_MUSL_LINES,

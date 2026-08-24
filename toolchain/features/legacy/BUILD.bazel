@@ -109,6 +109,9 @@ cc_args(
 cc_feature(
     name = "clang_cl_default_compile_flags",
     args = [
+        "//toolchain/args:clang_cl_suppress_compiler_banner",
+        "//toolchain/args:clang_cl_default_exception_handling",
+        "//toolchain/args:clang_cl_default_rtti",
         ":clang_cl_legacy_default_cxx_compile_flags",
         ":clang_cl_legacy_default_stack_protector",
         ":clang_cl_legacy_default_warning_flags",

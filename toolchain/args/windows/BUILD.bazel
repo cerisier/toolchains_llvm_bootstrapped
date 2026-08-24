@@ -109,26 +109,29 @@ cc_args_list(
     }),
 )
 
-# The supported native MSVC-ABI route composes the clang-cl personality with
-# Windows/MSVC target policy. Keep the two axes explicit while preserving the
-# established argument order.
 cc_args_list(
-    name = "msvc_target_compile_args",
-    args = [
-        "//toolchain/args/windows/msvc:compatibility",
-        "//toolchain/args:clang_cl_suppress_compiler_banner",
-        "//toolchain/args/windows/msvc:reproducible_coff_objects",
-        "//toolchain/args:clang_cl_default_exception_handling",
-        "//toolchain/args:clang_cl_default_rtti",
-        "//toolchain/args/windows/msvc:large_coff_objects",
-        "//toolchain/args/windows/msvc:windows_sdk_compile_defines",
-    ],
+    name = "target_flags",
+    args = ["//toolchain/args:target_flags"] + select({
+        "//constraints/windows/abi:msvc": ["//toolchain/args/windows/msvc:compatibility"],
+        "//conditions:default": [],
+    }),
 )
 
 cc_args_list(
-    name = "target_compile_args",
+    name = "deterministic_compile_flags",
+    args = ["//toolchain/args:deterministic_compile_flags"] + select({
+        "//constraints/windows/abi:msvc": [
+            "//toolchain/args/windows/msvc:reproducible_coff_objects",
+            "//toolchain/args/windows/msvc:reproducible_codeview",
+        ],
+        "//conditions:default": [],
+    }),
+)
+
+cc_args_list(
+    name = "large_object_compile_flags",
     args = select({
-        "//constraints/windows/abi:msvc": ["msvc_target_compile_args"],
+        "//constraints/windows/abi:msvc": ["//toolchain/args/windows/msvc:large_coff_objects"],
         "//conditions:default": [],
     }),
 )
@@ -137,22 +140,6 @@ cc_args_list(
     name = "crt_compile_args",
     args = select({
         "//constraints/windows/abi:msvc": ["//toolchain/args/windows/msvc:msvc_crt_compile_defines"],
-        "//conditions:default": [],
-    }),
-)
-
-cc_args_list(
-    name = "cxxstdlib_compile_args",
-    args = select({
-        "//constraints/windows/abi:msvc": ["//toolchain/args/windows/msvc:libcxx_compile_defines"],
-        "//conditions:default": [],
-    }),
-)
-
-cc_args_list(
-    name = "deterministic_codeview_compile_args",
-    args = select({
-        "//constraints/windows/abi:msvc": ["//toolchain/args/windows/msvc:reproducible_codeview"],
         "//conditions:default": [],
     }),
 )
