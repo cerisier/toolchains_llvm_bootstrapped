@@ -37,7 +37,6 @@ cc_args(
     args = [
         "/nologo",
         "/Brepro",
-        "/Z7",
         "/EHsc",
         "/GR",
         "/bigobj",
