@@ -26,7 +26,7 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = None):
             "@llvm//toolchain/features:targets_windows",
             "@llvm//toolchain/features:windows_export_all_symbols",
             "@llvm//toolchain/features/legacy:clang_cl_all_legacy_builtin_features",
-            "@llvm//toolchain/features/legacy:experimental_replace_legacy_action_config_features",
+            "@llvm//toolchain/features/legacy:clang_cl_experimental_replace_legacy_action_config_features",
 
             # LLVM CL-driver protocol: response files, layering-check
             # tolerance, CL command-line replacements, and the intentional
@@ -53,7 +53,7 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = None):
             "@llvm//toolchain/features/clang_cl:enabled_features",
             "@llvm//toolchain/features/msvc:abi_enabled_features",
             # Always last: contains user compile/link arguments.
-            "@llvm//toolchain/features/legacy:experimental_replace_legacy_action_config_features",
+            "@llvm//toolchain/features/legacy:clang_cl_experimental_replace_legacy_action_config_features",
         ],
     )
 
@@ -70,7 +70,7 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = None):
             "@llvm//toolchain/features/clang_cl:enabled_features",
             "@llvm//toolchain/features/msvc:abi_enabled_features",
             # Always last: contains user compile/link arguments.
-            "@llvm//toolchain/features/legacy:experimental_replace_legacy_action_config_features",
+            "@llvm//toolchain/features/legacy:clang_cl_experimental_replace_legacy_action_config_features",
         ],
     )
 
