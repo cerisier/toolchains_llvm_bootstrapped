@@ -270,9 +270,12 @@ cc_args_list(
 )
 
 cc_args_list(
-    name = "common_default_link_flags",
+    name = "default_libs",
     args = [
         "sdk_library_paths",
         "msvc_com_support_library_path",
-    ],
+    ] + select({
+        "//toolchain/features/msvc:static_crt_config": ["msvc_static_runtime_library_path"],
+        "//conditions:default": ["msvc_dynamic_runtime_library_path"],
+    }),
 )

@@ -2,36 +2,15 @@ load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 
 package(default_visibility = ["//visibility:public"])
 
-# This package owns Windows semantic implementations and selects their
-# Windows-local ABI, CRT, SDK, and runtime variants. Complete rules_cc argument
-# ordering and composition remains in //toolchain and //toolchain/runtimes.
-
-cc_args_list(
-    name = "mingw_default_libs",
-    args = [
-        "//toolchain/args/windows/mingw:default_library_search_paths",
-    ] + select({
-        "//constraints/windows/crt:msvcrt": ["//toolchain/args/windows/mingw:msvcrt_default_libs"],
-        "//constraints/windows/crt:ucrt": ["//toolchain/args/windows/mingw:ucrt_default_libs"],
-    }),
-)
-
-cc_args_list(
-    name = "msvc_default_link_flags",
-    args = [
-        "//toolchain/args/windows/msvc:common_default_link_flags",
-    ] + select({
-        "//toolchain/features/msvc:static_crt_config": ["//toolchain/args/windows/msvc:msvc_static_runtime_library_path"],
-        "//conditions:default": ["//toolchain/args/windows/msvc:msvc_dynamic_runtime_library_path"],
-    }) + [
-        "//toolchain/args/windows/msvc:default_console_subsystem_link_flags",
-    ],
-)
+# This package owns Windows semantic routing between target ABI/environment
+# implementations. Each selected implementation may refine deeper CRT, SDK,
+# and runtime dimensions. Complete rules_cc argument ordering and composition
+# remains in //toolchain and //toolchain/runtimes.
 
 cc_args_list(
     name = "default_link_flags",
     args = select({
-        "//constraints/windows/abi:msvc": ["msvc_default_link_flags"],
+        "//constraints/windows/abi:msvc": ["//toolchain/args/windows/msvc:default_console_subsystem_link_flags"],
         "//conditions:default": [],
     }),
 )
@@ -58,8 +37,8 @@ cc_args_list(
 cc_args_list(
     name = "default_libs",
     args = select({
-        "//constraints/windows/abi:msvc": [],
-        "//conditions:default": ["mingw_default_libs"],
+        "//constraints/windows/abi:msvc": ["//toolchain/args/windows/msvc:default_libs"],
+        "//conditions:default": ["//toolchain/args/windows/mingw:default_libs"],
     }),
 )
 

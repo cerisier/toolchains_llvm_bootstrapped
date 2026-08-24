@@ -1,4 +1,5 @@
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
+load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 
 package(default_visibility = ["//toolchain/args/windows:__pkg__"])
 
@@ -60,6 +61,16 @@ cc_args(
     name = "deterministic_link_flags",
     actions = ["@rules_cc//cc/toolchains/actions:link_actions"],
     args = ["-Wl,--no-insert-timestamp"],
+)
+
+cc_args_list(
+    name = "default_libs",
+    args = [
+        "default_library_search_paths",
+    ] + select({
+        "//constraints/windows/crt:msvcrt": ["msvcrt_default_libs"],
+        "//constraints/windows/crt:ucrt": ["ucrt_default_libs"],
+    }),
 )
 
 cc_args(

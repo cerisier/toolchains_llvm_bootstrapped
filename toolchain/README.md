@@ -44,8 +44,8 @@ top-level compositions.
 
 **//toolchain/args/\<platform\>:BUILD.bazel**:
 - Defines named semantic overrides for one target OS/platform family.
-- May select a platform-local implementation for one semantic—such as ABI,
-  CRT, SDK/runtime family, or an intentional empty implementation.
+- May select peer implementations at the next platform-local level—such as a
+  Windows target ABI/environment or an intentional empty implementation.
 - Does not define the complete rules_cc argument list or its ordering.
 
 For example, `//toolchain/args/windows:unwindlib` selects the applicable
@@ -53,15 +53,18 @@ Windows implementation of that one semantic. `//toolchain:windows_toolchain_args
 composes it in the complete Windows toolchain.
 
 **//toolchain/args/\<platform\>/\<variant\>:BUILD.bazel**:
-- Defines concrete flags, action bindings, inputs, and data for one platform
-  variant.
-- Contains no selection between target OS, ABI, CRT, SDK, or runtime families.
-- May still condition a concrete implementation on non-routing semantics such
-  as a runtime build stage.
+- Defines semantic implementations scoped to one selected platform variant.
+- May select dimensions that further specialize that scope, such as CRT
+  family or linkage, CPU, SDK version, or runtime build stage.
+- Owns the concrete flags, action bindings, inputs, and data for that scoped
+  implementation.
 
-This is what “no platform select logic” means for concrete leaves: they do not
-decide which target OS or platform variant applies. The named semantic override
-and the complete top-level composition own that routing.
+Selection follows the package hierarchy: a package may refine dimensions below
+its declared scope, but it must not route upward to a broader target OS or
+sideways between peer variants. For example, `//toolchain/args/windows` selects
+MinGW versus MSVC implementations, while the selected variant may refine its
+own CRT choice. Compiler personality and execution platform remain separate
+axes rather than deeper platform variants.
 
 Compiler personality is a separate axis from target OS, object format, ABI,
 CRT, SDK/runtime family, C++ runtime, and execution platform. Reusable clang-cl
