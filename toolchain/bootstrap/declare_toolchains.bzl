@@ -197,9 +197,22 @@ def declare_tool_map(exec_os, exec_cpu, prefix = None, fdo_profile = None, fdo_i
     cc_args(
         name = prefix + "/compile_resource_dir_msvc",
         actions = [
-            "@rules_cc//cc/toolchains/actions:source_compile_actions",
+            "@rules_cc//cc/toolchains/actions:clif_match",
+            "@rules_cc//cc/toolchains/actions:cpp_compile",
+            "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
+            "@rules_cc//cc/toolchains/actions:cpp_module_codegen",
+            "@rules_cc//cc/toolchains/actions:cpp_module_compile",
+            "@rules_cc//cc/toolchains/actions:linkstamp_compile",
+            "@rules_cc//cc/toolchains/actions:objcpp_compile",
+            "@rules_cc//cc/toolchains/actions:c_compile",
+            "@rules_cc//cc/toolchains/actions:preprocess_assemble",
+            "@rules_cc//cc/toolchains/actions:objc_compile",
         ],
         args = [
+            # clang-cl otherwise inserts builtin headers before every /imsvc
+            # path. Suppress that implicit path, then re-add the declared
+            # resource directory between libc++ and VC/UCRT headers.
+            "/clang:-nobuiltininc",
             "/imsvc{resource_dir}",
         ],
         data = [

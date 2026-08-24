@@ -16,17 +16,6 @@ cc_args(
 )
 
 cc_args(
-    name = "hermetic_compile",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:source_compile_actions",
-    ],
-    args = [
-        "/clang:-nostdlibinc",
-        "/clang:-nobuiltininc",
-    ],
-)
-
-cc_args(
     name = "reproducible_coff_objects",
     actions = [
         "@rules_cc//cc/toolchains/actions:source_compile_actions",
@@ -239,23 +228,6 @@ cc_args(
     format = {
         "winsdk_ucrt_lib": "//windows:winsdk_ucrt_libraries",
         "winsdk_um_lib": "//windows:winsdk_um_libraries",
-    },
-)
-
-# clang-cl rejects the common -L spelling in CL mode. Keep the common declared
-# directory model, but translate this irreducible spelling to LINK syntax.
-cc_args(
-    name = "libcxx_library_search_path",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:link_actions",
-    ],
-    args = [
-        "/clang:-Xlinker",
-        "/clang:/LIBPATH:{libcxx_library_search_path}",
-    ],
-    data = ["//runtimes/cxxstdlib:library_search_directory"],
-    format = {
-        "libcxx_library_search_path": "//runtimes/cxxstdlib:library_search_directory",
     },
 )
 
