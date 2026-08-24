@@ -1,11 +1,11 @@
 #include "windows_msvc_libcxx_behavior_support.h"
 
-#ifndef _LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS
-#error "Windows MSVC Layer 1 requires configuration-wide static libc++ annotations"
-#endif
-
 #include <atomic>
 #include <filesystem>
+
+#ifndef _LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS
+#error "Static Windows libc++ headers must configure visibility annotations"
+#endif
 
 namespace {
 std::atomic<int> alwayslink_marker{0};

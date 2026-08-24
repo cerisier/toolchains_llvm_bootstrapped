@@ -140,15 +140,6 @@ cc_args_list(
 )
 
 cc_args_list(
-    name = "windows_cxxstdlib_compile_args",
-    args = select({
-        # Hosted-C probes must not acquire C++ runtime policy.
-        "//toolchain:runtimes_stage1_hosted": [],
-        "//conditions:default": ["//toolchain/args/windows:cxxstdlib_compile_args"],
-    }),
-)
-
-cc_args_list(
     name = "windows_nonhosted_cxxstdlib_headers_include_search_paths",
     args = select({
         # The existing MinGW runtime-stage graph does not expose C++ runtime
@@ -183,9 +174,9 @@ cc_args_list(
     name = "windows_toolchain_args",
     args = [
         # Common default compile flags.
-        "//toolchain/args:target_flags",
+        "//toolchain/args/windows:target_flags",
         "//toolchain/args:no_absolute_paths_for_builtins",
-        "//toolchain/args:deterministic_compile_flags",
+        "//toolchain/args/windows:deterministic_compile_flags",
         "//toolchain/args:module_map",
         "//toolchain/runtimes/args:optimization_flags",
         "//toolchain:sysroot_flags",
@@ -197,10 +188,8 @@ cc_args_list(
         "@rules_cc//cc/toolchains/args/external_include_paths:external_include_paths",
 
         # Windows compiler, ABI, CRT, object-format, and C++ runtime semantics.
-        "//toolchain/args/windows:target_compile_args",
+        "//toolchain/args/windows:large_object_compile_flags",
         "//toolchain/args/windows:crt_compile_args",
-        ":windows_cxxstdlib_compile_args",
-        "//toolchain/args/windows:deterministic_codeview_compile_args",
         ":windows_cxxstdlib_headers_include_search_paths",
         ":windows_headers_before_compiler_resource",
 

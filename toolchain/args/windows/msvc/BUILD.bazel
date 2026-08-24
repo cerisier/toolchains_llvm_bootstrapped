@@ -64,14 +64,6 @@ cc_args(
 )
 
 cc_args(
-    name = "libcxx_compile_defines",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:source_compile_actions",
-    ],
-    args = ["/D_LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS"],
-)
-
-cc_args(
     name = "reproducible_codeview",
     actions = [
         "@rules_cc//cc/toolchains/actions:source_compile_actions",
@@ -237,6 +229,7 @@ cc_args(
 cc_args_list(
     name = "sdk_compile_args",
     args = [
+        "windows_sdk_compile_defines",
         "sdk_case_overlay",
         "sdk_includes",
     ],
