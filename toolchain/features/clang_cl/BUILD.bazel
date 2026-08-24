@@ -28,7 +28,8 @@ _LTO_INDEX_ACTIONS = [
 ]
 
 # rules_cc's generic ThinLTO args target a GNU driver and ELF linker protocol.
-# Keep the CL-driver and COFF-linker protocol together here.
+# This repository's fixed LLVM Windows route instead requires the combined
+# clang-cl driver and lld-link/COFF protocol, so keep that bridge together.
 cc_feature(
     name = "supports_start_end_lib",
     feature_name = "supports_start_end_lib",
@@ -287,9 +288,9 @@ cc_feature(
     overrides = "@rules_cc//cc/toolchains/features/legacy:dependency_file",
 )
 
-# This is the narrow dialect/ABI bridge: rules_cc exposes libraries as one
-# structured variable, while clang-cl requires COFF linker options to be
-# forwarded through /clang:-Xlinker.
+# This is the narrow driver/linker bridge: rules_cc exposes libraries as one
+# structured variable, while clang-cl must forward lld-link/COFF options
+# through /clang:-Xlinker.
 cc_nested_args(
     name = "link_object_group",
     args = ["{object_file}"],
