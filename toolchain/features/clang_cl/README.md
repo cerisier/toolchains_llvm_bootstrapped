@@ -5,11 +5,33 @@ when the C++ driver speaks clang-cl's CL-compatible command-line and response
 file protocol. It does not own the Windows MSVC target ABI, Microsoft SDK or
 runtime closure, CRT selection, or COFF artifact naming.
 
+hermetic-llvm composes this package only into its fixed LLVM-family Windows
+route: clang-cl compiles and drives links, lld-link links PE/COFF outputs, and
+llvm-ar creates archives. The package therefore also contains the narrow
+clang-cl-to-lld-link bridge needed to render structured libraries and COFF
+ThinLTO options. That bridge is intentional; it is not a promise that the
+driver, linker, or target format can be selected independently in this
+repository.
+
+Treat target OS, target ABI/object format, runtime, and compiler personality as
+distinct semantic axes, even where the supported route makes them one-to-one.
+The OS owns Windows platform conventions shared by its toolchain routes; the
+ABI/object format owns calling conventions and PE/COFF link and artifact
+semantics; the runtime owns CRT and C++ runtime inputs and linkage policy; the
+compiler personality owns command spelling and action protocol (`clang` versus
+`clang-cl`). Compose those axes at the toolchain route boundary rather than
+making a lower-level argument infer one from another. Only an explicitly named
+bridge should combine axes when one tool's protocol must transport another
+tool's semantics, as clang-cl does for lld-link here.
+
 The package is intentionally temporary. These implementations should be
 upstreamed to rules_cc rather than remain a hermetic-llvm-specific adapter.
-When upstreamed, they should live beside the corresponding rules_cc argument
-features and select their concrete spelling by compiler (for example, generic
-Clang versus clang-cl), instead of preserving this standalone package shape.
+When upstreamed, compiler-personality implementations should live beside the
+corresponding rules_cc argument features and select their concrete spelling by
+compiler (for example, generic Clang versus clang-cl), instead of preserving
+this standalone package shape. The lld-link/COFF ThinLTO and library bridge
+must remain visibly constrained to that linker/toolchain capability rather
+than being assumed for every clang-cl toolchain.
 
 Module maps, layering checks, and header parsing are not implemented for this
 protocol yet. Their names are temporarily tolerated because the repository's

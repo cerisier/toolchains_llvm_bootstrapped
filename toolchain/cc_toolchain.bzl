@@ -27,8 +27,9 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = None):
             "@llvm//toolchain/features:windows_export_all_symbols",
             "@llvm//toolchain/features/legacy:all_legacy_builtin_features",
             "@llvm//toolchain/features/legacy:experimental_replace_legacy_action_config_features",
-            # Compiler-dialect protocol: response files, layering-check
-            # tolerance, ThinLTO, and CL command-line replacements.
+            # LLVM CL-driver protocol: response files, layering-check
+            # tolerance, CL command-line replacements, and the intentional
+            # clang-cl-to-lld-link/COFF ThinLTO bridge.
             "@llvm//toolchain/features/clang_cl:known_features",
             # Target ABI: COFF link policy, CRT, validation, and explicit
             # unsupported coverage/sanitizer/header-parsing boundaries.
