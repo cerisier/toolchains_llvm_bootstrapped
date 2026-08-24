@@ -334,23 +334,29 @@ explicitly at the supported route boundary.
 
 ### Reusable filesystem rules and MSVC payload ownership
 
-- [ ] **R45 — Move the case-insensitive VFS rule to generic filesystem rules.**
-  Keep the concrete VC/UCRT/SDK overlay target with MSVC runtime/sysroot data.
+- [x] **R45 — Move the case-insensitive VFS rule to generic filesystem rules.**
+  The reusable rule now lives in root `case_insensitive_vfs.bzl`; the concrete
+  VC/UCRT/SDK overlay remains with the MSVC runtime/sysroot data.
 
-- [ ] **R46 — Move the case-folding directory copy rule to generic filesystem
-  rules.** Keep only concrete Windows SDK library-copy targets in the MSVC
+- [x] **R46 — Move the case-folding directory copy rule to generic filesystem
+  rules.** The reusable rule now lives in root `case_insensitive_copy.bzl`;
+  only the concrete Windows SDK library-copy targets remain in the MSVC
   payload package.
 
-- [ ] **R47 — Split the top-level `windows` package by responsibility.**
+- [x] **R47 — Split the top-level `windows` package by responsibility.**
   Move pinned Microsoft payload validation, curated VCRuntime/COM headers,
   runtime libraries, and concrete overlay/copy targets to
   `runtimes/msvc` or `runtimes/windows/msvc`. Keep argument spellings under
-  toolchain args and reusable rules under generic filesystem utilities.
+  toolchain args and reusable rules under generic filesystem utilities. The
+  implementation uses `runtimes/msvc`; the former top-level `windows` package
+  had no external label consumers and was removed without compatibility
+  aliases.
 
-- [ ] **R48 — Move generic `DirectoryInfo` adapters.**
+- [x] **R48 — Move generic `DirectoryInfo` adapters.**
   Relocate the generic tree-artifact adapter and suffix-validation rule to the
   directory/provider utility package. Keep Microsoft-specific expected path
-  assertions at their MSVC payload call sites.
+  assertions at their MSVC payload call sites. Both adapters now live in root
+  `directory.bzl`; its validation error is payload-neutral.
 
 ### Deferred release-policy checkpoint
 
@@ -801,6 +807,12 @@ Lightweight gate:
 
 Items: R45-R48.
 
+Status: implementation and lightweight proof complete on 2026-08-25. Generic
+filesystem mechanisms live at the repository root, Microsoft payload data and
+concrete derived artifacts live in `runtimes/msvc`, and clang-cl argument
+spellings remain in `toolchain/args/windows/msvc`. Payload repository rules,
+versions, hashes, transformations, and EULA gates are unchanged.
+
 Purpose: perform label/package relocation after the semantic consumers are
 stable. Use aliases only where public labels must remain compatible. Do not
 change Microsoft payload contents, pinned paths, case policy, or EULA gates.
@@ -811,6 +823,26 @@ Lightweight gate:
   CPUs on one Linux exec platform;
 - inspect tool `cfg = "exec"`, declared inputs, and output tree/overlay content;
 - run buildifier and affected Starlark/unit tests.
+
+Evidence:
+
+- pre-move x86-64 overlay build invocation
+  `ee6c1026-8e48-4120-a8f4-690616bcfce0` produced a 17,220-line,
+  3,421-file-entry VFS overlay; pre-move aquery invocation
+  `3ac784b0-cced-4928-b903-2283d6850f7b` showed `WindowsCaseVFS` and
+  `WindowsCaseCopy` on the Linux ARM64 execution platform;
+- post-move x86-64 and ARM64 payload builds passed in invocations
+  `4beb4a00-d988-446d-9c52-d46a20437932` and
+  `92eea089-7fc9-4810-9d22-8c807d9fac46`; the x86-64 overlay retains the same
+  17,220 lines and 3,421 file entries, with the intentional output-root change
+  from `windows/...` to `runtimes/msvc/...`;
+- filtered aquery showed the unchanged exec-configured
+  `tools/windows_case_copy` and `tools/windows_case_vfs` binaries on Linux
+  ARM64, x86-64 sources under `x64/c/.../x64`, and ARM64 sources under
+  `arm64/c/.../arm64`;
+- both filesystem-tool unit tests passed in invocation
+  `26028098-7211-4b1f-aae5-54868965579e`; buildifier passed in invocation
+  `979f1c2b-d9c9-4f0c-811b-30d01af62894`.
 
 ### Batch 6 — Release-policy design checkpoint
 
@@ -935,14 +967,13 @@ Stop and request owner direction before:
 
 ## Recommended starting point
 
-Batches 1 and 2 and the approved target-semantic portion of Batch 3 are
-complete. R11/R42 are explicitly deferred. Continue with **Batch 4 — Clarify
-runtime and overlay ownership** only after owner approval.
+Batches 1-5 are complete. R11/R42 remain explicitly deferred, and R44 remains
+an owner-approved no-op. The next batch is **Batch 6 — Release-policy design
+checkpoint**, which requires a fresh owner choice before implementation.
 
-The shared argument policy, clang-cl action protocol, and Windows target
-semantics now have distinct owning layers. Compiler-resource/SDK include
-ownership remains intentionally unchanged. The next approved owning boundary
-would be the already-correct runtime/overlay topology: clarify the
-libc++/VCRuntime ABI-header contract, static libc++ Stage 0 naming, empty MSVC
-hermetic-link semantics, and complete-runtime exec-helper boundary without
-changing their behavior.
+The shared argument policy, clang-cl action protocol, Windows target semantics,
+runtime boundaries, and filesystem/payload ownership now have distinct owning
+layers. Compiler-resource/SDK include ownership remains intentionally
+unchanged. Batch 6 must decide whether the temporary repository feature
+markers should be replaced by an explicit LLVM product-policy setting without
+changing ordinary consumer or generic release behavior.

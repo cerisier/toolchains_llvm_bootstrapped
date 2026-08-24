@@ -1,8 +1,8 @@
 load("@bazel_lib//:bzl_library.bzl", "bzl_library")
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
-load(":case_insensitive_copy.bzl", "case_insensitive_copy_directory")
-load(":case_insensitive_vfs.bzl", "case_insensitive_vfs_overlay")
-load(":directory_info.bzl", "directory_info", "validated_directory_info")
+load("//:case_insensitive_copy.bzl", "case_insensitive_copy_directory")
+load("//:case_insensitive_vfs.bzl", "case_insensitive_vfs_overlay")
+load("//:directory.bzl", "directory_info", "validated_directory_info")
 load(":versions.bzl", "MSVC_PAYLOAD_VERSION", "WINDOWS_SDK_INCLUDE_VERSION")
 
 package(default_visibility = ["//visibility:public"])
@@ -203,24 +203,6 @@ copy_to_directory(
         "**/lib/arm64",
         "**/lib/x64",
     ],
-)
-
-bzl_library(
-    name = "directory_info",
-    srcs = ["directory_info.bzl"],
-    deps = ["@bazel_skylib//rules/directory"],
-)
-
-bzl_library(
-    name = "case_insensitive_copy",
-    srcs = ["case_insensitive_copy.bzl"],
-    deps = ["@bazel_skylib//rules/directory"],
-)
-
-bzl_library(
-    name = "case_insensitive_vfs",
-    srcs = ["case_insensitive_vfs.bzl"],
-    deps = ["@bazel_skylib//rules/directory"],
 )
 
 bzl_library(

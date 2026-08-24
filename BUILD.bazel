@@ -51,6 +51,20 @@ bzl_library(
 )
 
 bzl_library(
+    name = "case_insensitive_copy",
+    srcs = ["case_insensitive_copy.bzl"],
+    visibility = ["//visibility:public"],
+    deps = ["@bazel_skylib//rules/directory:providers"],
+)
+
+bzl_library(
+    name = "case_insensitive_vfs",
+    srcs = ["case_insensitive_vfs.bzl"],
+    visibility = ["//visibility:public"],
+    deps = ["@bazel_skylib//rules/directory:providers"],
+)
+
+bzl_library(
     name = "http_pkg_archive",
     srcs = ["http_pkg_archive.bzl"],
     visibility = ["//visibility:public"],

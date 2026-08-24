@@ -1,6 +1,6 @@
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
-load("//windows:versions.bzl", "MSVC_COMPATIBILITY_VERSION")
+load("//runtimes/msvc:versions.bzl", "MSVC_COMPATIBILITY_VERSION")
 
 package(default_visibility = ["//toolchain/args/windows:__pkg__"])
 
@@ -102,9 +102,9 @@ cc_args(
         "/clang:-ivfsoverlay",
         "/clang:{sdk_case_overlay}",
     ],
-    data = ["//windows:msvc_sdk_case_overlay"],
+    data = ["//runtimes/msvc:msvc_sdk_case_overlay"],
     format = {
-        "sdk_case_overlay": "//windows:msvc_sdk_case_overlay",
+        "sdk_case_overlay": "//runtimes/msvc:msvc_sdk_case_overlay",
     },
 )
 
@@ -114,12 +114,12 @@ cc_args(
         "@rules_cc//cc/toolchains/actions:source_compile_actions",
     ],
     allowlist_include_directories = [
-        "//windows:msvc_com_support_headers",
-        "//windows:msvc_vcruntime_headers",
-        "//windows:winsdk_shared_include",
-        "//windows:winsdk_ucrt_include",
-        "//windows:winsdk_um_include",
-        "//windows:winsdk_winrt_include",
+        "//runtimes/msvc:msvc_com_support_headers",
+        "//runtimes/msvc:msvc_vcruntime_headers",
+        "//runtimes/msvc:winsdk_shared_include",
+        "//runtimes/msvc:winsdk_ucrt_include",
+        "//runtimes/msvc:winsdk_um_include",
+        "//runtimes/msvc:winsdk_winrt_include",
     ],
     args = [
         "/imsvc{msvc_com_support_include}",
@@ -130,20 +130,20 @@ cc_args(
         "/imsvc{winsdk_winrt_include}",
     ],
     data = [
-        "//windows:msvc_com_support_headers",
-        "//windows:msvc_vcruntime_headers",
-        "//windows:winsdk_shared_include",
-        "//windows:winsdk_ucrt_include",
-        "//windows:winsdk_um_include",
-        "//windows:winsdk_winrt_include",
+        "//runtimes/msvc:msvc_com_support_headers",
+        "//runtimes/msvc:msvc_vcruntime_headers",
+        "//runtimes/msvc:winsdk_shared_include",
+        "//runtimes/msvc:winsdk_ucrt_include",
+        "//runtimes/msvc:winsdk_um_include",
+        "//runtimes/msvc:winsdk_winrt_include",
     ],
     format = {
-        "msvc_com_support_include": "//windows:msvc_com_support_headers",
-        "msvc_include": "//windows:msvc_vcruntime_headers",
-        "winsdk_shared_include": "//windows:winsdk_shared_include",
-        "winsdk_ucrt_include": "//windows:winsdk_ucrt_include",
-        "winsdk_um_include": "//windows:winsdk_um_include",
-        "winsdk_winrt_include": "//windows:winsdk_winrt_include",
+        "msvc_com_support_include": "//runtimes/msvc:msvc_com_support_headers",
+        "msvc_include": "//runtimes/msvc:msvc_vcruntime_headers",
+        "winsdk_shared_include": "//runtimes/msvc:winsdk_shared_include",
+        "winsdk_ucrt_include": "//runtimes/msvc:winsdk_ucrt_include",
+        "winsdk_um_include": "//runtimes/msvc:winsdk_um_include",
+        "winsdk_winrt_include": "//runtimes/msvc:winsdk_winrt_include",
     },
 )
 
@@ -156,9 +156,9 @@ cc_args(
         "/clang:-Xlinker",
         "/clang:/LIBPATH:{com_support_library_search_path}",
     ],
-    data = ["//windows:msvc_com_support_libraries"],
+    data = ["//runtimes/msvc:msvc_com_support_libraries"],
     format = {
-        "com_support_library_search_path": "//windows:msvc_com_support_libraries",
+        "com_support_library_search_path": "//runtimes/msvc:msvc_com_support_libraries",
     },
 )
 
@@ -171,9 +171,9 @@ cc_args(
         "/clang:-Xlinker",
         "/clang:/LIBPATH:{dynamic_crt_library_search_path}",
     ],
-    data = ["//windows:msvc_dynamic_runtime_libraries"],
+    data = ["//runtimes/msvc:msvc_dynamic_runtime_libraries"],
     format = {
-        "dynamic_crt_library_search_path": "//windows:msvc_dynamic_runtime_libraries",
+        "dynamic_crt_library_search_path": "//runtimes/msvc:msvc_dynamic_runtime_libraries",
     },
 )
 
@@ -186,9 +186,9 @@ cc_args(
         "/clang:-Xlinker",
         "/clang:/LIBPATH:{static_crt_library_search_path}",
     ],
-    data = ["//windows:msvc_static_runtime_libraries"],
+    data = ["//runtimes/msvc:msvc_static_runtime_libraries"],
     format = {
-        "static_crt_library_search_path": "//windows:msvc_static_runtime_libraries",
+        "static_crt_library_search_path": "//runtimes/msvc:msvc_static_runtime_libraries",
     },
 )
 
@@ -204,12 +204,12 @@ cc_args(
         "/clang:/LIBPATH:{winsdk_um_lib}",
     ],
     data = [
-        "//windows:winsdk_ucrt_libraries",
-        "//windows:winsdk_um_libraries",
+        "//runtimes/msvc:winsdk_ucrt_libraries",
+        "//runtimes/msvc:winsdk_um_libraries",
     ],
     format = {
-        "winsdk_ucrt_lib": "//windows:winsdk_ucrt_libraries",
-        "winsdk_um_lib": "//windows:winsdk_um_libraries",
+        "winsdk_ucrt_lib": "//runtimes/msvc:winsdk_ucrt_libraries",
+        "winsdk_um_lib": "//runtimes/msvc:winsdk_um_libraries",
     },
 )
 
