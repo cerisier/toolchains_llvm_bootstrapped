@@ -394,7 +394,6 @@ cc_args_list(
         "@rules_cc//cc/toolchains/args/external_include_paths:external_include_paths",
 
         # Windows compiler, ABI, CRT, object-format, and C++ runtime semantics.
-        "//toolchain/args/windows:large_object_compile_flags",
         "//toolchain/args/windows:crt_compile_args",
         "//toolchain/args/windows:cxxstdlib_headers_include_search_paths",
         "//toolchain/args/windows:headers_before_compiler_resource",

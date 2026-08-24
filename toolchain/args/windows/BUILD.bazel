@@ -129,14 +129,6 @@ cc_args_list(
 )
 
 cc_args_list(
-    name = "large_object_compile_flags",
-    args = select({
-        "//constraints/windows/abi:msvc": ["//toolchain/args/windows/msvc:large_coff_objects"],
-        "//conditions:default": [],
-    }),
-)
-
-cc_args_list(
     name = "crt_compile_args",
     args = select({
         "//constraints/windows/abi:msvc": ["//toolchain/args/windows/msvc:msvc_crt_compile_defines"],
