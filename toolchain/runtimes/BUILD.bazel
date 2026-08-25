@@ -6,6 +6,12 @@ load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 cc_args_list(
     name = "hermetic_link_flags",
     args = select({
+        # The generic -nostdlib++ policy says that Bazel's runtime attributes
+        # own C++ runtime linkage. /NODEFAULTLIB is not its clang-cl equivalent:
+        # it would also suppress the selected Microsoft CRT and SDK libraries.
+        # The complete MSVC toolchain instead disables libc++ object auto-link
+        # metadata and names static libc++ through its default-libraries
+        # composition.
         "//constraints/windows/abi:msvc": [],
         "@platforms//os:macos": [],
         "//conditions:default": [

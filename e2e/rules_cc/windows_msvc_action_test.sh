@@ -63,7 +63,7 @@ bazel --bazelrc=.bazelrc aquery "${mingw_flags[@]}" \
 bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   --features=-compiler_param_file \
   --output=commands \
-  'inputs(".*libcxx/src/algorithm.cpp", mnemonic("CppCompile", deps(@llvm-project//libcxx:libcxx.static.msvc)))' \
+  'inputs(".*libcxx/src/algorithm.cpp", mnemonic("CppCompile", deps(@llvm-project//libcxx:libcxx.static.msvc_link_name)))' \
   >"${action_dir}/msvc-libcxx-compile.txt"
 
 bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
@@ -129,7 +129,7 @@ bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   >"${action_dir}/archive.txt"
 bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   --output=text \
-  'mnemonic("ValidateStaticLibrary", deps(@llvm-project//libcxx:libcxx.static.msvc))' \
+  'mnemonic("ValidateStaticLibrary", deps(@llvm-project//libcxx:libcxx.static.msvc_link_name))' \
   >"${action_dir}/staged-runtime-validation.txt"
 bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   --output=text \
@@ -207,7 +207,6 @@ assert_contains "${action_dir}/compile.txt" "msvc_com_support_headers_source"
 assert_contains "${action_dir}/compile.txt" "msvc_sdk_case_overlay.yaml"
 assert_absent "${action_dir}/compile.txt" "clang++"
 assert_absent "${action_dir}/compile.txt" "-fPIC"
-assert_absent "${action_dir}/compile.txt" "_LIBCPP_NO_AUTO_LINK"
 assert_absent "${action_dir}/compile.txt" "msvc_include"
 
 assert_contains "${action_dir}/mingw-libcxx-compile.txt" "-Wno-pragma-pack"
@@ -314,7 +313,8 @@ assert_contains "${action_dir}/link.txt" "/Fe"
 assert_before "${action_dir}/link.txt" "/clang:/DEBUG:NONE" "/clang:/OPT:REF"
 assert_before "${action_dir}/link.txt" "/clang:/OPT:REF" "/Fe"
 assert_absent "${action_dir}/link.txt" "/NODEFAULTLIB"
-assert_absent "${action_dir}/link.txt" "libc++.lib"
+assert_contains "${action_dir}/link.txt" "/clang:/DEFAULTLIB:libc++.lib"
+assert_before "${action_dir}/link.txt" "libcxx_msvc_library_search_directory" "/clang:/DEFAULTLIB:libc++.lib"
 assert_absent "${action_dir}/link.txt" "clang_rt.builtins.lib"
 assert_absent "${action_dir}/link.txt" "msvcrt.lib"
 assert_absent "${action_dir}/link.txt" "msvcprt.lib"

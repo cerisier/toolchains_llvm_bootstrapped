@@ -119,6 +119,10 @@ for artifact_key in ${ARTIFACTS}; do
     windows_msvc_libcxx_behavior_support.lib)
       "${LLVM_NM}" -u "${artifact}" | grep -Fq "__udivti3" ||
         fail "behavior archive does not exercise compiler-rt wide division"
+      directives="$("${LLVM_READOBJ}" --coff-directives "${artifact}")"
+      if grep -Fiq "defaultlib:libc++.lib" <<<"${directives}"; then
+        fail "behavior archive contains a hidden libc++ auto-link directive"
+      fi
       ;;
   esac
 done

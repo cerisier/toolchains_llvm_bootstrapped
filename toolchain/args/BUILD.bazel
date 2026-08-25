@@ -1054,6 +1054,20 @@ cc_args(
     },
 )
 
+cc_args(
+    name = "clang_cl_static_libcxx_default_lib",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    # The currently supported native Windows tuple selects static libc++. Name
+    # it in the Bazel-owned default-library composition instead of relying on
+    # a COFF .drectve section emitted by each consumer object.
+    args = [
+        "/clang:-Xlinker",
+        "/clang:/DEFAULTLIB:libc++.lib",
+    ],
+)
+
 # Those are stubs since we link against static_runtime_libs / dynamic_runtime_libs.
 cc_args(
     name = "libunwind_library_search_paths",
