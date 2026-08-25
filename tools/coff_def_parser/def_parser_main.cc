@@ -6,7 +6,7 @@
 #include <cstdio>
 #include <string>
 
-#include "tools/msvc_def_parser/def_parser.h"
+#include "tools/coff_def_parser/def_parser.h"
 
 static const char* ws = " \t\n\r\f\v";
 

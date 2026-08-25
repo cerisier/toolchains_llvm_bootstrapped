@@ -5,8 +5,8 @@
 #include <iterator>
 #include <string>
 
-#include "tools/windows_case/common.h"
-#include "tools/windows_case_copy/copy.h"
+#include "tools/case_insensitive_copy/copy.h"
+#include "tools/case_insensitive_filesystem/common.h"
 
 namespace {
 
@@ -14,7 +14,7 @@ class TemporaryDirectory {
 public:
   TemporaryDirectory() {
     path_ = std::filesystem::temp_directory_path() /
-            ("windows-case-copy-test-" +
+            ("case-insensitive-copy-test-" +
              std::to_string(
                  std::chrono::steady_clock::now().time_since_epoch().count()));
     std::filesystem::create_directories(path_);
@@ -64,7 +64,7 @@ bool TestCopyDirectoryLowercasesFileBasenames() {
   }
 
   std::string error;
-  if (!windows_case_copy::CopyDirectory(source, output, &error)) {
+  if (!case_insensitive_copy::CopyDirectory(source, output, &error)) {
     std::cerr << error << '\n';
     return false;
   }
@@ -85,8 +85,8 @@ bool TestCopyDirectoryLowercasesFileBasenames() {
 bool TestPreferredNameChoosesLowercaseAlias() {
   std::string preferred;
   std::string error;
-  if (!windows_case::PreferredName("Kernel32.Lib", "kernel32.lib", &preferred,
-                                   &error)) {
+  if (!case_insensitive_filesystem::PreferredName(
+          "Kernel32.Lib", "kernel32.lib", &preferred, &error)) {
     std::cerr << error << '\n';
     return false;
   }
@@ -116,7 +116,7 @@ bool TestCopyChoosesLowercaseAliasContents() {
   }
 
   std::string error;
-  if (!windows_case_copy::CopyDirectory(source, output, &error)) {
+  if (!case_insensitive_copy::CopyDirectory(source, output, &error)) {
     std::cerr << error << '\n';
     return false;
   }
@@ -142,7 +142,7 @@ bool TestCopyRejectsAmbiguousCaseCollision() {
   }
 
   std::string error;
-  if (!windows_case_copy::CopyDirectory(source, output, &error)) {
+  if (!case_insensitive_copy::CopyDirectory(source, output, &error)) {
     return Contains(error, "ambiguous case-insensitive SDK entries");
   }
   std::cerr << "ambiguous case-only entries were accepted\n";
@@ -162,8 +162,8 @@ bool TestCopyIsRepeatableAndPreservesEmptyDirectories() {
   }
 
   std::string error;
-  if (!windows_case_copy::CopyDirectory(source, first_output, &error) ||
-      !windows_case_copy::CopyDirectory(source, second_output, &error)) {
+  if (!case_insensitive_copy::CopyDirectory(source, first_output, &error) ||
+      !case_insensitive_copy::CopyDirectory(source, second_output, &error)) {
     std::cerr << error << '\n';
     return false;
   }
@@ -198,7 +198,7 @@ bool TestCopyFollowsFileSymlink() {
   }
 
   std::string error;
-  if (!windows_case_copy::CopyDirectory(source, output, &error)) {
+  if (!case_insensitive_copy::CopyDirectory(source, output, &error)) {
     std::cerr << error << '\n';
     return false;
   }

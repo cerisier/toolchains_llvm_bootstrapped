@@ -92,7 +92,7 @@ def declare_tool_map(exec_os, exec_cpu, prefix = None, fdo_profile = None, fdo_i
         "@rules_cc//cc/toolchains/actions:lto_backend": prefix + "/clang-cl",
         "@rules_cc//cc/toolchains/actions:preprocess_assemble": prefix + "/clang-cl",
         "@rules_cc//cc/toolchains/actions:cpp_header_parsing": prefix + "/clang-cl",
-        "@rules_cc//cc/toolchains/actions:generate_def_file": prefix + "/msvc-def-parser",
+        "@rules_cc//cc/toolchains/actions:generate_def_file": prefix + "/coff-def-parser",
         "@rules_cc//cc/toolchains/actions:ar_actions": prefix + "/llvm-ar",
         "@rules_cc//cc/toolchains/actions:cpp_link_executable": prefix + "/clang-cl",
         "@rules_cc//cc/toolchains/actions:cpp_link_dynamic_library": prefix + "/clang-cl",
@@ -275,8 +275,8 @@ def declare_tool_map(exec_os, exec_cpu, prefix = None, fdo_profile = None, fdo_i
     )
 
     cc_tool(
-        name = prefix + "/msvc-def-parser",
-        src = "@llvm//tools/msvc_def_parser",
+        name = prefix + "/coff-def-parser",
+        src = "@llvm//tools/coff_def_parser",
     )
 
     bootstrap_binary(

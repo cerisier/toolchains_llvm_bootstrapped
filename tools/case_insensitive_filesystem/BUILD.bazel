@@ -1,8 +1,8 @@
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
 package(default_visibility = [
-    "//tools/windows_case_copy:__pkg__",
-    "//tools/windows_case_vfs:__pkg__",
+    "//tools/case_insensitive_copy:__pkg__",
+    "//tools/case_insensitive_vfs:__pkg__",
 ])
 
 cc_library(

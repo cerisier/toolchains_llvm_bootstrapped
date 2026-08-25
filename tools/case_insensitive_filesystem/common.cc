@@ -1,4 +1,4 @@
-#include "tools/windows_case/common.h"
+#include "tools/case_insensitive_filesystem/common.h"
 
 #include <cctype>
 #include <iomanip>
@@ -6,7 +6,7 @@
 #include <sstream>
 #include <system_error>
 
-namespace windows_case {
+namespace case_insensitive_filesystem {
 namespace {
 
 std::string FilesystemError(std::string_view operation,
@@ -138,4 +138,4 @@ std::string JsonString(std::string_view value) {
   return result.str();
 }
 
-} // namespace windows_case
+} // namespace case_insensitive_filesystem

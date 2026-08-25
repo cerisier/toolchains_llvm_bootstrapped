@@ -148,8 +148,8 @@ def declare_llvm_targets(*, suffix = ""):
     )
 
     cc_tool(
-        name = "msvc_def_parser",
-        src = "@llvm//tools/msvc_def_parser",
+        name = "coff_def_parser",
+        src = "@llvm//tools/coff_def_parser",
     )
 
     TOOLS_WITHOUT_LINKER = {
@@ -189,7 +189,7 @@ def declare_llvm_targets(*, suffix = ""):
         "@rules_cc//cc/toolchains/actions:lto_backend": ":clang-cl",
         "@rules_cc//cc/toolchains/actions:preprocess_assemble": ":clang-cl",
         "@rules_cc//cc/toolchains/actions:cpp_header_parsing": ":clang-cl",
-        "@rules_cc//cc/toolchains/actions:generate_def_file": ":msvc_def_parser",
+        "@rules_cc//cc/toolchains/actions:generate_def_file": ":coff_def_parser",
         "@rules_cc//cc/toolchains/actions:ar_actions": ":llvm-ar",
         "@rules_cc//cc/toolchains/actions:cpp_link_executable": ":clang-cl",
         "@rules_cc//cc/toolchains/actions:cpp_link_dynamic_library": ":clang-cl",

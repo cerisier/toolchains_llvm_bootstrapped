@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-#include "tools/windows_case_vfs/vfs.h"
+#include "tools/case_insensitive_vfs/vfs.h"
 
 namespace {
 
@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
 
   std::string overlay;
   std::string error;
-  if (!windows_case_vfs::GenerateOverlay(roots, &overlay, &error)) {
+  if (!case_insensitive_vfs::GenerateOverlay(roots, &overlay, &error)) {
     std::cerr << error << '\n';
     return 1;
   }

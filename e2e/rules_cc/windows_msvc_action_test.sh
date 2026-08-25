@@ -380,7 +380,7 @@ assert_absent "${action_dir}/thin-lto-link.txt" " -o "
 assert_absent "${action_dir}/thin-lto-link.txt" "-x ir"
 
 assert_contains "${action_dir}/def.txt" "DefParser"
-assert_contains "${action_dir}/def.txt" "msvc_def_parser"
+assert_contains "${action_dir}/def.txt" "coff_def_parser"
 assert_contains "${action_dir}/def.txt" ".gen.def"
 assert_contains "${action_dir}/dll-link.txt" "/clang:/DEF:"
 assert_contains "${action_dir}/dll-link.txt" "/clang:/IMPLIB:"

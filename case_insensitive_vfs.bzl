@@ -17,7 +17,7 @@ def _case_insensitive_vfs_overlay_impl(ctx):
         arguments = [args],
         inputs = depset(transitive = inputs),
         outputs = [output],
-        mnemonic = "WindowsCaseVFS",
+        mnemonic = "CaseInsensitiveVFS",
         progress_message = "Generating case-insensitive VFS %{label}",
     )
     return [DefaultInfo(files = depset([output]))]
@@ -28,7 +28,7 @@ case_insensitive_vfs_overlay = rule(
         "roots": attr.label_list(providers = [DirectoryInfo]),
         "_generator": attr.label(
             allow_single_file = True,
-            default = "//tools/windows_case_vfs",
+            default = "//tools/case_insensitive_vfs",
             cfg = "exec",
             executable = True,
         ),

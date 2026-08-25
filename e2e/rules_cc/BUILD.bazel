@@ -554,7 +554,7 @@ cc_test(
 )
 
 # The generic MinGW target requires a Windows execution host. This MSVC twin
-# uses Bazel's portable C++ DEF parser through the toolchain action instead.
+# uses the portable COFF DEF parser through the toolchain action instead.
 cc_binary(
     name = "windows_msvc_generated_def.dll",
     features = [

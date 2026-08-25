@@ -3,7 +3,7 @@
 set -euo pipefail
 
 COPY_TOOL="${COPY_TOOLS%% *}"
-test_tmp="$(mktemp -d "${TMPDIR:-/tmp}/windows-case-copy-cli.XXXXXX")"
+test_tmp="$(mktemp -d "${TMPDIR:-/tmp}/case-insensitive-copy-cli.XXXXXX")"
 trap 'rm -rf "${test_tmp}"' EXIT
 
 expect_failure() {

@@ -1,8 +1,8 @@
 /* Distributed under the OSI-approved BSD 3-Clause License.  See accompanying
    file Copyright.txt or https://cmake.org/licensing for details.  */
 
-#ifndef BAZEL_THIRD_PARTY_DEF_PARSER_DEF_PARSER_H
-#define BAZEL_THIRD_PARTY_DEF_PARSER_DEF_PARSER_H
+#ifndef HERMETIC_LLVM_TOOLS_COFF_DEF_PARSER_DEF_PARSER_H_
+#define HERMETIC_LLVM_TOOLS_COFF_DEF_PARSER_DEF_PARSER_H_
 
 #include <set>
 #include <stdio.h>
@@ -43,4 +43,4 @@ class DefParser{
   static bool IsDefFile(const std::string& filename);
 };
 
-#endif
+#endif // HERMETIC_LLVM_TOOLS_COFF_DEF_PARSER_DEF_PARSER_H_

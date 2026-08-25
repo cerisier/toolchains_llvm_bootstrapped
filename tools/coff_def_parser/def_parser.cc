@@ -62,7 +62,7 @@
  * Author:   Valery Fine 16/09/96  (E-mail: fine@vxcern.cern.ch)
  *----------------------------------------------------------------------
  */
-#include "tools/msvc_def_parser/def_parser.h"
+#include "tools/coff_def_parser/def_parser.h"
 
 #include <algorithm>
 #include <cerrno>
