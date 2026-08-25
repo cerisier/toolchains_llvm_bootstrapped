@@ -53,7 +53,32 @@ Date: 2026-08-25 (Asia/Tokyo)
   `3d938b7f-6236-4495-94f3-567f3d6a617c`; all six focused tests pass on Linux
   RBE in `248b74cc-c306-4c76-b527-081babf2a5cd`. Human review approved the
   batch.
-- [ ] Batch 5: execution-filesystem SDK representation.
+- [x] Batch 5: execution-filesystem SDK representation committed as `f90e0876`.
+  Before the change, forced native-Windows x86-64 and
+  ARM64 queries failed on the VFS self-cycle in invocations
+  `b6ca90c2-d21a-4a2f-8176-c1e88587e37f` and
+  `8f9ae8e2-5083-472a-b269-cdaaa972edf8`. Selecting direct SDK headers exposed
+  the independently owned library-copy cycle in
+  `212e42f1-6607-425d-bfe6-61da02552a03`. The toolchain declarations now bind
+  native-Windows instances to direct validated SDK compile/default-lib views
+  and case-sensitive instances to the existing normalized views. Identical
+  native queries succeed for x86-64 and ARM64 in
+  `33f859a2-173d-422d-aca6-77e47e188345` and
+  `b3e4e0e1-5779-42e9-a13a-2a8f6c8b4bca`. Native action inspection finds no
+  case-normalization action or overlay, preserves the required header order,
+  and uses declared raw SDK library roots with `/MACHINE:X64` or
+  `/MACHINE:ARM64` in invocations `95f1f903-f3f0-4d8f-9f01-8081c899b794`
+  and `3ccc914a-adde-4977-9b46-3508459cac20`. Linux ARM64 RBE still emits the
+  VFS/copy normalization actions and uses normalized library roots for both
+  target architectures in `bb618f60-b664-407e-81f3-ed14b3952f5d`,
+  `e1a71b31-2a68-4138-9a4d-9b639bb00e91`,
+  `e356beb8-e359-4351-b077-15d154d814e7`, and
+  `e9e59028-45a4-4e7a-9b0b-82b3e8c6ab5e`. The existing Windows MSVC action
+  and analysis suites pass. The constructor documents why feature gating
+  cannot prune the eagerly configured normalization dependencies and records
+  a repository-provided relocatable normalized SDK view as the preferred
+  follow-up. Human review approved the batch. No Stage 3 or native consumer
+  execution was run; those remain Batch 6.
 - [ ] Batch 6: native consumer/ThinLTO and Linux RBE regression proof.
 
 ## Objective
