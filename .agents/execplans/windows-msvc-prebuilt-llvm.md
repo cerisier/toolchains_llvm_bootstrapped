@@ -1,11 +1,11 @@
 # Windows MSVC prebuilt LLVM execution plan
 
 Status: Steps 1-4, 6-10, and 10.1 are complete. Step 5 is intentionally
-skipped. Step 11 is implemented locally; matching-Windows CI execution remains
-unproved. Step 12 remains proposed and requires separate authorization.
+skipped. Step 11 is complete. Steps 12-13 remain proposed and require separate
+authorization.
 
 Date: 2026-08-20 (Asia/Tokyo)
-Revised: 2026-08-22 (Asia/Tokyo)
+Revised: 2026-08-25 (Asia/Tokyo)
 
 ## Activation and baseline
 
@@ -230,10 +230,10 @@ Non-goals for this plan:
   authoritative acceptance surface;
 - README/release-note changes, artifact publication, EULA redistribution, new
   CI secrets, or a prebuilt-release workflow cutover;
-- expanding source-bootstrap construction-host support beyond the existing
-  Linux RBE executors already used by the generic Stage 2/3 graph. Step 11's
-  focused matching-Windows consumer cells execute the completed prebuilt
-  compiler but do not rebuild LLVM from source.
+- full native-Windows Stage 2/3 ThinLTO/FDO compiler construction. Step 13
+  removes the earlier runtime/helper obstacle and proves native Windows
+  runtime construction, but the existing FDO workload/profile topology remains
+  explicitly Linux-executor-backed until separately redesigned and proved;
 
 ## Current graph and exact labels
 
@@ -420,11 +420,31 @@ uses COM Setup Configuration intentionally for MSVC-environment discovery.
     remove all remaining debt in the Stage 3 promotion step. The explicit MSVC
     product label, wrappers, compatibility constraints, and any proven generic
     executable-suffix fix remain.
+15. **Bootstrap-safe execution helpers.** Build-time SDK normalization and DEF
+    parsing tools must not require the C++ runtime that their actions help
+    construct or consume. Execution-filesystem case behavior is an execution-
+    platform property: case-sensitive executors use declared normalization
+    actions, while native Windows executors use the validated payload trees
+    directly. No target-OS select may stand in for this execution-platform
+    decision. The existing hosted-C runtime stage and staged tool-map concept
+    must be reused; this work must not add a Windows-only complete-runtime
+    helper stage or a marker feature used only to escape a dependency cycle.
+16. **Construction tools precede optional actions.** The MSVC construction tool
+    map must omit `generate_def_file`; the complete map adds the constructed
+    DEF parser for ordinary DLL/import-library actions. Disabling an export
+    feature is not an equivalent cycle break because `cc_tool_map` eagerly
+    analyzes every mapped tool.
 
 ## Mergeability contract
 
-Every numbered step is a potential merge point, not merely a checkpoint in an
-unreviewable long-lived branch:
+Every numbered step remains a reviewable integration checkpoint rather than a
+hidden point in an unreviewable long-lived branch. Step 13 is now a hard owner
+gate: no Windows MSVC implementation PR from this plan may merge, and no
+Windows MSVC toolchain may be published, until Step 13 is complete and proved.
+Earlier “potentially mergeable finish line” text therefore describes technical
+coherence at that checkpoint, not current authorization to merge or publish.
+
+At each checkpoint:
 
 - the step ends with its advertised labels truthful and buildable to the
   stated finish line; dormant support may land before a public label uses it,
@@ -516,7 +536,15 @@ Step 1: Stage-1 MSVC release route/config
                     |
                     v
           Step 12: supported-source Stage 3 build jobs
+                    |
+                    v
+          Step 13: bootstrap-safe C helpers + native Windows runtime proof
 ```
+
+Step 13 is the integration/publication prerequisite for the entire sequence,
+not merely an optional successor to Step 12. Steps 1-12 may retain their
+reviewable commit boundaries and evidence, but none authorizes merging or
+publishing before the Step 13 gate passes.
 
 Each implementation step belongs on an isolated branch/worktree based on the
 then-current accepted predecessor. Do not create a stack or submit a PR until
@@ -1881,6 +1909,201 @@ Risks/stop conditions:
 Upstream llvm-project patch expected: **no new patch**; this validates Step 3,
 any traced upstream fixes from Step 4, and the optimization graph.
 
+## Step 13 — Remove C++ bootstrap helpers and prove native Windows runtime construction
+
+**Codex-agent-ready goal:** Replace the Windows SDK case-normalization and DEF
+generation helpers with hosted-C tools, make SDK normalization depend on the
+execution filesystem rather than the target platform, break the DEF parser's
+eager tool-map self-edge without a new runtime stage, and prove that matching
+Windows executors construct the MSVC runtime/toolchain support graph without a
+Linux worker.
+
+Demonstrated starting facts:
+
+- `windows_case_vfs`, `windows_case_copy`, and `msvc_def_parser` are C++
+  binaries wrapped with `cc_runtime_complete_binary`. That makes small
+  construction tools depend on complete libc++ only on the newly added Windows
+  path, unlike the existing hosted-C helper model;
+- Linux execution avoids a Windows-target libc++ cycle because the helpers are
+  built for the Linux execution platform. Native Windows execution does not:
+  the case tool would request the same overlay that it is supposed to generate
+  and the complete-runtime transition would request the libc++ graph under
+  construction;
+- native Windows filesystems normally provide case-insensitive lookup, so the
+  VFS overlay and case-folded library copies are derived execution inputs for
+  case-sensitive executors, not Windows target semantics;
+- `msvc_def_parser` is needed only by DEF/DLL/import-library actions. Compiling
+  and linking the parser executable does not semantically require DEF
+  generation;
+- rules_cc `cc_tool_map` analyzes every mapped tool eagerly. The current
+  `staged_tools_for_msvc` and complete map are both derived from `MSVC_TOOLS`,
+  which contains `generate_def_file`; disabling an export feature therefore
+  does not remove the parser's analysis dependency from the toolchain building
+  the parser;
+- the existing `stage1_hosted` runtime boundary already means Stage 1 compiler
+  primitives plus target C headers/runtime for probes and small build tools. A
+  C port can reuse it on every execution platform without introducing a
+  Windows-only complete-C++ helper configuration.
+
+Likely owned files:
+
+- `tools/windows_case/**`, `tools/windows_case_vfs/**`, and
+  `tools/windows_case_copy/**`;
+- `tools/msvc_def_parser/**`, preserving its current BSD/CMake-derived notice,
+  COFF behavior, and command protocol;
+- `toolchain/runtimes/cc_runtime_binary.bzl` only if the existing
+  `cc_runtime_stage1_hosted_binary` constructor cannot be reused unchanged;
+- `toolchain/llvm/llvm.bzl` and `toolchain/bootstrap/declare_toolchains.bzl` for
+  matching installed and source-backed construction/complete MSVC tool maps;
+- `toolchain/declare_toolchains.bzl`, `toolchain/cc_toolchain.bzl`, and the
+  Windows SDK argument/input composition needed to select case handling from
+  the declared execution platform;
+- focused helper fixtures/tests and the existing matching-Windows CI surface.
+
+Implementation shape:
+
+1. **Port the execution helpers to C.**
+
+   - port all three helper programs to portable C without changing their
+     command-line, output, collision, path, response-file, COFF symbol, or
+     error contracts;
+   - preserve deterministic traversal/output ordering and rejection of
+     ambiguous case-folded SDK entries, unsupported filesystem objects,
+     malformed COFF/bigobj inputs, and invalid response files;
+   - build each executable with the existing
+     `cc_runtime_stage1_hosted_binary` path. The configured dependency closure
+     may contain target C headers/CRT and compiler primitives, but no libc++,
+     libc++abi, C++ standard-library search directory, or C++ auto-link input;
+   - do not retain a Windows-only `cc_runtime_complete_binary` helper path and
+     do not create another runtime-stage value for these tools.
+
+2. **Make the staged MSVC tool map a real construction map.**
+
+   - factor the shared MSVC action tools into a construction set that omits
+     `@rules_cc//cc/toolchains/actions:generate_def_file`;
+   - make `staged_tools_for_msvc` use that construction set. A C
+     `msvc_def_parser` built under the hosted-C transition therefore selects a
+     toolchain that does not depend on the parser being built;
+   - make the complete MSVC tool map add the constructed parser for ordinary
+     DEF/DLL/import-library actions. Keep installed-prebuilt and source-backed
+     bootstrap declarations structurally equivalent;
+   - do not use a marker feature, `no_windows_export_all_symbols`, or a new
+     build setting as a substitute for removing the eager tool-map edge. A DLL
+     requested accidentally under the construction map should fail rather than
+     silently lose its export behavior.
+
+3. **Select case handling from the execution filesystem.**
+
+   - make the toolchain instance's already-known `exec_os` select the SDK
+     representation. Supported case-sensitive execution platforms retain the
+     declared C VFS and case-fold-copy actions;
+   - matching native Windows execution uses the same validated and curated
+     Microsoft payload directories directly and contains no VFS/case-copy
+     action or helper input;
+   - keep this choice out of target-platform semantic selects. Target OS, MSVC
+     ABI, CRT, SDK contents, clang-cl personality, and execution-filesystem
+     behavior remain independent axes even where the supported route is
+     Windows-to-Windows;
+   - retain raw payload validation and the current Microsoft header/library
+     allowlists. Do not expose Microsoft STL or undeclared SDK contents while
+     bypassing the normalized derived view;
+   - do not introduce prebuilt helper binaries, Python/Go runtimes, ambient SDK
+     paths, or hand-maintained copies of Microsoft payloads.
+
+4. **Audit, but do not conflate, Clang resource-directory behavior.**
+
+   - preserve the proved clang-cl compile-header order: libc++ headers, then
+     the declared Clang builtin resource headers, then VC/UCRT headers. Hosted-C
+     helpers intentionally omit the libc++ prefix but still receive Clang
+     builtin headers before VC/UCRT;
+   - keep `/clang:-nobuiltininc` plus the declared `/imsvc` resource include
+     insertion unless identical action/artifact proof establishes a cleaner
+     equivalent. Native-Windows VFS removal does not itself justify changing
+     this compiler-personality behavior;
+   - separately test whether the MSVC-only link-driver `-resource-dir=...`
+     override remains necessary once no construction helper uses the complete
+     C++ runtime. Remove or consolidate it only if compiler-rt discovery and
+     all representative complete links remain identical; otherwise retain and
+     document it as clang-cl/compiler-runtime lookup semantics, not runtime-
+     stage scaffolding.
+
+5. **Preserve scope and validate the complete closure.**
+
+   - compare the old and C helper outputs on representative fixtures before
+     deleting the C++ implementations;
+   - prove both x86-64 and ARM64 MSVC target runtime graphs on matching native
+     Windows execution platforms. An x86-64 executor cross-building ARM64 is
+     additional evidence, not a replacement for the native ARM64 cell;
+   - keep full native-Windows Stage 2/3 FDO package construction outside this
+     step. Its workload/profile executor matrix remains explicitly Linux-bound
+     until separately reviewed and proved.
+
+Required proof:
+
+- focused fail-before graph evidence records both present problems: the current
+  complete-libc++ helper dependency and the eager `generate_def_file` tool-map
+  edge. Post-change cquery/aquery contains neither
+  `cc_runtime_complete_binary` nor libc++/libc++abi inputs for any helper;
+- helper compile actions are C on Linux and Windows execution platforms and
+  use the existing `stage1_hosted` runtime boundary;
+- construction tool maps omit `generate_def_file`; complete maps add exactly
+  the constructed parser. The parser executable has no configured dependency
+  on itself, while a representative DLL action invokes it successfully;
+- old and new helper implementations produce identical normalized directory
+  contents, VFS overlays, and DEF output for representative normal, duplicate-
+  case, bigobj, x86-64, ARM64, ARM64EC, existing-DEF, and parameter-file
+  fixtures. Record any platform path/Unicode difference explicitly rather than
+  weakening the comparison;
+- Linux execution retains declared `WindowsCaseVFS`, `WindowsCaseCopy`, and
+  `DefParser` tools/actions with stable deterministic outputs;
+- native Windows execution contains no case-normalization action or helper in
+  the SDK compile/link input closure and instead uses only the corresponding
+  validated raw payload directory targets;
+- both MSVC compiler-rt builtins and static `libc++.lib` build on matching
+  Windows workers for x86-64 and ARM64 with no Linux execution platform;
+- representative `/MD`, `/MT`, archive, DLL/DEF/import-library, and executable
+  consumers build, and runnable matching-architecture outputs execute on their
+  Windows workers;
+- action inspection retains clang-cl, llvm-ar `rcsD`, lld-link, `.obj`/`.lib`,
+  target triples, `/MACHINE`, declared SDK/CRT inputs, and absence of ambient
+  Visual Studio/SDK discovery;
+- compile actions retain the proved Clang-resource/VC-UCRT ordering. Record
+  whether the link-driver resource override was proved necessary or removed
+  after identical full-link proof;
+- existing Linux/RBE cross-build, MinGW, Linux, and macOS routes remain
+  semantically unchanged.
+
+**Potentially mergeable finish line:** All three construction helpers are
+portable hosted-C tools; the construction map can build the DEF parser without
+depending on it; the complete map uses that parser for DLLs; Linux cross-
+construction retains its normalized SDK behavior; and matching Windows
+executors build the MSVC runtime plus representative static/DLL consumers with
+neither Linux workers nor a complete-C++ helper cycle. The generic complete
+runtime remains a product state rather than a Windows helper bootstrap stage.
+This does not yet claim a native-Windows ThinLTO/FDO Stage 3 release build.
+
+Risks/stop conditions:
+
+- stop if the C port changes symbol-export classification, case-collision
+  policy, Unicode/path behavior, response-file parsing, or deterministic output
+  without an explicit compatibility decision;
+- stop if rules_cc cannot express an execution-platform-specific SDK input
+  implementation without leaking the decision into target semantics; isolate
+  and prove the smallest toolchain-construction fix first;
+- stop before removing either Clang resource-directory mechanism unless its
+  distinct compile-header or compiler-runtime-discovery contract has been
+  disproved by identical actions and complete artifacts;
+- do not make Windows construction pass by disabling input validation, using
+  ambient installed SDK paths, switching helpers to Microsoft STL, suppressing
+  DEF generation, or forcing a Linux execution platform invisibly;
+- if complete native Stage 3 requires changing FDO profile generation or
+  executing Windows workloads, split that owner into a separately authorized
+  successor step.
+
+Upstream patch expected: **no llvm-project patch**. A rules_cc patch is prepared
+only if a focused execution-platform/toolchain-construction limitation remains
+after the downstream graph is complete and proved.
+
 ## Upstreaming strategy and downstream-coupling review
 
 Every LLVM overlay change follows this sequence:
@@ -1918,6 +2141,7 @@ Explicit ownership summary:
 | MSVC workload/profile aggregate and merge action | hermetic-llvm bootstrap rules | no |
 | Stage 3 package input and proven Windows output-name blocker | hermetic-llvm release rule | no |
 | Prebuilt archive registration and Windows consumer row | hermetic-llvm minimal-prebuilt extension/toolchain/CI | no |
+| Bootstrap-safe SDK/DEF execution helpers and native Windows SDK representation | hermetic-llvm tools/toolchain construction | no |
 | a newly discovered source/select bug | determine from failing owner before edit | maybe |
 
 Rejected coupling:
@@ -1947,7 +2171,8 @@ Current evidence state after Step 11:
 | Matching-Windows prebuilt compiler consumer | supported | supported | Final run `32566192209`; exact archive registration, compiler execution, action selection, and non-cached native `/MD`, DLL, and `/MT` tests. |
 | Cross-build on Linux x86-64 RBE | supported | supported | All three listed LLVM lines after matrix passes. |
 | Linux ARM64 FDO executor actions | supported | supported | Required where selected by the existing Stage 3 executor/profile graph. |
-| Native matching Windows source bootstrap | unclaimed | unclaimed | Only completed prebuilt compiler execution is tested on Windows. |
+| Native matching Windows runtime/toolchain construction | proposed | proposed | Step 13: C-only hosted helpers, exec-filesystem-aware SDK view, libc++ and representative consumer proof. |
+| Native matching Windows Stage 2/3 release construction | unclaimed | unclaimed | Existing bootstrap FDO workload/profile graph remains Linux-executor-backed. |
 | macOS construction host | unclaimed | unclaimed | May be added later with a full package build. |
 | Release compiler CRT | `/MT` | `/MT` | `--config=release` requests static MSVC CRT semantics; ordinary consumers retain `/MD`. |
 | Debug/PDB package | unsupported | unsupported | Opt EXE only; no orphan PDB/import library. |
@@ -1973,6 +2198,7 @@ target/exec platforms, result, and remaining unknowns. Required evidence:
 | Minimized ThinLTO indexing | required | required | dual compile outputs; minimized-only index inputs; complete-bitcode backend inputs; suffix mapping and size comparison |
 | Stage 3 package full build | required | required | cquery output path and archive SHA-256 |
 | Prebuilt compiler consumer | required | required | matching Windows runner, selected archive hash/tool path, build and execution |
+| Native Windows runtime construction | required | required | C-only helpers, no complete C++ helper runtime, no Linux executor, builtins/libc++/DLL proof |
 | Compile params | required | required | triple, `/std:c++17`, includes, flags, target/exec separation |
 | Archive params/artifacts | required | required | llvm-ar `rcsD`, `.obj`/`.lib`, member machine/order |
 | Final link params | required | required | clang-cl/lld-link, response file, directories, `/MACHINE`, outputs |
@@ -2003,6 +2229,11 @@ inspection above.
 - whether LLVM 23.1.0-rc1 retains the minimized-index behavior proved on LLVM
   21.1.8 and the default LLVM 22.1.8 line; Step 9.1 did not rebuild that
   compatibility line;
+- exact Unicode/path behavior required when replacing the C++ filesystem helper
+  implementations with C on both POSIX and Windows execution filesystems;
+- whether the current rules_cc toolchain constructor can carry the execution-
+  filesystem SDK representation directly or needs a focused downstream
+  constructor extension. This must not be inferred from target OS;
 
 These are not claimed defects. Convert an item into an implementation change
 only after an exact failing action/artifact identifies its owner.
@@ -2025,8 +2256,9 @@ only after an exact failing action/artifact identifies its owner.
 - Before integration, self-review for: Stage 3 regression, downstream-only LLVM
   coupling, target/exec inversion, full MSVC input exposure, Microsoft-STL
   contamination, preemptive file-action cleanup, unclaimed PDB/import outputs,
-  premature feature graduation, temporary Step 1 debt, and any wording that
-  implies native Windows construction or another unverified execution host.
+  premature feature graduation, temporary Step 1 debt, a C++ runtime edge from
+  an execution helper, and any wording that implies native Windows Stage 3 or
+  another unverified execution host.
 
 ## Completion boundary
 
@@ -2038,6 +2270,8 @@ the completed prebuilt compiler while the MinGW row remains unchanged;
 action/profile/PE/archive evidence is recorded; generic release products retain
 their existing topology and effective semantics; unrelated Layer 1 features
 remain rejected; and all temporary Step 1 config, Stage 1 package override,
-and unused `llvm_binary` parameterization have been removed. Native Windows
-source self-hosting, Microsoft tool executables, public release upload, and
-release workflow cutover remain outside this plan.
+and unused `llvm_binary` parameterization have been removed. Matching Windows
+executors also build the bootstrap-safe C helper/runtime closure and
+representative MSVC consumers without Linux workers. Full native-Windows
+ThinLTO/FDO Stage 3 construction, Microsoft tool executables, public release
+upload, and release workflow cutover remain outside this plan.
