@@ -1,4 +1,7 @@
+load("@llvm//:defs.bzl", "exec_test")
 load("@llvm//toolchain/runtimes:cc_runtime_binary.bzl", "cc_runtime_complete_binary")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -11,4 +14,22 @@ cc_runtime_complete_binary(
         "def_parser.h",
         "def_parser_main.cc",
     ],
+)
+
+exec_test(
+    name = "test",
+    srcs = [
+        "def_parser.cc",
+        "def_parser.h",
+        "def_parser_test.cc",
+    ],
+    rule = cc_test,
+)
+
+exec_test(
+    name = "cli_test",
+    srcs = ["cli_test.sh"],
+    env = {"DEF_PARSERS": "$(rootpaths msvc_def_parser)"},
+    rule = sh_test,
+    tools = ["msvc_def_parser"],
 )
