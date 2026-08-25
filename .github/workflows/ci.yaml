@@ -210,6 +210,7 @@ jobs:
             link_machine: X64
             machine: AMD64
             repo_cpu: amd64
+            sdk_cpu: x64
             target_cpu: x86_64
             target_triple: x86_64-pc-windows-msvc
           - os: windows-11-arm
@@ -217,6 +218,7 @@ jobs:
             link_machine: ARM64
             machine: ARM64
             repo_cpu: arm64
+            sdk_cpu: arm64
             target_cpu: aarch64
             target_triple: aarch64-pc-windows-msvc
     runs-on: ${{ matrix.os }}
@@ -340,6 +342,15 @@ jobs:
               "mnemonic(\"${mnemonic}\", ${thin_lto_target})" \
               >"${RUNNER_TEMP}/msvc-thinlto-${output}-action.txt"
           done
+          # Keep the real compile action above to prove compiler response-file
+          # use. Disable it only in this inspection query so aquery exposes the
+          # rendered flags, matching windows_msvc_action_test.sh.
+          bazel --bazelrc=.bazelrc aquery \
+            "${common_flags[@]}" \
+            --features=-compiler_param_file \
+            --output=commands \
+            "mnemonic(\"CppCompile\", ${thin_lto_target})" \
+            >"${RUNNER_TEMP}/msvc-thinlto-compile-flags.txt"
           bazel --bazelrc=.bazelrc aquery \
             "${common_flags[@]}" \
             --include_param_files \
@@ -348,17 +359,17 @@ jobs:
             >"${RUNNER_TEMP}/msvc-thinlto-graph.txt"
 
           thin_compile="${RUNNER_TEMP}/msvc-thinlto-compile-action.txt"
+          thin_compile_flags="${RUNNER_TEMP}/msvc-thinlto-compile-flags.txt"
           thin_index="${RUNNER_TEMP}/msvc-thinlto-index-action.txt"
           thin_backend="${RUNNER_TEMP}/msvc-thinlto-backend-action.txt"
           thin_link="${RUNNER_TEMP}/msvc-thinlto-link-action.txt"
           grep -F "llvm-toolchain-minimal-windows-${{ matrix.repo_cpu }}" "${thin_compile}"
           grep -F "clang-cl.exe" "${thin_compile}"
-          grep -F -- "--target=${{ matrix.target_triple }}" "${thin_compile}"
-          grep -F "/std:c++20" "${thin_compile}"
-          grep -F "/clang:-flto=thin" "${thin_compile}"
-          grep -F ".indexing.o" "${thin_compile}"
-          # Compiler response-file spilling is an execution-host decision.
-          # The ThinLTO index and final link parameter files below are protocol.
+          grep -F ".params" "${thin_compile}"
+          grep -F -- "--target=${{ matrix.target_triple }}" "${thin_compile_flags}"
+          grep -F "/std:c++20" "${thin_compile_flags}"
+          grep -F "/clang:-flto=thin" "${thin_compile_flags}"
+          grep -F ".indexing.o" "${thin_compile_flags}"
 
           grep -F "CppLTOIndexing" "${thin_index}"
           grep -F "clang-cl.exe" "${thin_index}"
@@ -367,6 +378,8 @@ jobs:
           grep -F "/thinlto-index-only:" "${thin_index}"
           grep -F "/thinlto-object-suffix-replace:.indexing.o;.obj" "${thin_index}"
           grep -F ".params" "${thin_index}"
+          grep -F "windows_msvc_libcxx_alwayslink.obj" "${thin_index}"
+          grep -F "windows_msvc_libcxx_behavior_support.obj" "${thin_index}"
 
           grep -F "CcLtoBackendCompile" "${thin_backend}"
           grep -F "clang-cl.exe" "${thin_backend}"
@@ -379,11 +392,9 @@ jobs:
           grep -F "/MACHINE:${{ matrix.link_machine }}" "${thin_link}"
           grep -F ".exe-lto-final.params" "${thin_link}"
           grep -F ".lto.merged.o" "${thin_link}"
-          grep -F "/WHOLEARCHIVE" "${thin_link}"
-          grep -F "windows_msvc_libcxx_behavior_support.lib" "${thin_link}"
           grep -F "/DEFAULTLIB:libc++.lib" "${thin_link}"
-          grep -F "winsdk_ucrt_lib" "${thin_link}"
-          grep -F "winsdk_um_lib" "${thin_link}"
+          grep -F "windows_sdk+windows_sdk/sysroot/${{ matrix.sdk_cpu }}/c/ucrt/${{ matrix.sdk_cpu }}" "${thin_link}"
+          grep -F "windows_sdk+windows_sdk/sysroot/${{ matrix.sdk_cpu }}/c/um/${{ matrix.sdk_cpu }}" "${thin_link}"
           grep -F "msvc_dynamic_runtime_libraries" "${thin_link}"
           grep -F "/Fe" "${thin_link}"
 
