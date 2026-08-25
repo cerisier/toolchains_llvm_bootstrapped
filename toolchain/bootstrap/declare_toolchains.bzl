@@ -85,14 +85,13 @@ def declare_tool_map(exec_os, exec_cpu, prefix = None, fdo_profile = None, fdo_i
         },
     )
 
-    MSVC_TOOLS = {
+    MSVC_CONSTRUCTION_TOOLS = {
         "@rules_cc//cc/toolchains/actions:c_compile": prefix + "/clang-cl",
         "@rules_cc//cc/toolchains/actions:cpp_compile": prefix + "/clang-cl",
         "@rules_cc//cc/toolchains/actions:linkstamp_compile": prefix + "/clang-cl",
         "@rules_cc//cc/toolchains/actions:lto_backend": prefix + "/clang-cl",
         "@rules_cc//cc/toolchains/actions:preprocess_assemble": prefix + "/clang-cl",
         "@rules_cc//cc/toolchains/actions:cpp_header_parsing": prefix + "/clang-cl",
-        "@rules_cc//cc/toolchains/actions:generate_def_file": prefix + "/coff-def-parser",
         "@rules_cc//cc/toolchains/actions:ar_actions": prefix + "/llvm-ar",
         "@rules_cc//cc/toolchains/actions:cpp_link_executable": prefix + "/clang-cl",
         "@rules_cc//cc/toolchains/actions:cpp_link_dynamic_library": prefix + "/clang-cl",
@@ -105,21 +104,25 @@ def declare_tool_map(exec_os, exec_cpu, prefix = None, fdo_profile = None, fdo_i
         "@rules_cc//cc/toolchains/actions:strip": prefix + "/llvm-strip",
     }
 
+    MSVC_COMPLETE_TOOLS = MSVC_CONSTRUCTION_TOOLS | {
+        "@rules_cc//cc/toolchains/actions:generate_def_file": prefix + "/coff-def-parser",
+    } | _validate_static_library_tool(prefix)
+
     cc_tool_map(
-        name = prefix + "/tools_for_msvc",
-        tools = MSVC_TOOLS | _validate_static_library_tool(prefix),
+        name = prefix + "/complete_tools_for_msvc",
+        tools = MSVC_COMPLETE_TOOLS,
     )
 
     cc_tool_map(
-        name = prefix + "/staged_tools_for_msvc",
-        tools = MSVC_TOOLS,
+        name = prefix + "/construction_tools_for_msvc",
+        tools = MSVC_CONSTRUCTION_TOOLS,
     )
 
     native.alias(
         name = prefix + "/tools_for_msvc_for_runtime",
         actual = select({
-            "@llvm//toolchain:runtimes_all": prefix + "/tools_for_msvc",
-            "//conditions:default": prefix + "/staged_tools_for_msvc",
+            "@llvm//toolchain:runtimes_all": prefix + "/complete_tools_for_msvc",
+            "//conditions:default": prefix + "/construction_tools_for_msvc",
         }),
     )
 
