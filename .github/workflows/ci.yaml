@@ -357,7 +357,8 @@ jobs:
           grep -F "/std:c++20" "${thin_compile}"
           grep -F "/clang:-flto=thin" "${thin_compile}"
           grep -F ".indexing.o" "${thin_compile}"
-          grep -F ".params" "${thin_compile}"
+          # Compiler response-file spilling is an execution-host decision.
+          # The ThinLTO index and final link parameter files below are protocol.
 
           grep -F "CppLTOIndexing" "${thin_index}"
           grep -F "clang-cl.exe" "${thin_index}"
