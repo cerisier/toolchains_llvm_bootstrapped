@@ -1,15 +1,15 @@
 #ifndef HERMETIC_LLVM_TOOLS_CASE_INSENSITIVE_COPY_COPY_H_
 #define HERMETIC_LLVM_TOOLS_CASE_INSENSITIVE_COPY_COPY_H_
 
-#include <filesystem>
-#include <string>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-namespace case_insensitive_copy {
+int case_insensitive_copy_directory(const char *source, const char *destination,
+                                    char **error);
 
-bool CopyDirectory(const std::filesystem::path &source,
-                   const std::filesystem::path &destination,
-                   std::string *error);
-
-} // namespace case_insensitive_copy
+#ifdef __cplusplus
+}
+#endif
 
 #endif // HERMETIC_LLVM_TOOLS_CASE_INSENSITIVE_COPY_COPY_H_

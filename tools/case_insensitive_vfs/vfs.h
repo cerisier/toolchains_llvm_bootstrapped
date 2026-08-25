@@ -1,15 +1,17 @@
 #ifndef HERMETIC_LLVM_TOOLS_CASE_INSENSITIVE_VFS_VFS_H_
 #define HERMETIC_LLVM_TOOLS_CASE_INSENSITIVE_VFS_VFS_H_
 
-#include <filesystem>
-#include <string>
-#include <vector>
+#include <stddef.h>
 
-namespace case_insensitive_vfs {
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-bool GenerateOverlay(const std::vector<std::filesystem::path> &roots,
-                     std::string *overlay, std::string *error);
+int case_insensitive_vfs_generate(const char *const *roots, size_t root_count,
+                                  char **overlay, char **error);
 
-} // namespace case_insensitive_vfs
+#ifdef __cplusplus
+}
+#endif
 
 #endif // HERMETIC_LLVM_TOOLS_CASE_INSENSITIVE_VFS_VFS_H_

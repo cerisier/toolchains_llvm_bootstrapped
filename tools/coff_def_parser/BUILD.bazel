@@ -1,25 +1,26 @@
 load("@llvm//:defs.bzl", "exec_test")
-load("@llvm//toolchain/runtimes:cc_runtime_binary.bzl", "cc_runtime_complete_binary")
+load("@llvm//toolchain/runtimes:cc_runtime_binary.bzl", "cc_runtime_stage1_hosted_binary")
 load("@rules_cc//cc:cc_test.bzl", "cc_test")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 
 package(default_visibility = ["//visibility:public"])
 
-# Ported from bazelbuild/bazel df9cf21c8bf643f374790b0c2bc75686293b7024,
-# third_party/def_parser. The accompanying BSD notice remains unchanged.
-cc_runtime_complete_binary(
+# Behavior derived from bazelbuild/bazel third_party/def_parser at parser
+# revision 56d21d61f551e5a48f56771c1748ed05751f58aa. The accompanying BSD
+# notice remains unchanged.
+cc_runtime_stage1_hosted_binary(
     name = "coff_def_parser",
     srcs = [
-        "def_parser.cc",
+        "def_parser.c",
         "def_parser.h",
-        "def_parser_main.cc",
+        "def_parser_main.c",
     ],
 )
 
 exec_test(
     name = "test",
     srcs = [
-        "def_parser.cc",
+        "def_parser.c",
         "def_parser.h",
         "def_parser_test.cc",
     ],

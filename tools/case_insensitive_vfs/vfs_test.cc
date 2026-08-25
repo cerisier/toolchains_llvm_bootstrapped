@@ -1,9 +1,11 @@
 #include <chrono>
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <string>
 #include <string_view>
+#include <vector>
 
 #include "tools/case_insensitive_filesystem/common.h"
 #include "tools/case_insensitive_vfs/vfs.h"
@@ -58,6 +60,62 @@ bool AppearsBefore(std::string_view value, std::string_view left,
   return false;
 }
 
+bool GenerateOverlay(std::initializer_list<std::filesystem::path> roots,
+                     std::string *overlay, std::string *error) {
+  std::vector<std::string> root_strings;
+  std::vector<const char *> root_paths;
+  for (const std::filesystem::path &root : roots) {
+    root_strings.push_back(root.string());
+  }
+  for (const std::string &root : root_strings) {
+    root_paths.push_back(root.c_str());
+  }
+  char *generated = nullptr;
+  char *generated_error = nullptr;
+  const bool result = case_insensitive_vfs_generate(
+      root_paths.data(), root_paths.size(), &generated, &generated_error);
+  if (result) {
+    *overlay = generated;
+  } else {
+    *error = generated_error;
+  }
+  std::free(generated);
+  std::free(generated_error);
+  return result;
+}
+
+bool PreferredName(std::string_view left, std::string_view right,
+                   std::string *preferred, std::string *error) {
+  const std::string left_string(left);
+  const std::string right_string(right);
+  char *generated = nullptr;
+  char *generated_error = nullptr;
+  const bool result = ci_preferred_name(
+      left_string.c_str(), right_string.c_str(), &generated, &generated_error);
+  if (result) {
+    *preferred = generated;
+  } else {
+    *error = generated_error;
+  }
+  std::free(generated);
+  std::free(generated_error);
+  return result;
+}
+
+std::string GenericPath(const std::filesystem::path &path) {
+  char *generic = ci_generic_path(path.string().c_str());
+  std::string result(generic);
+  std::free(generic);
+  return result;
+}
+
+std::string JsonString(const std::string &value) {
+  char *json = ci_json_string(value.c_str());
+  std::string result(json);
+  std::free(json);
+  return result;
+}
+
 bool TestGenerateCaseInsensitiveOverlay() {
   TemporaryDirectory temporary;
   const std::filesystem::path root = temporary.path() / "root";
@@ -70,7 +128,7 @@ bool TestGenerateCaseInsensitiveOverlay() {
 
   std::string overlay;
   std::string error;
-  if (!case_insensitive_vfs::GenerateOverlay({root}, &overlay, &error)) {
+  if (!GenerateOverlay({root}, &overlay, &error)) {
     std::cerr << error << '\n';
     return false;
   }
@@ -84,8 +142,7 @@ bool TestGenerateCaseInsensitiveOverlay() {
 bool TestPreferredNameChoosesLowercaseAlias() {
   std::string preferred;
   std::string error;
-  if (!case_insensitive_filesystem::PreferredName("Windows.h", "windows.h",
-                                                  &preferred, &error)) {
+  if (!PreferredName("Windows.h", "windows.h", &preferred, &error)) {
     std::cerr << error << '\n';
     return false;
   }
@@ -100,8 +157,7 @@ bool TestPreferredNameChoosesLowercaseAlias() {
 bool TestPreferredNameRejectsAmbiguousEntries() {
   std::string preferred;
   std::string error;
-  if (!case_insensitive_filesystem::PreferredName("FOO.h", "Foo.h", &preferred,
-                                                  &error)) {
+  if (!PreferredName("FOO.h", "Foo.h", &preferred, &error)) {
     return true;
   }
   std::cerr << "ambiguous case-only entries were accepted\n";
@@ -126,7 +182,7 @@ bool TestGenerateFollowsTransformedHeaderSymlink() {
 
   std::string overlay;
   std::string error;
-  if (!case_insensitive_vfs::GenerateOverlay({root}, &overlay, &error)) {
+  if (!GenerateOverlay({root}, &overlay, &error)) {
     std::cerr << error << '\n';
     return false;
   }
@@ -148,8 +204,7 @@ bool TestGenerateIsDeterministicAndSortsRootsAndEntries() {
 
   std::string first_overlay;
   std::string error;
-  if (!case_insensitive_vfs::GenerateOverlay({second_root, first_root},
-                                             &first_overlay, &error)) {
+  if (!GenerateOverlay({second_root, first_root}, &first_overlay, &error)) {
     std::cerr << error << '\n';
     return false;
   }
@@ -163,8 +218,7 @@ bool TestGenerateIsDeterministicAndSortsRootsAndEntries() {
   }
 
   std::string second_overlay;
-  if (!case_insensitive_vfs::GenerateOverlay({first_root, second_root},
-                                             &second_overlay, &error)) {
+  if (!GenerateOverlay({first_root, second_root}, &second_overlay, &error)) {
     std::cerr << error << '\n';
     return false;
   }
@@ -174,9 +228,8 @@ bool TestGenerateIsDeterministicAndSortsRootsAndEntries() {
   }
 
   return Contains(first_overlay, "\"name\": \"Empty\"") &&
-         AppearsBefore(first_overlay,
-                       case_insensitive_filesystem::GenericPath(first_root),
-                       case_insensitive_filesystem::GenericPath(second_root)) &&
+         AppearsBefore(first_overlay, GenericPath(first_root),
+                       GenericPath(second_root)) &&
          AppearsBefore(first_overlay, "\"name\": \"Alpha.h\"",
                        "\"name\": \"zeta.h\"");
 }
@@ -199,7 +252,7 @@ bool TestGenerateRejectsAmbiguousCaseCollision() {
 
   std::string overlay;
   std::string error;
-  if (!case_insensitive_vfs::GenerateOverlay({root}, &overlay, &error)) {
+  if (!GenerateOverlay({root}, &overlay, &error)) {
     return Contains(error, "ambiguous case-insensitive SDK entries");
   }
   std::cerr << "ambiguous case-only entries were accepted\n";
@@ -219,7 +272,7 @@ bool TestGenerateRejectsDirectorySymlink() {
 
   std::string overlay;
   std::string error;
-  if (!case_insensitive_vfs::GenerateOverlay({root}, &overlay, &error)) {
+  if (!GenerateOverlay({root}, &overlay, &error)) {
     return Contains(error, "unsupported SDK directory symlink");
   }
   std::cerr << "directory symlink was accepted\n";
@@ -227,14 +280,13 @@ bool TestGenerateRejectsDirectorySymlink() {
 }
 
 bool TestJsonAndGenericPathEscaping() {
-  const std::string escaped = case_insensitive_filesystem::JsonString(
-      std::string("\"\\\b\f\n\r\t\x01", 8));
+  const std::string escaped = JsonString(std::string("\"\\\b\f\n\r\t\x01", 8));
   if (escaped != "\"\\\"\\\\\\b\\f\\n\\r\\t\\u0001\"") {
     std::cerr << "unexpected JSON escaping: " << escaped << '\n';
     return false;
   }
-  const std::string generic = case_insensitive_filesystem::GenericPath(
-      std::filesystem::path("alpha") / "beta");
+  const std::string generic =
+      GenericPath(std::filesystem::path("alpha") / "beta");
   if (generic != "alpha/beta") {
     std::cerr << "unexpected generic path: " << generic << '\n';
     return false;

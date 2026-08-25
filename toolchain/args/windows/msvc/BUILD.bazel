@@ -231,7 +231,10 @@ cc_args_list(
     ] + select({
         "//toolchain/features/msvc:static_crt_config": ["static_crt_library_search_paths"],
         "//conditions:default": ["dynamic_crt_library_search_paths"],
-    }) + [
-        "//toolchain/args:clang_cl_static_libcxx_default_lib",
-    ],
+    }) + select({
+        # Hosted C construction tools need the target CRT and SDK, but do not
+        # consume the C++ standard library.
+        "//toolchain:runtimes_stage1_hosted": [],
+        "//conditions:default": ["//toolchain/args:clang_cl_static_libcxx_default_lib"],
+    }),
 )

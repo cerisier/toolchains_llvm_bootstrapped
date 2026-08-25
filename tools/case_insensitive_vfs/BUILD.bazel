@@ -1,5 +1,5 @@
 load("@llvm//:defs.bzl", "exec_test")
-load("@llvm//toolchain/runtimes:cc_runtime_binary.bzl", "cc_runtime_complete_binary")
+load("@llvm//toolchain/runtimes:cc_runtime_binary.bzl", "cc_runtime_stage1_hosted_binary")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@rules_cc//cc:cc_test.bzl", "cc_test")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
@@ -8,14 +8,14 @@ package(default_visibility = ["//visibility:public"])
 
 cc_library(
     name = "case_insensitive_vfs_lib",
-    srcs = ["vfs.cc"],
+    srcs = ["vfs.c"],
     hdrs = ["vfs.h"],
     deps = ["//tools/case_insensitive_filesystem:common"],
 )
 
-cc_runtime_complete_binary(
+cc_runtime_stage1_hosted_binary(
     name = "case_insensitive_vfs",
-    srcs = ["main.cc"],
+    srcs = ["main.c"],
     deps = ["case_insensitive_vfs_lib"],
 )
 

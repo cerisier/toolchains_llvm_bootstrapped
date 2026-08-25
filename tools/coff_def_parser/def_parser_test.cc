@@ -17,6 +17,26 @@
 
 namespace {
 
+class Parser {
+public:
+  Parser() : parser_(coff_def_parser_create()) {}
+  ~Parser() { coff_def_parser_destroy(parser_); }
+
+  void SetDLLName(const std::string &name) {
+    coff_def_parser_set_dll_name(parser_, name.c_str());
+  }
+  bool AddObjectFile(const char *filename) {
+    return coff_def_parser_add_object_file(parser_, filename);
+  }
+  bool AddFile(const std::string &filename) {
+    return coff_def_parser_add_file(parser_, filename.c_str());
+  }
+  void WriteFile(FILE *file) { coff_def_parser_write_file(parser_, file); }
+
+private:
+  struct coff_def_parser *parser_;
+};
+
 constexpr std::uint16_t kI386 = 0x014c;
 constexpr std::uint16_t kArm = 0x01c0;
 constexpr std::uint16_t kArmNt = 0x01c4;
@@ -183,7 +203,7 @@ bool ReadText(const std::filesystem::path &path, std::string *contents) {
   return input.good() || input.eof();
 }
 
-bool Render(DefParser *parser, const std::filesystem::path &path,
+bool Render(Parser *parser, const std::filesystem::path &path,
             std::string *contents) {
   FILE *output = std::fopen(path.string().c_str(), "wb");
   if (!output) {
@@ -220,18 +240,15 @@ bool TestNormalCoffSymbolClassificationAndSorting() {
                                {"??_Gdeleting", 1, 0x20},
                                {"??_Edeleting", 1, 0x20},
                                {"with.dot", 1, 0x20},
-                               // The current fixed-width short-name handling
-                               // accidentally retains trailing NULs, so this
-                               // managed-code sentinel is exported. Keep that
-                               // fail-before baseline explicit until the C port
-                               // fixes all managed short-name filters.
                                {"__t2m", 1, 0x20},
+                               {"__m2mep", 1, 0x20},
+                               {"__mep", 1, 0x20},
                                {"managed$$Fsymbol", 1, 0x20},
                            }))) {
     return false;
   }
 
-  DefParser parser;
+  Parser parser;
   parser.SetDLLName("sample.dll");
   if (!parser.AddObjectFile(object.string().c_str())) {
     return false;
@@ -244,7 +261,6 @@ bool TestNormalCoffSymbolClassificationAndSorting() {
                              "\tdataZeta \t DATA\n"
                              "\t??_7Vtable\n"
                              "\tAlpha\n"
-                             "\t__t2m\n"
                              "\tzeta\n");
 }
 
@@ -266,7 +282,7 @@ bool TestArchitectureSpecificSymbols() {
        {{"arm64ec", 1, 0x20}, {"func$entry_thunk", 1, 0x20}}},
   };
 
-  DefParser parser;
+  Parser parser;
   for (const ObjectSpec &spec : objects) {
     const std::filesystem::path path = temporary.path() / spec.name;
     if (!WriteBytes(path,
@@ -294,7 +310,7 @@ bool TestBigObjAndAuxiliarySymbols() {
                                       {"afteraux", 1, 0x20}}))) {
     return false;
   }
-  DefParser parser;
+  Parser parser;
   if (!parser.AddObjectFile(object.string().c_str())) {
     return false;
   }
@@ -314,7 +330,7 @@ bool TestDefinitionFileMerge() {
                         "  Existing\n")) {
     return false;
   }
-  DefParser parser;
+  Parser parser;
   parser.SetDLLName("new.dll");
   if (!parser.AddFile(input.string())) {
     return false;
@@ -357,7 +373,7 @@ bool TestMalformedObjectsAreRejected() {
     return false;
   }
 
-  DefParser parser;
+  Parser parser;
   return !parser.AddObjectFile(too_small.string().c_str()) &&
          !parser.AddObjectFile(truncated.string().c_str()) &&
          !parser.AddObjectFile(invalid_section.string().c_str()) &&

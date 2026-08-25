@@ -4,43 +4,30 @@
 #ifndef HERMETIC_LLVM_TOOLS_COFF_DEF_PARSER_DEF_PARSER_H_
 #define HERMETIC_LLVM_TOOLS_COFF_DEF_PARSER_DEF_PARSER_H_
 
-#include <set>
 #include <stdio.h>
-#include <string>
 
-#ifdef _WIN32
-std::wstring AsAbsoluteWindowsPath(const std::string& path);
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-class DefParser{
- public:
-  DefParser() {}
+struct coff_def_parser;
 
-  // This method adds a DEF file.
-  // It merges all the symbols found in the DEF file into final result.
-  bool AddDefinitionFile(const char* filename);
+struct coff_def_parser *coff_def_parser_create(void);
+void coff_def_parser_destroy(struct coff_def_parser *parser);
+void coff_def_parser_set_dll_name(struct coff_def_parser *parser,
+                                  const char *name);
+int coff_def_parser_add_object_file(struct coff_def_parser *parser,
+                                    const char *filename);
+int coff_def_parser_add_definition_file(struct coff_def_parser *parser,
+                                        const char *filename);
+int coff_def_parser_add_file(struct coff_def_parser *parser,
+                             const char *filename);
+void coff_def_parser_write_file(const struct coff_def_parser *parser,
+                                FILE *file);
+FILE *coff_def_parser_open_file(const char *filename, const char *mode);
 
-  // This method adds an Object file.
-  // It parses that object file and merge symbols found into final result.
-  bool AddObjectFile(const char* filename);
-
-  // Add a file, the function itself will tell which type of file it is.
-  bool AddFile(const std::string& filename);
-
-  // Set the DLL name the output DEF file is used for.
-  // This will cause a "LIBRARY <DLLName>" entry in the output DEF file.
-  void SetDLLName(const std::string& filename);
-
-  // Write all symbols found into the output DEF file.
-  void WriteFile(FILE* file);
-
- private:
-  std::set<std::string> Symbols;
-  std::set<std::string> DataSymbols;
-  std::string DLLName;
-
-  // Returns true if filename ends with .def (case insensitive).
-  static bool IsDefFile(const std::string& filename);
-};
+#ifdef __cplusplus
+}
+#endif
 
 #endif // HERMETIC_LLVM_TOOLS_COFF_DEF_PARSER_DEF_PARSER_H_
