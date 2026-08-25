@@ -269,6 +269,7 @@ jobs:
             "${compiler_repo}//:bin/llvm.exe" \
             "${compiler_repo}//:bin/llvm-readobj.exe"
           output_base="$(bazel --bazelrc=.bazelrc info output_base)"
+          execution_root="$(bazel --bazelrc=.bazelrc info execution_root)"
           compiler="${output_base}/$(bazel --bazelrc=.bazelrc cquery \
             "${common_flags[@]}" \
             --output=files \
@@ -433,7 +434,7 @@ jobs:
             "${thin_lto_target}" | grep -E '\.exe$')"
           "${readobj}" \
             --file-headers \
-            "${output_base}/${thin_lto_exe}" | tee "${RUNNER_TEMP}/thinlto-readobj.txt"
+            "${execution_root}/${thin_lto_exe}" | tee "${RUNNER_TEMP}/thinlto-readobj.txt"
           grep -F "IMAGE_FILE_MACHINE_${{ matrix.machine }}" \
             "${RUNNER_TEMP}/thinlto-readobj.txt"
           bazel --bazelrc=.bazelrc test \
