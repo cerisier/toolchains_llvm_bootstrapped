@@ -79,7 +79,37 @@ Date: 2026-08-25 (Asia/Tokyo)
   a repository-provided relocatable normalized SDK view as the preferred
   follow-up. Human review approved the batch. No Stage 3 or native consumer
   execution was run; those remain Batch 6.
-- [ ] Batch 6: native consumer/ThinLTO and Linux RBE regression proof.
+- [ ] Batch 6: implemented locally; native consumer/ThinLTO execution and
+  human review remain. The Linux RBE producer regression built both complete
+  Stage 3 release archives together with `--config=remote --config=release`
+  in invocation `bcad0e81-0ad6-4d4d-982c-c7df686cd7d9` (111,812 actions,
+  17,084 executed processes). The graph generated and merged the existing
+  FDO workload profiles, applied them to the two source-backed ThinLTO builds,
+  and packaged both targets without changing `_LLVM_FDO_EXECUTORS`. The x64
+  archive is 48 MiB with SHA-256
+  `ab3f7f0621e607839d99da497f89c0f66069d3af067d0622c708ba5b485ff09d`;
+  its `llvm.exe` is `IMAGE_FILE_MACHINE_AMD64`. The ARM64 archive is 45 MiB
+  with SHA-256
+  `62f3f25a3407f07050f70278d8704882ebbeba2b7666dcb165925e9aac9aa9f4`;
+  its `llvm.exe` is native `IMAGE_FILE_MACHINE_ARM64`, not ARM64EC.
+  Representative x64 action queries are
+  `2b0f752d-3598-47e5-bd7a-63aaeb436d7f` (final link),
+  `92847f62-b31d-44ff-b197-631c82abe9f2` (ThinLTO index), and
+  `88f69125-4bcb-4258-a89a-b8e7ff05019c` (archive). ARM64 equivalents are
+  `84b0db1f-2f4d-44c8-be1e-24fb6fdea15d`,
+  `b79e70b2-4990-4a13-9d31-15368675b258`, and
+  `6f845c67-ecb0-4bc7-b74a-d7c4ebae4886`. They prove Linux x64 execution,
+  source-built `clang-cl` with declared sibling `lld-link`, the correct target
+  triples and `/MACHINE`, COFF ThinLTO indexing, target `.obj` members, target
+  `.lib` outputs, and deterministic exec-host `llvm-ar rcsD` ordering. The
+  focused Windows MSVC action and unsupported-boundary scripts pass unchanged.
+  The local CI edit folds those scripts into the sole archive-producer job,
+  extends the existing native x64/ARM64 consumer matrix with ThinLTO
+  compile/index/backend/link inspection plus execution and PE-machine proof,
+  and removes the two-row `windows_msvc_layer1_hosts` development matrix.
+  YAML parsing and `git diff --check` pass. Native proof is intentionally not
+  claimed: the CI edit and Batch 5 commit have not been pushed, and this macOS
+  checkout cannot execute Windows PE consumers.
 
 ## Objective
 
