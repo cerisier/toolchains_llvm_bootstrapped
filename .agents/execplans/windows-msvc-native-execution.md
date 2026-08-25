@@ -32,7 +32,27 @@ Date: 2026-08-25 (Asia/Tokyo)
   the C++ default library at `runtimes_stage1_hosted`. Post-fix link action
   inspections are `5117c617-4b93-44ea-aec7-b0e612137bbc` and
   `42b91d9e-827f-4076-9228-05e1804992b9`. Human review approved the batch.
-- [ ] Batch 4: construction/complete MSVC tool-map split.
+- [x] Batch 4: construction/complete MSVC tool-map split implemented locally
+  in both installed/prebuilt and source-backed declarations. The pre-change
+  configured helper graphs selected `staged_tools_for_msvc` and contained the
+  corresponding `coff_def_parser`/`coff-def-parser` tool labels. Post-change
+  x86-64 construction graphs select only `construction_tools_for_msvc` in
+  invocations `fa569838-5c48-46be-9be3-dea1aeef000e` (installed) and
+  `626c2783-8c59-457f-88d8-6ba9aa6caa4a` (source-backed); ARM64 evidence is
+  `dcd4eb0d-d0d4-451a-8523-572aef3f7236` and
+  `9c04fc2b-ec78-49c9-aab4-7689b593d458`. Direct map queries find zero parser
+  dependency in each construction map and exactly one in each complete map.
+  The representative complete-toolchain generated-DEF DLL builds in
+  `013ca5dd-66e1-48be-a5b1-fd52db54903e`; action inspection in
+  `a722e5a5-4fc1-4c55-9c56-d6685e9a0bce` isolates the real declared COFF
+  parser executing on Linux ARM64 RBE over the target `.obj`, and complete-map
+  selection is visible in
+  `a3216e7d-cc1b-4fba-ad0a-800c5cfca58d`. All three hosted helpers still
+  cross-compile for MSVC x86-64 and ARM64 in
+  `ae4f4770-6897-4931-903d-09a74b29e36f` and
+  `3d938b7f-6236-4495-94f3-567f3d6a617c`; all six focused tests pass on Linux
+  RBE in `248b74cc-c306-4c76-b527-081babf2a5cd`. Human review approved the
+  batch.
 - [ ] Batch 5: execution-filesystem SDK representation.
 - [ ] Batch 6: native consumer/ThinLTO and Linux RBE regression proof.
 
