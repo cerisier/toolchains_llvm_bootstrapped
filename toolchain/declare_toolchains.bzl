@@ -19,6 +19,8 @@ def declare_toolchains(*, execs = SUPPORTED_EXECS, targets = SUPPORTED_TARGETS):
             name = cc_toolchain_name,
             tool_map = platform_cc_tool_map(exec_os, exec_cpu),
             module_map = platform_module_map(exec_os, exec_cpu),
+            msvc_sdk_compile_args = "@llvm//toolchain/args/windows/msvc:direct_sdk_compile_args" if exec_os == "windows" else "@llvm//toolchain/args/windows/msvc:normalized_sdk_compile_args",
+            msvc_default_libs = "@llvm//toolchain/args/windows/msvc:direct_default_libs" if exec_os == "windows" else "@llvm//toolchain/args/windows/msvc:normalized_default_libs",
             extra_args = select({
                 "@llvm//platforms/config:windows_x86_64_msvc": [clang_cl_resource_dir_arg(exec_os, exec_cpu)],
                 "@llvm//platforms/config:windows_aarch64_msvc": [clang_cl_resource_dir_arg(exec_os, exec_cpu)],

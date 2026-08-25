@@ -522,6 +522,8 @@ def declare_toolchains(*, execs = None, targets = SUPPORTED_TARGETS):
             # See https://github.com/bazelbuild/rules_cc/issues/299#issuecomment-2660340534
             cc_toolchain(
                 name = cc_toolchain_name,
+                msvc_sdk_compile_args = "@llvm//toolchain/args/windows/msvc:direct_sdk_compile_args" if exec_os == "windows" else "@llvm//toolchain/args/windows/msvc:normalized_sdk_compile_args",
+                msvc_default_libs = "@llvm//toolchain/args/windows/msvc:direct_default_libs" if exec_os == "windows" else "@llvm//toolchain/args/windows/msvc:normalized_default_libs",
                 extra_args = select({
                     "@llvm//platforms/config:windows_x86_64_msvc": [":%s/clang_cl_compile_resource_dir" % tool_prefix],
                     "@llvm//platforms/config:windows_aarch64_msvc": [":%s/clang_cl_compile_resource_dir" % tool_prefix],
