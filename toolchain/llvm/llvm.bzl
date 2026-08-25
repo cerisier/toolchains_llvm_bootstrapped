@@ -182,14 +182,13 @@ def declare_llvm_targets(*, suffix = ""):
 
     # MSVC ABI actions use the CL/LINK dialect directly. Keep this map separate
     # from MinGW so target ABI, never execution OS, selects the personality.
-    MSVC_TOOLS = {
+    MSVC_CONSTRUCTION_TOOLS = {
         "@rules_cc//cc/toolchains/actions:c_compile": ":clang-cl",
         "@rules_cc//cc/toolchains/actions:cpp_compile": ":clang-cl",
         "@rules_cc//cc/toolchains/actions:linkstamp_compile": ":clang-cl",
         "@rules_cc//cc/toolchains/actions:lto_backend": ":clang-cl",
         "@rules_cc//cc/toolchains/actions:preprocess_assemble": ":clang-cl",
         "@rules_cc//cc/toolchains/actions:cpp_header_parsing": ":clang-cl",
-        "@rules_cc//cc/toolchains/actions:generate_def_file": ":coff_def_parser",
         "@rules_cc//cc/toolchains/actions:ar_actions": ":llvm-ar",
         "@rules_cc//cc/toolchains/actions:cpp_link_executable": ":clang-cl",
         "@rules_cc//cc/toolchains/actions:cpp_link_dynamic_library": ":clang-cl",
@@ -201,23 +200,27 @@ def declare_llvm_targets(*, suffix = ""):
         "@rules_cc//cc/toolchains/actions:strip": ":llvm-strip",
     }
 
+    MSVC_COMPLETE_TOOLS = MSVC_CONSTRUCTION_TOOLS | {
+        "@rules_cc//cc/toolchains/actions:generate_def_file": ":coff_def_parser",
+    } | _VALIDATE_STATIC_LIBRARY_TOOL
+
     cc_tool_map(
-        name = "tools_for_msvc",
-        tools = MSVC_TOOLS | _VALIDATE_STATIC_LIBRARY_TOOL,
+        name = "complete_tools_for_msvc",
+        tools = MSVC_COMPLETE_TOOLS,
         visibility = ["//visibility:public"],
     )
 
     cc_tool_map(
-        name = "staged_tools_for_msvc",
-        tools = MSVC_TOOLS,
+        name = "construction_tools_for_msvc",
+        tools = MSVC_CONSTRUCTION_TOOLS,
         visibility = ["//visibility:public"],
     )
 
     native.alias(
         name = "tools_for_msvc_for_runtime",
         actual = select({
-            "@llvm//toolchain:runtimes_all": ":tools_for_msvc",
-            "//conditions:default": ":staged_tools_for_msvc",
+            "@llvm//toolchain:runtimes_all": ":complete_tools_for_msvc",
+            "//conditions:default": ":construction_tools_for_msvc",
         }),
         visibility = ["//visibility:public"],
     )
