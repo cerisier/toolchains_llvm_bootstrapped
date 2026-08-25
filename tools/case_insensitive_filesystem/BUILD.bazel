@@ -7,6 +7,6 @@ package(default_visibility = [
 
 cc_library(
     name = "common",
-    srcs = ["common.cc"],
+    srcs = ["common.c"],
     hdrs = ["common.h"],
 )
