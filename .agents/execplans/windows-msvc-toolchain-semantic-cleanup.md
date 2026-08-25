@@ -1,8 +1,9 @@
 # Windows MSVC toolchain semantic cleanup plan
 
-Status: active; Batches 1 and 2 and the approved target-semantic portion and
-post-review leaf cleanup of Batch 3 are implemented and proved. R11/R42 remain
-open by owner decision; remaining batches await owner selection.
+Status: active; Batches 1-5 are implemented and proved. Batch 4 replaced hidden
+libc++ COFF auto-link metadata with explicit default-library linkage. R11/R42
+remain open by owner decision; R28/R29 moved to Step 13 of the Windows MSVC
+prebuilt LLVM execution plan.
 
 Date: 2026-08-24 (Asia/Tokyo)
 
@@ -96,17 +97,18 @@ order so later agents can map plan state back to PR #711.
   the previous broad-Windows behavior. The changed runtime selects were
   audited for the same exact loss pattern.
 
-- [ ] **R04 — Name the libc++/VCRuntime ABI-header contract precisely.**
+- [x] **R04 — Name the libc++/VCRuntime ABI-header contract precisely.**
   Keep the empty libc++abi-header route only for the supported
-  libc++ + Windows MSVC ABI + VCRuntime tuple. Rename or comment the selector
-  so it does not imply that every future MSVC C++ library gets ABI headers
-  elsewhere. Do not add libc++abi headers to the current route.
+  libc++ + Windows MSVC ABI + VCRuntime tuple. Give the selector that exact
+  meaning so it does not imply that every future MSVC C++ library gets ABI
+  headers elsewhere. Do not add libc++abi headers to the current route.
 
-- [ ] **R05 — Clarify the static libc++ Stage 0 graph.**
+- [x] **R05 — Clarify the static libc++ Stage 0 graph.**
   Preserve the ASan-inheriting default Stage 0 archive and the non-ASan Stage 0
   archive used by MSVC. Rename targets/comments to expose that distinction and
-  document that the final copy exists only for the exact `libc++.lib` COFF
-  auto-link name. Do not change the runtime stage.
+  document that the final copy supplies the exact `libc++.lib` name used by the
+  explicit clang-cl C++ runtime link contract. Disable libc++'s COFF auto-link
+  metadata for this configured route. Do not change the runtime stage.
 
 - [x] **R06 — Retain `exec_test` for Linux-linking artifact inspection.**
   `llvm-readelf` is an execution-platform tool while inspected outputs remain
@@ -218,11 +220,14 @@ order so later agents can map plan state back to PR #711.
   Once R22 and R24 are complete, delete the outer list whose only purpose was
   selecting between mechanically parallel dialect targets.
 
-- [ ] **R26 — Document why MSVC `hermetic_link_flags` is empty.**
+- [x] **R26 — Document why MSVC `hermetic_link_flags` is empty.**
   Preserve upstream libc++ CMake behavior: `-nostdlib++` is added only when
-  not MSVC, and `_LIBCPP_BUILDING_LIBRARY` suppresses self-auto-linking.
-  Record that `/NODEFAULTLIB` is stronger and forbidden; do not invent a
-  nonempty clang-cl equivalent.
+  not MSVC. Record that `/NODEFAULTLIB` is stronger and forbidden; do not
+  invent a nonempty clang-cl equivalent. Disable libc++ auto-link through its
+  supported `_LIBCPP_NO_AUTO_LINK` configuration and make the complete
+  toolchain's default-libraries composition name static `libc++.lib`
+  explicitly. `_LIBCPP_BUILDING_LIBRARY`
+  remains the upstream self-build guard, not the dependency-injection policy.
 
 - [x] **R27 — Replace the asymmetric Windows hosted-C aggregate.**
   Compose symmetric named Windows semantics for headers, SDK/runtime inputs,
@@ -234,13 +239,17 @@ order so later agents can map plan state back to PR #711.
   consumers use the target resource directory; generic Stage 1 links higher
   Unix runtime layers. Replace catch-all/default staging with explicit named
   stages and verify which branches are reachable through the unified
-  toolchain.
+  toolchain. Deferred to Step 13 of the Windows MSVC prebuilt LLVM execution
+  plan, which removes the runtime-complete helper cycle instead of documenting
+  the transient topology here.
 
 - [ ] **R29 — Name complete-runtime exec helpers by their real boundary.**
   Preserve the complete Linux exec-runtime transition for `msvc_def_parser`
   and case tools, but expose a purpose-named exec-helper wrapper or explicit
   documentation. State that these helpers must not enter construction of the
-  execution platform's own runtimes.
+  execution platform's own runtimes. Deferred to Step 13 of the Windows MSVC
+  prebuilt LLVM execution plan; its C-helper/parser-free bootstrap removes the
+  special complete-runtime wrapper rather than preserving it under a new name.
 
 ### Target/platform semantic hierarchy
 
@@ -625,9 +634,10 @@ Post-review semantic correction:
   failed the new public-header assertion. Selecting the exact supported
   `:windows_msvc` tuple makes the configuration-wide static-libc++ contract
   explicit without coupling it to ordinary consumer `/MD` versus `/MT`;
-- this correction does not complete R05. The remaining Stage 0 target naming,
-  ASan distinction, and final COFF auto-link copy documentation stay in Batch
-  4. R11/R42 remain deferred, and R44 remains an implementation no-op.
+- at that checkpoint, the Stage 0 target naming, ASan distinction, and final
+  COFF library-name contract remained for R05. Batch 4 now completes them and
+  replaces auto-link metadata with explicit default-library composition.
+  R11/R42 remain deferred, and R44 remains an implementation no-op.
 
 Evidence:
 
@@ -788,20 +798,58 @@ Evidence:
 
 ### Batch 4 — Clarify runtime and overlay ownership
 
-Items: R04-R05, R26, R28-R29.
+Items: R04-R05 and R26. R28-R29 move to Step 13 of the Windows MSVC prebuilt
+LLVM execution plan and remain open until that work is proved.
 
-Purpose: make already-correct ABI/runtime-stage behavior legible without
-changing LLVM source semantics or supported runtime contents. Most changes
-should be names/comments/semantic aliases; stop if a proposed rename changes a
-public label rather than retaining an alias.
+Status: implementation and lightweight proof complete on 2026-08-25. The
+libc++/MSVC/VCRuntime selector and both Stage 0 archive routes now expose their
+exact contracts. The configured MSVC libc++ headers suppress COFF auto-link
+metadata. The libc++ search-path semantic remains a search path only; the MSVC
+default-libraries composition names the declared static `libc++.lib`
+explicitly. MSVC `hermetic_link_flags` remains intentionally empty;
+`/NODEFAULTLIB` is not used.
+
+Purpose: name the current ABI/runtime-stage contracts precisely and replace
+libc++'s hidden COFF auto-link directive with an explicit, declared MSVC
+default-library argument. Keep LLVM source semantics and supported runtime contents
+unchanged. Rename only unpublished internal labels; retain an alias for any
+verified public consumer.
 
 Lightweight gate:
 
 - build the MSVC compiler-rt builtins and static libc++ artifacts for both
   target CPUs;
 - inspect archive names and runtime transitions once;
+- prove a libc++ consumer object no longer contains a `libc++.lib` default-lib
+  directive, while its final link action explicitly names the declared static
+  archive and does not use `/NODEFAULTLIB`;
 - build one generic libc++/libc++abi runtime representative to prove its graph
   remains unchanged.
+
+Evidence:
+
+- fail-before build invocation `59381c79-7057-447c-8a7e-1757878f48a8`
+  materialized the configured header without `_LIBCPP_NO_AUTO_LINK`; its
+  representative consumer archive contained `/DEFAULTLIB:libc++.lib` in the
+  COFF directive section. Fail-before aquery invocation
+  `f27c4be0-5956-41b6-86cc-377a26a2f0c7` showed only the declared libc++
+  `/LIBPATH` and no explicit `libc++.lib` link argument;
+- post-change aquery invocation `4f243d5c-56ff-43e0-99b1-923d7271cd9c`
+  shows the same declared search directory followed by explicit
+  `/clang:/DEFAULTLIB:libc++.lib`, with no `/NODEFAULTLIB`;
+- x86-64 build invocation `4f2fa4a1-5a47-44b4-8db0-9d98edc72472` and ARM64
+  build invocation `35e6f642-98c1-4f41-9b56-f9492468192f` rebuilt the static
+  runtime and representative complete consumers. The configured header
+  contains `_LIBCPP_NO_AUTO_LINK`; both consumer archives contain no libc++
+  default-lib directive. The executables inspect as AMD64 and native ARM64;
+- generic Linux libc++ and libc++abi archives built in invocation
+  `75f3745e-1802-4880-ad33-ae9d99858a01`. The Windows MSVC action protocol
+  script passed, and the full x86-64/ARM64 artifact matrix—including `/MD`,
+  `/MT`, ThinLTO, DLL/import-library, PDB, and the new no-auto-link artifact
+  assertion—passed in final invocation
+  `0fff4f67-19f7-4cdc-87a5-c593ac322c18`;
+- buildifier and `git diff --check` passed. R28/R29 remain intentionally open
+  for Step 13; no runtime-stage implementation from those items was included.
 
 ### Batch 5 — Split generic filesystem rules from MSVC payloads
 
@@ -1004,9 +1052,10 @@ Stop and request owner direction before:
 
 ## Recommended starting point
 
-Batches 1-5 are complete. R11/R42 remain explicitly deferred, and R44 remains
-an owner-approved no-op. The next batch is **Batch 6 — Release-policy design
-checkpoint**, which requires a fresh owner choice before implementation.
+Batches 1-5 are complete. R28/R29 are explicitly deferred to the new Step 13;
+R11/R42 remain deferred, and R44 remains an owner-approved no-op. The next
+batch is **Batch 6 — Release-policy design checkpoint**, which requires a fresh
+owner choice before implementation.
 
 The shared argument policy, clang-cl action protocol, Windows target semantics,
 runtime boundaries, and filesystem/payload ownership now have distinct owning

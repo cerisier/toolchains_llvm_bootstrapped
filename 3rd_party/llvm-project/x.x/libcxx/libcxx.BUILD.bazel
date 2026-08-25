@@ -61,6 +61,9 @@ _CONFIG_SITE_THREAD_API_PTHREAD_LINES = [
 
 _CONFIG_SITE_WINDOWS_MSVC_STATIC_LIBCXX_LINES = [
     "#define _LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS",
+    # Bazel owns C++ runtime selection. Do not inject libc++.lib through
+    # COFF .drectve sections emitted by every libc++ consumer object.
+    "#define _LIBCPP_NO_AUTO_LINK",
 ]
 
 _CONFIG_SITE_PREAMBLE_LINES = [
@@ -508,7 +511,8 @@ cc_library(
 )
 
 cc_runtime_stage0_asan_static_library(
-    name = "libcxx.static.default",
+    # The generic Stage 0 route inherits the configured ASan runtime policy.
+    name = "libcxx.static.stage0_asan_inheriting",
     visibility = ["//visibility:public"],
     deps = [
         ":libcxx",
@@ -516,7 +520,9 @@ cc_runtime_stage0_asan_static_library(
 )
 
 cc_runtime_stage0_static_library(
-    name = "libcxx.static.archive",
+    # The Windows MSVC route deliberately does not inherit ASan. It is the
+    # static libc++ input to the ordinary complete consumer toolchain.
+    name = "libcxx.static.stage0_non_asan",
     visibility = ["//visibility:public"],
     deps = [
         ":libcxx",
@@ -524,8 +530,9 @@ cc_runtime_stage0_static_library(
 )
 
 copy_file(
-    name = "libcxx.static.msvc",
-    src = ":libcxx.static.archive",
+    # The explicit clang-cl C++ runtime link contract names libc++.lib.
+    name = "libcxx.static.msvc_link_name",
+    src = ":libcxx.static.stage0_non_asan",
     out = "libc++.lib",
     allow_symlink = True,
     visibility = ["//visibility:public"],
@@ -553,8 +560,8 @@ filegroup(
 alias(
     name = "libcxx.static",
     actual = select({
-        ":windows_msvc": ":libcxx.static.msvc",
-        "//conditions:default": ":libcxx.static.default",
+        ":windows_msvc": ":libcxx.static.msvc_link_name",
+        "//conditions:default": ":libcxx.static.stage0_asan_inheriting",
     }),
     visibility = ["//visibility:public"],
 )

@@ -231,5 +231,7 @@ cc_args_list(
     ] + select({
         "//toolchain/features/msvc:static_crt_config": ["static_crt_library_search_paths"],
         "//conditions:default": ["dynamic_crt_library_search_paths"],
-    }),
+    }) + [
+        "//toolchain/args:clang_cl_static_libcxx_default_lib",
+    ],
 )
