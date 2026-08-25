@@ -37,7 +37,10 @@ cc_args_list(
 cc_args_list(
     name = "default_libs",
     args = select({
-        "//constraints/windows/abi:msvc": ["//toolchain/args/windows/msvc:default_libs"],
+        # MSVC SDK representation follows the execution filesystem, so each
+        # concrete cc_toolchain instance supplies its complete default-lib
+        # composition. Target-configured MinGW remains selected here.
+        "//constraints/windows/abi:msvc": [],
         "//conditions:default": ["//toolchain/args/windows/mingw:default_libs"],
     }),
 )

@@ -4,7 +4,23 @@ load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 
 _WINDOWS_MSVC_SUPPORTS_HEADER_PARSING = False
 
-def cc_toolchain(name, tool_map, module_map = None, extra_args = None):
+def cc_toolchain(
+        name,
+        tool_map,
+        module_map = None,
+        extra_args = None,
+        # These labels vary with the concrete execution filesystem, while
+        # rules_cc configures cc_args and their data in the target
+        # configuration. Feature-gating both representations would therefore
+        # retain the inactive VFS/copy dependencies and their construction
+        # cycle. Windows executors use the validated raw SDK; case-sensitive
+        # executors use its normalized view.
+        # TODO(cerisier): Replace this constructor plumbing with a
+        # repository-provided relocatable normalized SDK view, or another
+        # model that preserves these semantic positions without eagerly
+        # configuring both representations.
+        msvc_sdk_compile_args = "@llvm//toolchain/args/windows/msvc:normalized_sdk_compile_args",
+        msvc_default_libs = "@llvm//toolchain/args/windows/msvc:normalized_default_libs"):
     extra_args = extra_args or []
     cc_feature_set(
         name = name + "_msvc_known_features",
@@ -221,6 +237,14 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = None):
     )
 
     cc_args_list(
+        name = name + "_msvc_default_libs",
+        args = select({
+            "@llvm//toolchain:runtimes_none": [],
+            "//conditions:default": [msvc_default_libs],
+        }),
+    )
+
+    cc_args_list(
         name = name + "_semantic_args",
         args = select({
             "@llvm//toolchain:runtimes_none": ["@llvm//toolchain/runtimes:toolchain_args"],
@@ -244,6 +268,12 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = None):
                 # TODO: rules_cc passes extra args to these actions, ideally these would be fixed in rules_cc.
                 "@llvm//toolchain/args:ignore_unused_command_line_argument",
             ],
+        }) + select({
+            # This is the existing Windows default-libs semantic position.
+            # Its concrete SDK representation belongs to the exec-specific
+            # toolchain instance rather than the target configuration.
+            "@llvm//constraints/windows/abi:msvc": [name + "_msvc_default_libs"],
+            "//conditions:default": [],
         }),
     )
 
@@ -289,7 +319,7 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = None):
         # declared resource headers between them and VC/UCRT so libc++
         # include_next wrappers resolve Clang definitions first.
         args = [name + "_semantic_args"] + extra_args + select({
-            "@llvm//constraints/windows/abi:msvc": ["@llvm//toolchain/args/windows/msvc:sdk_compile_args"],
+            "@llvm//constraints/windows/abi:msvc": [msvc_sdk_compile_args],
             "//conditions:default": [],
         }),
         # clang-cl header parsing remains a named unsupported boundary. It can
