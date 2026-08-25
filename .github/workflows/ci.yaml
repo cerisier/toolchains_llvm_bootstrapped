@@ -121,6 +121,20 @@ jobs:
           cp "${x64_archive}" windows-msvc-prebuilt-amd64.tar.zst
           cp "${arm64_archive}" windows-msvc-prebuilt-arm64.tar.zst
 
+      - name: Verify Windows MSVC action and analysis contracts
+        env:
+          USE_BAZEL_VERSION: last_rc
+        working-directory: e2e/rules_cc
+        shell: bash
+        run: |
+          common_flags=(
+            --config=remote
+            --jobs=100
+            --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7
+          )
+          bash ./windows_msvc_action_test.sh "${common_flags[@]}"
+          bash ./windows_msvc_analysis_test.sh "${common_flags[@]}"
+
       - uses: actions/upload-artifact@v7
         with:
           archive: false
@@ -197,12 +211,14 @@ jobs:
             machine: AMD64
             repo_cpu: amd64
             target_cpu: x86_64
+            target_triple: x86_64-pc-windows-msvc
           - os: windows-11-arm
             bazel_version: latest
             link_machine: ARM64
             machine: ARM64
             repo_cpu: arm64
             target_cpu: aarch64
+            target_triple: aarch64-pc-windows-msvc
     runs-on: ${{ matrix.os }}
     name: Test MSVC prebuilt on ${{ matrix.os }}
 
@@ -295,6 +311,7 @@ jobs:
           grep -F "llvm-toolchain-minimal-windows-${{ matrix.repo_cpu }}" \
             "${RUNNER_TEMP}/msvc-archive-action.txt"
           grep -F "llvm-ar.exe" "${RUNNER_TEMP}/msvc-archive-action.txt"
+          grep -F "rcsD" "${RUNNER_TEMP}/msvc-archive-action.txt"
           bazel --bazelrc=.bazelrc aquery \
             "${common_flags[@]}" \
             --include_param_files \
@@ -308,11 +325,105 @@ jobs:
           grep -F "/MACHINE:${{ matrix.link_machine }}" \
             "${RUNNER_TEMP}/msvc-link-action.txt"
 
+          thin_lto_target="//:windows_msvc_libcxx_behavior_thinlto"
+          for action in \
+            "CppCompile:compile" \
+            "CppLTOIndexing:index" \
+            "CcLtoBackendCompile:backend" \
+            "CppLink:link"; do
+            mnemonic="${action%%:*}"
+            output="${action#*:}"
+            bazel --bazelrc=.bazelrc aquery \
+              "${common_flags[@]}" \
+              --include_param_files \
+              --output=text \
+              "mnemonic(\"${mnemonic}\", ${thin_lto_target})" \
+              >"${RUNNER_TEMP}/msvc-thinlto-${output}-action.txt"
+          done
+          bazel --bazelrc=.bazelrc aquery \
+            "${common_flags[@]}" \
+            --include_param_files \
+            --output=text \
+            "${thin_lto_target}" \
+            >"${RUNNER_TEMP}/msvc-thinlto-graph.txt"
+
+          thin_compile="${RUNNER_TEMP}/msvc-thinlto-compile-action.txt"
+          thin_index="${RUNNER_TEMP}/msvc-thinlto-index-action.txt"
+          thin_backend="${RUNNER_TEMP}/msvc-thinlto-backend-action.txt"
+          thin_link="${RUNNER_TEMP}/msvc-thinlto-link-action.txt"
+          grep -F "llvm-toolchain-minimal-windows-${{ matrix.repo_cpu }}" "${thin_compile}"
+          grep -F "clang-cl.exe" "${thin_compile}"
+          grep -F -- "--target=${{ matrix.target_triple }}" "${thin_compile}"
+          grep -F "/std:c++20" "${thin_compile}"
+          grep -F "/clang:-flto=thin" "${thin_compile}"
+          grep -F ".indexing.o" "${thin_compile}"
+          grep -F ".params" "${thin_compile}"
+
+          grep -F "CppLTOIndexing" "${thin_index}"
+          grep -F "clang-cl.exe" "${thin_index}"
+          grep -F "lld-link.exe" "${thin_index}"
+          grep -F "/MACHINE:${{ matrix.link_machine }}" "${thin_index}"
+          grep -F "/thinlto-index-only:" "${thin_index}"
+          grep -F "/thinlto-object-suffix-replace:.indexing.o;.obj" "${thin_index}"
+          grep -F ".params" "${thin_index}"
+
+          grep -F "CcLtoBackendCompile" "${thin_backend}"
+          grep -F "clang-cl.exe" "${thin_backend}"
+          grep -F -- "--target=${{ matrix.target_triple }}" "${thin_backend}"
+          grep -F "/clang:-fthinlto-index=" "${thin_backend}"
+          grep -F ".obj" "${thin_backend}"
+
+          grep -F "clang-cl.exe" "${thin_link}"
+          grep -F "lld-link.exe" "${thin_link}"
+          grep -F "/MACHINE:${{ matrix.link_machine }}" "${thin_link}"
+          grep -F ".exe-lto-final.params" "${thin_link}"
+          grep -F ".lto.merged.o" "${thin_link}"
+          grep -F "/WHOLEARCHIVE" "${thin_link}"
+          grep -F "windows_msvc_libcxx_behavior_support.lib" "${thin_link}"
+          grep -F "/DEFAULTLIB:libc++.lib" "${thin_link}"
+          grep -F "winsdk_ucrt_lib" "${thin_link}"
+          grep -F "winsdk_um_lib" "${thin_link}"
+          grep -F "msvc_dynamic_runtime_libraries" "${thin_link}"
+          grep -F "/Fe" "${thin_link}"
+
+          if grep -Eiq \
+            'CaseInsensitive(VFS|Copy)|case_insensitive_(vfs|copy)' \
+            "${RUNNER_TEMP}/msvc-thinlto-graph.txt" || \
+            grep -Eiq \
+              'msvc_sdk_case_overlay|winsdk_(ucrt|um)_libraries|toolchain/stage' \
+              "${RUNNER_TEMP}/msvc-thinlto-graph.txt"; then
+            echo "Native ThinLTO unexpectedly selected normalization or source-built tools" >&2
+            exit 1
+          fi
+          if grep -Eiq \
+            'Program Files[/\\](Microsoft Visual Studio|Windows Kits)' \
+            "${RUNNER_TEMP}/msvc-thinlto-graph.txt"; then
+            echo "Native ThinLTO unexpectedly selected an ambient Visual Studio or SDK path" >&2
+            exit 1
+          fi
+          for action_file in "${thin_index}" "${thin_backend}" "${thin_link}"; do
+            if grep -Fq -- "-Wl," "${action_file}" || \
+              grep -Fq -- "-x ir" "${action_file}"; then
+              echo "Native ThinLTO unexpectedly used GNU linker protocol" >&2
+              exit 1
+            fi
+          done
+
           bazel --bazelrc=.bazelrc test \
             "${common_flags[@]}" \
             --strategy=TestRunner=local \
             //:windows_msvc_libcxx_behavior_md \
-            //:windows_msvc_dll_behavior
+            //:windows_msvc_dll_behavior \
+            "${thin_lto_target}"
+          thin_lto_exe="$(bazel --bazelrc=.bazelrc cquery \
+            "${common_flags[@]}" \
+            --output=files \
+            "${thin_lto_target}" | grep -E '\.exe$')"
+          "${readobj}" \
+            --file-headers \
+            "${output_base}/${thin_lto_exe}" | tee "${RUNNER_TEMP}/thinlto-readobj.txt"
+          grep -F "IMAGE_FILE_MACHINE_${{ matrix.machine }}" \
+            "${RUNNER_TEMP}/thinlto-readobj.txt"
           bazel --bazelrc=.bazelrc test \
             "${common_flags[@]}" \
             --features=-dynamic_link_msvcrt \
@@ -387,102 +498,6 @@ jobs:
         working-directory: ${{ matrix.folder }}
         shell: bash
         run: ./coverage_lcov_test.sh --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7
-
-  windows_msvc_layer1_hosts:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-latest
-            bazel_version: last_rc
-            target_cpu: x86_64
-          - os: ubuntu-24.04-arm
-            bazel_version: last_rc
-            target_cpu: aarch64
-    runs-on: ${{ matrix.os }}
-    name: Windows MSVC Layer 1 on ${{ matrix.os }}
-
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Cross-build representative MSVC behavior locally
-        env:
-          USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
-        working-directory: e2e/rules_cc
-        shell: bash
-        run: |
-          cache_flags=()
-          if [[ "${RUNNER_OS}" == "Windows" ]]; then
-            cache_flags+=(--repository_cache= --repo_contents_cache=)
-          fi
-          bazel \
-            --bazelrc=.bazelrc \
-            build \
-            "${cache_flags[@]}" \
-            --jobs=50 \
-            --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
-            --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
-            --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
-            --extra_execution_platforms=@platforms//host:host \
-            --platforms=@llvm//platforms:windows_${{ matrix.target_cpu }}_msvc \
-            --spawn_strategy=local \
-            //:windows_msvc_libcxx_behavior_md \
-            //:windows_msvc_dll_behavior
-          bazel \
-            --bazelrc=.bazelrc \
-            build \
-            "${cache_flags[@]}" \
-            --jobs=50 \
-            --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
-            --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
-            --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
-            --extra_execution_platforms=@platforms//host:host \
-            --platforms=@llvm//platforms:windows_${{ matrix.target_cpu }}_msvc \
-            --features=-dynamic_link_msvcrt \
-            --features=static_link_msvcrt \
-            --spawn_strategy=local \
-            //:windows_msvc_libcxx_behavior_mt
-
-      - name: Inspect representative MSVC artifacts
-        if: runner.os == 'Linux'
-        env:
-          USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
-        working-directory: e2e/rules_cc
-        shell: bash
-        run: |
-          bazel \
-            --bazelrc=.bazelrc \
-            test \
-            --config=remote \
-            --jobs=100 \
-            --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
-            --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
-            --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
-            //:windows_msvc_artifacts_${{ matrix.target_cpu }}_test
-
-      - name: Verify stable MSVC action protocols
-        if: runner.os == 'Linux' && matrix.target_cpu == 'x86_64'
-        env:
-          USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
-        working-directory: e2e/rules_cc
-        shell: bash
-        run: |
-          bash ./windows_msvc_action_test.sh \
-            --config=remote \
-            --jobs=100 \
-            --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7
-
-      - name: Verify unsupported MSVC configurations
-        if: runner.os == 'Linux' && matrix.target_cpu == 'x86_64'
-        env:
-          USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
-        working-directory: e2e/rules_cc
-        shell: bash
-        run: |
-          bash ./windows_msvc_analysis_test.sh \
-            --config=remote \
-            --jobs=100 \
-            --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7
 
   llvm_version_analysis:
     strategy:
