@@ -1,7 +1,7 @@
 /* Distributed under the OSI-approved BSD 3-Clause License.  See accompanying
    file Copyright.txt or https://cmake.org/licensing for details.  */
 
-#include "tools/msvc_def_parser/def_parser.h"
+#include "tools/coff_def_parser/def_parser.h"
 
 #include <chrono>
 #include <cstdint>
@@ -31,7 +31,7 @@ class TemporaryDirectory {
 public:
   TemporaryDirectory() {
     path_ = std::filesystem::temp_directory_path() /
-            ("msvc-def-parser-test-" +
+            ("coff-def-parser-test-" +
              std::to_string(
                  std::chrono::steady_clock::now().time_since_epoch().count()));
     std::filesystem::create_directories(path_);

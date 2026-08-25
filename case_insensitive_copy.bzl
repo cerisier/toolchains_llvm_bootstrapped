@@ -15,7 +15,7 @@ def _case_insensitive_copy_directory_impl(ctx):
         ],
         inputs = source.transitive_files,
         outputs = [output],
-        mnemonic = "WindowsCaseCopy",
+        mnemonic = "CaseInsensitiveCopy",
         progress_message = "Case-folding directory inputs %{label}",
     )
     directory = create_directory_info(
@@ -35,7 +35,7 @@ case_insensitive_copy_directory = rule(
         "src": attr.label(mandatory = True, providers = [DirectoryInfo]),
         "_copy_tool": attr.label(
             allow_single_file = True,
-            default = "//tools/windows_case_copy",
+            default = "//tools/case_insensitive_copy",
             cfg = "exec",
             executable = True,
         ),

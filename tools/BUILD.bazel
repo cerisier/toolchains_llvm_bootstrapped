@@ -23,8 +23,8 @@ py_binary(
 )
 
 alias(
-    name = "msvc_def_parser",
-    actual = "//tools/msvc_def_parser",
+    name = "coff_def_parser",
+    actual = "//tools/coff_def_parser",
 )
 
 bzl_library(

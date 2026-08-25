@@ -8,7 +8,7 @@ package(default_visibility = ["//visibility:public"])
 # Ported from bazelbuild/bazel df9cf21c8bf643f374790b0c2bc75686293b7024,
 # third_party/def_parser. The accompanying BSD notice remains unchanged.
 cc_runtime_complete_binary(
-    name = "msvc_def_parser",
+    name = "coff_def_parser",
     srcs = [
         "def_parser.cc",
         "def_parser.h",
@@ -29,7 +29,7 @@ exec_test(
 exec_test(
     name = "cli_test",
     srcs = ["cli_test.sh"],
-    env = {"DEF_PARSERS": "$(rootpaths msvc_def_parser)"},
+    env = {"DEF_PARSERS": "$(rootpaths coff_def_parser)"},
     rule = sh_test,
-    tools = ["msvc_def_parser"],
+    tools = ["coff_def_parser"],
 )

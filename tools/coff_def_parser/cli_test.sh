@@ -3,7 +3,7 @@
 set -euo pipefail
 
 DEF_PARSER="${DEF_PARSERS%% *}"
-test_tmp="$(mktemp -d "${TMPDIR:-/tmp}/msvc-def-parser-cli.XXXXXX")"
+test_tmp="$(mktemp -d "${TMPDIR:-/tmp}/coff-def-parser-cli.XXXXXX")"
 trap 'rm -rf "${test_tmp}"' EXIT
 
 expect_failure() {

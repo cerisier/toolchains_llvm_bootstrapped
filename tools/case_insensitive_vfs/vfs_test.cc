@@ -5,8 +5,8 @@
 #include <string>
 #include <string_view>
 
-#include "tools/windows_case/common.h"
-#include "tools/windows_case_vfs/vfs.h"
+#include "tools/case_insensitive_filesystem/common.h"
+#include "tools/case_insensitive_vfs/vfs.h"
 
 namespace {
 
@@ -14,7 +14,7 @@ class TemporaryDirectory {
 public:
   TemporaryDirectory() {
     path_ = std::filesystem::temp_directory_path() /
-            ("windows-case-vfs-test-" +
+            ("case-insensitive-vfs-test-" +
              std::to_string(
                  std::chrono::steady_clock::now().time_since_epoch().count()));
     std::filesystem::create_directories(path_);
@@ -70,7 +70,7 @@ bool TestGenerateCaseInsensitiveOverlay() {
 
   std::string overlay;
   std::string error;
-  if (!windows_case_vfs::GenerateOverlay({root}, &overlay, &error)) {
+  if (!case_insensitive_vfs::GenerateOverlay({root}, &overlay, &error)) {
     std::cerr << error << '\n';
     return false;
   }
@@ -84,8 +84,8 @@ bool TestGenerateCaseInsensitiveOverlay() {
 bool TestPreferredNameChoosesLowercaseAlias() {
   std::string preferred;
   std::string error;
-  if (!windows_case::PreferredName("Windows.h", "windows.h", &preferred,
-                                   &error)) {
+  if (!case_insensitive_filesystem::PreferredName("Windows.h", "windows.h",
+                                                  &preferred, &error)) {
     std::cerr << error << '\n';
     return false;
   }
@@ -100,7 +100,8 @@ bool TestPreferredNameChoosesLowercaseAlias() {
 bool TestPreferredNameRejectsAmbiguousEntries() {
   std::string preferred;
   std::string error;
-  if (!windows_case::PreferredName("FOO.h", "Foo.h", &preferred, &error)) {
+  if (!case_insensitive_filesystem::PreferredName("FOO.h", "Foo.h", &preferred,
+                                                  &error)) {
     return true;
   }
   std::cerr << "ambiguous case-only entries were accepted\n";
@@ -125,7 +126,7 @@ bool TestGenerateFollowsTransformedHeaderSymlink() {
 
   std::string overlay;
   std::string error;
-  if (!windows_case_vfs::GenerateOverlay({root}, &overlay, &error)) {
+  if (!case_insensitive_vfs::GenerateOverlay({root}, &overlay, &error)) {
     std::cerr << error << '\n';
     return false;
   }
@@ -147,8 +148,8 @@ bool TestGenerateIsDeterministicAndSortsRootsAndEntries() {
 
   std::string first_overlay;
   std::string error;
-  if (!windows_case_vfs::GenerateOverlay({second_root, first_root},
-                                         &first_overlay, &error)) {
+  if (!case_insensitive_vfs::GenerateOverlay({second_root, first_root},
+                                             &first_overlay, &error)) {
     std::cerr << error << '\n';
     return false;
   }
@@ -162,8 +163,8 @@ bool TestGenerateIsDeterministicAndSortsRootsAndEntries() {
   }
 
   std::string second_overlay;
-  if (!windows_case_vfs::GenerateOverlay({first_root, second_root},
-                                         &second_overlay, &error)) {
+  if (!case_insensitive_vfs::GenerateOverlay({first_root, second_root},
+                                             &second_overlay, &error)) {
     std::cerr << error << '\n';
     return false;
   }
@@ -173,8 +174,9 @@ bool TestGenerateIsDeterministicAndSortsRootsAndEntries() {
   }
 
   return Contains(first_overlay, "\"name\": \"Empty\"") &&
-         AppearsBefore(first_overlay, windows_case::GenericPath(first_root),
-                       windows_case::GenericPath(second_root)) &&
+         AppearsBefore(first_overlay,
+                       case_insensitive_filesystem::GenericPath(first_root),
+                       case_insensitive_filesystem::GenericPath(second_root)) &&
          AppearsBefore(first_overlay, "\"name\": \"Alpha.h\"",
                        "\"name\": \"zeta.h\"");
 }
@@ -197,7 +199,7 @@ bool TestGenerateRejectsAmbiguousCaseCollision() {
 
   std::string overlay;
   std::string error;
-  if (!windows_case_vfs::GenerateOverlay({root}, &overlay, &error)) {
+  if (!case_insensitive_vfs::GenerateOverlay({root}, &overlay, &error)) {
     return Contains(error, "ambiguous case-insensitive SDK entries");
   }
   std::cerr << "ambiguous case-only entries were accepted\n";
@@ -217,7 +219,7 @@ bool TestGenerateRejectsDirectorySymlink() {
 
   std::string overlay;
   std::string error;
-  if (!windows_case_vfs::GenerateOverlay({root}, &overlay, &error)) {
+  if (!case_insensitive_vfs::GenerateOverlay({root}, &overlay, &error)) {
     return Contains(error, "unsupported SDK directory symlink");
   }
   std::cerr << "directory symlink was accepted\n";
@@ -225,14 +227,14 @@ bool TestGenerateRejectsDirectorySymlink() {
 }
 
 bool TestJsonAndGenericPathEscaping() {
-  const std::string escaped =
-      windows_case::JsonString(std::string("\"\\\b\f\n\r\t\x01", 8));
+  const std::string escaped = case_insensitive_filesystem::JsonString(
+      std::string("\"\\\b\f\n\r\t\x01", 8));
   if (escaped != "\"\\\"\\\\\\b\\f\\n\\r\\t\\u0001\"") {
     std::cerr << "unexpected JSON escaping: " << escaped << '\n';
     return false;
   }
-  const std::string generic =
-      windows_case::GenericPath(std::filesystem::path("alpha") / "beta");
+  const std::string generic = case_insensitive_filesystem::GenericPath(
+      std::filesystem::path("alpha") / "beta");
   if (generic != "alpha/beta") {
     std::cerr << "unexpected generic path: " << generic << '\n';
     return false;

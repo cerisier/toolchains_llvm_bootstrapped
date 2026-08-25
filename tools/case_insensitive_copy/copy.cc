@@ -1,20 +1,20 @@
-#include "tools/windows_case_copy/copy.h"
+#include "tools/case_insensitive_copy/copy.h"
 
 #include <sstream>
 #include <system_error>
 #include <vector>
 
-#include "tools/windows_case/common.h"
+#include "tools/case_insensitive_filesystem/common.h"
 
-namespace windows_case_copy {
+namespace case_insensitive_copy {
 namespace {
 
 std::string FilesystemError(std::string_view operation,
                             const std::filesystem::path &path,
                             const std::error_code &error) {
   std::ostringstream message;
-  message << operation << " " << windows_case::GenericPath(path) << ": "
-          << error.message();
+  message << operation << " " << case_insensitive_filesystem::GenericPath(path)
+          << ": " << error.message();
   return message.str();
 }
 
@@ -30,12 +30,13 @@ bool CopyDirectory(const std::filesystem::path &source,
     return false;
   }
 
-  std::vector<windows_case::DirectoryEntry> entries;
-  if (!windows_case::CollectPreferredEntries(source, &entries, error)) {
+  std::vector<case_insensitive_filesystem::DirectoryEntry> entries;
+  if (!case_insensitive_filesystem::CollectPreferredEntries(source, &entries,
+                                                            error)) {
     return false;
   }
 
-  for (const windows_case::DirectoryEntry &candidate : entries) {
+  for (const case_insensitive_filesystem::DirectoryEntry &candidate : entries) {
     const std::filesystem::path source_path = candidate.entry.path();
     const std::filesystem::file_status status =
         std::filesystem::status(source_path, filesystem_error);
@@ -52,8 +53,8 @@ bool CopyDirectory(const std::filesystem::path &source,
       continue;
     }
     if (!std::filesystem::is_regular_file(status)) {
-      *error =
-          "unsupported SDK entry " + windows_case::GenericPath(source_path);
+      *error = "unsupported SDK entry " +
+               case_insensitive_filesystem::GenericPath(source_path);
       return false;
     }
 
@@ -69,4 +70,4 @@ bool CopyDirectory(const std::filesystem::path &source,
   return true;
 }
 
-} // namespace windows_case_copy
+} // namespace case_insensitive_copy

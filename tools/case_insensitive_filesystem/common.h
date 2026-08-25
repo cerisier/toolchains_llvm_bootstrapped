@@ -1,12 +1,12 @@
-#ifndef HERMETIC_LLVM_TOOLS_WINDOWS_CASE_COMMON_H_
-#define HERMETIC_LLVM_TOOLS_WINDOWS_CASE_COMMON_H_
+#ifndef HERMETIC_LLVM_TOOLS_CASE_INSENSITIVE_FILESYSTEM_COMMON_H_
+#define HERMETIC_LLVM_TOOLS_CASE_INSENSITIVE_FILESYSTEM_COMMON_H_
 
 #include <filesystem>
 #include <string>
 #include <string_view>
 #include <vector>
 
-namespace windows_case {
+namespace case_insensitive_filesystem {
 
 struct DirectoryEntry {
   std::filesystem::directory_entry entry;
@@ -26,6 +26,6 @@ std::string GenericPath(const std::filesystem::path &path);
 
 std::string JsonString(std::string_view value);
 
-} // namespace windows_case
+} // namespace case_insensitive_filesystem
 
-#endif // HERMETIC_LLVM_TOOLS_WINDOWS_CASE_COMMON_H_
+#endif // HERMETIC_LLVM_TOOLS_CASE_INSENSITIVE_FILESYSTEM_COMMON_H_

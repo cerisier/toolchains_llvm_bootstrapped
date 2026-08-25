@@ -1,13 +1,13 @@
-#include "tools/windows_case_vfs/vfs.h"
+#include "tools/case_insensitive_vfs/vfs.h"
 
 #include <algorithm>
 #include <sstream>
 #include <system_error>
 #include <utility>
 
-#include "tools/windows_case/common.h"
+#include "tools/case_insensitive_filesystem/common.h"
 
-namespace windows_case_vfs {
+namespace case_insensitive_vfs {
 namespace {
 
 struct Entry {
@@ -21,22 +21,23 @@ std::string FilesystemError(std::string_view operation,
                             const std::filesystem::path &path,
                             const std::error_code &error) {
   std::ostringstream message;
-  message << operation << " " << windows_case::GenericPath(path) << ": "
-          << error.message();
+  message << operation << " " << case_insensitive_filesystem::GenericPath(path)
+          << ": " << error.message();
   return message.str();
 }
 
 bool DirectoryEntry(const std::filesystem::path &path,
                     const std::filesystem::path &virtual_name, Entry *result,
                     std::string *error) {
-  std::vector<windows_case::DirectoryEntry> entries;
-  if (!windows_case::CollectPreferredEntries(path, &entries, error)) {
+  std::vector<case_insensitive_filesystem::DirectoryEntry> entries;
+  if (!case_insensitive_filesystem::CollectPreferredEntries(path, &entries,
+                                                            error)) {
     return false;
   }
 
   result->type = "directory";
-  result->name = windows_case::GenericPath(virtual_name);
-  for (const windows_case::DirectoryEntry &candidate : entries) {
+  result->name = case_insensitive_filesystem::GenericPath(virtual_name);
+  for (const case_insensitive_filesystem::DirectoryEntry &candidate : entries) {
     const std::filesystem::path full_path = candidate.entry.path();
     std::error_code filesystem_error;
     const std::filesystem::file_status status =
@@ -55,7 +56,7 @@ bool DirectoryEntry(const std::filesystem::path &path,
       }
       if (std::filesystem::is_symlink(link_status)) {
         *error = "unsupported SDK directory symlink " +
-                 windows_case::GenericPath(full_path);
+                 case_insensitive_filesystem::GenericPath(full_path);
         return false;
       }
 
@@ -67,14 +68,16 @@ bool DirectoryEntry(const std::filesystem::path &path,
       continue;
     }
     if (!std::filesystem::is_regular_file(status)) {
-      *error = "unsupported SDK entry " + windows_case::GenericPath(full_path);
+      *error = "unsupported SDK entry " +
+               case_insensitive_filesystem::GenericPath(full_path);
       return false;
     }
 
-    result->contents.push_back({"file",
-                                full_path.filename().string(),
-                                windows_case::GenericPath(full_path),
-                                {}});
+    result->contents.push_back(
+        {"file",
+         full_path.filename().string(),
+         case_insensitive_filesystem::GenericPath(full_path),
+         {}});
   }
   return true;
 }
@@ -87,14 +90,16 @@ void RenderEntry(const Entry &entry, int indentation,
                  std::ostringstream *output) {
   *output << "{\n";
   Indent(output, indentation + 2);
-  *output << "\"type\": " << windows_case::JsonString(entry.type) << ",\n";
+  *output << "\"type\": " << case_insensitive_filesystem::JsonString(entry.type)
+          << ",\n";
   Indent(output, indentation + 2);
-  *output << "\"name\": " << windows_case::JsonString(entry.name);
+  *output << "\"name\": "
+          << case_insensitive_filesystem::JsonString(entry.name);
   if (!entry.external_contents.empty()) {
     *output << ",\n";
     Indent(output, indentation + 2);
     *output << "\"external-contents\": "
-            << windows_case::JsonString(entry.external_contents);
+            << case_insensitive_filesystem::JsonString(entry.external_contents);
   }
   if (!entry.contents.empty()) {
     *output << ",\n";
@@ -129,8 +134,8 @@ bool GenerateOverlay(const std::vector<std::filesystem::path> &roots,
   std::sort(sorted_roots.begin(), sorted_roots.end(),
             [](const std::filesystem::path &left,
                const std::filesystem::path &right) {
-              return windows_case::GenericPath(left) <
-                     windows_case::GenericPath(right);
+              return case_insensitive_filesystem::GenericPath(left) <
+                     case_insensitive_filesystem::GenericPath(right);
             });
 
   std::vector<Entry> root_entries;
@@ -138,7 +143,8 @@ bool GenerateOverlay(const std::vector<std::filesystem::path> &roots,
   for (const std::filesystem::path &root : sorted_roots) {
     Entry entry;
     if (!DirectoryEntry(root, root, &entry, error)) {
-      *error = "walk " + windows_case::GenericPath(root) + ": " + *error;
+      *error = "walk " + case_insensitive_filesystem::GenericPath(root) + ": " +
+               *error;
       return false;
     }
     root_entries.push_back(std::move(entry));
@@ -163,4 +169,4 @@ bool GenerateOverlay(const std::vector<std::filesystem::path> &roots,
   return true;
 }
 
-} // namespace windows_case_vfs
+} // namespace case_insensitive_vfs

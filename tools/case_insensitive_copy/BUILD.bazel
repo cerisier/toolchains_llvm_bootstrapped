@@ -7,32 +7,32 @@ load("@rules_shell//shell:sh_test.bzl", "sh_test")
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
-    name = "windows_case_vfs_lib",
-    srcs = ["vfs.cc"],
-    hdrs = ["vfs.h"],
-    deps = ["//tools/windows_case:common"],
+    name = "case_insensitive_copy_lib",
+    srcs = ["copy.cc"],
+    hdrs = ["copy.h"],
+    deps = ["//tools/case_insensitive_filesystem:common"],
 )
 
 cc_runtime_complete_binary(
-    name = "windows_case_vfs",
+    name = "case_insensitive_copy",
     srcs = ["main.cc"],
-    deps = ["windows_case_vfs_lib"],
+    deps = ["case_insensitive_copy_lib"],
 )
 
 exec_test(
     name = "test",
-    srcs = ["vfs_test.cc"],
+    srcs = ["copy_test.cc"],
     rule = cc_test,
     deps = [
-        "windows_case_vfs_lib",
-        "//tools/windows_case:common",
+        "case_insensitive_copy_lib",
+        "//tools/case_insensitive_filesystem:common",
     ],
 )
 
 exec_test(
     name = "cli_test",
     srcs = ["cli_test.sh"],
-    env = {"VFS_TOOLS": "$(rootpaths windows_case_vfs)"},
+    env = {"COPY_TOOLS": "$(rootpaths case_insensitive_copy)"},
     rule = sh_test,
-    tools = ["windows_case_vfs"],
+    tools = ["case_insensitive_copy"],
 )

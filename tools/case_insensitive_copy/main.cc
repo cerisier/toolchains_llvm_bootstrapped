@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 
-#include "tools/windows_case_copy/copy.h"
+#include "tools/case_insensitive_copy/copy.h"
 
 namespace {
 
@@ -41,7 +41,7 @@ int main(int argc, char **argv) {
   }
 
   std::string error;
-  if (!windows_case_copy::CopyDirectory(source, output, &error)) {
+  if (!case_insensitive_copy::CopyDirectory(source, output, &error)) {
     std::cerr << error << '\n';
     return 1;
   }
