@@ -1,10 +1,13 @@
 # Windows MSVC native execution completion plan
 
-Status: in progress. This plan is the canonical specification for Step 13 of
-`windows-msvc-prebuilt-llvm.md` and is a hard prerequisite to merging any
-Windows MSVC implementation from that sequence or publishing its toolchain.
+Status: complete on the combined draft PR #711 branch. This plan is the
+canonical specification for Step 13 of `windows-msvc-prebuilt-llvm.md` and is a
+hard prerequisite to merging any Windows MSVC implementation from that
+sequence or publishing its toolchain. The successor release split remains
+owned by `windows-gnu-msvc-prebuilt-release.md`.
 
 Date: 2026-08-25 (Asia/Tokyo)
+Revised: 2026-08-26 (Asia/Tokyo)
 
 ## Progress
 
@@ -79,8 +82,8 @@ Date: 2026-08-25 (Asia/Tokyo)
   a repository-provided relocatable normalized SDK view as the preferred
   follow-up. Human review approved the batch. No Stage 3 or native consumer
   execution was run; those remain Batch 6.
-- [ ] Batch 6: implemented locally; native consumer/ThinLTO execution and
-  human review remain. The Linux RBE producer regression built both complete
+- [x] Batch 6: native consumer/ThinLTO execution, consolidated CI, and final
+  review are complete. The Linux RBE producer regression built both complete
   Stage 3 release archives together with `--config=remote --config=release`
   in invocation `bcad0e81-0ad6-4d4d-982c-c7df686cd7d9` (111,812 actions,
   17,084 executed processes). The graph generated and merged the existing
@@ -107,9 +110,16 @@ Date: 2026-08-25 (Asia/Tokyo)
   extends the existing native x64/ARM64 consumer matrix with ThinLTO
   compile/index/backend/link inspection plus execution and PE-machine proof,
   and removes the two-row `windows_msvc_layer1_hosts` development matrix.
-  YAML parsing and `git diff --check` pass. Native proof is intentionally not
-  claimed: the CI edit and Batch 5 commit have not been pushed, and this macOS
-  checkout cannot execute Windows PE consumers.
+  YAML parsing and `git diff --check` pass. Commits `ccf0ead9` through
+  `e0179195` corrected and consolidated the native proof without changing
+  product/toolchain semantics. Final CI run `32878927638` passed all
+  42 jobs at `e017919577791226553b4377f9acd399b2ea6bee`. Native x86-64 job
+  `97907151911` and ARM64 job `97907151905` selected the unpublished matching
+  MSVC-built archives, passed compile/archive/link and ThinLTO action
+  assertions, executed the `/MD`, DLL, ThinLTO, and `/MT` behaviors, and
+  inspected the ThinLTO executables as `IMAGE_FILE_MACHINE_AMD64` and native
+  `IMAGE_FILE_MACHINE_ARM64` respectively. The same run kept every generic,
+  MinGW, source-version, public-docs, and Bazel test lane green.
 
 ## Objective
 

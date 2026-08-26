@@ -1,12 +1,20 @@
 # Windows MSVC prebuilt LLVM execution plan
 
-Status: Steps 1-4, 6-10, and 10.1 are complete. Step 5 is intentionally
-skipped. Step 11 is complete. Steps 12-13 remain proposed and require separate
-authorization. Step 13 is specified canonically in
-`windows-msvc-native-execution.md`.
+Status: Steps 1-4, 6-11, and 13 are implemented and proved on the combined
+draft PR #711 branch. Step 5 is intentionally skipped. Step 12 remains proposed
+and requires separate authorization. Step 13 is specified canonically in
+`windows-msvc-native-execution.md`. This status proves the combined source
+inventory; it does not make PR #711 a mergeable delivery unit.
+
+The sequential merge, dual GNU/MSVC Windows archive publication, public-index
+selection, and execution-toolchain cutover are specified canonically in
+`windows-gnu-msvc-prebuilt-release.md`. That successor plan preserves the
+existing GNU/MinGW-built Windows archives and adds separate MSVC-built archives;
+it supersedes any earlier rollout assumption that the MSVC archives replace the
+GNU assets in place.
 
 Date: 2026-08-20 (Asia/Tokyo)
-Revised: 2026-08-25 (Asia/Tokyo)
+Revised: 2026-08-26 (Asia/Tokyo)
 
 ## Activation and baseline
 
