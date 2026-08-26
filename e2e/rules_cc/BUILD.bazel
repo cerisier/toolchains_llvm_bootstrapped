@@ -1372,6 +1372,17 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "windows_msvc_fdo_optimize_probe",
+    testonly = True,
+    srcs = ["windows_msvc_crt_default_probe.c"],
+    features = ["fdo_optimize"],
+    target_compatible_with = [
+        "@llvm//constraints/windows/abi:msvc",
+        "@platforms//os:windows",
+    ],
+)
+
 platform(
     name = "windows_x86_64_msvc_libstdcxx_invalid",
     constraint_values = [

@@ -22,9 +22,7 @@ def cc_toolchain(
             # The semantic feature is valid: clang-cl renders external include
             # directories through its /imsvc include-path replacement.
             "@llvm//toolchain/features:external_include_paths",
-            "@llvm//toolchain/features:fdo_optimize",
             "@llvm//toolchain/features:generate_pdb_file",
-            "@llvm//toolchain/features:llvm_release_features",
             "@llvm//toolchain/features:no_windows_export_all_symbols",
             "@llvm//toolchain/features:static_link_cpp_runtimes",
             "@llvm//toolchain/features:targets_windows",
@@ -195,7 +193,7 @@ def cc_toolchain(
                 "@llvm//toolchain/features:fdo_optimize",
             ],
             "//conditions:default": [name + "_generic_known_features"],
-        }) + ["@llvm//toolchain/features:llvm_release_features"],
+        }),
     )
 
     cc_feature_set(
@@ -244,13 +242,7 @@ def cc_toolchain(
             # feature.
             "@llvm//constraints/windows/abi:msvc": ["@llvm//toolchain/features/msvc:configuration_validation_args"],
             "//conditions:default": [],
-        }) + [
-            # Release policy precedes user compile flags so callers retain the
-            # usual last-flag-wins override behavior.
-            "@llvm//toolchain/features:llvm_release_no_exceptions_args",
-            "@llvm//toolchain/features:llvm_release_no_rtti_args",
-            "@llvm//toolchain/features:llvm_release_omit_frame_pointer_args",
-        ] + select({
+        }) + select({
             "@llvm//constraints/windows/abi:msvc": ["@llvm//toolchain/features/msvc:crt_compile_args"],
             "//conditions:default": [
                 # TODO: rules_cc passes extra args to these actions, ideally these would be fixed in rules_cc.

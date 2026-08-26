@@ -12,16 +12,6 @@ def configure_builder_for_runtimes(builder, runtime_stage, linkmode = "static", 
     builder.set("host_conlyopt", [])
     builder.set("host_linkopt", [])
 
-    # Release features replace compiler-dialect-specific command-line options,
-    # so reset them at the same runtime configuration boundary as *opt above.
-    # Individual runtimes remain responsible for their own RTTI, exception, and
-    # frame-pointer policy.
-    builder.extend("features", [
-        "-llvm_release_no_exceptions",
-        "-llvm_release_no_rtti",
-        "-llvm_release_omit_frame_pointer",
-    ])
-
     # We are compiling runtimes without any kind of other dependencies.
     builder.set(
         Label("//toolchain:runtime_stage"),

@@ -28,9 +28,6 @@ for cpu in x86_64 aarch64; do
     "@llvm//toolchain:linux_${cpu}_to_windows_${cpu}_msvc" \
     >/dev/null
   bazel --bazelrc=.bazelrc query \
-    "@llvm//toolchain:stage1_linux_${cpu}_to_windows_${cpu}_msvc" \
-    >/dev/null
-  bazel --bazelrc=.bazelrc query \
     "@llvm//toolchain:windows_${cpu}_to_windows_${cpu}" \
     >/dev/null
   if bazel --bazelrc=.bazelrc query \
@@ -39,7 +36,7 @@ for cpu in x86_64 aarch64; do
     echo >&2 "native Windows MSVC target toolchain unexpectedly registered for ${cpu}"
     exit 1
   fi
-  for stage in stage2 stage3; do
+  for stage in stage1 stage2 stage3; do
     if bazel --bazelrc=.bazelrc query \
       "@llvm//toolchain:${stage}_linux_${cpu}_to_windows_${cpu}_msvc" \
       >/dev/null 2>&1; then
@@ -70,6 +67,13 @@ expect_failure \
   "${common_flags[@]}" \
   --platforms=@llvm//platforms:windows_x86_64_msvc \
   //:windows_msvc_unsupported_feature_probe
+
+expect_failure \
+  windows-msvc-fdo-optimize \
+  "is provided by all of the following features: msvc_supported_configuration fdo_optimize" \
+  "${common_flags[@]}" \
+  --platforms=@llvm//platforms:windows_x86_64_msvc \
+  //:windows_msvc_fdo_optimize_probe
 
 expect_failure \
   windows-msvc-header-parsing \

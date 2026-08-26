@@ -1,9 +1,8 @@
 load("@bazel_features//:features.bzl", "bazel_features")
 load("@llvm-project//:vars.bzl", "LLVM_VERSION_MAJOR")
-load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains:tool.bzl", "cc_tool")
 load("@rules_cc//cc/toolchains:tool_map.bzl", "cc_tool_map")
-load("//platforms:common.bzl", "MSVC_TARGET_SUPPORTED_EXECS", "SUPPORTED_TARGETS")
+load("//platforms:common.bzl", "SUPPORTED_TARGETS")
 load("//toolchain:cc_toolchain.bzl", "cc_toolchain")
 load(":bootstrap_binary.bzl", "bootstrap_binary", "bootstrap_directory")
 
@@ -30,7 +29,7 @@ def _declare_exec_platform(exec_os, exec_cpu):
         ],
     )
 
-def _bootstrap_cc_tool(prefix, tool, bootstrap_binary_kwargs, *, capabilities = [], data = [], env = {}, symlink = True):
+def _bootstrap_cc_tool(prefix, tool, bootstrap_binary_kwargs, *, capabilities = [], data = [], symlink = True):
     binary = prefix + "/bin/" + tool
     bootstrap_binary(
         name = binary,
@@ -43,7 +42,6 @@ def _bootstrap_cc_tool(prefix, tool, bootstrap_binary_kwargs, *, capabilities = 
         src = binary,
         capabilities = capabilities,
         data = data,
-        env = env,
     )
 
 def declare_tool_map(exec_os, exec_cpu, prefix = None, fdo_profile = None, fdo_instrumented = False):
@@ -83,46 +81,6 @@ def declare_tool_map(exec_os, exec_cpu, prefix = None, fdo_profile = None, fdo_i
         tools = BASE_TOOLS | COMPLETE_ONLY_TOOLS | {
             "@rules_cc//cc/toolchains/actions:ar_actions": prefix + "/llvm-ar",
         },
-    )
-
-    MSVC_CONSTRUCTION_TOOLS = {
-        "@rules_cc//cc/toolchains/actions:c_compile": prefix + "/clang-cl",
-        "@rules_cc//cc/toolchains/actions:cpp_compile": prefix + "/clang-cl",
-        "@rules_cc//cc/toolchains/actions:linkstamp_compile": prefix + "/clang-cl",
-        "@rules_cc//cc/toolchains/actions:lto_backend": prefix + "/clang-cl",
-        "@rules_cc//cc/toolchains/actions:preprocess_assemble": prefix + "/clang-cl",
-        "@rules_cc//cc/toolchains/actions:cpp_header_parsing": prefix + "/clang-cl",
-        "@rules_cc//cc/toolchains/actions:ar_actions": prefix + "/llvm-ar",
-        "@rules_cc//cc/toolchains/actions:cpp_link_executable": prefix + "/clang-cl",
-        "@rules_cc//cc/toolchains/actions:cpp_link_dynamic_library": prefix + "/clang-cl",
-        "@rules_cc//cc/toolchains/actions:cpp_link_nodeps_dynamic_library": prefix + "/clang-cl",
-        "@rules_cc//cc/toolchains/actions:objc_executable": prefix + "/clang-cl",
-        "@rules_cc//cc/toolchains/actions:lto_index_for_executable": prefix + "/clang-cl",
-        "@rules_cc//cc/toolchains/actions:lto_index_for_dynamic_library": prefix + "/clang-cl",
-        "@rules_cc//cc/toolchains/actions:lto_index_for_nodeps_dynamic_library": prefix + "/clang-cl",
-        "@rules_cc//cc/toolchains/actions:strip": prefix + "/llvm-strip",
-    }
-
-    MSVC_COMPLETE_TOOLS = MSVC_CONSTRUCTION_TOOLS | {
-        "@rules_cc//cc/toolchains/actions:generate_def_file": prefix + "/coff-def-parser",
-    } | _validate_static_library_tool(prefix)
-
-    cc_tool_map(
-        name = prefix + "/complete_tools_for_msvc",
-        tools = MSVC_COMPLETE_TOOLS,
-    )
-
-    cc_tool_map(
-        name = prefix + "/construction_tools_for_msvc",
-        tools = MSVC_CONSTRUCTION_TOOLS,
-    )
-
-    native.alias(
-        name = prefix + "/tools_for_msvc_for_runtime",
-        actual = select({
-            "@llvm//toolchain:runtimes_all": prefix + "/complete_tools_for_msvc",
-            "//conditions:default": prefix + "/construction_tools_for_msvc",
-        }),
     )
 
     cc_tool_map(
@@ -196,35 +154,6 @@ def declare_tool_map(exec_os, exec_cpu, prefix = None, fdo_profile = None, fdo_i
         strip_prefix = "clang/lib/Headers",
     )
 
-    cc_args(
-        name = prefix + "/clang_cl_compile_resource_dir",
-        actions = [
-            "@rules_cc//cc/toolchains/actions:clif_match",
-            "@rules_cc//cc/toolchains/actions:cpp_compile",
-            "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
-            "@rules_cc//cc/toolchains/actions:cpp_module_codegen",
-            "@rules_cc//cc/toolchains/actions:cpp_module_compile",
-            "@rules_cc//cc/toolchains/actions:linkstamp_compile",
-            "@rules_cc//cc/toolchains/actions:objcpp_compile",
-            "@rules_cc//cc/toolchains/actions:c_compile",
-            "@rules_cc//cc/toolchains/actions:preprocess_assemble",
-            "@rules_cc//cc/toolchains/actions:objc_compile",
-        ],
-        args = [
-            # clang-cl otherwise inserts builtin headers before every /imsvc
-            # path. Suppress that implicit path, then re-add the declared
-            # resource directory between libc++ and VC/UCRT headers.
-            "/clang:-nobuiltininc",
-            "/imsvc{resource_dir}",
-        ],
-        data = [
-            prefix + "/clang_builtin_headers_include_directory",
-        ],
-        format = {
-            "resource_dir": prefix + "/clang_builtin_headers_include_directory",
-        },
-    )
-
     _bootstrap_cc_tool(
         prefix,
         "clang",
@@ -246,39 +175,6 @@ def declare_tool_map(exec_os, exec_cpu, prefix = None, fdo_profile = None, fdo_i
             prefix + "/clang_builtin_headers_include_directory",
         ],
         capabilities = ["@rules_cc//cc/toolchains/capabilities:supports_pic"],
-    )
-
-    _bootstrap_cc_tool(
-        prefix,
-        "clang-cl",
-        bootstrap_binary_kwargs,
-        data = [
-            prefix + "/clang_builtin_headers_include_directory",
-            prefix + "/bin/lld-link",
-        ],
-        capabilities = [
-            "@rules_cc//cc/toolchains/capabilities:has_configured_linker_path",
-            "@rules_cc//cc/toolchains/capabilities:supports_dynamic_linker",
-            "@rules_cc//cc/toolchains/capabilities:supports_interface_shared_libraries",
-        ],
-        env = {
-            # Presence suppresses clang-cl's Visual Studio library probing;
-            # /lldignoreenv prevents the child linker from consuming it.
-            "LIB": "__hermetic_llvm_empty_lib__",
-        },
-    )
-
-    # clang-cl discovers this raw sibling by InstalledDir. It is action data,
-    # not an independently selected rules_cc action tool.
-    bootstrap_binary(
-        name = prefix + "/bin/lld-link",
-        actual = "@llvm-project//llvm:llvm.stripped",
-        **bootstrap_binary_kwargs
-    )
-
-    cc_tool(
-        name = prefix + "/coff-def-parser",
-        src = "@llvm//tools/coff_def_parser",
     )
 
     bootstrap_binary(
@@ -521,14 +417,7 @@ def declare_toolchains(*, execs = None, targets = SUPPORTED_TARGETS):
             # See https://github.com/bazelbuild/rules_cc/issues/299#issuecomment-2660340534
             cc_toolchain(
                 name = cc_toolchain_name,
-                extra_args = select({
-                    "@llvm//platforms/config:windows_x86_64_msvc": [":%s/clang_cl_compile_resource_dir" % tool_prefix],
-                    "@llvm//platforms/config:windows_aarch64_msvc": [":%s/clang_cl_compile_resource_dir" % tool_prefix],
-                    "//conditions:default": [],
-                }),
                 tool_map = select({
-                    "@llvm//platforms/config:windows_x86_64_msvc": ":%s/tools_for_msvc_for_runtime" % tool_prefix,
-                    "@llvm//platforms/config:windows_aarch64_msvc": ":%s/tools_for_msvc_for_runtime" % tool_prefix,
                     "@llvm//toolchain:linux_complete": ":%s/tools_with_interface_libraries" % tool_prefix,
                     "@llvm//toolchain:macos_complete_with_libtool": ":%s/tools_with_dsym_and_libtool" % tool_prefix,
                     "@llvm//toolchain:macos_complete": ":%s/tools_with_dsym" % tool_prefix,
@@ -557,23 +446,3 @@ def declare_toolchains(*, execs = None, targets = SUPPORTED_TARGETS):
                     toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
                     visibility = ["//visibility:public"],
                 )
-
-                if stage_name == "stage1" and target_os == "windows" and (exec_os, exec_cpu) in MSVC_TARGET_SUPPORTED_EXECS:
-                    native.toolchain(
-                        name = "%s_%s_%s_to_%s_%s_msvc" % (stage_name, exec_os, exec_cpu, target_os, target_cpu),
-                        exec_compatible_with = [
-                            "@platforms//cpu:" + exec_cpu,
-                            "@platforms//os:" + exec_os,
-                        ],
-                        target_compatible_with = [
-                            "@platforms//cpu:" + target_cpu,
-                            "@platforms//os:" + target_os,
-                        ],
-                        target_settings = [
-                            target_setting,
-                            "@llvm//platforms/config:windows_{}_msvc".format(target_cpu),
-                        ],
-                        toolchain = cc_toolchain_name,
-                        toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
-                        visibility = ["//visibility:public"],
-                    )

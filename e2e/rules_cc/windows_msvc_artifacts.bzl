@@ -17,7 +17,6 @@ def _crt_transition_impl(settings, attr):
     return {
         "//command_line_option:features": features,
         "//command_line_option:platforms": str(attr.target_platform),
-        "@llvm//toolchain:bootstrap_stage": "stage1_from_source",
     }
 
 _crt_transition = transition(
@@ -26,7 +25,6 @@ _crt_transition = transition(
     outputs = [
         "//command_line_option:features",
         "//command_line_option:platforms",
-        "@llvm//toolchain:bootstrap_stage",
     ],
 )
 

@@ -95,34 +95,6 @@ bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   'mnemonic("CppCompile", //:windows_msvc_generated_def_binary)' \
   >"${action_dir}/dbg-compile-flags.txt"
 bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
-  --features=-compiler_param_file \
-  --features=llvm_release_no_exceptions \
-  --features=llvm_release_no_rtti \
-  --features=llvm_release_omit_frame_pointer \
-  --output=commands \
-  'mnemonic("CppCompile", //:windows_msvc_generated_def_binary)' \
-  >"${action_dir}/release-compile.txt"
-bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
-  --features=-compiler_param_file \
-  --features=llvm_release_no_exceptions \
-  --features=llvm_release_no_rtti \
-  --features=llvm_release_omit_frame_pointer \
-  --cxxopt=/EHsc \
-  --cxxopt=/GR \
-  --cxxopt=/clang:-fno-omit-frame-pointer \
-  --cxxopt=/std:c++20 \
-  --output=commands \
-  'mnemonic("CppCompile", //:windows_msvc_generated_def_binary)' \
-  >"${action_dir}/release-user-overrides.txt"
-bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
-  --features=-compiler_param_file \
-  --features=llvm_release_no_exceptions \
-  --features=llvm_release_no_rtti \
-  --features=llvm_release_omit_frame_pointer \
-  --output=commands \
-  'inputs(".*libcxxabi/src/private_typeinfo.cpp", mnemonic("CppCompile", deps(@llvm-project//libcxxabi:libcxxabi.static)))' \
-  >"${action_dir}/release-libcxxabi-compile.txt"
-bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   --include_param_files \
   --output=text \
   'mnemonic("CppArchive", //:windows_msvc_libcxx_behavior_support)' \
@@ -142,28 +114,24 @@ bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   >"${action_dir}/link.txt"
 bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   --features=thin_lto \
-  --@llvm//toolchain:bootstrap_stage=stage1_from_source \
   --features=-compiler_param_file \
   --output=commands \
   'mnemonic("CppCompile", //:windows_msvc_libcxx_behavior_md)' \
   >"${action_dir}/thin-lto-compile.txt"
 bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   --features=thin_lto \
-  --@llvm//toolchain:bootstrap_stage=stage1_from_source \
   --include_param_files \
   --output=text \
   'mnemonic("CppLTOIndexing", //:windows_msvc_libcxx_behavior_md)' \
   >"${action_dir}/thin-lto-index.txt"
 bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   --features=thin_lto \
-  --@llvm//toolchain:bootstrap_stage=stage1_from_source \
   --include_param_files \
   --output=text \
   'mnemonic("CcLtoBackendCompile", //:windows_msvc_libcxx_behavior_md)' \
   >"${action_dir}/thin-lto-backend.txt"
 bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   --features=thin_lto \
-  --@llvm//toolchain:bootstrap_stage=stage1_from_source \
   --include_param_files \
   --output=text \
   'mnemonic("CppLink", //:windows_msvc_libcxx_behavior_md)' \
@@ -241,30 +209,6 @@ assert_contains "${action_dir}/dbg-compile-flags.txt" "/Z7"
 assert_absent "${action_dir}/dbg-compile-flags.txt" "/O2"
 assert_absent "${action_dir}/dbg-compile-flags.txt" "/DNDEBUG"
 assert_absent "${action_dir}/dbg-compile-flags.txt" "/D_DEBUG"
-assert_contains "${action_dir}/release-compile.txt" "/std:c++17"
-assert_contains "${action_dir}/release-compile.txt" "/EHs-c-"
-assert_contains "${action_dir}/release-compile.txt" "/GR-"
-assert_contains "${action_dir}/release-compile.txt" "/clang:-fomit-frame-pointer"
-assert_absent "${action_dir}/release-compile.txt" " -fno-exceptions"
-assert_absent "${action_dir}/release-compile.txt" " -fno-rtti"
-assert_absent "${action_dir}/release-compile.txt" " -fomit-frame-pointer"
-assert_matches "${action_dir}/release-user-overrides.txt" "/EHs-c-.* /EHsc "
-assert_matches "${action_dir}/release-user-overrides.txt" "/GR-.* /GR "
-assert_matches "${action_dir}/release-user-overrides.txt" "/clang:-fomit-frame-pointer.* /clang:-fno-omit-frame-pointer "
-assert_matches "${action_dir}/release-user-overrides.txt" "/std:c\\+\\+17.* /std:c\\+\\+20"
-assert_matches "${action_dir}/release-user-overrides.txt" "/std:c\\+\\+20.* /c .* /Fo"
-assert_contains "${action_dir}/release-libcxxabi-compile.txt" "libcxxabi/src/private_typeinfo.cpp"
-assert_contains "${action_dir}/release-libcxxabi-compile.txt" "-funwind-tables"
-assert_contains "${action_dir}/release-libcxxabi-compile.txt" "/DNDEBUG"
-assert_contains "${action_dir}/release-libcxxabi-compile.txt" "/O2"
-assert_absent "${action_dir}/release-libcxxabi-compile.txt" "/D_DEBUG"
-assert_absent "${action_dir}/release-libcxxabi-compile.txt" " -fno-exceptions"
-assert_absent "${action_dir}/release-libcxxabi-compile.txt" " -fno-rtti"
-assert_absent "${action_dir}/release-libcxxabi-compile.txt" " -fomit-frame-pointer"
-assert_absent "${action_dir}/release-libcxxabi-compile.txt" "/EHs-c-"
-assert_absent "${action_dir}/release-libcxxabi-compile.txt" "/GR-"
-assert_absent "${action_dir}/release-libcxxabi-compile.txt" "/clang:-fomit-frame-pointer"
-
 assert_contains "${action_dir}/archive.txt" "llvm-ar"
 assert_contains "${action_dir}/archive.txt" "rcsD"
 assert_contains "${action_dir}/archive.txt" "windows_msvc_libcxx_behavior_support.lib"
@@ -318,9 +262,8 @@ assert_contains "${action_dir}/thin-lto-compile.txt" ".indexing.o"
 assert_absent "${action_dir}/thin-lto-compile.txt" ".indexing.obj"
 
 assert_contains "${action_dir}/thin-lto-index.txt" "CppLTOIndexing"
-assert_contains "${action_dir}/thin-lto-index.txt" "llvm.stripped"
-assert_matches "${action_dir}/thin-lto-index.txt" "Command Line: \\(exec .*stage1_(linux|macos)_(aarch64|x86_64)/bin/clang-cl"
-assert_matches "${action_dir}/thin-lto-index.txt" "stage1_(linux|macos)_(aarch64|x86_64)/bin/lld-link"
+assert_matches "${action_dir}/thin-lto-index.txt" "Command Line: \\(exec .*llvm-toolchain-minimal-linux-(amd64|arm64)/bin/clang-cl"
+assert_matches "${action_dir}/thin-lto-index.txt" "llvm-toolchain-minimal-linux-(amd64|arm64)/bin/lld-link"
 assert_absent "${action_dir}/thin-lto-index.txt" "clang-cl-thinlto-index"
 assert_absent "${action_dir}/thin-lto-index.txt" "COMPILER_PATH="
 assert_absent "${action_dir}/thin-lto-index.txt" "LLVM_CLANG_CL="

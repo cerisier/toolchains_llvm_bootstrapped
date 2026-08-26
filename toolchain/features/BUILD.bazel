@@ -21,20 +21,6 @@ _FINAL_LINK_ACTIONS = [
     "@rules_cc//cc/toolchains/actions:objc_executable",
 ]
 
-_MSVC_CXX_COMPILE_ACTIONS = [
-    "@rules_cc//cc/toolchains/actions:cpp_compile",
-    "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
-    "@rules_cc//cc/toolchains/actions:linkstamp_compile",
-]
-
-_MSVC_COMPILE_ACTIONS = [
-    "@rules_cc//cc/toolchains/actions:c_compile",
-    "@rules_cc//cc/toolchains/actions:cpp_compile",
-    "@rules_cc//cc/toolchains/actions:linkstamp_compile",
-    "@rules_cc//cc/toolchains/actions:preprocess_assemble",
-    "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
-]
-
 # [x] opt
 # [x] dbg
 # [] fastbuild
@@ -46,96 +32,6 @@ _MSVC_COMPILE_ACTIONS = [
 cc_feature(
     name = "static_link_cpp_runtimes",
     overrides = "@rules_cc//cc/toolchains/features:static_link_cpp_runtimes",
-)
-
-cc_args(
-    name = "llvm_release_no_exceptions_clang_args",
-    actions = ["@rules_cc//cc/toolchains/actions:compile_actions"],
-    args = ["-fno-exceptions"],
-    requires_any_of = [":llvm_release_no_exceptions"],
-)
-
-cc_args(
-    name = "llvm_release_no_exceptions_clang_cl_args",
-    actions = _MSVC_CXX_COMPILE_ACTIONS,
-    args = ["/EHs-c-"],
-    requires_any_of = [":llvm_release_no_exceptions"],
-)
-
-cc_args_list(
-    name = "llvm_release_no_exceptions_args",
-    args = select({
-        "//constraints/windows/abi:msvc": [":llvm_release_no_exceptions_clang_cl_args"],
-        "//conditions:default": [":llvm_release_no_exceptions_clang_args"],
-    }),
-)
-
-cc_feature(
-    name = "llvm_release_no_exceptions",
-    feature_name = "llvm_release_no_exceptions",
-)
-
-cc_args(
-    name = "llvm_release_no_rtti_clang_args",
-    actions = ["@rules_cc//cc/toolchains/actions:compile_actions"],
-    args = ["-fno-rtti"],
-    requires_any_of = [":llvm_release_no_rtti"],
-)
-
-cc_args(
-    name = "llvm_release_no_rtti_clang_cl_args",
-    actions = _MSVC_CXX_COMPILE_ACTIONS,
-    args = ["/GR-"],
-    requires_any_of = [":llvm_release_no_rtti"],
-)
-
-cc_args_list(
-    name = "llvm_release_no_rtti_args",
-    args = select({
-        "//constraints/windows/abi:msvc": [":llvm_release_no_rtti_clang_cl_args"],
-        "//conditions:default": [":llvm_release_no_rtti_clang_args"],
-    }),
-)
-
-cc_feature(
-    name = "llvm_release_no_rtti",
-    feature_name = "llvm_release_no_rtti",
-)
-
-cc_args(
-    name = "llvm_release_omit_frame_pointer_clang_args",
-    actions = ["@rules_cc//cc/toolchains/actions:compile_actions"],
-    args = ["-fomit-frame-pointer"],
-    requires_any_of = [":llvm_release_omit_frame_pointer"],
-)
-
-cc_args(
-    name = "llvm_release_omit_frame_pointer_clang_cl_args",
-    actions = _MSVC_COMPILE_ACTIONS + ["@rules_cc//cc/toolchains/actions:lto_backend"],
-    args = ["/clang:-fomit-frame-pointer"],
-    requires_any_of = [":llvm_release_omit_frame_pointer"],
-)
-
-cc_args_list(
-    name = "llvm_release_omit_frame_pointer_args",
-    args = select({
-        "//constraints/windows/abi:msvc": [":llvm_release_omit_frame_pointer_clang_cl_args"],
-        "//conditions:default": [":llvm_release_omit_frame_pointer_clang_args"],
-    }),
-)
-
-cc_feature(
-    name = "llvm_release_omit_frame_pointer",
-    feature_name = "llvm_release_omit_frame_pointer",
-)
-
-cc_feature_set(
-    name = "llvm_release_features",
-    all_of = [
-        ":llvm_release_no_exceptions",
-        ":llvm_release_no_rtti",
-        ":llvm_release_omit_frame_pointer",
-    ],
 )
 
 cc_feature(
@@ -566,7 +462,7 @@ cc_feature(
 )
 
 cc_args(
-    name = "fdo_optimize_clang_compile_args",
+    name = "fdo_optimize_compile_args",
     actions = [
         "@rules_cc//cc/toolchains/actions:compile_actions",
     ],
@@ -579,31 +475,6 @@ cc_args(
         "fdo_profile_path": "@rules_cc//cc/toolchains/variables:fdo_profile_path",
     },
     requires_not_none = "@rules_cc//cc/toolchains/variables:fdo_profile_path",
-)
-
-cc_args(
-    name = "fdo_optimize_clang_cl_compile_args",
-    # Instrumentation profiles are consumed while producing ThinLTO bitcode.
-    # The backends consume the resulting profile metadata; rules_cc therefore
-    # does not expose fdo_profile_path to fdo_optimize backend actions.
-    actions = _MSVC_COMPILE_ACTIONS,
-    args = [
-        "/clang:-fprofile-use={fdo_profile_path}",
-        "/clang:-Wno-profile-instr-unprofiled",
-        "/clang:-Wno-profile-instr-out-of-date",
-    ],
-    format = {
-        "fdo_profile_path": "@rules_cc//cc/toolchains/variables:fdo_profile_path",
-    },
-    requires_not_none = "@rules_cc//cc/toolchains/variables:fdo_profile_path",
-)
-
-cc_args_list(
-    name = "fdo_optimize_compile_args",
-    args = select({
-        "//constraints/windows/abi:msvc": [":fdo_optimize_clang_cl_compile_args"],
-        "//conditions:default": [":fdo_optimize_clang_compile_args"],
-    }),
 )
 
 cc_args(
@@ -640,9 +511,6 @@ cc_feature_set(
         ":llvm_coverage_map_format",
         ":gcc_coverage_map_format",
         ":fully_static_link",
-        ":llvm_release_no_exceptions",
-        ":llvm_release_no_rtti",
-        ":llvm_release_omit_frame_pointer",
     ] + select({
         "@platforms//os:windows": [
             ":copy_dynamic_libraries_to_binary",
