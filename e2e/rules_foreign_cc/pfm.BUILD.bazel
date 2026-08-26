@@ -18,15 +18,15 @@ make_variant(
     },
     lib_name = "libpfm",
     lib_source = ":sources",
+    target_compatible_with = select({
+        "@platforms//os:linux": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
     targets = [
         "lib",
         "install-lib",
         "-C include install",
     ],
-    target_compatible_with = select({
-        "@platforms//os:linux": [],
-        "//conditions:default": ["@platforms//:incompatible"],
-    }),
     toolchain = "@rules_foreign_cc//toolchains:preinstalled_autoconf_toolchain",
     visibility = ["//visibility:private"],
 )
