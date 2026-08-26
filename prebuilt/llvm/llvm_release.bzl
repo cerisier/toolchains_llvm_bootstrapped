@@ -3,10 +3,7 @@ load("@tar.bzl", "mtree_mutate", "mtree_spec", "tar")
 load("//prebuilt:mtree.bzl", "mtree")
 load("//tools:defs.bzl", "TOOLCHAIN_BINARIES")
 
-def llvm_release(
-        name,
-        bin_suffix = "",
-        target_compatible_with = []):
+def llvm_release(name, bin_suffix = ""):
     mtree_spec(
         name = name + "_builtin_headers_mtree_",
         srcs = [
@@ -69,5 +66,4 @@ def llvm_release(
         compress = "zstd",
         mtree = name + "_mtree",
         tags = ["manual"],
-        target_compatible_with = target_compatible_with,
     )

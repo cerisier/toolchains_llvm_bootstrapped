@@ -1,4 +1,4 @@
-load("//platforms:common.bzl", "SUPPORTED_EXECS", "SUPPORTED_TARGETS")
+load("//platforms:common.bzl", "MSVC_TARGET_SUPPORTED_EXECS", "SUPPORTED_EXECS", "SUPPORTED_TARGETS")
 load("//toolchain:selects.bzl", "clang_cl_resource_dir_arg", "platform_cc_tool_map", "platform_module_map", "resource_dir_arg")
 load(":cc_toolchain.bzl", "cc_toolchain")
 
@@ -19,8 +19,6 @@ def declare_toolchains(*, execs = SUPPORTED_EXECS, targets = SUPPORTED_TARGETS):
             name = cc_toolchain_name,
             tool_map = platform_cc_tool_map(exec_os, exec_cpu),
             module_map = platform_module_map(exec_os, exec_cpu),
-            msvc_sdk_compile_args = "@llvm//toolchain/args/windows/msvc:direct_sdk_compile_args" if exec_os == "windows" else "@llvm//toolchain/args/windows/msvc:normalized_sdk_compile_args",
-            msvc_default_libs = "@llvm//toolchain/args/windows/msvc:direct_default_libs" if exec_os == "windows" else "@llvm//toolchain/args/windows/msvc:normalized_default_libs",
             extra_args = select({
                 "@llvm//platforms/config:windows_x86_64_msvc": [clang_cl_resource_dir_arg(exec_os, exec_cpu)],
                 "@llvm//platforms/config:windows_aarch64_msvc": [clang_cl_resource_dir_arg(exec_os, exec_cpu)],
@@ -49,7 +47,7 @@ def declare_toolchains(*, execs = SUPPORTED_EXECS, targets = SUPPORTED_TARGETS):
                 visibility = ["//visibility:public"],
             )
 
-            if target_os == "windows":
+            if target_os == "windows" and (exec_os, exec_cpu) in MSVC_TARGET_SUPPORTED_EXECS:
                 native.toolchain(
                     name = "{}_{}_to_{}_{}_msvc".format(exec_os, exec_cpu, target_os, target_cpu),
                     exec_compatible_with = [

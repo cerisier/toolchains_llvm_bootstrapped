@@ -3,7 +3,7 @@ load("@llvm-project//:vars.bzl", "LLVM_VERSION_MAJOR")
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains:tool.bzl", "cc_tool")
 load("@rules_cc//cc/toolchains:tool_map.bzl", "cc_tool_map")
-load("//platforms:common.bzl", "SUPPORTED_TARGETS")
+load("//platforms:common.bzl", "MSVC_TARGET_SUPPORTED_EXECS", "SUPPORTED_TARGETS")
 load("//toolchain:cc_toolchain.bzl", "cc_toolchain")
 load(":bootstrap_binary.bzl", "bootstrap_binary", "bootstrap_directory")
 
@@ -100,7 +100,6 @@ def declare_tool_map(exec_os, exec_cpu, prefix = None, fdo_profile = None, fdo_i
         "@rules_cc//cc/toolchains/actions:lto_index_for_executable": prefix + "/clang-cl",
         "@rules_cc//cc/toolchains/actions:lto_index_for_dynamic_library": prefix + "/clang-cl",
         "@rules_cc//cc/toolchains/actions:lto_index_for_nodeps_dynamic_library": prefix + "/clang-cl",
-        "@rules_cc//cc/toolchains/actions:llvm_profdata": prefix + "/llvm-profdata",
         "@rules_cc//cc/toolchains/actions:strip": prefix + "/llvm-strip",
     }
 
@@ -522,8 +521,6 @@ def declare_toolchains(*, execs = None, targets = SUPPORTED_TARGETS):
             # See https://github.com/bazelbuild/rules_cc/issues/299#issuecomment-2660340534
             cc_toolchain(
                 name = cc_toolchain_name,
-                msvc_sdk_compile_args = "@llvm//toolchain/args/windows/msvc:direct_sdk_compile_args" if exec_os == "windows" else "@llvm//toolchain/args/windows/msvc:normalized_sdk_compile_args",
-                msvc_default_libs = "@llvm//toolchain/args/windows/msvc:direct_default_libs" if exec_os == "windows" else "@llvm//toolchain/args/windows/msvc:normalized_default_libs",
                 extra_args = select({
                     "@llvm//platforms/config:windows_x86_64_msvc": [":%s/clang_cl_compile_resource_dir" % tool_prefix],
                     "@llvm//platforms/config:windows_aarch64_msvc": [":%s/clang_cl_compile_resource_dir" % tool_prefix],
@@ -561,7 +558,7 @@ def declare_toolchains(*, execs = None, targets = SUPPORTED_TARGETS):
                     visibility = ["//visibility:public"],
                 )
 
-                if target_os == "windows":
+                if stage_name == "stage1" and target_os == "windows" and (exec_os, exec_cpu) in MSVC_TARGET_SUPPORTED_EXECS:
                     native.toolchain(
                         name = "%s_%s_%s_to_%s_%s_msvc" % (stage_name, exec_os, exec_cpu, target_os, target_cpu),
                         exec_compatible_with = [

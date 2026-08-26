@@ -179,18 +179,6 @@ bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   'mnemonic("CppLink", //:windows_msvc_generated_def.dll)' \
   >"${action_dir}/dll-link.txt"
 bazel --bazelrc=.bazelrc cquery "${common_flags[@]}" \
-  --dynamic_mode=off \
-  --output=starlark \
-  --starlark:expr='providers(target)' \
-  '@llvm-project//clang:config' \
-  >"${action_dir}/clang-static-config.txt"
-bazel --bazelrc=.bazelrc cquery "${common_flags[@]}" \
-  --dynamic_mode=default \
-  --output=starlark \
-  --starlark:expr='providers(target)' \
-  '@llvm-project//clang:config' \
-  >"${action_dir}/clang-dynamic-config.txt"
-bazel --bazelrc=.bazelrc cquery "${common_flags[@]}" \
   --output=label \
   'kind(".*cc_toolchain.*", deps(//:windows_msvc_crt_default_probe))' \
   >"${action_dir}/resolved-toolchains.txt"
@@ -276,11 +264,6 @@ assert_absent "${action_dir}/release-libcxxabi-compile.txt" " -fomit-frame-point
 assert_absent "${action_dir}/release-libcxxabi-compile.txt" "/EHs-c-"
 assert_absent "${action_dir}/release-libcxxabi-compile.txt" "/GR-"
 assert_absent "${action_dir}/release-libcxxabi-compile.txt" "/clang:-fomit-frame-pointer"
-
-assert_contains "${action_dir}/clang-static-config.txt" "CLANG_BUILD_STATIC"
-assert_contains "${action_dir}/clang-static-config.txt" "clang/Config/config.h"
-assert_absent "${action_dir}/clang-dynamic-config.txt" "CLANG_BUILD_STATIC"
-assert_contains "${action_dir}/clang-dynamic-config.txt" "clang/Config/config.h"
 
 assert_contains "${action_dir}/archive.txt" "llvm-ar"
 assert_contains "${action_dir}/archive.txt" "rcsD"

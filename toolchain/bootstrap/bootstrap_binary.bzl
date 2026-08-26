@@ -3,10 +3,10 @@ load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory_bin_action")
 load("//tools:defs.bzl", "TOOLCHAIN_BINARIES")
 load(":transition_settings.bzl", "LLVM_TOOLS", "SANITIZER_FLAGS", "disable_sanitizers")
 
-_LLVM_RELEASE_FEATURES = [
-    "llvm_release_no_exceptions",
-    "llvm_release_no_rtti",
-    "llvm_release_omit_frame_pointer",
+_LLVM_TOOL_COPTS = [
+    "-fno-exceptions",
+    "-fno-rtti",
+    "-fomit-frame-pointer",
 ]
 
 def _append_unique(values, extra_values):
@@ -22,6 +22,7 @@ def _bootstrap_transition_impl(settings, attr):
     if fdo_profile and fdo_instrumented:
         fail("fdo_profile and fdo_instrumented are mutually exclusive")
 
+    copts = settings["//command_line_option:copt"]
     features = settings["//command_line_option:features"]
     is_after_stage1 = fdo_profile or fdo_instrumented
 
@@ -35,7 +36,8 @@ def _bootstrap_transition_impl(settings, attr):
         "//toolchain:runtime_stage": "complete",
         "//toolchain:bootstrap_stage": bootstrap_stage,
         "//command_line_option:compilation_mode": "opt",
-        "//command_line_option:features": _append_unique(features, _LLVM_RELEASE_FEATURES + ["thin_lto"]) if is_after_stage1 else features,
+        "//command_line_option:copt": _append_unique(copts, _LLVM_TOOL_COPTS) if is_after_stage1 else copts,
+        "//command_line_option:features": _append_unique(features, ["thin_lto"]) if is_after_stage1 else features,
         "//command_line_option:fdo_profile": fdo_profile,
         "@llvm-project//llvm:driver-tools": LLVM_TOOLS,
     }
@@ -55,10 +57,12 @@ def _bootstrap_transition_impl(settings, attr):
 bootstrap_transition = transition(
     implementation = _bootstrap_transition_impl,
     inputs = [
+        "//command_line_option:copt",
         "//command_line_option:features",
         "//command_line_option:platforms",
     ],
     outputs = [
+        "//command_line_option:copt",
         "//command_line_option:compilation_mode",
         "//command_line_option:fdo_profile",
         "//command_line_option:features",

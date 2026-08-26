@@ -13,16 +13,7 @@ _LLVM_FDO_EXECUTORS = {
     },
 }
 
-_WINDOWS_MSVC_TARGET_CPUS = [
-    "aarch64",
-    "x86_64",
-]
-
-bootstrap_binaries(fdo_profile = select({
-    "//platforms/config:windows_aarch64_msvc": ":llvm_fdo_profdata_msvc",
-    "//platforms/config:windows_x86_64_msvc": ":llvm_fdo_profdata_msvc",
-    "//conditions:default": ":llvm_fdo_profdata",
-}))
+bootstrap_binaries(fdo_profile = ":llvm_fdo_profdata")
 
 [
     llvm_fdo_profile_workload(
@@ -56,53 +47,6 @@ bootstrap_binaries(fdo_profile = select({
         "x86_64",
     ]
 ]
-
-[
-    llvm_fdo_profile_workload(
-        name = "llvm_fdo_profile_workload_%s_to_windows_%s_msvc" % (executor, target_cpu),
-        srcs = "@llvm_fdo_zstd//:zstd_compress_files",
-        driver_mode = "msvc",
-        exec_compatible_with = [
-            "@platforms//cpu:" + executor_config["cpu"],
-            "@platforms//os:linux",
-        ],
-        exec_properties = {
-            "Arch": executor_config["buildbuddy_arch"],
-        },
-        object_file_extension = ".obj",
-        target_platform = "//platforms:windows_%s_msvc" % target_cpu,
-        workload_kind = "hosted",
-    )
-    for executor, executor_config in _LLVM_FDO_EXECUTORS.items()
-    for target_cpu in _WINDOWS_MSVC_TARGET_CPUS
-]
-
-[
-    llvm_fdo_profile_data(
-        name = "llvm_fdo_profdata_msvc_linux_" + executor_cpu,
-        profiles = [
-            "llvm_fdo_profile_workload_linux_%s_to_%s_%s" % (executor_cpu, target_os, target_cpu)
-            for target_os, target_cpu in SUPPORTED_TARGETS
-        ] + [
-            "llvm_fdo_profile_workload_linux_%s_to_windows_%s_msvc" % (executor_cpu, target_cpu)
-            for target_cpu in _WINDOWS_MSVC_TARGET_CPUS
-        ],
-        visibility = ["//visibility:public"],
-    )
-    for executor_cpu in [
-        "aarch64",
-        "x86_64",
-    ]
-]
-
-alias(
-    name = "llvm_fdo_profdata_msvc",
-    actual = select({
-        "@platforms//cpu:aarch64": ":llvm_fdo_profdata_msvc_linux_aarch64",
-        "@platforms//cpu:x86_64": ":llvm_fdo_profdata_msvc_linux_x86_64",
-    }),
-    visibility = ["//visibility:public"],
-)
 
 alias(
     name = "llvm_fdo_profdata",

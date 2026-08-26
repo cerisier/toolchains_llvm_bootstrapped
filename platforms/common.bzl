@@ -31,6 +31,13 @@ SUPPORTED_EXECS = [
     ("windows", "aarch64"),
 ]
 
+# MSVC target toolchains remain Linux-exec-only until the published Windows
+# execution compiler is selected and proved natively.
+MSVC_TARGET_SUPPORTED_EXECS = [
+    ("linux", "x86_64"),
+    ("linux", "aarch64"),
+]
+
 WINDOWS_TARGETS = [target for target in SUPPORTED_TARGETS if target[0] == "windows"]
 
 LIBC_SUPPORTED_TARGETS = [

@@ -23,6 +23,32 @@ common_flags=(
   --repo_env=BAZEL_WINDOWS_SDK_EULA=1
 )
 
+for cpu in x86_64 aarch64; do
+  bazel --bazelrc=.bazelrc query \
+    "@llvm//toolchain:linux_${cpu}_to_windows_${cpu}_msvc" \
+    >/dev/null
+  bazel --bazelrc=.bazelrc query \
+    "@llvm//toolchain:stage1_linux_${cpu}_to_windows_${cpu}_msvc" \
+    >/dev/null
+  bazel --bazelrc=.bazelrc query \
+    "@llvm//toolchain:windows_${cpu}_to_windows_${cpu}" \
+    >/dev/null
+  if bazel --bazelrc=.bazelrc query \
+    "@llvm//toolchain:windows_${cpu}_to_windows_${cpu}_msvc" \
+    >/dev/null 2>&1; then
+    echo >&2 "native Windows MSVC target toolchain unexpectedly registered for ${cpu}"
+    exit 1
+  fi
+  for stage in stage2 stage3; do
+    if bazel --bazelrc=.bazelrc query \
+      "@llvm//toolchain:${stage}_linux_${cpu}_to_windows_${cpu}_msvc" \
+      >/dev/null 2>&1; then
+      echo >&2 "${stage} MSVC target toolchain unexpectedly registered for ${cpu}"
+      exit 1
+    fi
+  done
+done
+
 expect_failure \
   windows-msvc-libstdcxx \
   "Layer 1 MSVC ABI requires //constraints/cxxstdlib:libcxx" \
