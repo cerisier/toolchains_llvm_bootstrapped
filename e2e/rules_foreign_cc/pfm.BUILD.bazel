@@ -18,6 +18,11 @@ make_variant(
     },
     lib_name = "libpfm",
     lib_source = ":sources",
+    targets = [
+        "lib",
+        "install-lib",
+        "-C include install",
+    ],
     target_compatible_with = select({
         "@platforms//os:linux": [],
         "//conditions:default": ["@platforms//:incompatible"],
