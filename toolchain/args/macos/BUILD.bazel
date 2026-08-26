@@ -9,6 +9,11 @@ package(default_visibility = ["//visibility:public"])
 
 cc_sysroot(
     name = "macos_sdk_sysroot",
+    actions = [
+        "//toolchain:source_compile_actions_with_cpp20_modules",
+        "@rules_cc//cc/toolchains/actions:cpp_module_deps_scanning",
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
     allowlist_include_directories = ["@macos_sdk//sysroot"],
     # NOTE: cc_sysroot automatically passes --sysroot=, but Clang checks
     # -isysroot, SDKROOT, then --sysroot:
@@ -29,6 +34,9 @@ cc_args(
     name = "macos_minimum_os_flags",
     actions = [
         "@rules_cc//cc/toolchains/actions:compile_actions",
+        "@rules_cc//cc/toolchains/actions:cpp_module_deps_scanning",
+        "@rules_cc//cc/toolchains/actions:cpp20_module_compile",
+        "@rules_cc//cc/toolchains/actions:cpp20_module_codegen",
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
     args = ["-mmacosx-version-min={version}"],
@@ -58,7 +66,8 @@ cc_args(
 cc_args(
     name = "sanitizer_headers_include_search_paths",
     actions = [
-        "@rules_cc//cc/toolchains/actions:source_compile_actions",
+        "//toolchain:source_compile_actions_with_cpp20_modules",
+        "@rules_cc//cc/toolchains/actions:cpp_module_deps_scanning",
     ],
     allowlist_include_directories = [
         "//sanitizers:sanitizers_headers_include_search_directory",

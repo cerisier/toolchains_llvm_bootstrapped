@@ -60,6 +60,9 @@ def declare_llvm_targets(*, suffix = ""):
         name = "compile_resource_dir",
         actions = [
             "@rules_cc//cc/toolchains/actions:compile_actions",
+            "@rules_cc//cc/toolchains/actions:cpp_module_deps_scanning",
+            "@rules_cc//cc/toolchains/actions:cpp20_module_compile",
+            "@rules_cc//cc/toolchains/actions:cpp20_module_codegen",
         ],
         allowlist_include_directories = [
             ":builtin_resource_dir",
@@ -107,6 +110,9 @@ def declare_llvm_targets(*, suffix = ""):
         "@rules_cc//cc/toolchains/actions:llvm_profdata": ":llvm-profdata",
         "@rules_cc//cc/toolchains/actions:objc_compile": ":clang",
         "@llvm//toolchain:cpp_compile_actions_without_header_parsing": ":clang++",
+        "@rules_cc//cc/toolchains/actions:cpp20_module_compile": ":clang++",
+        "@rules_cc//cc/toolchains/actions:cpp20_module_codegen": ":clang++",
+        "@rules_cc//cc/toolchains/actions:cpp_module_deps_scanning": ":clang-scan-deps",
         "@rules_cc//cc/toolchains/actions:objcopy_embed_data": ":llvm-objcopy",
         "@rules_cc//cc/toolchains/actions:dwp": ":llvm-dwp",
         "@rules_cc//cc/toolchains/actions:strip": ":llvm-strip",
@@ -214,6 +220,16 @@ def declare_llvm_targets(*, suffix = ""):
             ":builtin_resource_dir",
         ],
         capabilities = ["@rules_cc//cc/toolchains/capabilities:supports_pic"],
+        allowlist_include_directories = [":builtin_resource_dir"],
+    )
+
+    cc_tool(
+        name = "clang-scan-deps",
+        src = "bin/clang-scan-deps" + suffix,
+        data = [
+            ":builtin_resource_dir",
+            "bin/llvm" + suffix,
+        ],
         allowlist_include_directories = [":builtin_resource_dir"],
     )
 

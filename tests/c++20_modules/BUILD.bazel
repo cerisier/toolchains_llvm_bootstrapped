@@ -1,0 +1,202 @@
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
+load(":defs.bzl", "module_compatibility", "module_library", "module_test")
+load(":layering_check_test.bzl", "layering_check_test_suite")
+
+module_library(
+    name = "direct_module",
+    copts = ["-std=c++20"],
+    module_interfaces = ["direct_module.cppm"],
+)
+
+module_test(
+    name = "direct_module_test",
+    srcs = ["direct_module_test.cc"],
+    copts = ["-std=c++20"],
+    linkstatic = True,
+    deps = [":direct_module"],
+)
+
+cc_library(
+    name = "layering_check_dep",
+    hdrs = ["layering_check_dep.h"],
+)
+
+cc_library(
+    name = "layering_check_consumer",
+    srcs = ["layering_check_consumer.cc"],
+    copts = ["-std=c++20"],
+    deps = [":layering_check_dep"],
+)
+
+layering_check_test_suite()
+
+module_library(
+    name = "transitive_base",
+    copts = ["-std=c++20"],
+    module_interfaces = ["transitive_base.cppm"],
+)
+
+module_library(
+    name = "transitive_module",
+    copts = ["-std=c++20"],
+    module_interfaces = ["transitive_module.cppm"],
+    deps = [":transitive_base"],
+)
+
+module_test(
+    name = "transitive_module_test",
+    srcs = ["transitive_module_test.cc"],
+    copts = ["-std=c++20"],
+    deps = [":transitive_module"],
+)
+
+module_library(
+    name = "implementation_unit",
+    srcs = ["implementation_unit.cc"],
+    copts = ["-std=c++20"],
+    module_interfaces = ["implementation_unit.cppm"],
+)
+
+module_test(
+    name = "implementation_unit_test",
+    srcs = ["implementation_unit_test.cc"],
+    copts = ["-std=c++20"],
+    deps = [":implementation_unit"],
+)
+
+module_library(
+    name = "multiple_interfaces",
+    copts = ["-std=c++20"],
+    module_interfaces = [
+        "multiple_alpha.cppm",
+        "multiple_beta.cppm",
+    ],
+)
+
+module_test(
+    name = "multiple_interfaces_test",
+    srcs = ["multiple_interfaces_test.cc"],
+    copts = ["-std=c++20"],
+    deps = [":multiple_interfaces"],
+)
+
+module_library(
+    name = "partitioned_module",
+    copts = ["-std=c++20"],
+    module_interfaces = [
+        "partitioned_module.cppm",
+        "partitioned_module_detail.cppm",
+    ],
+)
+
+module_test(
+    name = "partitioned_module_test",
+    srcs = ["partitioned_module_test.cc"],
+    copts = ["-std=c++20"],
+    deps = [":partitioned_module"],
+)
+
+module_library(
+    name = "global_module_fragment",
+    hdrs = ["global_module_fragment.h"],
+    copts = ["-std=c++20"],
+    module_interfaces = ["global_module_fragment.cppm"],
+)
+
+module_test(
+    name = "global_module_fragment_test",
+    srcs = ["global_module_fragment_test.cc"],
+    copts = ["-std=c++20"],
+    deps = [":global_module_fragment"],
+)
+
+write_file(
+    name = "generated_module_source",
+    out = "generated_module.cppm",
+    content = [
+        "export module hermetic_llvm.tests.generated;",
+        "",
+        "export constexpr int generated_value() { return 42; }",
+    ],
+    target_compatible_with = module_compatibility(),
+)
+
+module_library(
+    name = "generated_module",
+    copts = ["-std=c++20"],
+    module_interfaces = [":generated_module.cppm"],
+)
+
+module_test(
+    name = "generated_module_test",
+    srcs = ["generated_module_test.cc"],
+    copts = ["-std=c++20"],
+    deps = [":generated_module"],
+)
+
+cc_test(
+    name = "std_module_test",
+    srcs = ["std_module_test.cc"],
+    copts = ["-std=c++23"],
+    features = [
+        "cpp_modules",
+        "libcxx_std_module",
+    ],
+    tags = ["cxx20_modules"],
+    target_compatible_with = module_compatibility(),
+    deps = ["@llvm//runtimes/libcxx:std_module"],
+)
+
+cc_library(
+    name = "std_importing_module",
+    copts = ["-std=c++23"],
+    features = [
+        "cpp_modules",
+        "libcxx_std_module",
+    ],
+    module_interfaces = ["std_importing_module.cppm"],
+    target_compatible_with = module_compatibility(),
+    deps = ["@llvm//runtimes/libcxx:std_module"],
+)
+
+cc_test(
+    name = "std_importing_module_test",
+    srcs = ["std_importing_module_test.cc"],
+    copts = ["-std=c++23"],
+    features = [
+        "cpp_modules",
+        "libcxx_std_module",
+    ],
+    tags = ["cxx20_modules"],
+    target_compatible_with = module_compatibility(),
+    deps = [":std_importing_module"],
+)
+
+test_suite(
+    name = "cxx20_modules_tests",
+    tests = [
+        ":cpp20_module_consumer_layering_check_flags_test",
+        ":cpp20_module_layering_check_flags_test",
+        ":direct_module_test",
+        ":generated_module_test",
+        ":global_module_fragment_test",
+        ":implementation_unit_test",
+        ":multiple_interfaces_test",
+        ":ordinary_layering_check_flags_test",
+        ":partitioned_module_test",
+        ":std_importing_module_test",
+        ":std_module_test",
+        ":transitive_module_test",
+    ],
+)
+
+test_suite(
+    name = "layering_check_tests",
+    tests = [
+        ":cpp20_module_consumer_layering_check_flags_test",
+        ":cpp20_module_layering_check_flags_test",
+        ":ordinary_layering_check_flags_test",
+    ],
+)

@@ -1,5 +1,6 @@
 load("@bazel_lib//:bzl_library.bzl", "bzl_library")
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
+load("@rules_cc//cc/toolchains:feature_constraint.bzl", "cc_feature_constraint")
 load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 load("//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
 
@@ -35,7 +36,7 @@ cc_args(
 cc_args(
     name = "target_flags",
     actions = [
-        "@rules_cc//cc/toolchains/actions:compile_actions",
+        "//toolchain:source_compile_actions_with_cpp20_modules",
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
     args = [
@@ -76,25 +77,38 @@ cc_args(
     }),
 )
 
+cc_feature_constraint(
+    name = "not_cpp_modules",
+    none_of = ["//toolchain/features:cpp_modules"],
+)
+
 cc_args(
     name = "module_map",
     actions = [
         "@rules_cc//cc/toolchains/actions:compile_actions",
     ],
     args = [
-        # With C++20, Clang defaults to using C++ rather than Clang modules,
-        # which breaks Bazel's `use_module_maps` feature, which is used by
-        # `layering_check`. Since Bazel doesn't support C++ modules yet, it
-        # is safe to disable them globally until the toolchain shipped by
-        # Bazel sets this flag on `use_module_maps`.
-        # https://github.com/llvm/llvm-project/commit/0556138624edf48621dd49a463dbe12e7101f17d
-        "-Xclang",
-        "-fno-cxx-modules",
         "-Wno-module-import-in-extern-c",
         # This warning would mean we had an error configuring the toolchain or modulemap
         "-Werror=incomplete-umbrella",
         "-Wno-modules-import-nested-redundant",
     ],
+)
+
+# With C++20, Clang defaults to using C++ rather than Clang header modules,
+# which breaks the module maps used by layering_check. Disable C++ modules for
+# ordinary compilation, but not for targets that explicitly enable Bazel's
+# cpp_modules feature.
+cc_args(
+    name = "no_cxx_modules_unless_consuming",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:compile_actions",
+    ],
+    args = [
+        "-Xclang",
+        "-fno-cxx-modules",
+    ],
+    requires_any_of = [":not_cpp_modules"],
 )
 
 cc_args(
@@ -107,6 +121,8 @@ cc_args(
         "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
         "@rules_cc//cc/toolchains/actions:cpp_module_compile",
         "@rules_cc//cc/toolchains/actions:cpp_module_codegen",
+        "@rules_cc//cc/toolchains/actions:cpp20_module_compile",
+        "@rules_cc//cc/toolchains/actions:cpp20_module_codegen",
         "@rules_cc//cc/toolchains/actions:clif_match",
         "@rules_cc//cc/toolchains/actions:objcpp_compile",
     ],
@@ -200,6 +216,8 @@ cc_args(
     name = "no_absolute_paths_for_builtins",
     actions = [
         "@rules_cc//cc/toolchains/actions:compile_actions",
+        "@rules_cc//cc/toolchains/actions:cpp20_module_compile",
+        "@rules_cc//cc/toolchains/actions:cpp20_module_codegen",
     ],
     args = [
         # If the compiler sometimes rewrites paths in the .d files without symlinks
@@ -213,6 +231,8 @@ cc_args(
     name = "deterministic_compile_flags",
     actions = [
         "@rules_cc//cc/toolchains/actions:compile_actions",
+        "@rules_cc//cc/toolchains/actions:cpp20_module_compile",
+        "@rules_cc//cc/toolchains/actions:cpp20_module_codegen",
     ],
     args = [
         # Make C++ compilation deterministic. Use linkstamping instead of these
@@ -834,6 +854,8 @@ cc_args(
     actions = [
         "@rules_cc//cc/toolchains/actions:cpp_compile_actions",
         "@rules_cc//cc/toolchains/actions:c_compile_actions",
+        "@rules_cc//cc/toolchains/actions:cpp20_module_compile",
+        "@rules_cc//cc/toolchains/actions:cpp20_module_codegen",
         # -nostdlibinc triggers a warning for assemble (no preprocess)
         "@rules_cc//cc/toolchains/actions:preprocess_assemble",
         "@rules_cc//cc/toolchains/actions:objc_compile",
@@ -859,6 +881,8 @@ cc_args(
     name = "empty_sysroot_flags",
     actions = [
         "@rules_cc//cc/toolchains/actions:compile_actions",
+        "@rules_cc//cc/toolchains/actions:cpp20_module_compile",
+        "@rules_cc//cc/toolchains/actions:cpp20_module_codegen",
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
     args = select({
@@ -979,4 +1003,118 @@ bzl_library(
     name = "llvm_target_triple",
     srcs = ["llvm_target_triple.bzl"],
     deps = ["//constraints/windows/abi:abis"],
+)
+
+# clang-scan-deps receives the ordinary target compile arguments after `--`.
+# The scan tool and target compiler are selected from the same toolchain
+# distribution, so invoking clang++ through the scan tool's sibling lookup
+# remains hermetic across execution platforms and bootstrap stages.
+cc_args(
+    name = "cpp_module_deps_scanning",
+    actions = ["@rules_cc//cc/toolchains/actions:cpp_module_deps_scanning"],
+    args = [
+        "-format=p1689",
+        "-o",
+        "{output_file}",
+        "--",
+        "clang++",
+    ],
+    format = {"output_file": "@rules_cc//cc/toolchains/variables:output_file"},
+    requires_not_none = "@rules_cc//cc/toolchains/variables:output_file",
+)
+
+cc_args(
+    name = "cpp_module_deps_scanning_hermetic_flags",
+    actions = ["@rules_cc//cc/toolchains/actions:cpp_module_deps_scanning"],
+    args = select({
+        "@platforms//os:macos": [],
+        "//conditions:default": [
+            "--sysroot=/dev/null",
+            "-nostdlibinc",
+        ],
+    }),
+)
+
+cc_args(
+    name = "cpp_module_deps_scanning_cxxstdlib_headers",
+    actions = ["@rules_cc//cc/toolchains/actions:cpp_module_deps_scanning"],
+    args = [
+        "-isystem",
+        "{cxxstdlib_headers_include_search_path}",
+        "-isystem",
+        "{cxxstdlib_abi_headers_include_search_path}",
+    ],
+    data = [
+        "//runtimes/cxxstdlib:abi_headers_include_search_directory",
+        "//runtimes/cxxstdlib:headers_include_search_directory",
+    ],
+    format = {
+        "cxxstdlib_headers_include_search_path": "//runtimes/cxxstdlib:headers_include_search_directory",
+        "cxxstdlib_abi_headers_include_search_path": "//runtimes/cxxstdlib:abi_headers_include_search_directory",
+    },
+)
+
+cc_args(
+    name = "cpp20_module_output",
+    actions = ["@rules_cc//cc/toolchains/actions:cpp20_module_compile"],
+    args = [
+        "-x",
+        "c++-module",
+        "-std=c++20",
+        "-fmodule-output={cpp_module_output_file}",
+    ],
+    format = {"cpp_module_output_file": "@rules_cc//cc/toolchains/variables:cpp_module_output_file"},
+    requires_not_none = "@rules_cc//cc/toolchains/variables:cpp_module_output_file",
+)
+
+# Keep paths recorded in a BMI relative to the execution root. Consumers can
+# then load the BMI in a different sandbox without embedding every input file
+# in it.
+cc_args(
+    name = "cpp20_module_home_is_cwd",
+    actions = ["@rules_cc//cc/toolchains/actions:cpp20_module_compile"],
+    args = [
+        "-Xclang",
+        "-fmodule-map-file-home-is-cwd",
+        "-Xclang",
+        "-fmodule-file-home-is-cwd",
+    ],
+)
+
+cc_args(
+    name = "cpp_module_modmap_response",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:cpp_compile",
+        "@rules_cc//cc/toolchains/actions:cpp20_module_compile",
+        "@rules_cc//cc/toolchains/actions:cpp20_module_codegen",
+    ],
+    args = ["@{cpp_module_modmap_file}"],
+    format = {"cpp_module_modmap_file": "@rules_cc//cc/toolchains/variables:cpp_module_modmap_file"},
+    requires_not_none = "@rules_cc//cc/toolchains/variables:cpp_module_modmap_file",
+)
+
+cc_args(
+    name = "libcxx_std_module_flags",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:cpp_module_deps_scanning",
+        "@rules_cc//cc/toolchains/actions:cpp20_module_compile",
+        "@rules_cc//cc/toolchains/actions:cpp20_module_codegen",
+    ],
+    args = [
+        "-nostdinc++",
+        "-isystem",
+        "{cxxstdlib_headers_include_search_path}",
+        "-isystem",
+        "{cxxstdlib_abi_headers_include_search_path}",
+        "-std=c++23",
+        "-Wno-reserved-module-identifier",
+    ],
+    data = [
+        "//runtimes/cxxstdlib:abi_headers_include_search_directory",
+        "//runtimes/cxxstdlib:headers_include_search_directory",
+    ],
+    format = {
+        "cxxstdlib_headers_include_search_path": "//runtimes/cxxstdlib:headers_include_search_directory",
+        "cxxstdlib_abi_headers_include_search_path": "//runtimes/cxxstdlib:abi_headers_include_search_directory",
+    },
 )

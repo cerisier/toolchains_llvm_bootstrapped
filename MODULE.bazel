@@ -17,6 +17,19 @@ bazel_dep(name = "rules_go", version = "0.62.0", repo_name = None)
 bazel_dep(name = "zlib-ng", version = "2.3.3.bcr.2", repo_name = "llvm_zlib")
 bazel_dep(name = "zstd", version = "1.5.7.bcr.1", repo_name = "llvm_zstd")
 
+# C++20 module support for the rule-based toolchain API landed after the
+# rules_cc 0.2.22 release. Pin upstream main and patch its source action set so
+# dependency include paths and defines reach module scanning and compilation;
+# module codegen is excluded because it consumes the BMI rather than sources.
+archive_override(
+    module_name = "rules_cc",
+    integrity = "sha256-/LD728vQZwyDdapt9vySDK3rPRqjlRnNvrUyQoidwyw=",
+    patch_strip = 1,
+    patches = ["//3rd_party/rules_cc:cpp20_module_include_paths.patch"],
+    strip_prefix = "rules_cc-dc424059b634480fdca0250e4ecc2af88f127059",
+    urls = ["https://github.com/bazelbuild/rules_cc/archive/dc424059b634480fdca0250e4ecc2af88f127059.tar.gz"],
+)
+
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 rbe_platform_repository = use_repo_rule("//:rbe.bzl", "rbe_platform_repository")

@@ -7,6 +7,7 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = []):
         all_of = [
             "@rules_cc//cc/toolchains/args/layering_check:layering_check",
             "@rules_cc//cc/toolchains/args/layering_check:use_module_maps",
+            "@llvm//toolchain/features:libcxx_std_module",
             "@llvm//toolchain/features:static_link_cpp_runtimes",
             "@llvm//toolchain/features/runtime_library_search_directories:feature",
             "@llvm//toolchain/features:parse_headers",

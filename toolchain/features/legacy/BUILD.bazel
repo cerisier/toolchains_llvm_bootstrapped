@@ -7,6 +7,8 @@ cc_args(
     name = "legacy_default_cxx_compile_flags",
     actions = [
         "@rules_cc//cc/toolchains/actions:cpp_compile_actions",
+        "@rules_cc//cc/toolchains/actions:cpp20_module_compile",
+        "@rules_cc//cc/toolchains/actions:cpp20_module_codegen",
     ],
     args = [
         "-std=c++17",
@@ -17,6 +19,8 @@ cc_args(
     name = "legacy_default_compile_flags",
     actions = [
         "@rules_cc//cc/toolchains/actions:compile_actions",
+        "@rules_cc//cc/toolchains/actions:cpp20_module_compile",
+        "@rules_cc//cc/toolchains/actions:cpp20_module_codegen",
     ],
     args = select({
         "@platforms//os:none": [],
