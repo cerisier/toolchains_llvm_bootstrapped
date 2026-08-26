@@ -15,6 +15,13 @@ common --repo_contents_cache=~/.cache/bazel-repo/contents
 # docs: https://bazel.build/reference/command-line-reference#flag--remote_download_outputs
 common --remote_download_outputs=minimal
 
+# Bound analysis and queued remote actions so LLVM source builds fit in the
+# GitHub runner Java heap on a cold remote cache.
+build --experimental_throttle_remote_action_building
+build --discard_analysis_cache
+build --notrack_incremental_state
+build --jobs=100
+
 # Allows tests to run bazelisk-in-bazel, since this is the cache folder used
 # docs: https://bazel.build/reference/command-line-reference#flag--test_env
 test --test_env=XDG_CACHE_HOME
