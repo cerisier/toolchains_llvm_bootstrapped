@@ -1,6 +1,5 @@
 load("@rules_cc//cc/toolchains:feature_set.bzl", "cc_feature_set")
 load("@rules_cc//cc/toolchains:toolchain.bzl", _cc_toolchain = "cc_toolchain")
-load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 
 _WINDOWS_MSVC_SUPPORTS_HEADER_PARSING = False
 
@@ -222,41 +221,6 @@ def cc_toolchain(
         }),
     )
 
-    cc_args_list(
-        name = name + "_msvc_default_libs",
-        args = select({
-            "@llvm//toolchain:runtimes_none": [],
-            "//conditions:default": ["@llvm//toolchain/args/windows/msvc:normalized_default_libs"],
-        }),
-    )
-
-    cc_args_list(
-        name = name + "_semantic_args",
-        args = select({
-            "@llvm//toolchain:runtimes_none": ["@llvm//toolchain/runtimes:toolchain_args"],
-            "@llvm//toolchain:runtimes_stage1": ["@llvm//toolchain/runtimes:toolchain_args"],
-            "@llvm//toolchain:runtimes_stage1_hosted": ["@llvm//toolchain/runtimes:toolchain_args"],
-            "//conditions:default": ["@llvm//toolchain:toolchain_args"],
-        }) + select({
-            # ABI validation is a toolchain invariant, not a user-disableable
-            # feature.
-            "@llvm//constraints/windows/abi:msvc": ["@llvm//toolchain/features/msvc:configuration_validation_args"],
-            "//conditions:default": [],
-        }) + select({
-            "@llvm//constraints/windows/abi:msvc": ["@llvm//toolchain/features/msvc:crt_compile_args"],
-            "//conditions:default": [
-                # TODO: rules_cc passes extra args to these actions, ideally these would be fixed in rules_cc.
-                "@llvm//toolchain/args:ignore_unused_command_line_argument",
-            ],
-        }) + select({
-            # This is the existing Windows default-libs semantic position.
-            # Its concrete SDK representation belongs to the exec-specific
-            # toolchain instance rather than the target configuration.
-            "@llvm//constraints/windows/abi:msvc": [name + "_msvc_default_libs"],
-            "//conditions:default": [],
-        }),
-    )
-
     native.alias(
         name = name + "_generic_static_runtime_lib",
         actual = select({
@@ -298,10 +262,12 @@ def cc_toolchain(
         # libc++ headers are part of semantic platform args. Keep Clang's
         # declared resource headers between them and VC/UCRT so libc++
         # include_next wrappers resolve Clang definitions first.
-        args = [name + "_semantic_args"] + extra_args + select({
-            "@llvm//constraints/windows/abi:msvc": ["@llvm//toolchain/args/windows/msvc:normalized_sdk_compile_args"],
-            "//conditions:default": [],
-        }),
+        args = select({
+            "@llvm//toolchain:runtimes_none": ["@llvm//toolchain/runtimes:toolchain_args"],
+            "@llvm//toolchain:runtimes_stage1": ["@llvm//toolchain/runtimes:toolchain_args"],
+            "@llvm//toolchain:runtimes_stage1_hosted": ["@llvm//toolchain/runtimes:toolchain_args"],
+            "//conditions:default": ["@llvm//toolchain:toolchain_args"],
+        }) + extra_args,
         # clang-cl header parsing remains a named unsupported boundary. It can
         # become true only with a dialect-correct parse-only action and proved
         # module-map/layering behavior.

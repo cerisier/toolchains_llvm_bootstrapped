@@ -170,6 +170,15 @@ cc_args_list(
 )
 
 cc_args_list(
+    name = "cxxstdlib_headers_include_search_paths",
+    args = select({
+        "@platforms//os:linux": ["//toolchain/args:cxxstdlib_headers_include_search_paths"],
+        "@platforms//os:windows": ["//toolchain/args/windows:cxxstdlib_headers_include_search_paths"],
+        "//conditions:default": [],
+    }),
+)
+
+cc_args_list(
     name = "default_libs",
     args = select({
         "@platforms//os:macos": [
@@ -295,9 +304,7 @@ cc_args_list(
 # TODO(zbarsky): This must match llvm/toolchains/llvm.bzl
 cc_args_list(
     name = "linux_toolchain_args",
-    args = [
-        "//toolchain/args:cxxstdlib_headers_include_search_paths",
-    ] + select({
+    args = select({
         "//platforms/config:musl": [
             "//toolchain/args/linux:kernel_headers_include_search_paths",
             "//toolchain/args/linux:musl_libc_headers_include_search_paths",
@@ -343,8 +350,9 @@ cc_args_list(
         ":hermetic_compile_flags",
 
         # Keep external -isystem directories before the toolchain C and C++
-        # -isystem directories in :platform_specific_args.
+        # -isystem directories below.
         "@rules_cc//cc/toolchains/args/external_include_paths:external_include_paths",
+        ":cxxstdlib_headers_include_search_paths",
 
         # TODO(cerisier): Explode this into specific args instead
         ":platform_specific_args",
@@ -381,6 +389,8 @@ cc_args_list(
         # Needs to stay out of resource_dir since clang does not always search for crtstuff for all targets.
         ":default_startfiles",
         ":default_libs",
+        # TODO: rules_cc passes extra args to these actions, ideally these would be fixed in rules_cc.
+        "//toolchain/args:ignore_unused_command_line_argument",
     ],
 )
 
@@ -404,8 +414,8 @@ cc_args_list(
         "@rules_cc//cc/toolchains/args/external_include_paths:external_include_paths",
 
         # Windows compiler, ABI, CRT, object-format, and C++ runtime semantics.
-        "//toolchain/args/windows:crt_compile_args",
-        "//toolchain/args/windows:cxxstdlib_headers_include_search_paths",
+        "//toolchain/args/windows:crt_compile_defines",
+        ":cxxstdlib_headers_include_search_paths",
         "//toolchain/args/windows:headers_before_compiler_resource",
 
         # Optional sanitizers
@@ -439,6 +449,9 @@ cc_args_list(
         # Needs to stay out of resource_dir since clang does not always search for crtstuff for all targets.
         ":default_startfiles",
         ":default_libs",
+        "//toolchain/args/windows:configuration_validation_args",
+        "//toolchain/args/windows:crt_linkage_args",
+        "//toolchain/args/windows:ignore_unused_command_line_argument",
     ],
 )
 

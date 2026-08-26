@@ -239,3 +239,12 @@ cc_args_list(
     }),
     visibility = ["//visibility:public"],
 )
+
+cc_args_list(
+    name = "normalized_default_libs_for_runtime",
+    args = select({
+        "//toolchain:runtimes_none": [],
+        "//conditions:default": [":normalized_default_libs"],
+    }),
+    visibility = ["//visibility:public"],
+)

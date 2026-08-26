@@ -124,10 +124,34 @@ cc_args_list(
 )
 
 cc_args_list(
-    name = "crt_compile_args",
+    name = "configuration_validation_args",
+    args = select({
+        "//constraints/windows/abi:msvc": ["//toolchain/features/msvc:configuration_validation_args"],
+        "//conditions:default": [],
+    }),
+)
+
+cc_args_list(
+    name = "crt_compile_defines",
     args = select({
         "//constraints/windows/abi:msvc": ["//toolchain/args/windows/msvc:msvc_crt_compile_defines"],
         "//conditions:default": [],
+    }),
+)
+
+cc_args_list(
+    name = "crt_linkage_args",
+    args = select({
+        "//constraints/windows/abi:msvc": ["//toolchain/features/msvc:crt_compile_args"],
+        "//conditions:default": [],
+    }),
+)
+
+cc_args_list(
+    name = "ignore_unused_command_line_argument",
+    args = select({
+        "//constraints/windows/abi:msvc": [],
+        "//conditions:default": ["//toolchain/args:ignore_unused_command_line_argument"],
     }),
 )
 

@@ -19,9 +19,19 @@ def declare_toolchains(*, execs = SUPPORTED_EXECS, targets = SUPPORTED_TARGETS):
             name = cc_toolchain_name,
             tool_map = platform_cc_tool_map(exec_os, exec_cpu),
             module_map = platform_module_map(exec_os, exec_cpu),
+            # Paths below describe the concrete execution filesystem. Keep
+            # target semantics in //toolchain's ordered argument composition.
             extra_args = select({
-                "@llvm//platforms/config:windows_x86_64_msvc": [clang_cl_resource_dir_arg(exec_os, exec_cpu)],
-                "@llvm//platforms/config:windows_aarch64_msvc": [clang_cl_resource_dir_arg(exec_os, exec_cpu)],
+                "@llvm//platforms/config:windows_x86_64_msvc": [
+                    "@llvm//toolchain/args/windows/msvc:normalized_default_libs_for_runtime",
+                    clang_cl_resource_dir_arg(exec_os, exec_cpu),
+                    "@llvm//toolchain/args/windows/msvc:normalized_sdk_compile_args",
+                ],
+                "@llvm//platforms/config:windows_aarch64_msvc": [
+                    "@llvm//toolchain/args/windows/msvc:normalized_default_libs_for_runtime",
+                    clang_cl_resource_dir_arg(exec_os, exec_cpu),
+                    "@llvm//toolchain/args/windows/msvc:normalized_sdk_compile_args",
+                ],
                 "//conditions:default": [resource_dir_arg(exec_os, exec_cpu)],
             }),
         )
