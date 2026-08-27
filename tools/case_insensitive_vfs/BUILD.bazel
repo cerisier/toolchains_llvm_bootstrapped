@@ -25,16 +25,16 @@ cc_runtime_stage1_hosted_binary(
 )
 
 exec_test(
+    cc_test,
     name = "test",
     srcs = ["vfs_test.cc"],
-    rule = cc_test,
     deps = ["case_insensitive_vfs_lib"],
 )
 
 exec_test(
+    sh_test,
     name = "cli_test",
     srcs = ["cli_test.sh"],
     env = {"VFS_TOOLS": "$(rootpaths case_insensitive_vfs)"},
-    rule = sh_test,
     tools = ["case_insensitive_vfs"],
 )

@@ -18,19 +18,19 @@ cc_runtime_stage1_hosted_binary(
 )
 
 exec_test(
+    cc_test,
     name = "test",
     srcs = [
         "def_parser.c",
         "def_parser.h",
         "def_parser_test.cc",
     ],
-    rule = cc_test,
 )
 
 exec_test(
+    sh_test,
     name = "cli_test",
     srcs = ["cli_test.sh"],
     env = {"DEF_PARSERS": "$(rootpaths coff_def_parser)"},
-    rule = sh_test,
     tools = ["coff_def_parser"],
 )

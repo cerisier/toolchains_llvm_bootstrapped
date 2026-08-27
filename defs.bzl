@@ -1,4 +1,4 @@
-def exec_test(*, rule, name, tags = [], args = [], env = {}, data = [], tools = [], **kwargs):
+def exec_test(rule, *, name, tags = [], args = [], env = {}, data = [], tools = [], **kwargs):
     # The inner executable is built in the exec configuration. Keep target
     # artifacts on the outer test unless an inner rule attribute itself uses a
     # location expansion for one of them (for example go_test.x_defs).

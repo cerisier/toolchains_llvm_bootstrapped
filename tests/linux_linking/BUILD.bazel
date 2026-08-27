@@ -73,6 +73,7 @@ platform_transition_binary(
 )
 
 exec_test(
+    sh_test,
     name = "x86_64_musl_static_pie_test",
     srcs = ["verify_static_pie.sh"],
     args = [
@@ -82,13 +83,13 @@ exec_test(
     data = [
         ":hello_x86_64_musl_pie_on",
     ],
-    rule = sh_test,
     tools = [
         ":llvm-readelf",
     ],
 )
 
 exec_test(
+    sh_test,
     name = "x86_64_musl_static_non_pie_default_test",
     srcs = ["verify_static_non_pie.sh"],
     args = [
@@ -98,13 +99,13 @@ exec_test(
     data = [
         ":hello_x86_64_musl",
     ],
-    rule = sh_test,
     tools = [
         ":llvm-readelf",
     ],
 )
 
 exec_test(
+    sh_test,
     name = "x86_64_glibc_dynamic_non_pie_test",
     srcs = ["verify_dynamic_non_pie.sh"],
     args = [
@@ -114,13 +115,13 @@ exec_test(
     data = [
         ":hello_x86_64_gnu",
     ],
-    rule = sh_test,
     tools = [
         ":llvm-readelf",
     ],
 )
 
 exec_test(
+    sh_test,
     name = "aarch64_musl_static_pie_test",
     srcs = ["verify_static_pie.sh"],
     args = [
@@ -130,13 +131,13 @@ exec_test(
     data = [
         ":hello_aarch64_musl_pie_on",
     ],
-    rule = sh_test,
     tools = [
         ":llvm-readelf",
     ],
 )
 
 exec_test(
+    sh_test,
     name = "aarch64_musl_static_non_pie_default_test",
     srcs = ["verify_static_non_pie.sh"],
     args = [
@@ -146,13 +147,13 @@ exec_test(
     data = [
         ":hello_aarch64_musl",
     ],
-    rule = sh_test,
     tools = [
         ":llvm-readelf",
     ],
 )
 
 exec_test(
+    sh_test,
     name = "aarch64_glibc_dynamic_non_pie_test",
     srcs = ["verify_dynamic_non_pie.sh"],
     args = [
@@ -162,7 +163,6 @@ exec_test(
     data = [
         ":hello_aarch64_gnu",
     ],
-    rule = sh_test,
     tools = [
         ":llvm-readelf",
     ],

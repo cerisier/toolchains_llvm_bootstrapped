@@ -46,10 +46,10 @@ platform_data(
 
 # TODO: Add a wasm64 test once wazero gains memory64 support.
 exec_test(
+    go_test,
     name = "wasm_test",
     srcs = ["wasm_test.go"],
     data = [":wasm_blob"],
-    rule = go_test,
     x_defs = {
         "wasmBlobRlocationpath": "$(rlocationpath :wasm_blob)",
     },

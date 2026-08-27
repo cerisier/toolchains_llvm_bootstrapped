@@ -298,11 +298,11 @@ platform_transition_filegroup(
 ]
 
 exec_test(
+    sh_test,
     name = "libstdcxx_main_dynamic_output_test",
     srcs = ["libstdcxx_main_dynamic_output_test.sh"],
     data = [":libstdcxx_main_dynamic_linux_x86_64"],
     env = {"BINARY": "$(rootpath :libstdcxx_main_dynamic_linux_x86_64)"},
-    rule = sh_test,
     target_compatible_with = select({
         "@platforms//cpu:x86_64": [],
         "//conditions:default": ["@platforms//:incompatible"],
@@ -313,11 +313,11 @@ exec_test(
 )
 
 exec_test(
+    sh_test,
     name = "libstdcxx_main_dynamic_with_linkopts_output_test",
     srcs = ["libstdcxx_main_dynamic_output_test.sh"],
     data = [":libstdcxx_main_dynamic_with_linkopts_linux_x86_64"],
     env = {"BINARY": "$(rootpath :libstdcxx_main_dynamic_with_linkopts_linux_x86_64)"},
-    rule = sh_test,
     target_compatible_with = select({
         "@platforms//cpu:x86_64": [],
         "//conditions:default": ["@platforms//:incompatible"],
@@ -745,11 +745,11 @@ ubsan_cc_binary(
 )
 
 exec_test(
+    sh_test,
     name = "ubsan_output_test",
     srcs = ["ubsan_output_test.sh"],
     data = [":ubsan_fail"],
     env = {"BINARY": "$(rootpath :ubsan_fail)"},
-    rule = sh_test,
     target_compatible_with = select({
         "@platforms//os:windows": ["@platforms//:incompatible"],
         "//conditions:default": [],
@@ -766,11 +766,11 @@ cfi_cc_binary(
 )
 
 exec_test(
+    sh_test,
     name = "cfi_output_test",
     srcs = ["cfi_output_test.sh"],
     data = [":cfi_fail"],
     env = {"BINARY": "$(rootpath :cfi_fail)"},
-    rule = sh_test,
     target_compatible_with = select({
         "@platforms//os:linux": [],
         "//conditions:default": ["@platforms//:incompatible"],
@@ -787,11 +787,11 @@ msan_cc_binary(
 )
 
 exec_test(
+    sh_test,
     name = "msan_output_test",
     srcs = ["msan_output_test.sh"],
     data = [":msan_fail"],
     env = {"BINARY": "$(rootpath :msan_fail)"},
-    rule = sh_test,
     target_compatible_with = select({
         "@platforms//os:linux": [],
         "//conditions:default": ["@platforms//:incompatible"],
@@ -808,6 +808,7 @@ dfsan_cc_binary(
 )
 
 exec_test(
+    sh_test,
     name = "dfsan_output_test",
     srcs = ["dfsan_output_test.sh"],
     data = [":dfsan_fail"],
@@ -815,7 +816,6 @@ exec_test(
         "BINARY": "$(rootpath :dfsan_fail)",
         "DFSAN_OPTIONS": "warn_unimplemented=1",
     },
-    rule = sh_test,
     target_compatible_with = select({
         "@platforms//os:linux": [],
         "//conditions:default": ["@platforms//:incompatible"],
@@ -833,6 +833,7 @@ nsan_cc_binary(
 )
 
 exec_test(
+    sh_test,
     name = "nsan_output_test",
     srcs = ["nsan_output_test.sh"],
     data = [":nsan_fail"],
@@ -840,7 +841,6 @@ exec_test(
         "BINARY": "$(rootpath :nsan_fail)",
         "NSAN_OPTIONS": "check_nan=true,halt_on_error=0",
     },
-    rule = sh_test,
     target_compatible_with = select({
         # nsan is x86 only
         "@llvm//platforms/config:linux_x86_64": [],
@@ -858,11 +858,11 @@ safestack_cc_binary(
 )
 
 exec_test(
+    sh_test,
     name = "safestack_output_test",
     srcs = ["safestack_output_test.sh"],
     data = [":safestack_fail"],
     env = {"BINARY": "$(rootpath :safestack_fail)"},
-    rule = sh_test,
     target_compatible_with = select({
         "@platforms//os:linux": [],
         "//conditions:default": ["@platforms//:incompatible"],
@@ -879,11 +879,11 @@ rtsan_cc_binary(
 )
 
 exec_test(
+    sh_test,
     name = "rtsan_output_test",
     srcs = ["rtsan_output_test.sh"],
     data = [":rtsan_fail"],
     env = {"BINARY": "$(rootpath :rtsan_fail)"},
-    rule = sh_test,
     target_compatible_with = select({
         "@platforms//os:linux": [],
         "//conditions:default": ["@platforms//:incompatible"],
@@ -900,11 +900,11 @@ tysan_cc_binary(
 )
 
 exec_test(
+    sh_test,
     name = "tysan_output_test",
     srcs = ["tysan_output_test.sh"],
     data = [":tysan_fail"],
     env = {"BINARY": "$(rootpath :tysan_fail)"},
-    rule = sh_test,
     target_compatible_with = select({
         "@platforms//os:linux": [],
         "//conditions:default": ["@platforms//:incompatible"],
@@ -922,11 +922,11 @@ tsan_cc_binary(
 )
 
 exec_test(
+    sh_test,
     name = "tsan_output_test",
     srcs = ["tsan_output_test.sh"],
     data = [":tsan_fail"],
     env = {"BINARY": "$(rootpath :tsan_fail)"},
-    rule = sh_test,
     target_compatible_with = select({
         # firecracker + docker on arm64 is too restrictive.
         # macOS: the TSan dylib builds/links/loads, but the runtime crashes
@@ -953,15 +953,16 @@ asan_cc_binary(
 )
 
 exec_test(
+    asan_cc_binary,
     name = "asan_libcxx_container_overflow_test",
     srcs = ["asan_libcxx_container_overflow.cc"],
     copts = ["-fno-exceptions"],
     linkopts = ["-Wl,--icf=none"],
-    rule = asan_cc_binary,
     target_compatible_with = _ASAN_LIBCXX_CONTAINER_OVERFLOW_TEST_COMPATIBLE,
 )
 
 exec_test(
+    sh_test,
     name = "asan_output_test",
     srcs = ["asan_output_test.sh"],
     data = [":asan_fail"] + select({
@@ -982,7 +983,6 @@ exec_test(
         },
         "//conditions:default": {"BINARY": "$(rootpath :asan_fail)"},
     }),
-    rule = sh_test,
 )
 
 lsan_cc_binary(
@@ -996,11 +996,11 @@ lsan_cc_binary(
 )
 
 exec_test(
+    sh_test,
     name = "lsan_output_test",
     srcs = ["lsan_output_test.sh"],
     data = [":lsan_fail"],
     env = {"BINARY": "$(rootpath :lsan_fail)"},
-    rule = sh_test,
     target_compatible_with = select({
         "@platforms//os:linux": [],
         "//conditions:default": ["@platforms//:incompatible"],
@@ -1233,13 +1233,13 @@ profile_cc_binary(
 )
 
 exec_test(
+    sh_test,
     name = "fuzzer_output_test",
     srcs = ["fuzzer_output_test.sh"],
     data = [":fuzzer_main"],
     env = {
         "BINARY": "$(rootpath :fuzzer_main)",
     },
-    rule = sh_test,
     tags = ["no-remote"],
     target_compatible_with = select({
         "@platforms//os:linux": [],
@@ -1259,6 +1259,7 @@ fuzzer_asan_cc_binary(
 )
 
 exec_test(
+    sh_test,
     name = "fuzzer_asan_output_test",
     srcs = ["fuzzer_sanitizer_output_test.sh"],
     data = [":fuzzer_asan_main"],
@@ -1268,7 +1269,6 @@ exec_test(
         "EXPECT_NONZERO": "1",
         "INPUT_TEXT": "ASAN",
     },
-    rule = sh_test,
     tags = ["no-remote"],
     target_compatible_with = select({
         "@platforms//os:linux": [],
@@ -1288,6 +1288,7 @@ fuzzer_cc_binary(
 )
 
 exec_test(
+    sh_test,
     name = "fuzzer_ubsan_output_test",
     srcs = ["fuzzer_sanitizer_output_test.sh"],
     data = [":fuzzer_ubsan_main"],
@@ -1297,7 +1298,6 @@ exec_test(
         "EXPECT_NONZERO": "0",
         "INPUT_TEXT": "UBSAN",
     },
-    rule = sh_test,
     tags = ["no-remote"],
     target_compatible_with = select({
         "@platforms//os:linux": [],
@@ -1453,6 +1453,7 @@ _WINDOWS_MSVC_MT_ARTIFACTS = [
 
 [
     exec_test(
+        sh_test,
         name = "windows_msvc_artifacts_" + cpu + "_test",
         srcs = ["windows_msvc_artifacts_test.sh"],
         data = ["windows_msvc_artifacts_" + cpu],
@@ -1463,7 +1464,6 @@ _WINDOWS_MSVC_MT_ARTIFACTS = [
             "LLVM_READOBJ": "$(rlocationpath @llvm//tools:llvm-readobj)",
             "MACHINE": machine,
         },
-        rule = sh_test,
         tags = ["manual"],
         target_compatible_with = select({
             "@platforms//os:windows": ["@platforms//:incompatible"],
