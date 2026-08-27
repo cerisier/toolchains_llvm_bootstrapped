@@ -128,8 +128,8 @@ If you wish to setup things manually, you will likely require a few flags:
 | **armv7-linux-musleabihf** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **aarch64-windows-gnu ²**| ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **x86_64-windows-gnu ²** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **aarch64-windows-msvc ³** | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ |
-| **x86_64-windows-msvc ³** | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ |
+| **aarch64-windows-msvc ³** | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
+| **x86_64-windows-msvc ³** | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
 | **bpfeb** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **bpfel** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **wasm32-unknown-unknown** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -139,8 +139,8 @@ If you wish to setup things manually, you will likely require a few flags:
 
 ² See "Windows" section.
 
-³ MSVC ABI targets currently require a Linux execution platform. See "Windows"
-section.
+³ MSVC ABI targets currently require a macOS or Linux execution platform. See
+"Windows" section.
 
 ### musl
 
@@ -242,8 +242,8 @@ The native MSVC ABI is available through
 `@llvm//platforms:windows_x86_64_msvc` and
 `@llvm//platforms:windows_aarch64_msvc`. These target toolchains use clang-cl,
 lld-link, the Microsoft Visual C++ runtime and Windows SDK, and a statically
-linked libc++. Their compile and link actions currently require a Linux
-execution platform; native Windows and macOS execution toolchains are not yet
+linked libc++. Their compile and link actions currently support macOS and Linux
+execution platforms; native Windows execution toolchains are not yet
 registered. Using the Microsoft inputs requires explicit acceptance of both
 licenses:
 

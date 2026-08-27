@@ -31,9 +31,11 @@ SUPPORTED_EXECS = [
     ("windows", "aarch64"),
 ]
 
-# MSVC target toolchains remain Linux-exec-only until the published Windows
-# execution compiler is selected and proved natively.
+# MSVC target toolchains use the published Unix execution compilers. Native
+# Windows execution remains gated until its compiler is selected and proved.
 MSVC_TARGET_SUPPORTED_EXECS = [
+    ("macos", "x86_64"),
+    ("macos", "aarch64"),
     ("linux", "x86_64"),
     ("linux", "aarch64"),
 ]
