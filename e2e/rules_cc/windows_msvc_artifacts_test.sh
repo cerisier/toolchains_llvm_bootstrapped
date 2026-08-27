@@ -123,6 +123,11 @@ for artifact_key in ${ARTIFACTS}; do
         grep -Fq "Name: generated_add42" ||
         fail "generated DEF DLL is missing generated_add42"
       ;;
+    windows_msvc_generated_def_thinlto.dll)
+      "${LLVM_READOBJ}" --coff-exports "${artifact}" |
+        grep -Fq "Name: generated_add42" ||
+        fail "ThinLTO generated DEF DLL is missing generated_add42"
+      ;;
     *.if.lib)
       found_import_library=1
       ;;

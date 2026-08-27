@@ -220,8 +220,13 @@ bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
 bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   --include_param_files \
   --output=text \
-  'mnemonic("DefParser", deps(//:windows_msvc_generated_def.dll))' \
+  'mnemonic("DefParser", //:windows_msvc_generated_def.dll)' \
   >"${action_dir}/def.txt"
+bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
+  --include_param_files \
+  --output=text \
+  'mnemonic("DefParser", //:windows_msvc_generated_def_thinlto.dll)' \
+  >"${action_dir}/thin-lto-def.txt"
 bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   --include_param_files \
   --output=text \
@@ -487,8 +492,12 @@ assert_absent "${action_dir}/thin-lto-link.txt" " -o "
 assert_absent "${action_dir}/thin-lto-link.txt" "-x ir"
 
 assert_contains "${action_dir}/def.txt" "DefParser"
-assert_contains "${action_dir}/def.txt" "coff_def_parser"
+assert_contains "${action_dir}/def.txt" "def_file_generator"
+assert_contains "${action_dir}/def.txt" "bin/llvm-nm"
 assert_contains "${action_dir}/def.txt" ".gen.def"
+assert_contains "${action_dir}/thin-lto-def.txt" "def_file_generator"
+assert_contains "${action_dir}/thin-lto-def.txt" "bin/llvm-nm"
+assert_contains "${action_dir}/thin-lto-def.txt" "windows_generated_def.obj"
 assert_contains "${action_dir}/dll-link.txt" "/clang:/DEF:"
 assert_contains "${action_dir}/dll-link.txt" "/clang:/IMPLIB:"
 assert_contains "${action_dir}/dll-link.txt" "/clang:/DLL"

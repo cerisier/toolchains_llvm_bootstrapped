@@ -126,19 +126,9 @@ cc_feature(
     implies = [":copy_dynamic_libraries_to_binary"],
 )
 
-# rules_cc generates export-all DEF files before ThinLTO indexing by scanning
-# native object symbol tables. Clang ThinLTO outputs LLVM bitcode under the
-# target object suffix, which neither the portable nor legacy DEF parser can
-# scan. Keep the two requests mutually exclusive until the generation action
-# has a bitcode-aware symbol-discovery protocol.
-cc_mutually_exclusive_category(
-    name = "generated_def_object_format",
-)
-
 cc_feature(
     name = "windows_export_all_symbols",
     feature_name = "windows_export_all_symbols",
-    mutually_exclusive = [":generated_def_object_format"],
 )
 
 cc_feature(

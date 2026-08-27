@@ -230,7 +230,6 @@ cc_feature(
     ],
     feature_name = "thin_lto",
     implies = [":supports_start_end_lib"],
-    mutually_exclusive = ["//toolchain/features:generated_def_object_format"],
 )
 
 cc_feature_constraint(

@@ -83,13 +83,10 @@ expect_failure \
   --platforms=@llvm//platforms:windows_x86_64_msvc \
   //:windows_msvc_fdo_optimize_probe
 
-expect_failure \
-  windows-msvc-generated-def-thinlto \
-  "is provided by all of the following features: windows_export_all_symbols thin_lto" \
+bazel --bazelrc=.bazelrc build \
   "${common_flags[@]}" \
-  --features=thin_lto \
   --platforms=@llvm//platforms:windows_x86_64_msvc \
-  //:windows_msvc_generated_def.dll
+  //:windows_msvc_generated_def_thinlto_binary
 
 expect_failure \
   windows-msvc-header-parsing \

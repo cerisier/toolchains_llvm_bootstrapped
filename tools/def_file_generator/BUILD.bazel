@@ -1,0 +1,37 @@
+load("@llvm//:defs.bzl", "exec_test")
+load("@llvm//toolchain/runtimes:cc_runtime_binary.bzl", "cc_runtime_stage1_hosted_binary")
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
+
+package(default_visibility = ["//visibility:public"])
+
+# Keep generated-DEF support available while constructing the C++ runtime:
+# this adapter uses only the hosted C runtime and a declared llvm-nm binary.
+cc_runtime_stage1_hosted_binary(
+    name = "def_file_generator",
+    srcs = ["def_file_generator.c"],
+)
+
+cc_binary(
+    name = "bigobj_fixture_writer",
+    testonly = True,
+    srcs = ["bigobj_fixture_writer.c"],
+)
+
+exec_test(
+    sh_test,
+    name = "test",
+    srcs = ["cli_test.sh"],
+    env = {
+        "BIGOBJ_FIXTURE_WRITERS": "$(rootpaths bigobj_fixture_writer)",
+        "CLANG_CLS": "$(rootpaths //tools:clang-cl)",
+        "DEF_FILE_GENERATORS": "$(rootpaths def_file_generator)",
+        "LLVM_NMS": "$(rootpaths //tools:llvm-nm)",
+    },
+    tools = [
+        "bigobj_fixture_writer",
+        "def_file_generator",
+        "//tools:clang-cl",
+        "//tools:llvm-nm",
+    ],
+)

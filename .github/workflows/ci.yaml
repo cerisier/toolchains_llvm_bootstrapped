@@ -181,11 +181,14 @@ jobs:
             //:windows_msvc_dll_behavior \
             //:windows_msvc_generated_def.dll \
             //:windows_msvc_generated_def_binary \
+            //:windows_msvc_generated_def_thinlto.dll \
+            //:windows_msvc_generated_def_thinlto_binary \
             //:windows_msvc_libcxx_behavior_mt \
             //:windows_msvc_libcxx_behavior_thinlto
 
           [[ "$(./bazel-bin/main_default.exe | tr -d '\r')" == "Hello, World!" ]]
           ./bazel-bin/windows_msvc_generated_def_binary.exe
+          ./bazel-bin/windows_msvc_generated_def_thinlto_binary.exe
           ./bazel-bin/windows_msvc_dll_behavior.exe
           ./bazel-bin/windows_msvc_libcxx_behavior_mt.exe
           ./bazel-bin/windows_msvc_libcxx_behavior_thinlto.exe

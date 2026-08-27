@@ -148,8 +148,11 @@ def declare_llvm_targets(*, suffix = ""):
     )
 
     cc_tool(
-        name = "coff_def_parser",
-        src = "@llvm//tools/coff_def_parser",
+        name = "def_file_generator",
+        src = "@llvm//tools/def_file_generator",
+        data = ["bin/llvm-nm" + suffix],
+        env = {"LLVM_NM": "{llvm_nm}"},
+        format = {"llvm_nm": "bin/llvm-nm" + suffix},
     )
 
     TOOLS_WITHOUT_LINKER = {
@@ -202,7 +205,7 @@ def declare_llvm_targets(*, suffix = ""):
     }
 
     MSVC_COMPLETE_TOOLS = MSVC_CONSTRUCTION_TOOLS | {
-        "@rules_cc//cc/toolchains/actions:generate_def_file": ":coff_def_parser",
+        "@rules_cc//cc/toolchains/actions:generate_def_file": ":def_file_generator",
     } | _VALIDATE_STATIC_LIBRARY_TOOL
 
     cc_tool_map(

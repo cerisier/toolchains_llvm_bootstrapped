@@ -557,7 +557,7 @@ cc_test(
 )
 
 # The generic MinGW target requires a Windows execution host. This MSVC twin
-# uses the portable COFF DEF parser through the toolchain action instead.
+# uses the portable llvm-nm DEF generator through the toolchain action instead.
 cc_binary(
     name = "windows_msvc_generated_def.dll",
     features = [
@@ -570,6 +570,47 @@ cc_binary(
         "@platforms//os:windows",
     ],
     deps = [":windows_generated_def_library"],
+)
+
+cc_binary(
+    name = "windows_msvc_generated_def_thinlto.dll",
+    srcs = ["windows_generated_def.cc"],
+    features = [
+        "-no_windows_export_all_symbols",
+        "thin_lto",
+        "windows_export_all_symbols",
+    ],
+    linkshared = True,
+    target_compatible_with = [
+        "@llvm//constraints/windows/abi:msvc",
+        "@platforms//os:windows",
+    ],
+)
+
+filegroup(
+    name = "windows_msvc_generated_def_thinlto_interface_library",
+    srcs = [":windows_msvc_generated_def_thinlto.dll"],
+    output_group = "interface_library",
+)
+
+cc_import(
+    name = "windows_msvc_generated_def_thinlto_import",
+    interface_library = ":windows_msvc_generated_def_thinlto_interface_library",
+    shared_library = ":windows_msvc_generated_def_thinlto.dll",
+    target_compatible_with = [
+        "@llvm//constraints/windows/abi:msvc",
+        "@platforms//os:windows",
+    ],
+)
+
+cc_binary(
+    name = "windows_msvc_generated_def_thinlto_binary",
+    srcs = ["windows_generated_def_test.cc"],
+    target_compatible_with = [
+        "@llvm//constraints/windows/abi:msvc",
+        "@platforms//os:windows",
+    ],
+    deps = [":windows_msvc_generated_def_thinlto_import"],
 )
 
 filegroup(
@@ -1411,6 +1452,9 @@ _WINDOWS_MSVC_MD_ARTIFACTS = [
     "windows_explicit_def_interface_library",
     "windows_msvc_generated_def.dll",
     "windows_msvc_generated_def_interface_library",
+    "windows_msvc_generated_def_thinlto.dll",
+    "windows_msvc_generated_def_thinlto_binary",
+    "windows_msvc_generated_def_thinlto_interface_library",
 ]
 
 _WINDOWS_MSVC_MT_ARTIFACTS = [

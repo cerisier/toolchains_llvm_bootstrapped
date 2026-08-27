@@ -23,8 +23,8 @@ py_binary(
 )
 
 alias(
-    name = "coff_def_parser",
-    actual = "//tools/coff_def_parser",
+    name = "def_file_generator",
+    actual = "//tools/def_file_generator",
 )
 
 bzl_library(
