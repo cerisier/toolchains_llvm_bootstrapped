@@ -437,7 +437,10 @@ cc_feature(
 cc_args(
     name = "generate_pdb_file_compile_args",
     actions = _DEBUG_INFO_COMPILE_ACTIONS,
-    args = ["-gcodeview"],
+    args = select({
+        "//constraints/windows/abi:msvc": ["/Z7"],
+        "//conditions:default": ["-gcodeview"],
+    }),
 )
 
 cc_args(
@@ -448,12 +451,9 @@ cc_args(
 
 cc_feature(
     name = "generate_pdb_file",
-    args = select({
+    args = [":generate_pdb_file_compile_args"] + select({
         "//constraints/windows/abi:msvc": ["//toolchain/features/msvc:pdb_args"],
-        "//conditions:default": [
-            ":generate_pdb_file_compile_args",
-            ":generate_pdb_file_link_args",
-        ],
+        "//conditions:default": [":generate_pdb_file_link_args"],
     }),
     feature_name = "generate_pdb_file",
 )

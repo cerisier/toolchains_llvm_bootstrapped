@@ -76,6 +76,12 @@ bazel --bazelrc=.bazelrc aquery "${mingw_flags[@]}" \
   --output=commands \
   'mnemonic("CppCompile", //:windows_test)' \
   >"${action_dir}/mingw-release-compile.txt"
+bazel --bazelrc=.bazelrc aquery "${mingw_flags[@]}" \
+  --features=generate_pdb_file \
+  --features=-compiler_param_file \
+  --output=commands \
+  'mnemonic("CppCompile", //:windows_test)' \
+  >"${action_dir}/mingw-pdb-compile.txt"
 bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   --features=thin_lto \
   --features=no_exceptions \
@@ -123,6 +129,18 @@ bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   --output=commands \
   'mnemonic("CppCompile", //:windows_msvc_generated_def_binary)' \
   >"${action_dir}/dbg-compile-flags.txt"
+bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
+  -c opt \
+  --features=-compiler_param_file \
+  --output=commands \
+  'mnemonic("CppCompile", //:windows_msvc_libcxx_behavior_debug)' \
+  >"${action_dir}/pdb-opt-compile-flags.txt"
+bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
+  -c opt \
+  --features=-compiler_param_file \
+  --output=commands \
+  'mnemonic("CppLink", //:windows_msvc_libcxx_behavior_debug)' \
+  >"${action_dir}/pdb-opt-link-flags.txt"
 bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   --include_param_files \
   --output=text \
@@ -240,6 +258,8 @@ assert_contains "${action_dir}/mingw-release-compile.txt" "-fno-rtti"
 assert_contains "${action_dir}/mingw-release-compile.txt" "-fomit-frame-pointer"
 assert_absent "${action_dir}/mingw-release-compile.txt" "/EHs-c-"
 assert_absent "${action_dir}/mingw-release-compile.txt" "/clang:-fno-rtti"
+assert_contains "${action_dir}/mingw-pdb-compile.txt" "-gcodeview"
+assert_absent "${action_dir}/mingw-pdb-compile.txt" "/Z7"
 assert_contains "${action_dir}/msvc-libcxx-compile.txt" "bin/clang-cl"
 assert_matches "${action_dir}/msvc-libcxx-compile.txt" "/clang:-Wthread-safety.*-Xclang=-Wno-thread-safety-analysis"
 assert_absent "${action_dir}/msvc-libcxx-compile.txt" "/clang:-flto=thin"
@@ -292,6 +312,10 @@ assert_contains "${action_dir}/dbg-compile-flags.txt" "/Z7"
 assert_absent "${action_dir}/dbg-compile-flags.txt" "/O2"
 assert_absent "${action_dir}/dbg-compile-flags.txt" "/DNDEBUG"
 assert_absent "${action_dir}/dbg-compile-flags.txt" "/D_DEBUG"
+assert_contains "${action_dir}/pdb-opt-compile-flags.txt" "/O2"
+assert_contains "${action_dir}/pdb-opt-compile-flags.txt" "/Z7"
+assert_absent "${action_dir}/pdb-opt-compile-flags.txt" "-gcodeview"
+assert_contains "${action_dir}/pdb-opt-link-flags.txt" "/clang:/DEBUG"
 assert_contains "${action_dir}/archive.txt" "llvm-ar"
 assert_contains "${action_dir}/archive.txt" "rcsD"
 assert_contains "${action_dir}/archive.txt" "windows_msvc_libcxx_behavior_support.lib"
