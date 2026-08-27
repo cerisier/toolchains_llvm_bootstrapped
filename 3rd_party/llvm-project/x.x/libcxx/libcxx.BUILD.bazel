@@ -5,6 +5,7 @@ load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@llvm//3rd_party/llvm-project/21.x/libcxx:libcxx_headers.bzl", "LIBCXX_HEADERS_FILES_21")
 load("@llvm//3rd_party/llvm-project/22.x/libcxx:libcxx_headers.bzl", "LIBCXX_HEADERS_FILES_22")
 load("@llvm//3rd_party/llvm-project/23.x/libcxx:libcxx_headers.bzl", "LIBCXX_HEADERS_FILES_23")
+load("@llvm//runtimes/libcxx:std_module.bzl", "libcxx_std_cppm")
 load("@llvm//toolchain/runtimes:cc_runtime_shared_library.bzl", "cc_runtime_stage1_asan_shared_library")
 load("@llvm//toolchain/runtimes:cc_runtime_static_library.bzl", "cc_runtime_stage0_asan_static_library")
 load("@llvm-project//:vars.bzl", "LLVM_VERSION_MAJOR")
@@ -38,6 +39,39 @@ filegroup(
     ] if int(LLVM_VERSION_MAJOR) >= 22 else [
         ":libcxx_21_headers_files",
     ]),
+    visibility = ["//visibility:public"],
+)
+
+exports_files(
+    ["modules/std.cppm.in"],
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "libcxx_std_module_inc_files",
+    srcs = glob(["modules/std/*.inc"]),
+    visibility = ["//visibility:public"],
+)
+
+libcxx_std_cppm(
+    name = "std_cppm_source",
+    inc_files = ":libcxx_std_module_inc_files",
+    out_name = "std.cppm",
+    template = "modules/std.cppm.in",
+    visibility = ["//visibility:public"],
+)
+
+# Place the helpers beside generated std.cppm so its conventional
+# "std/<header>.inc" includes resolve without an execution-root-relative path.
+filegroup(
+    name = "libcxx_std_module_inc_overlay",
+    srcs = [":std_cppm_source"],
+    output_group = "module_inc_files",
+)
+
+cc_library(
+    name = "libcxx_std_module_inc_lib",
+    textual_hdrs = [":libcxx_std_module_inc_overlay"],
     visibility = ["//visibility:public"],
 )
 

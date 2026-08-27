@@ -336,8 +336,23 @@ cc_args_list(
 )
 
 cc_args_list(
+    name = "cpp20_modules_args",
+    args = [
+        "//toolchain/args:cpp_module_deps_scanning",
+        "//toolchain/args:cpp_module_deps_scanning_hermetic_flags",
+        "//toolchain/args:cpp_module_deps_scanning_cxxstdlib_headers",
+        "//toolchain/args:cpp20_module_output",
+        "//toolchain/args:cpp20_module_home_is_cwd",
+        "//toolchain/args:cpp_module_modmap_response",
+        "//toolchain/args:no_cxx_modules_unless_consuming",
+    ],
+)
+
+cc_args_list(
     name = "toolchain_args",
     args = [
+        ":cpp20_modules_args",
+
         # Common default compile flags.
         "//toolchain/args:target_flags",
         "//toolchain/args:no_absolute_paths_for_builtins",
@@ -423,6 +438,16 @@ cc_action_type_set(
         "@rules_cc//cc/toolchains/actions:lto_backend",
         "@rules_cc//cc/toolchains/actions:clif_match",
         "@rules_cc//cc/toolchains/actions:objcpp_compile",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+cc_action_type_set(
+    name = "source_compile_actions_with_cpp20_modules",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:source_compile_actions",
+        "@rules_cc//cc/toolchains/actions:cpp20_module_compile",
+        "@rules_cc//cc/toolchains/actions:cpp20_module_codegen",
     ],
     visibility = ["//visibility:public"],
 )

@@ -1,0 +1,14 @@
+diff --git a/cc/toolchains/actions/BUILD b/cc/toolchains/actions/BUILD
+--- a/cc/toolchains/actions/BUILD
++++ b/cc/toolchains/actions/BUILD
+@@ -265,8 +265,10 @@ cc_action_type_set(
+     name = "source_compile_actions",
+     actions = [
+         ":compile_actions",
++        ":cpp20_module_actions",
+     ],
+     excludes = [
++        ":cpp20_module_codegen",
+         # `lto_backend` actions do not instantiate the full set of build variables.
+         ":lto_backend",
+     ],

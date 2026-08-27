@@ -14,6 +14,14 @@ bazel_dep(name = "rules_shell", version = "0.6.1")
 bazel_dep(name = "with_cfg.bzl", version = "0.12.0")
 bazel_dep(name = "rules_python", version = "1.7.0")
 bazel_dep(name = "llvm", version = "")
+
+archive_override(
+    module_name = "rules_cc",
+    integrity = "sha256-/LD728vQZwyDdapt9vySDK3rPRqjlRnNvrUyQoidwyw=",
+    strip_prefix = "rules_cc-dc424059b634480fdca0250e4ecc2af88f127059",
+    urls = ["https://github.com/bazelbuild/rules_cc/archive/dc424059b634480fdca0250e4ecc2af88f127059.tar.gz"],
+)
+
 local_path_override(
     module_name = "llvm",
     path = "../../",

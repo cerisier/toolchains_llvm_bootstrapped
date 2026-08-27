@@ -1,5 +1,8 @@
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("//runtimes:defs.bzl", "stub_library")
+
+exports_files(["std_module.bzl"])
 
 alias(
     name = "libcxx.static",
@@ -52,4 +55,21 @@ alias(
     name = "libcxxabi_headers_include_search_directory",
     actual = "@llvm-project//libcxxabi:libcxxabi_headers_include_search_directory",
     visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "libcxx_headers",
+    actual = "@llvm-project//libcxx:headers",
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "std_module",
+    features = [
+        "cpp_modules",
+        "libcxx_std_module",
+    ],
+    module_interfaces = ["@llvm-project//libcxx:std_cppm_source"],
+    visibility = ["//visibility:public"],
+    deps = ["@llvm-project//libcxx:libcxx_std_module_inc_lib"],
 )

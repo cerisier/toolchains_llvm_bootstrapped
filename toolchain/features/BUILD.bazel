@@ -220,6 +220,17 @@ cc_feature(
     feature_name = "parse_headers",
 )
 
+cc_feature(
+    name = "cpp_modules",
+    feature_name = "cpp_modules",
+)
+
+cc_feature(
+    name = "libcxx_std_module",
+    args = ["//toolchain/args:libcxx_std_module_flags"],
+    feature_name = "libcxx_std_module",
+)
+
 cc_args(
     name = "generate_dsym_file_compile_args",
     actions = _DEBUG_INFO_COMPILE_ACTIONS,
@@ -400,6 +411,7 @@ cc_feature_set(
         ":llvm_coverage_map_format",
         ":gcc_coverage_map_format",
         ":fully_static_link",
+        ":cpp_modules",
     ] + select({
         "@platforms//os:windows": [
             ":copy_dynamic_libraries_to_binary",
