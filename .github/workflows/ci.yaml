@@ -193,7 +193,8 @@ jobs:
           ./bazel-bin/windows_msvc_libcxx_behavior_mt.exe
           ./bazel-bin/windows_msvc_libcxx_behavior_thinlto.exe
 
-  # macOS: smoke build (//:main_default) plus the supported sanitizer e2e tests.
+  # macOS: native and Windows cross-compilation smoke builds plus the supported
+  # sanitizer e2e tests.
   test_macos:
     strategy:
       fail-fast: false
@@ -224,6 +225,34 @@ jobs:
             --bazelrc=.bazelrc \
             build \
             --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
+            //:main_default
+
+      - name: Cross-compile Windows smoke targets with MinGW and MSVC
+        env:
+          USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
+        working-directory: ${{ matrix.folder }}
+        shell: bash
+        run: |
+          case "$RUNNER_ARCH" in
+            X64) target_cpu=x86_64 ;;
+            ARM64) target_cpu=aarch64 ;;
+            *) echo "Unsupported macOS runner architecture: $RUNNER_ARCH" >&2; exit 1 ;;
+          esac
+
+          bazel \
+            --bazelrc=.bazelrc \
+            build \
+            --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
+            --platforms="@llvm//platforms:windows_${target_cpu}" \
+            //:main_default
+
+          bazel \
+            --bazelrc=.bazelrc \
+            build \
+            --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
+            --platforms="@llvm//platforms:windows_${target_cpu}_msvc" \
+            --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
+            --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
             //:main_default
 
       # ASan, UBSan and libFuzzer are fully supported on macOS: run their e2e
