@@ -398,11 +398,17 @@ static int dump_file(struct coff_def_parser *parser, const char *filename) {
   } else if (has_bytes(file_size, 0, BIGOBJ_HEADER_SIZE) &&
              read_u16(contents) == 0 && read_u16(contents + 2) == 0xffff) {
     machine = read_u16(contents + 6);
-    result =
-        parse_symbol_table(parser, contents, file_size, BIGOBJ_HEADER_SIZE,
-                           read_u32(contents + 44), read_u32(contents + 48),
-                           read_u32(contents + 52), BIGOBJ_SYMBOL_SIZE, 1,
-                           arch_for_machine(machine), filename);
+    if (!supported_machine(machine)) {
+      printf("unrecognized file format in '%s, %u'\n", filename,
+             (unsigned)machine);
+      result = 0;
+    } else {
+      result =
+          parse_symbol_table(parser, contents, file_size, BIGOBJ_HEADER_SIZE,
+                             read_u32(contents + 44), read_u32(contents + 48),
+                             read_u32(contents + 52), BIGOBJ_SYMBOL_SIZE, 1,
+                             arch_for_machine(machine), filename);
+    }
   } else {
     printf("unrecognized file format in '%s, %u'\n", filename,
            (unsigned)machine);

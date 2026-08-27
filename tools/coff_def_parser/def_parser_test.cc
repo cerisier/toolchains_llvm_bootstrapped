@@ -43,6 +43,7 @@ constexpr std::uint16_t kArmNt = 0x01c4;
 constexpr std::uint16_t kAmd64 = 0x8664;
 constexpr std::uint16_t kArm64 = 0xaa64;
 constexpr std::uint16_t kArm64Ec = 0xa641;
+constexpr std::uint16_t kUnknownMachine = 0x1234;
 constexpr std::uint32_t kExecute = 0x20000000;
 constexpr std::uint32_t kRead = 0x40000000;
 constexpr std::uint32_t kWrite = 0x80000000;
@@ -352,6 +353,8 @@ bool TestMalformedObjectsAreRejected() {
       temporary.path() / "invalid-section.obj";
   const std::filesystem::path truncated_bigobj =
       temporary.path() / "truncated-big.obj";
+  const std::filesystem::path unsupported_bigobj =
+      temporary.path() / "unsupported-big.obj";
 
   std::vector<std::uint8_t> truncated_bytes(20, 0);
   Set16(&truncated_bytes, 0, kAmd64);
@@ -369,6 +372,9 @@ bool TestMalformedObjectsAreRejected() {
   if (!WriteBytes(too_small, {0}) || !WriteBytes(truncated, truncated_bytes) ||
       !WriteBytes(invalid_section, MakeCoff(kAmd64, {kRead | kExecute},
                                             {{"invalid", 2, 0x20}})) ||
+      !WriteBytes(unsupported_bigobj,
+                  MakeBigObj(kUnknownMachine, {kRead | kExecute},
+                             {{"unsupported", 1, 0x20}})) ||
       !WriteBytes(truncated_bigobj, truncated_bigobj_bytes)) {
     return false;
   }
@@ -377,6 +383,7 @@ bool TestMalformedObjectsAreRejected() {
   return !parser.AddObjectFile(too_small.string().c_str()) &&
          !parser.AddObjectFile(truncated.string().c_str()) &&
          !parser.AddObjectFile(invalid_section.string().c_str()) &&
+         !parser.AddObjectFile(unsupported_bigobj.string().c_str()) &&
          !parser.AddObjectFile(truncated_bigobj.string().c_str());
 }
 
