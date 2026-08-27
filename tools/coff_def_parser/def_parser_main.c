@@ -58,6 +58,72 @@ static char *trim(char *value) {
   return value;
 }
 
+static int decode_shell_argument(char *value, char **argument) {
+  char *input = value;
+  char *output = value;
+  int quote = 0;
+  int started = 0;
+  int separated = 0;
+
+  while (*input != '\0') {
+    unsigned char character = (unsigned char)*input++;
+    if (quote == '\'') {
+      if (character == '\'') {
+        quote = 0;
+      } else {
+        *output++ = (char)character;
+      }
+    } else if (quote == '"') {
+      if (character == '"') {
+        quote = 0;
+      } else if (character == '\\') {
+        if (*input == '\0') {
+          fprintf(stderr,
+                  "coff_def_parser: trailing escape in shell parameter\n");
+          return 0;
+        }
+        *output++ = *input++;
+      } else {
+        *output++ = (char)character;
+      }
+    } else if (isspace(character)) {
+      separated = started;
+    } else {
+      if (separated) {
+        fprintf(stderr,
+                "coff_def_parser: multiple arguments in one shell parameter "
+                "entry\n");
+        return 0;
+      }
+      started = 1;
+      if (character == '\'' || character == '"') {
+        quote = character;
+      } else if (character == '\\') {
+        if (*input == '\0') {
+          fprintf(stderr,
+                  "coff_def_parser: trailing escape in shell parameter\n");
+          return 0;
+        }
+        *output++ = *input++;
+      } else {
+        *output++ = (char)character;
+      }
+    }
+  }
+
+  if (quote != 0) {
+    fprintf(stderr, "coff_def_parser: unterminated shell parameter quote\n");
+    return 0;
+  }
+  if (!started) {
+    fprintf(stderr, "coff_def_parser: empty shell parameter entry\n");
+    return 0;
+  }
+  *output = '\0';
+  *argument = value;
+  return 1;
+}
+
 static void usage(void) {
   fprintf(stderr,
           "Usage: output_def_file dllname [objfile ...] [input_deffile ...] "
@@ -106,8 +172,9 @@ int main(int argc, char **argv) {
         return 1;
       }
       while ((line = read_line(parameters)) != NULL) {
-        char *filename = trim(line);
-        if (!coff_def_parser_add_file(parser, filename)) {
+        char *filename;
+        if (!decode_shell_argument(trim(line), &filename) ||
+            !coff_def_parser_add_file(parser, filename)) {
           free(line);
           fclose(parameters);
           coff_def_parser_destroy(parser);
