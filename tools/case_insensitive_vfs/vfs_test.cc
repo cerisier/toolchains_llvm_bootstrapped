@@ -186,6 +186,41 @@ bool TestPreferredNameRejectsAmbiguousEntries() {
   return false;
 }
 
+bool TestGeneratePrefersLowercaseAcrossMultipleAliases() {
+  TemporaryDirectory temporary;
+  const std::filesystem::path root = temporary.path() / "root";
+  std::filesystem::create_directories(root);
+  const std::filesystem::path upper = root / "FOO.h";
+  const std::filesystem::path title = root / "Foo.h";
+  const std::filesystem::path lower = root / "foo.h";
+  if (!Write(upper, "upper") || !Write(title, "title") ||
+      !Write(lower, "lower")) {
+    std::cerr << "failed to create case-alias files\n";
+    return false;
+  }
+  std::error_code filesystem_error;
+  if (std::filesystem::equivalent(upper, title, filesystem_error) &&
+      !filesystem_error) {
+    return true;
+  }
+
+  std::string overlay;
+  std::string error;
+  if (!GenerateOverlay({root}, &overlay, &error)) {
+    std::cerr << error << '\n';
+    return false;
+  }
+  if (!Contains(overlay, "\"name\": \"foo.h\"")) {
+    return false;
+  }
+  if (overlay.find("\"name\": \"FOO.h\"") != std::string::npos ||
+      overlay.find("\"name\": \"Foo.h\"") != std::string::npos) {
+    std::cerr << "overlay retained a non-preferred case alias\n";
+    return false;
+  }
+  return true;
+}
+
 bool TestGenerateFollowsTransformedHeaderSymlink() {
   TemporaryDirectory temporary;
   const std::filesystem::path root = temporary.path() / "root";
@@ -323,6 +358,7 @@ int main() {
       !TestGenerateExternalNamesOverlay() ||
       !TestPreferredNameChoosesLowercaseAlias() ||
       !TestPreferredNameRejectsAmbiguousEntries() ||
+      !TestGeneratePrefersLowercaseAcrossMultipleAliases() ||
       !TestGenerateFollowsTransformedHeaderSymlink() ||
       !TestGenerateIsDeterministicAndSortsRootsAndEntries() ||
       !TestGenerateRejectsAmbiguousCaseCollision() ||

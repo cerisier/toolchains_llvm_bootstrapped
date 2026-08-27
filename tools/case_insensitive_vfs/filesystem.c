@@ -107,45 +107,97 @@ int ci_preferred_name(const char *left, const char *right, char **preferred,
 static int compare_entries(const void *left, const void *right) {
   const struct ci_directory_entry *left_entry = left;
   const struct ci_directory_entry *right_entry = right;
-  return strcmp(left_entry->folded_name, right_entry->folded_name);
+  int folded_comparison =
+      strcmp(left_entry->folded_name, right_entry->folded_name);
+  if (folded_comparison != 0) {
+    return folded_comparison;
+  }
+  return strcmp(left_entry->name, right_entry->name);
 }
 
-static int add_entry(struct ci_directory_entries *entries, const char *name,
-                     const char *directory, char **error) {
-  size_t index;
-  char *folded = ci_fold_case(name);
-  for (index = 0; index < entries->count; ++index) {
-    struct ci_directory_entry *current = &entries->values[index];
-    if (strcmp(current->folded_name, folded) == 0) {
-      char *preferred = NULL;
-      if (!ci_preferred_name(current->name, name, &preferred, error)) {
-        char *detail = ci_xstrdup(*error);
-        ci_set_error(error, "%s: %s", directory, detail);
-        free(detail);
-        free(folded);
+static void append_entry(struct ci_directory_entries *entries, size_t *capacity,
+                         const char *name) {
+  if (entries->count == *capacity) {
+    *capacity = *capacity == 0 ? 64 : *capacity * 2;
+    entries->values =
+        ci_xrealloc(entries->values, *capacity * sizeof(*entries->values));
+  }
+  entries->values[entries->count].name = ci_xstrdup(name);
+  entries->values[entries->count].folded_name = ci_fold_case(name);
+  entries->count++;
+}
+
+static int validate_sorted_entries(const char *directory,
+                                   const struct ci_directory_entries *entries,
+                                   char **error) {
+  size_t start = 0;
+  while (start < entries->count) {
+    size_t end = start + 1;
+    size_t index;
+    while (end < entries->count &&
+           strcmp(entries->values[start].folded_name,
+                  entries->values[end].folded_name) == 0) {
+      end++;
+    }
+    if (end - start > 1) {
+      for (index = start; index < end; ++index) {
+        if (strcmp(entries->values[index].name,
+                   entries->values[index].folded_name) == 0) {
+          break;
+        }
+      }
+      if (index == end) {
+        ci_set_error(error,
+                     "%s: ambiguous case-insensitive SDK entries \"%s\" and "
+                     "\"%s\"",
+                     directory, entries->values[start].name,
+                     entries->values[start + 1].name);
         return 0;
       }
-      if (strcmp(preferred, name) == 0) {
-        free(current->name);
-        current->name = ci_xstrdup(name);
-      }
-      free(preferred);
-      free(folded);
-      return 1;
     }
+    start = end;
   }
-
-  entries->values = ci_xrealloc(entries->values, (entries->count + 1) *
-                                                     sizeof(*entries->values));
-  entries->values[entries->count].name = ci_xstrdup(name);
-  entries->values[entries->count].folded_name = folded;
-  entries->count++;
   return 1;
+}
+
+static void collapse_sorted_entries(struct ci_directory_entries *entries) {
+  size_t read = 0;
+  size_t write = 0;
+  while (read < entries->count) {
+    size_t end = read + 1;
+    size_t selected = read;
+    size_t index;
+    while (end < entries->count &&
+           strcmp(entries->values[read].folded_name,
+                  entries->values[end].folded_name) == 0) {
+      end++;
+    }
+    for (index = read; index < end; ++index) {
+      if (strcmp(entries->values[index].name,
+                 entries->values[index].folded_name) == 0) {
+        selected = index;
+        break;
+      }
+    }
+    {
+      struct ci_directory_entry preferred = entries->values[selected];
+      for (index = read; index < end; ++index) {
+        if (index != selected) {
+          free(entries->values[index].name);
+          free(entries->values[index].folded_name);
+        }
+      }
+      entries->values[write++] = preferred;
+    }
+    read = end;
+  }
+  entries->count = write;
 }
 
 int ci_collect_preferred_entries(const char *directory,
                                  struct ci_directory_entries *entries,
                                  char **error) {
+  size_t capacity = 0;
   entries->values = NULL;
   entries->count = 0;
 #ifdef _WIN32
@@ -163,11 +215,8 @@ int ci_collect_preferred_entries(const char *directory,
     return 0;
   }
   do {
-    if (strcmp(data.cFileName, ".") != 0 && strcmp(data.cFileName, "..") != 0 &&
-        !add_entry(entries, data.cFileName, directory, error)) {
-      FindClose(handle);
-      ci_free_entries(entries);
-      return 0;
+    if (strcmp(data.cFileName, ".") != 0 && strcmp(data.cFileName, "..") != 0) {
+      append_entry(entries, &capacity, data.cFileName);
     }
   } while (FindNextFileA(handle, &data));
   if (GetLastError() != ERROR_NO_MORE_FILES) {
@@ -188,11 +237,8 @@ int ci_collect_preferred_entries(const char *directory,
   }
   errno = 0;
   while ((entry = readdir(stream)) != NULL) {
-    if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0 &&
-        !add_entry(entries, entry->d_name, directory, error)) {
-      closedir(stream);
-      ci_free_entries(entries);
-      return 0;
+    if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
+      append_entry(entries, &capacity, entry->d_name);
     }
     errno = 0;
   }
@@ -208,6 +254,11 @@ int ci_collect_preferred_entries(const char *directory,
   if (entries->count > 1) {
     qsort(entries->values, entries->count, sizeof(*entries->values),
           compare_entries);
+    if (!validate_sorted_entries(directory, entries, error)) {
+      ci_free_entries(entries);
+      return 0;
+    }
+    collapse_sorted_entries(entries);
   }
   return 1;
 }
