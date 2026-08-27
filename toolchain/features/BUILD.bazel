@@ -15,6 +15,21 @@ _DEBUG_INFO_COMPILE_ACTIONS = [
     "@rules_cc//cc/toolchains/actions:objcpp_compile",
 ]
 
+# rules_cc's compile_actions group also contains raw assembly. clang-cl's
+# source-language optimization and debug options do not apply there, while
+# preprocessed assembly still needs the preprocessor-facing subset.
+_CONFIGURATION_COMPILE_ACTIONS = select({
+    "//constraints/windows/abi:msvc": [
+        "@rules_cc//cc/toolchains/actions:c_compile",
+        "@rules_cc//cc/toolchains/actions:cpp_compile",
+        "@rules_cc//cc/toolchains/actions:linkstamp_compile",
+        "@rules_cc//cc/toolchains/actions:preprocess_assemble",
+        "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
+        "@rules_cc//cc/toolchains/actions:lto_backend",
+    ],
+    "//conditions:default": ["@rules_cc//cc/toolchains/actions:compile_actions"],
+})
+
 _FINAL_LINK_ACTIONS = [
     "@rules_cc//cc/toolchains/actions:cpp_link_dynamic_library",
     "@rules_cc//cc/toolchains/actions:cpp_link_executable",
@@ -184,7 +199,7 @@ cc_args(
 
 cc_args(
     name = "opt_no_debug_info",
-    actions = ["@rules_cc//cc/toolchains/actions:compile_actions"],
+    actions = _CONFIGURATION_COMPILE_ACTIONS,
     args = select({
         # clang-cl emits no CodeView unless a /Z debug option is requested.
         "//constraints/windows/abi:msvc": [],
@@ -200,7 +215,7 @@ cc_args(
 
 cc_args(
     name = "opt_optimization_level",
-    actions = ["@rules_cc//cc/toolchains/actions:compile_actions"],
+    actions = _CONFIGURATION_COMPILE_ACTIONS,
     args = select({
         "//constraints/windows/abi:msvc": ["/O2"],
         "//conditions:default": [
@@ -214,7 +229,7 @@ cc_args(
 
 cc_args(
     name = "opt_fortify",
-    actions = ["@rules_cc//cc/toolchains/actions:compile_actions"],
+    actions = _CONFIGURATION_COMPILE_ACTIONS,
     args = select({
         # VCRuntime provides its own checked-runtime policy; _FORTIFY_SOURCE is
         # a glibc-family source contract, not a clang-cl spelling problem.
@@ -229,7 +244,7 @@ cc_args(
 
 cc_args(
     name = "opt_disable_assertions",
-    actions = ["@rules_cc//cc/toolchains/actions:compile_actions"],
+    actions = _CONFIGURATION_COMPILE_ACTIONS,
     args = select({
         "//constraints/windows/abi:msvc": ["/DNDEBUG"],
         "//conditions:default": [
@@ -241,7 +256,7 @@ cc_args(
 
 cc_args(
     name = "opt_function_sections",
-    actions = ["@rules_cc//cc/toolchains/actions:compile_actions"],
+    actions = _CONFIGURATION_COMPILE_ACTIONS,
     args = select({
         "//constraints/windows/abi:msvc": ["/Gy"],
         "//conditions:default": [
@@ -254,7 +269,7 @@ cc_args(
 
 cc_args(
     name = "opt_data_sections",
-    actions = ["@rules_cc//cc/toolchains/actions:compile_actions"],
+    actions = _CONFIGURATION_COMPILE_ACTIONS,
     args = select({
         "//constraints/windows/abi:msvc": ["/Gw"],
         "//conditions:default": [
@@ -265,7 +280,7 @@ cc_args(
 
 cc_args(
     name = "opt_inline_elimination",
-    actions = ["@rules_cc//cc/toolchains/actions:compile_actions"],
+    actions = _CONFIGURATION_COMPILE_ACTIONS,
     args = select({
         "//constraints/windows/abi:msvc": ["/Zc:inline"],
         # Generic Clang's section and linker-GC policy already owns dead-code
@@ -305,7 +320,7 @@ cc_feature(
 
 cc_args(
     name = "dbg_runtime_debug_define",
-    actions = ["@rules_cc//cc/toolchains/actions:compile_actions"],
+    actions = _CONFIGURATION_COMPILE_ACTIONS,
     args = select({
         # Only retail /MD and /MT are supported. _DEBUG would select debug CRT
         # behavior that the declared Microsoft runtime closure does not provide.
@@ -319,7 +334,7 @@ cc_args(
 
 cc_args(
     name = "dbg_no_optimization",
-    actions = ["@rules_cc//cc/toolchains/actions:compile_actions"],
+    actions = _CONFIGURATION_COMPILE_ACTIONS,
     args = select({
         "//constraints/windows/abi:msvc": ["/Od"],
         "//conditions:default": [
@@ -333,7 +348,7 @@ cc_args(
 
 cc_args(
     name = "dbg_debug_info",
-    actions = ["@rules_cc//cc/toolchains/actions:compile_actions"],
+    actions = _CONFIGURATION_COMPILE_ACTIONS,
     args = select({
         "//constraints/windows/abi:msvc": ["/Z7"],
         "//conditions:default": [

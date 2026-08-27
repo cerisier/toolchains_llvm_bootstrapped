@@ -164,6 +164,14 @@ for source_action in \
     "inputs(\"${source_pattern}\", mnemonic(\"CppCompile\", //:windows_msvc_libcxx_behavior_md))" \
     >"${action_dir}/${action_name}-compile.txt"
 done
+for compilation_mode in opt dbg; do
+  bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
+    -c "${compilation_mode}" \
+    --features=-compiler_param_file \
+    --output=commands \
+    'inputs("windows_msvc_raw_assembly_x86_64[.]s", mnemonic("CppCompile", //:windows_msvc_libcxx_behavior_md))' \
+    >"${action_dir}/raw-assembly-${compilation_mode}-compile.txt"
+done
 bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   --features=thin_lto \
   --features=no_exceptions \
@@ -365,6 +373,13 @@ assert_absent "${action_dir}/raw-assembly-compile.txt" "/clang:-Wall"
 assert_absent "${action_dir}/raw-assembly-compile.txt" "/clang:-fcolor-diagnostics"
 assert_absent "${action_dir}/raw-assembly-compile.txt" "/clang:-fno-omit-frame-pointer"
 assert_absent "${action_dir}/raw-assembly-compile.txt" "/clang:-MD"
+assert_absent "${action_dir}/raw-assembly-opt-compile.txt" "/O2"
+assert_absent "${action_dir}/raw-assembly-opt-compile.txt" "/DNDEBUG"
+assert_absent "${action_dir}/raw-assembly-opt-compile.txt" "/Gy"
+assert_absent "${action_dir}/raw-assembly-opt-compile.txt" "/Gw"
+assert_absent "${action_dir}/raw-assembly-opt-compile.txt" "/Zc:inline"
+assert_absent "${action_dir}/raw-assembly-dbg-compile.txt" "/Od"
+assert_absent "${action_dir}/raw-assembly-dbg-compile.txt" "/Z7"
 
 assert_contains "${action_dir}/preprocessed-assembly-compile.txt" "/clang:-fms-compatibility-version="
 assert_contains "${action_dir}/preprocessed-assembly-compile.txt" "/clang:-nostdlibinc"
