@@ -420,9 +420,12 @@ cc_library(
         "//conditions:default": [],
     }),
     features = select({
-        # clang-cl discovers this archive through its configured library
-        # search path, outside Bazel's LTO compilation context. Keep its
-        # members native so ThinLTO imports remain declared action inputs.
+        # The MSVC link names libc++.lib through /DEFAULTLIB and its declared
+        # library search directory, not as a LibraryToLink in rules_cc's
+        # per-object ThinLTO graph. Keep libc++ itself as native COFF so the
+        # linker can consume the opaque archive directly; consumer objects
+        # still use ThinLTO. Including libc++ in ThinLTO would first require
+        # modeling its members and backend actions in that graph.
         ":windows_msvc": ["-thin_lto"],
         "//conditions:default": [],
     }),

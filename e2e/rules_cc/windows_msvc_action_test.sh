@@ -69,6 +69,7 @@ bazel --bazelrc=.bazelrc aquery "${mingw_flags[@]}" \
   'mnemonic("CppLink", //:windows_test)' \
   >"${action_dir}/mingw-link.txt"
 bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
+  --features=thin_lto \
   --features=-compiler_param_file \
   --output=commands \
   'inputs(".*libcxx/src/algorithm.cpp", mnemonic("CppCompile", deps(@llvm-project//libcxx:libcxx.static.msvc_link_name)))' \
@@ -182,6 +183,8 @@ assert_absent "${action_dir}/mingw-libcxx-compile.txt" "/clang:-Wno-unused-value
 assert_contains "${action_dir}/mingw-link.txt" "-Wl,--no-insert-timestamp"
 assert_contains "${action_dir}/msvc-libcxx-compile.txt" "bin/clang-cl"
 assert_matches "${action_dir}/msvc-libcxx-compile.txt" "/clang:-Wthread-safety.*-Xclang=-Wno-thread-safety-analysis"
+assert_absent "${action_dir}/msvc-libcxx-compile.txt" "/clang:-flto=thin"
+assert_absent "${action_dir}/msvc-libcxx-compile.txt" "/clang:-fthin-link-bitcode="
 
 assert_contains "${action_dir}/default-compile-flags.txt" "/std:c++17"
 assert_contains "${action_dir}/default-compile-flags.txt" "/clang:-fms-compatibility-version="
