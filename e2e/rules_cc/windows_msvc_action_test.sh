@@ -150,6 +150,20 @@ bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   --output=commands \
   'mnemonic("CppCompile", //:windows_msvc_libcxx_behavior_md)' \
   >"${action_dir}/thin-lto-compile.txt"
+for source_action in \
+  "raw-assembly:windows_msvc_raw_assembly_x86_64[.]s" \
+  "preprocessed-assembly:windows_msvc_assembly[.]S" \
+  "c:windows_msvc_c_smoke[.]c" \
+  "cxx:windows_msvc_libcxx_behavior[.]cc"; do
+  action_name="${source_action%%:*}"
+  source_pattern="${source_action#*:}"
+  bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
+    --features=thin_lto \
+    --features=-compiler_param_file \
+    --output=commands \
+    "inputs(\"${source_pattern}\", mnemonic(\"CppCompile\", //:windows_msvc_libcxx_behavior_md))" \
+    >"${action_dir}/${action_name}-compile.txt"
+done
 bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   --features=thin_lto \
   --features=no_exceptions \
@@ -329,6 +343,55 @@ assert_contains "${action_dir}/thin-lto-compile.txt" ".indexing.o"
 assert_absent "${action_dir}/thin-lto-compile.txt" ".indexing.obj"
 assert_absent "${action_dir}/thin-lto-compile.txt" "/std:c++20"
 
+assert_contains "${action_dir}/raw-assembly-compile.txt" "--target=x86_64-pc-windows-msvc"
+assert_contains "${action_dir}/raw-assembly-compile.txt" "/Brepro"
+assert_contains "${action_dir}/raw-assembly-compile.txt" "/nologo"
+assert_contains "${action_dir}/raw-assembly-compile.txt" "/c windows_msvc_raw_assembly_x86_64.s"
+assert_contains "${action_dir}/raw-assembly-compile.txt" "/Fo"
+assert_absent "${action_dir}/raw-assembly-compile.txt" "/clang:-fms-compatibility-version="
+assert_absent "${action_dir}/raw-assembly-compile.txt" "/clang:-no-canonical-prefixes"
+assert_absent "${action_dir}/raw-assembly-compile.txt" "/D__DATE__="
+assert_absent "${action_dir}/raw-assembly-compile.txt" "/clang:-gno-codeview-command-line"
+assert_absent "${action_dir}/raw-assembly-compile.txt" "/clang:-nostdlibinc"
+assert_absent "${action_dir}/raw-assembly-compile.txt" "/D_CRT_"
+assert_absent "${action_dir}/raw-assembly-compile.txt" "libcxx_headers_include_search_directory"
+assert_absent "${action_dir}/raw-assembly-compile.txt" "/DNOMINMAX"
+assert_absent "${action_dir}/raw-assembly-compile.txt" "/clang:-ivfsoverlay"
+assert_absent "${action_dir}/raw-assembly-compile.txt" "/imsvc"
+assert_absent "${action_dir}/raw-assembly-compile.txt" "/EHsc"
+assert_absent "${action_dir}/raw-assembly-compile.txt" "/GR"
+assert_absent "${action_dir}/raw-assembly-compile.txt" "/GS"
+assert_absent "${action_dir}/raw-assembly-compile.txt" "/clang:-Wall"
+assert_absent "${action_dir}/raw-assembly-compile.txt" "/clang:-fcolor-diagnostics"
+assert_absent "${action_dir}/raw-assembly-compile.txt" "/clang:-fno-omit-frame-pointer"
+assert_absent "${action_dir}/raw-assembly-compile.txt" "/clang:-MD"
+
+assert_contains "${action_dir}/preprocessed-assembly-compile.txt" "/clang:-fms-compatibility-version="
+assert_contains "${action_dir}/preprocessed-assembly-compile.txt" "/clang:-nostdlibinc"
+assert_contains "${action_dir}/preprocessed-assembly-compile.txt" "/DNOMINMAX"
+assert_contains "${action_dir}/preprocessed-assembly-compile.txt" "/clang:-ivfsoverlay"
+assert_contains "${action_dir}/preprocessed-assembly-compile.txt" "/imsvc"
+assert_contains "${action_dir}/preprocessed-assembly-compile.txt" "/clang:-MD"
+assert_absent "${action_dir}/preprocessed-assembly-compile.txt" "libcxx_headers_include_search_directory"
+assert_absent "${action_dir}/preprocessed-assembly-compile.txt" "/EHsc"
+assert_absent "${action_dir}/preprocessed-assembly-compile.txt" "/GR"
+assert_absent "${action_dir}/preprocessed-assembly-compile.txt" "/GS"
+assert_absent "${action_dir}/preprocessed-assembly-compile.txt" "/clang:-fno-omit-frame-pointer"
+
+assert_contains "${action_dir}/c-compile.txt" "/DNOMINMAX"
+assert_contains "${action_dir}/c-compile.txt" "/clang:-ivfsoverlay"
+assert_contains "${action_dir}/c-compile.txt" "/GS"
+assert_contains "${action_dir}/c-compile.txt" "/clang:-fno-omit-frame-pointer"
+assert_absent "${action_dir}/c-compile.txt" "libcxx_headers_include_search_directory"
+assert_absent "${action_dir}/c-compile.txt" "/EHsc"
+assert_absent "${action_dir}/c-compile.txt" "/GR"
+
+assert_contains "${action_dir}/cxx-compile.txt" "libcxx_headers_include_search_directory"
+assert_contains "${action_dir}/cxx-compile.txt" "/EHsc"
+assert_contains "${action_dir}/cxx-compile.txt" "/GR"
+assert_contains "${action_dir}/cxx-compile.txt" "/GS"
+assert_contains "${action_dir}/cxx-compile.txt" "/clang:-fno-omit-frame-pointer"
+
 assert_contains "${action_dir}/thin-lto-index.txt" "CppLTOIndexing"
 assert_matches "${action_dir}/thin-lto-index.txt" "Command Line: \\(exec .*llvm-toolchain-minimal-linux-(amd64|arm64)/bin/clang-cl"
 assert_matches "${action_dir}/thin-lto-index.txt" "llvm-toolchain-minimal-linux-(amd64|arm64)/bin/lld-link"
@@ -360,6 +423,12 @@ assert_contains "${action_dir}/thin-lto-backend.txt" "/clang:-fomit-frame-pointe
 assert_absent "${action_dir}/thin-lto-backend.txt" "/clang:-nostdlibinc"
 assert_absent "${action_dir}/thin-lto-backend.txt" "/clang:-nobuiltininc"
 assert_absent "${action_dir}/thin-lto-backend.txt" "/imsvc"
+assert_absent "${action_dir}/thin-lto-backend.txt" "/EHsc"
+assert_absent "${action_dir}/thin-lto-backend.txt" "/GR"
+assert_absent "${action_dir}/thin-lto-backend.txt" "/GS"
+assert_absent "${action_dir}/thin-lto-backend.txt" "/DNOMINMAX"
+assert_absent "${action_dir}/thin-lto-backend.txt" "/clang:-ivfsoverlay"
+assert_absent "${action_dir}/thin-lto-backend.txt" "/clang:-gno-codeview-command-line"
 assert_absent "${action_dir}/thin-lto-backend.txt" ".indexing.o"
 assert_absent "${action_dir}/thin-lto-backend.txt" "-Wl,"
 assert_absent "${action_dir}/thin-lto-backend.txt" " -o "

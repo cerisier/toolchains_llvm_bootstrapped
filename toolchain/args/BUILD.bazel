@@ -5,6 +5,20 @@ load("//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
 
 package(default_visibility = ["//visibility:public"])
 
+_CLANG_CL_FRONTEND_ACTIONS = [
+    "@rules_cc//cc/toolchains/actions:c_compile",
+    "@rules_cc//cc/toolchains/actions:cpp_compile",
+    "@rules_cc//cc/toolchains/actions:linkstamp_compile",
+    "@rules_cc//cc/toolchains/actions:preprocess_assemble",
+    "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
+]
+
+_CLANG_CL_CXX_FRONTEND_ACTIONS = [
+    "@rules_cc//cc/toolchains/actions:cpp_compile",
+    "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
+    "@rules_cc//cc/toolchains/actions:linkstamp_compile",
+]
+
 # COMMON RESET FLAGS
 # --no-default-config
 # -fno-spell-checking
@@ -58,13 +72,13 @@ cc_args(
 
 cc_args(
     name = "clang_cl_default_exception_handling",
-    actions = ["@rules_cc//cc/toolchains/actions:source_compile_actions"],
+    actions = _CLANG_CL_CXX_FRONTEND_ACTIONS,
     args = ["/EHsc"],
 )
 
 cc_args(
     name = "clang_cl_default_rtti",
-    actions = ["@rules_cc//cc/toolchains/actions:source_compile_actions"],
+    actions = _CLANG_CL_CXX_FRONTEND_ACTIONS,
     args = ["/GR"],
 )
 
@@ -187,9 +201,7 @@ cc_args(
 
 cc_args(
     name = "clang_cl_cxxstdlib_headers_include_search_paths",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:source_compile_actions",
-    ],
+    actions = _CLANG_CL_CXX_FRONTEND_ACTIONS,
     args = select({
         "//toolchain:runtimes_all": ["/imsvc{cxxstdlib_headers_include_search_path}"],
         "//conditions:default": [],
@@ -279,7 +291,10 @@ cc_args(
 
 cc_args(
     name = "no_absolute_paths_for_builtins",
-    actions = ["@rules_cc//cc/toolchains/actions:source_compile_actions"],
+    actions = select({
+        "//constraints/windows/abi:msvc": _CLANG_CL_FRONTEND_ACTIONS,
+        "//conditions:default": ["@rules_cc//cc/toolchains/actions:source_compile_actions"],
+    }),
     args = select({
         "//constraints/windows/abi:msvc": ["/clang:-no-canonical-prefixes"],
         # If the compiler sometimes rewrites paths in the .d files without
@@ -291,7 +306,10 @@ cc_args(
 
 cc_args(
     name = "deterministic_compile_flags",
-    actions = ["@rules_cc//cc/toolchains/actions:source_compile_actions"],
+    actions = select({
+        "//constraints/windows/abi:msvc": _CLANG_CL_FRONTEND_ACTIONS,
+        "//conditions:default": ["@rules_cc//cc/toolchains/actions:source_compile_actions"],
+    }),
     args = select({
         "//constraints/windows/abi:msvc": ["/clang:-Wno-builtin-macro-redefined"],
         "//conditions:default": ["-Wno-builtin-macro-redefined"],

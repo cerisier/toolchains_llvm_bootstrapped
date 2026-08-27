@@ -4,12 +4,19 @@ load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 
 package(default_visibility = ["//toolchain/args/windows:__pkg__"])
 
+_FRONTEND_ACTIONS = [
+    "@rules_cc//cc/toolchains/actions:c_compile",
+    "@rules_cc//cc/toolchains/actions:cpp_compile",
+    "@rules_cc//cc/toolchains/actions:linkstamp_compile",
+    "@rules_cc//cc/toolchains/actions:preprocess_assemble",
+    "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
+]
+
 cc_args(
     name = "compatibility",
     actions = [
         "@rules_cc//cc/toolchains/actions:lto_backend",
-        "@rules_cc//cc/toolchains/actions:source_compile_actions",
-    ],
+    ] + _FRONTEND_ACTIONS,
     args = [
         "/clang:-fms-compatibility-version={}".format(MSVC_COMPATIBILITY_VERSION),
     ],
@@ -25,17 +32,13 @@ cc_args(
 
 cc_args(
     name = "windows_sdk_compile_defines",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:source_compile_actions",
-    ],
+    actions = _FRONTEND_ACTIONS,
     args = ["/DNOMINMAX"],
 )
 
 cc_args(
     name = "msvc_crt_compile_defines",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:source_compile_actions",
-    ],
+    actions = _FRONTEND_ACTIONS,
     args = [
         "/D_CRT_NONSTDC_NO_WARNINGS",
         "/D_CRT_SECURE_NO_DEPRECATE",
@@ -46,9 +49,7 @@ cc_args(
 
 cc_args(
     name = "deterministic_codeview_flags",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:source_compile_actions",
-    ],
+    actions = _FRONTEND_ACTIONS,
     args = ["/clang:-gno-codeview-command-line"],
 )
 
@@ -95,9 +96,7 @@ cc_args(
 
 cc_args(
     name = "sdk_header_case_overlay",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:source_compile_actions",
-    ],
+    actions = _FRONTEND_ACTIONS,
     args = [
         "/clang:-ivfsoverlay",
         "/clang:{sdk_header_case_overlay}",
@@ -110,9 +109,7 @@ cc_args(
 
 cc_args(
     name = "sdk_includes",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:source_compile_actions",
-    ],
+    actions = _FRONTEND_ACTIONS,
     allowlist_include_directories = [
         "//runtimes/msvc:msvc_com_support_headers",
         "//runtimes/msvc:msvc_vcruntime_headers",

@@ -3,6 +3,24 @@ load("@rules_cc//cc/toolchains:feature.bzl", "cc_feature")
 load("@rules_cc//cc/toolchains:feature_set.bzl", "cc_feature_set")
 load("@rules_cc//cc/toolchains:nested_args.bzl", "cc_nested_args")
 
+_CLANG_CL_FRONTEND_ACTIONS = [
+    "@rules_cc//cc/toolchains/actions:c_compile",
+    "@rules_cc//cc/toolchains/actions:cpp_compile",
+    "@rules_cc//cc/toolchains/actions:linkstamp_compile",
+    "@rules_cc//cc/toolchains/actions:preprocess_assemble",
+    "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
+]
+
+_CLANG_CL_SOURCE_CODEGEN_ACTIONS = [
+    "@rules_cc//cc/toolchains/actions:c_compile",
+    "@rules_cc//cc/toolchains/actions:cpp_compile",
+    "@rules_cc//cc/toolchains/actions:linkstamp_compile",
+]
+
+_CLANG_CL_CODEGEN_ACTIONS = _CLANG_CL_SOURCE_CODEGEN_ACTIONS + [
+    "@rules_cc//cc/toolchains/actions:lto_backend",
+]
+
 cc_args(
     name = "legacy_default_cxx_compile_flags",
     actions = ["@rules_cc//cc/toolchains/actions:cpp_compile_actions"],
@@ -76,13 +94,13 @@ cc_args(
 
 cc_args(
     name = "clang_cl_legacy_default_stack_protector",
-    actions = ["@rules_cc//cc/toolchains/actions:source_compile_actions"],
+    actions = _CLANG_CL_SOURCE_CODEGEN_ACTIONS,
     args = ["/GS"],
 )
 
 cc_args(
     name = "clang_cl_legacy_default_warning_flags",
-    actions = ["@rules_cc//cc/toolchains/actions:source_compile_actions"],
+    actions = _CLANG_CL_FRONTEND_ACTIONS,
     # Preserve the generic Clang diagnostic policy through explicit Clang
     # passthrough instead of approximating it with a /W level.
     args = [
@@ -96,13 +114,13 @@ cc_args(
 
 cc_args(
     name = "clang_cl_legacy_default_color_diagnostics",
-    actions = ["@rules_cc//cc/toolchains/actions:source_compile_actions"],
+    actions = _CLANG_CL_FRONTEND_ACTIONS,
     args = ["/clang:-fcolor-diagnostics"],
 )
 
 cc_args(
     name = "clang_cl_legacy_default_frame_pointer",
-    actions = ["@rules_cc//cc/toolchains/actions:compile_actions"],
+    actions = _CLANG_CL_CODEGEN_ACTIONS,
     args = ["/clang:-fno-omit-frame-pointer"],
 )
 
