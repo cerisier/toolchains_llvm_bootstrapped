@@ -1,6 +1,6 @@
+load("@msvc_runtime//:versions.bzl", "MSVC_COMPATIBILITY_VERSION")
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
-load("//runtimes/msvc:versions.bzl", "MSVC_COMPATIBILITY_VERSION")
 
 package(default_visibility = ["//toolchain/args/windows:__pkg__"])
 

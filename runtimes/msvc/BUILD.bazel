@@ -1,8 +1,8 @@
-load("@bazel_lib//:bzl_library.bzl", "bzl_library")
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
+load("@msvc_runtime//:versions.bzl", "MSVC_TOOLSET_VERSION")
+load("@windows_sdk//:versions.bzl", "WINDOWS_SDK_INCLUDE_VERSION")
 load("//:case_insensitive_vfs.bzl", "case_insensitive_vfs_overlay")
 load("//:directory.bzl", "directory_info", "validated_directory_info")
-load(":versions.bzl", "MSVC_PAYLOAD_VERSION", "WINDOWS_SDK_INCLUDE_VERSION")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -64,7 +64,7 @@ _MSVC_VCRUNTIME_HEADERS = [
 validated_directory_info(
     name = "msvc_include",
     src = "@msvc_runtime//:msvc_include",
-    expected_path_suffix = "/Contents/VC/Tools/MSVC/%s/include" % MSVC_PAYLOAD_VERSION,
+    expected_path_suffix = "/Contents/VC/Tools/MSVC/%s/include" % MSVC_TOOLSET_VERSION,
 )
 
 [
@@ -102,13 +102,13 @@ validated_directory_info(
 validated_directory_info(
     name = "msvc_lib_arm64",
     src = "@msvc_runtime//:msvc_lib_arm64",
-    expected_path_suffix = "/Contents/VC/Tools/MSVC/%s/lib/arm64" % MSVC_PAYLOAD_VERSION,
+    expected_path_suffix = "/Contents/VC/Tools/MSVC/%s/lib/arm64" % MSVC_TOOLSET_VERSION,
 )
 
 validated_directory_info(
     name = "msvc_lib_x64",
     src = "@msvc_runtime//:msvc_lib_x64",
-    expected_path_suffix = "/Contents/VC/Tools/MSVC/%s/lib/x64" % MSVC_PAYLOAD_VERSION,
+    expected_path_suffix = "/Contents/VC/Tools/MSVC/%s/lib/x64" % MSVC_TOOLSET_VERSION,
 )
 
 copy_to_directory(
@@ -203,9 +203,4 @@ copy_to_directory(
         "**/lib/arm64",
         "**/lib/x64",
     ],
-)
-
-bzl_library(
-    name = "versions",
-    srcs = ["versions.bzl"],
 )
