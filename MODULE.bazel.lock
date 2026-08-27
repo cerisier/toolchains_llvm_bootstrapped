@@ -754,7 +754,7 @@
     "@@windows_support+//windows:extensions.bzl%windows_sdk": {
       "general": {
         "bzlTransitiveDigest": "+cRtqyngA7nILb7W85BmcWXVbeFCd+MRsSY2DpSAbaE=",
-        "usagesDigest": "j6r5KUBLrelev9TR9YivRtHMrwk50F9IeGInnq4+gHQ=",
+        "usagesDigest": "QDDI1HZvJ6Zdy2PDvV4PpwPMs8lKGXti5FPLG34jzJc=",
         "recordedInputs": [
           "REPO_MAPPING:windows_support+,bazel_tools bazel_tools"
         ],
@@ -768,15 +768,7 @@
                 "Microsoft.Windows.SDK.CPP.arm64": "sha256-A7wMA9Q5zvhQdLvNQl+dXTptO0Z5Z6zSHaO6bf7q+mc=",
                 "Microsoft.Windows.SDK.CPP.x64": "sha256-rWzpD/lAEGmdKVSLPCseUsieuBFD4hmRVdmlw4ABtSs="
               },
-              "transformations": {
-                "base/c/Include/10.0.26100.0/shared/driverspecs.h": "base/c/Include/10.0.26100.0/shared/DriverSpecs.h",
-                "base/c/Include/10.0.26100.0/shared/specstrings.h": "base/c/Include/10.0.26100.0/shared/SpecStrings.h",
-                "base/c/Include/10.0.26100.0/um/ole2.h": "base/c/Include/10.0.26100.0/um/Ole2.h",
-                "base/c/Include/10.0.26100.0/um/olectl.h": "base/c/Include/10.0.26100.0/um/OleCtl.h",
-                "**/*.h": "lowercase",
-                "**/*.lib": "lowercase",
-                "**/*.Lib": "lowercase"
-              },
+              "transformations": {},
               "architectures": [
                 "x64",
                 "arm64"

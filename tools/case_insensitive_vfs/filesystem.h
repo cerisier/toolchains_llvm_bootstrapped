@@ -1,5 +1,5 @@
-#ifndef HERMETIC_LLVM_TOOLS_CASE_INSENSITIVE_FILESYSTEM_COMMON_H_
-#define HERMETIC_LLVM_TOOLS_CASE_INSENSITIVE_FILESYSTEM_COMMON_H_
+#ifndef HERMETIC_LLVM_TOOLS_CASE_INSENSITIVE_VFS_FILESYSTEM_H_
+#define HERMETIC_LLVM_TOOLS_CASE_INSENSITIVE_VFS_FILESYSTEM_H_
 
 #include <stddef.h>
 
@@ -41,12 +41,9 @@ char *ci_generic_path(const char *path);
 char *ci_json_string(const char *value);
 int ci_path_info(const char *path, enum ci_path_type *type, int *is_symlink,
                  char **error);
-int ci_create_directory(const char *path, char **error);
-int ci_copy_file_exclusive(const char *source, const char *destination,
-                           char **error);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // HERMETIC_LLVM_TOOLS_CASE_INSENSITIVE_FILESYSTEM_COMMON_H_
+#endif // HERMETIC_LLVM_TOOLS_CASE_INSENSITIVE_VFS_FILESYSTEM_H_

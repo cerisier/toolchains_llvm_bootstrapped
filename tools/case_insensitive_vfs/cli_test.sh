@@ -34,4 +34,12 @@ printf 'header\n' >"${test_tmp}/root/Nested/Windows.h"
   -root "${test_tmp}/root" \
   -output "${test_tmp}/overlay.yaml"
 grep -Fq '"case-sensitive": false' "${test_tmp}/overlay.yaml"
+grep -Fq '"use-external-names": false' "${test_tmp}/overlay.yaml"
 grep -Fq '"name": "Windows.h"' "${test_tmp}/overlay.yaml"
+
+"${VFS_TOOL}" \
+  -root "${test_tmp}/root" \
+  -use-external-names \
+  -output "${test_tmp}/external-names-overlay.yaml"
+grep -Fq '"use-external-names": true' \
+  "${test_tmp}/external-names-overlay.yaml"

@@ -1,6 +1,5 @@
 load("@bazel_lib//:bzl_library.bzl", "bzl_library")
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
-load("//:case_insensitive_copy.bzl", "case_insensitive_copy_directory")
 load("//:case_insensitive_vfs.bzl", "case_insensitive_vfs_overlay")
 load("//:directory.bzl", "directory_info", "validated_directory_info")
 load(":versions.bzl", "MSVC_PAYLOAD_VERSION", "WINDOWS_SDK_INCLUDE_VERSION")
@@ -139,7 +138,7 @@ directory_info(
 )
 
 case_insensitive_vfs_overlay(
-    name = "msvc_sdk_case_overlay",
+    name = "msvc_sdk_header_case_overlay",
     roots = [
         ":msvc_com_support_headers",
         ":msvc_vcruntime_headers",
@@ -150,14 +149,15 @@ case_insensitive_vfs_overlay(
     ],
 )
 
-case_insensitive_copy_directory(
-    name = "winsdk_ucrt_libraries",
-    src = ":winsdk_ucrt_lib",
-)
-
-case_insensitive_copy_directory(
-    name = "winsdk_um_libraries",
-    src = ":winsdk_um_lib",
+case_insensitive_vfs_overlay(
+    name = "msvc_sdk_library_case_overlay",
+    roots = [
+        ":winsdk_ucrt_lib",
+        ":winsdk_um_lib",
+    ],
+    # lld-link discovers inputs through the VFS, then opens the returned path
+    # through the real filesystem. Preserve the SDK's actual filename there.
+    use_external_names = True,
 )
 
 copy_to_directory(

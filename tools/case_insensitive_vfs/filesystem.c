@@ -2,7 +2,7 @@
 #define _POSIX_C_SOURCE 200809L
 #endif
 
-#include "tools/case_insensitive_filesystem/common.h"
+#include "tools/case_insensitive_vfs/filesystem.h"
 
 #include <ctype.h>
 #include <errno.h>
@@ -12,16 +12,12 @@
 #include <string.h>
 
 #ifdef _WIN32
-#include <fcntl.h>
-#include <io.h>
 #include <sys/stat.h>
 #include <windows.h>
 #else
 #include <dirent.h>
-#include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <unistd.h>
 #endif
 
 void *ci_xmalloc(size_t size) {
@@ -338,93 +334,4 @@ int ci_path_info(const char *path, enum ci_path_type *type, int *is_symlink,
                                     : CI_PATH_OTHER;
 #endif
   return 1;
-}
-
-int ci_create_directory(const char *path, char **error) {
-#ifdef _WIN32
-  if (CreateDirectoryA(path, NULL)) {
-    return 1;
-  }
-  {
-    DWORD code = GetLastError();
-    if (code == ERROR_ALREADY_EXISTS) {
-      DWORD attributes = GetFileAttributesA(path);
-      if (attributes != INVALID_FILE_ATTRIBUTES &&
-          (attributes & FILE_ATTRIBUTE_DIRECTORY) != 0) {
-        return 1;
-      }
-    }
-    ci_set_error(error, "create %s: Windows error %lu", path,
-                 (unsigned long)code);
-  }
-#else
-  if (mkdir(path, 0777) == 0) {
-    return 1;
-  }
-  {
-    int code = errno;
-    if (code == EEXIST) {
-      struct stat status;
-      if (stat(path, &status) == 0 && S_ISDIR(status.st_mode)) {
-        return 1;
-      }
-    }
-    ci_set_error(error, "create %s: %s", path, strerror(code));
-  }
-#endif
-  return 0;
-}
-
-int ci_copy_file_exclusive(const char *source, const char *destination,
-                           char **error) {
-  FILE *input;
-  FILE *output;
-  char buffer[65536];
-  int descriptor;
-  int result = 0;
-
-  input = fopen(source, "rb");
-  if (input == NULL) {
-    ci_set_error(error, "copy %s: %s", source, strerror(errno));
-    return 0;
-  }
-#ifdef _WIN32
-  descriptor = _open(destination, _O_WRONLY | _O_CREAT | _O_EXCL | _O_BINARY,
-                     _S_IREAD | _S_IWRITE);
-  output = descriptor < 0 ? NULL : _fdopen(descriptor, "wb");
-#else
-  descriptor = open(destination, O_WRONLY | O_CREAT | O_EXCL, 0666);
-  output = descriptor < 0 ? NULL : fdopen(descriptor, "wb");
-#endif
-  if (output == NULL) {
-    if (descriptor >= 0) {
-#ifdef _WIN32
-      _close(descriptor);
-#else
-      close(descriptor);
-#endif
-    }
-    ci_set_error(error, "copy %s: %s", destination, strerror(errno));
-    fclose(input);
-    return 0;
-  }
-  while (!feof(input)) {
-    size_t count = fread(buffer, 1, sizeof(buffer), input);
-    if ((count != 0 && fwrite(buffer, 1, count, output) != count) ||
-        ferror(input)) {
-      ci_set_error(error, "copy %s: %s", destination, strerror(errno));
-      goto done;
-    }
-  }
-  result = 1;
-done:
-  if (fclose(output) != 0 && result) {
-    ci_set_error(error, "copy %s: %s", destination, strerror(errno));
-    result = 0;
-  }
-  fclose(input);
-  if (!result) {
-    remove(destination);
-  }
-  return result;
 }

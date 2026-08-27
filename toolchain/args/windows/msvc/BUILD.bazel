@@ -94,17 +94,17 @@ cc_args(
 )
 
 cc_args(
-    name = "sdk_case_overlay",
+    name = "sdk_header_case_overlay",
     actions = [
         "@rules_cc//cc/toolchains/actions:source_compile_actions",
     ],
     args = [
         "/clang:-ivfsoverlay",
-        "/clang:{sdk_case_overlay}",
+        "/clang:{sdk_header_case_overlay}",
     ],
-    data = ["//runtimes/msvc:msvc_sdk_case_overlay"],
+    data = ["//runtimes/msvc:msvc_sdk_header_case_overlay"],
     format = {
-        "sdk_case_overlay": "//runtimes/msvc:msvc_sdk_case_overlay",
+        "sdk_header_case_overlay": "//runtimes/msvc:msvc_sdk_header_case_overlay",
     },
 )
 
@@ -193,23 +193,27 @@ cc_args(
 )
 
 cc_args(
-    name = "normalized_sdk_library_search_paths",
+    name = "sdk_library_search_paths",
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
     args = [
+        "/clang:-Xlinker",
+        "/clang:/vfsoverlay:{sdk_library_case_overlay}",
         "/clang:-Xlinker",
         "/clang:/LIBPATH:{winsdk_ucrt_lib}",
         "/clang:-Xlinker",
         "/clang:/LIBPATH:{winsdk_um_lib}",
     ],
     data = [
-        "//runtimes/msvc:winsdk_ucrt_libraries",
-        "//runtimes/msvc:winsdk_um_libraries",
+        "//runtimes/msvc:msvc_sdk_library_case_overlay",
+        "//runtimes/msvc:winsdk_ucrt_lib",
+        "//runtimes/msvc:winsdk_um_lib",
     ],
     format = {
-        "winsdk_ucrt_lib": "//runtimes/msvc:winsdk_ucrt_libraries",
-        "winsdk_um_lib": "//runtimes/msvc:winsdk_um_libraries",
+        "sdk_library_case_overlay": "//runtimes/msvc:msvc_sdk_library_case_overlay",
+        "winsdk_ucrt_lib": "//runtimes/msvc:winsdk_ucrt_lib",
+        "winsdk_um_lib": "//runtimes/msvc:winsdk_um_lib",
     },
 )
 
@@ -217,7 +221,7 @@ cc_args_list(
     name = "normalized_sdk_compile_args",
     args = [
         "windows_sdk_compile_defines",
-        "sdk_case_overlay",
+        "sdk_header_case_overlay",
         "sdk_includes",
     ],
     visibility = ["//visibility:public"],
@@ -226,7 +230,7 @@ cc_args_list(
 cc_args_list(
     name = "normalized_default_libs",
     args = [
-        "normalized_sdk_library_search_paths",
+        "sdk_library_search_paths",
         "com_support_library_search_paths",
     ] + select({
         "//toolchain/features/msvc:static_crt_config": ["static_crt_library_search_paths"],
