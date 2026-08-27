@@ -1,14 +1,8 @@
-def exec_test(rule, *, name, tags = [], args = [], env = {}, data = [], tools = [], **kwargs):
+def exec_test(rule, *, name, tags = [], args = [], env = {}, data = [], inner_data = [], tools = [], **kwargs):
     # The inner executable is built in the exec configuration. Keep target
     # artifacts on the outer test unless an inner rule attribute itself uses a
-    # location expansion for one of them (for example go_test.x_defs).
-    inner_data = []
-    if type(data) == "list":
-        inner_data = [
-            item
-            for item in data
-            if " {}".format(item) + ")" in str(kwargs)
-        ]
+    # location expansion for one of them (for example go_test.x_defs), in which
+    # case the caller must also declare it in inner_data.
     rule(
         name = name + "_",
         data = inner_data,

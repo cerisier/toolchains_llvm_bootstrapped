@@ -50,6 +50,7 @@ exec_test(
     name = "wasm_test",
     srcs = ["wasm_test.go"],
     data = [":wasm_blob"],
+    inner_data = [":wasm_blob"],
     x_defs = {
         "wasmBlobRlocationpath": "$(rlocationpath :wasm_blob)",
     },
