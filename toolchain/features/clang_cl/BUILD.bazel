@@ -21,6 +21,12 @@ _COMPILE_ACTIONS = [
     "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
 ]
 
+_CXX_FRONTEND_ACTIONS = [
+    "@rules_cc//cc/toolchains/actions:cpp_compile",
+    "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
+    "@rules_cc//cc/toolchains/actions:linkstamp_compile",
+]
+
 _LINK_ACTIONS = ["@rules_cc//cc/toolchains/actions:link_actions"]
 
 _LTO_INDEX_ACTIONS = [
@@ -28,6 +34,59 @@ _LTO_INDEX_ACTIONS = [
     "@rules_cc//cc/toolchains/actions:lto_index_for_executable",
     "@rules_cc//cc/toolchains/actions:lto_index_for_nodeps_dynamic_library",
 ]
+
+cc_args(
+    name = "no_exceptions_args",
+    # Exception support is a C++ frontend semantic. The generated LLVM IR
+    # already records that choice, so neither C/assembly nor LTO backends need it.
+    actions = _CXX_FRONTEND_ACTIONS,
+    args = ["/EHs-c-"],
+)
+
+cc_feature(
+    name = "no_exceptions",
+    args = [":no_exceptions_args"],
+    feature_name = "no_exceptions",
+)
+
+cc_args(
+    name = "no_rtti_args",
+    # RTTI is also decided by the C++ frontend and encoded in LLVM IR; it has
+    # no semantic effect on C/assembly or on a backend consuming that IR.
+    actions = _CXX_FRONTEND_ACTIONS,
+    # /GR- maps to Clang's weaker -fno-rtti-data and leaves __cpp_rtti
+    # defined. Use the Clang option to preserve the no-RTTI semantic.
+    args = ["/clang:-fno-rtti"],
+)
+
+cc_feature(
+    name = "no_rtti",
+    args = [":no_rtti_args"],
+    feature_name = "no_rtti",
+)
+
+cc_args(
+    name = "omit_frame_pointer_args",
+    # Frame-pointer omission affects machine-code generation for both C and
+    # C++, including ThinLTO backend code generation.
+    actions = _COMPILE_ACTIONS + ["@rules_cc//cc/toolchains/actions:lto_backend"],
+    args = ["/clang:-fomit-frame-pointer"],
+)
+
+cc_feature(
+    name = "omit_frame_pointer",
+    args = [":omit_frame_pointer_args"],
+    feature_name = "omit_frame_pointer",
+)
+
+cc_feature_set(
+    name = "compiler_policy_features",
+    all_of = [
+        ":no_exceptions",
+        ":no_rtti",
+        ":omit_frame_pointer",
+    ],
+)
 
 # rules_cc's generic ThinLTO args target a GNU driver and ELF linker protocol.
 # This repository's fixed LLVM Windows route instead requires the combined

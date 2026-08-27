@@ -36,7 +36,12 @@ def cc_toolchain(
             # Target ABI: COFF link policy, CRT, validation, and explicit
             # unsupported coverage/sanitizer/header-parsing boundaries.
             "@llvm//toolchain/features/msvc:abi_known_features",
-        ],
+        ] + select({
+            "@llvm//toolchain:runtimes_none": [],
+            "@llvm//toolchain:runtimes_stage1": [],
+            "@llvm//toolchain:runtimes_stage1_hosted": [],
+            "//conditions:default": ["@llvm//toolchain/features/clang_cl:compiler_policy_features"],
+        }),
     )
 
     cc_feature_set(
@@ -114,6 +119,7 @@ def cc_toolchain(
             # Those features are enabled internally by --compilation_mode flags family.
             # We add them to the list of known_features but not in the list of enabled_features.
             "@llvm//toolchain/features:all_non_legacy_builtin_features",
+            "@llvm//toolchain/features:compiler_policy_features",
             "@llvm//toolchain/features/legacy:all_legacy_builtin_features",
             # Always last (contains user_compile_flags and user_link_flags who should apply last).
             "@llvm//toolchain/features/legacy:experimental_replace_legacy_action_config_features",

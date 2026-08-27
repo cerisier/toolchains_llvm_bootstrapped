@@ -35,6 +35,57 @@ cc_feature(
     overrides = "@rules_cc//cc/toolchains/features:static_link_cpp_runtimes",
 )
 
+cc_args(
+    name = "no_exceptions_args",
+    # Preserve the generic Clang behavior previously provided by --copt,
+    # whose user_compile_flags expansion covers rules_cc compile_actions.
+    actions = ["@rules_cc//cc/toolchains/actions:compile_actions"],
+    args = ["-fno-exceptions"],
+)
+
+cc_feature(
+    name = "no_exceptions",
+    args = [":no_exceptions_args"],
+    feature_name = "no_exceptions",
+)
+
+cc_args(
+    name = "no_rtti_args",
+    # Preserve the generic Clang behavior previously provided by --copt,
+    # whose user_compile_flags expansion covers rules_cc compile_actions.
+    actions = ["@rules_cc//cc/toolchains/actions:compile_actions"],
+    args = ["-fno-rtti"],
+)
+
+cc_feature(
+    name = "no_rtti",
+    args = [":no_rtti_args"],
+    feature_name = "no_rtti",
+)
+
+cc_args(
+    name = "omit_frame_pointer_args",
+    # Preserve the generic Clang behavior previously provided by --copt,
+    # including C compilation and ThinLTO backend code generation.
+    actions = ["@rules_cc//cc/toolchains/actions:compile_actions"],
+    args = ["-fomit-frame-pointer"],
+)
+
+cc_feature(
+    name = "omit_frame_pointer",
+    args = [":omit_frame_pointer_args"],
+    feature_name = "omit_frame_pointer",
+)
+
+cc_feature_set(
+    name = "compiler_policy_features",
+    all_of = [
+        ":no_exceptions",
+        ":no_rtti",
+        ":omit_frame_pointer",
+    ],
+)
+
 cc_feature(
     name = "prefer_pic_for_opt_binaries",
     feature_name = "prefer_pic_for_opt_binaries",

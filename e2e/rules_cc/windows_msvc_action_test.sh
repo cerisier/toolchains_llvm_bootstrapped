@@ -68,8 +68,19 @@ bazel --bazelrc=.bazelrc aquery "${mingw_flags[@]}" \
   --output=commands \
   'mnemonic("CppLink", //:windows_test)' \
   >"${action_dir}/mingw-link.txt"
+bazel --bazelrc=.bazelrc aquery "${mingw_flags[@]}" \
+  --features=no_exceptions \
+  --features=no_rtti \
+  --features=omit_frame_pointer \
+  --features=-compiler_param_file \
+  --output=commands \
+  'mnemonic("CppCompile", //:windows_test)' \
+  >"${action_dir}/mingw-release-compile.txt"
 bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   --features=thin_lto \
+  --features=no_exceptions \
+  --features=no_rtti \
+  --features=omit_frame_pointer \
   --features=-compiler_param_file \
   --output=commands \
   'inputs(".*libcxx/src/algorithm.cpp", mnemonic("CppCompile", deps(@llvm-project//libcxx:libcxx.static.msvc_link_name)))' \
@@ -98,6 +109,15 @@ bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   'mnemonic("CppCompile", //:windows_msvc_generated_def_binary)' \
   >"${action_dir}/opt-compile-flags.txt"
 bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
+  -c opt \
+  --features=no_exceptions \
+  --features=no_rtti \
+  --features=omit_frame_pointer \
+  --features=-compiler_param_file \
+  --output=commands \
+  'mnemonic("CppCompile", //:windows_msvc_generated_def_binary)' \
+  >"${action_dir}/release-compile-flags.txt"
+bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   -c dbg \
   --features=-compiler_param_file \
   --output=commands \
@@ -123,24 +143,36 @@ bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   >"${action_dir}/link.txt"
 bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   --features=thin_lto \
+  --features=no_exceptions \
+  --features=no_rtti \
+  --features=omit_frame_pointer \
   --features=-compiler_param_file \
   --output=commands \
   'mnemonic("CppCompile", //:windows_msvc_libcxx_behavior_md)' \
   >"${action_dir}/thin-lto-compile.txt"
 bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   --features=thin_lto \
+  --features=no_exceptions \
+  --features=no_rtti \
+  --features=omit_frame_pointer \
   --include_param_files \
   --output=text \
   'mnemonic("CppLTOIndexing", //:windows_msvc_libcxx_behavior_md)' \
   >"${action_dir}/thin-lto-index.txt"
 bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   --features=thin_lto \
+  --features=no_exceptions \
+  --features=no_rtti \
+  --features=omit_frame_pointer \
   --include_param_files \
   --output=text \
   'mnemonic("CcLtoBackendCompile", //:windows_msvc_libcxx_behavior_md)' \
   >"${action_dir}/thin-lto-backend.txt"
 bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   --features=thin_lto \
+  --features=no_exceptions \
+  --features=no_rtti \
+  --features=omit_frame_pointer \
   --include_param_files \
   --output=text \
   'mnemonic("CppLink", //:windows_msvc_libcxx_behavior_md)' \
@@ -181,10 +213,18 @@ assert_contains "${action_dir}/mingw-libcxx-compile.txt" "-Xclang=-Wno-thread-sa
 assert_absent "${action_dir}/mingw-libcxx-compile.txt" "/clang:-Wno-pragma-pack"
 assert_absent "${action_dir}/mingw-libcxx-compile.txt" "/clang:-Wno-unused-value"
 assert_contains "${action_dir}/mingw-link.txt" "-Wl,--no-insert-timestamp"
+assert_contains "${action_dir}/mingw-release-compile.txt" "-fno-exceptions"
+assert_contains "${action_dir}/mingw-release-compile.txt" "-fno-rtti"
+assert_contains "${action_dir}/mingw-release-compile.txt" "-fomit-frame-pointer"
+assert_absent "${action_dir}/mingw-release-compile.txt" "/EHs-c-"
+assert_absent "${action_dir}/mingw-release-compile.txt" "/clang:-fno-rtti"
 assert_contains "${action_dir}/msvc-libcxx-compile.txt" "bin/clang-cl"
 assert_matches "${action_dir}/msvc-libcxx-compile.txt" "/clang:-Wthread-safety.*-Xclang=-Wno-thread-safety-analysis"
 assert_absent "${action_dir}/msvc-libcxx-compile.txt" "/clang:-flto=thin"
 assert_absent "${action_dir}/msvc-libcxx-compile.txt" "/clang:-fthin-link-bitcode="
+assert_absent "${action_dir}/msvc-libcxx-compile.txt" "/EHs-c-"
+assert_absent "${action_dir}/msvc-libcxx-compile.txt" "/clang:-fno-rtti"
+assert_absent "${action_dir}/msvc-libcxx-compile.txt" "/clang:-fomit-frame-pointer"
 
 assert_contains "${action_dir}/default-compile-flags.txt" "/std:c++17"
 assert_contains "${action_dir}/default-compile-flags.txt" "/clang:-fms-compatibility-version="
@@ -216,6 +256,15 @@ assert_contains "${action_dir}/opt-compile-flags.txt" "/Gw"
 assert_contains "${action_dir}/opt-compile-flags.txt" "/Zc:inline"
 assert_absent "${action_dir}/opt-compile-flags.txt" "/Z7"
 assert_absent "${action_dir}/opt-compile-flags.txt" "/D_DEBUG"
+assert_contains "${action_dir}/release-compile-flags.txt" "/EHs-c-"
+assert_contains "${action_dir}/release-compile-flags.txt" "/clang:-fno-rtti"
+assert_contains "${action_dir}/release-compile-flags.txt" "/clang:-fomit-frame-pointer"
+assert_matches "${action_dir}/release-compile-flags.txt" "/EHsc .* /EHs-c-"
+assert_matches "${action_dir}/release-compile-flags.txt" "/GR .* /clang:-fno-rtti"
+assert_matches "${action_dir}/release-compile-flags.txt" "/clang:-fno-omit-frame-pointer .* /clang:-fomit-frame-pointer"
+assert_absent "${action_dir}/release-compile-flags.txt" " -fno-exceptions"
+assert_absent "${action_dir}/release-compile-flags.txt" " -fno-rtti"
+assert_absent "${action_dir}/release-compile-flags.txt" " -fomit-frame-pointer"
 assert_contains "${action_dir}/dbg-compile-flags.txt" "/Od"
 assert_contains "${action_dir}/dbg-compile-flags.txt" "/Z7"
 assert_absent "${action_dir}/dbg-compile-flags.txt" "/O2"
@@ -274,6 +323,8 @@ assert_contains "${action_dir}/thin-lto-compile.txt" "/clang:-flto=thin"
 assert_contains "${action_dir}/thin-lto-compile.txt" "/Fo"
 assert_contains "${action_dir}/thin-lto-compile.txt" ".obj"
 assert_contains "${action_dir}/thin-lto-compile.txt" "/clang:-fthin-link-bitcode="
+assert_contains "${action_dir}/thin-lto-compile.txt" "/EHs-c-"
+assert_contains "${action_dir}/thin-lto-compile.txt" "/clang:-fno-rtti"
 assert_contains "${action_dir}/thin-lto-compile.txt" ".indexing.o"
 assert_absent "${action_dir}/thin-lto-compile.txt" ".indexing.obj"
 assert_absent "${action_dir}/thin-lto-compile.txt" "/std:c++20"
@@ -305,6 +356,7 @@ assert_contains "${action_dir}/thin-lto-backend.txt" "CcLtoBackendCompile"
 assert_contains "${action_dir}/thin-lto-backend.txt" "bin/clang-cl"
 assert_contains "${action_dir}/thin-lto-backend.txt" "/clang:-fthinlto-index="
 assert_contains "${action_dir}/thin-lto-backend.txt" "windows_msvc_libcxx_behavior.obj"
+assert_contains "${action_dir}/thin-lto-backend.txt" "/clang:-fomit-frame-pointer"
 assert_absent "${action_dir}/thin-lto-backend.txt" "/clang:-nostdlibinc"
 assert_absent "${action_dir}/thin-lto-backend.txt" "/clang:-nobuiltininc"
 assert_absent "${action_dir}/thin-lto-backend.txt" "/imsvc"
