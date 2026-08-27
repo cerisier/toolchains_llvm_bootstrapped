@@ -155,9 +155,6 @@ case_insensitive_vfs_overlay(
         ":winsdk_ucrt_lib",
         ":winsdk_um_lib",
     ],
-    # lld-link discovers inputs through the VFS, then opens the returned path
-    # through the real filesystem. Preserve the SDK's actual filename there.
-    use_external_names = True,
 )
 
 copy_to_directory(

@@ -1,10 +1,16 @@
 load("@llvm//:defs.bzl", "exec_test")
+load("@llvm//toolchain:selects.bzl", "platform_llvm_binary")
 load("@llvm//toolchain/runtimes:cc_runtime_binary.bzl", "cc_runtime_stage1_hosted_binary")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("@rules_cc//cc:cc_test.bzl", "cc_test")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 
 package(default_visibility = ["//visibility:public"])
+
+alias(
+    name = "clang_for_test",
+    actual = platform_llvm_binary("clang"),
+)
 
 cc_library(
     name = "case_insensitive_vfs_lib",
@@ -35,6 +41,12 @@ exec_test(
     sh_test,
     name = "cli_test",
     srcs = ["cli_test.sh"],
-    env = {"VFS_TOOLS": "$(rootpaths case_insensitive_vfs)"},
-    tools = ["case_insensitive_vfs"],
+    env = {
+        "CLANG": "$(rootpath clang_for_test)",
+        "VFS_TOOLS": "$(rootpaths case_insensitive_vfs)",
+    },
+    tools = [
+        "case_insensitive_vfs",
+        "clang_for_test",
+    ],
 )

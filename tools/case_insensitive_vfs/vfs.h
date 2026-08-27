@@ -8,8 +8,7 @@ extern "C" {
 #endif
 
 int case_insensitive_vfs_generate(const char *const *roots, size_t root_count,
-                                  int use_external_names, char **overlay,
-                                  char **error);
+                                  char **overlay, char **error);
 
 #ifdef __cplusplus
 }

@@ -173,8 +173,7 @@ static int compare_roots(const void *left, const void *right) {
 }
 
 int case_insensitive_vfs_generate(const char *const *roots, size_t root_count,
-                                  int use_external_names, char **overlay,
-                                  char **error) {
+                                  char **overlay, char **error) {
   struct text_buffer output = {NULL, 0, 0};
   struct root_entry *sorted_roots;
   size_t index;
@@ -195,8 +194,6 @@ int case_insensitive_vfs_generate(const char *const *roots, size_t root_count,
   buffer_append(&output, "{\n"
                          "  \"version\": 0,\n"
                          "  \"case-sensitive\": false,\n");
-  buffer_append_format(&output, "  \"use-external-names\": %s,\n",
-                       use_external_names ? "true" : "false");
   buffer_append(&output, "  \"roots\": [\n");
   for (index = 0; index < root_count; ++index) {
     buffer_indent(&output, 4);

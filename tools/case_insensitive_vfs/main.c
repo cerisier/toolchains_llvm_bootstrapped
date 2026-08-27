@@ -10,7 +10,6 @@ int main(int argc, char **argv) {
   const char **roots = NULL;
   size_t root_count = 0;
   const char *output_path = NULL;
-  int use_external_names = 0;
   char *overlay = NULL;
   char *error = NULL;
   FILE *output;
@@ -30,8 +29,6 @@ int main(int argc, char **argv) {
         return 2;
       }
       output_path = argv[index];
-    } else if (strcmp(argv[index], "-use-external-names") == 0) {
-      use_external_names = 1;
     } else {
       fprintf(stderr, "unknown argument: %s\n", argv[index]);
       free(roots);
@@ -43,8 +40,7 @@ int main(int argc, char **argv) {
     free(roots);
     return 2;
   }
-  if (!case_insensitive_vfs_generate(roots, root_count, use_external_names,
-                                     &overlay, &error)) {
+  if (!case_insensitive_vfs_generate(roots, root_count, &overlay, &error)) {
     fprintf(stderr, "%s\n", error);
     free(error);
     free(roots);

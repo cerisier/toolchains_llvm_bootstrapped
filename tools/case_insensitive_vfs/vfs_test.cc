@@ -61,8 +61,7 @@ bool AppearsBefore(std::string_view value, std::string_view left,
 }
 
 bool GenerateOverlay(std::initializer_list<std::filesystem::path> roots,
-                     std::string *overlay, std::string *error,
-                     bool use_external_names = false) {
+                     std::string *overlay, std::string *error) {
   std::vector<std::string> root_strings;
   std::vector<const char *> root_paths;
   for (const std::filesystem::path &root : roots) {
@@ -74,8 +73,7 @@ bool GenerateOverlay(std::initializer_list<std::filesystem::path> roots,
   char *generated = nullptr;
   char *generated_error = nullptr;
   const bool result = case_insensitive_vfs_generate(
-      root_paths.data(), root_paths.size(), use_external_names, &generated,
-      &generated_error);
+      root_paths.data(), root_paths.size(), &generated, &generated_error);
   if (result) {
     *overlay = generated;
   } else {
@@ -135,30 +133,10 @@ bool TestGenerateCaseInsensitiveOverlay() {
     return false;
   }
   return Contains(overlay, "\"case-sensitive\": false") &&
-         Contains(overlay, "\"use-external-names\": false") &&
+         overlay.find("\"use-external-names\"") == std::string::npos &&
          Contains(overlay, "\"name\": \"Windows.h\"") &&
          Contains(overlay, "\"name\": \"Nested\"") &&
          Contains(overlay, "\"name\": \"Ole2.h\"");
-}
-
-bool TestGenerateExternalNamesOverlay() {
-  TemporaryDirectory temporary;
-  const std::filesystem::path root = temporary.path() / "root";
-  std::filesystem::create_directories(root);
-  if (!Write(root / "Kernel32.Lib", "kernel32")) {
-    std::cerr << "failed to create source file\n";
-    return false;
-  }
-
-  std::string overlay;
-  std::string error;
-  if (!GenerateOverlay({root}, &overlay, &error, true)) {
-    std::cerr << error << '\n';
-    return false;
-  }
-  return Contains(overlay, "\"case-sensitive\": false") &&
-         Contains(overlay, "\"use-external-names\": true") &&
-         Contains(overlay, "\"name\": \"Kernel32.Lib\"");
 }
 
 bool TestPreferredNameChoosesLowercaseAlias() {
@@ -355,7 +333,6 @@ bool TestJsonAndGenericPathEscaping() {
 
 int main() {
   if (!TestGenerateCaseInsensitiveOverlay() ||
-      !TestGenerateExternalNamesOverlay() ||
       !TestPreferredNameChoosesLowercaseAlias() ||
       !TestPreferredNameRejectsAmbiguousEntries() ||
       !TestGeneratePrefersLowercaseAcrossMultipleAliases() ||
