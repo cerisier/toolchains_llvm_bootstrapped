@@ -196,6 +196,10 @@ config_setting(
     values = {"features": "static_link_msvcrt"},
 )
 
+cc_mutually_exclusive_category(
+    name = "crt_mode",
+)
+
 cc_args(
     name = "static_crt_compile_args",
     actions = _COMPILE_ACTIONS + _LINK_ACTIONS,
@@ -205,6 +209,7 @@ cc_args(
 cc_feature(
     name = "static_link_msvcrt",
     feature_name = "static_link_msvcrt",
+    mutually_exclusive = [":crt_mode"],
 )
 
 cc_args(
@@ -216,6 +221,7 @@ cc_args(
 cc_feature(
     name = "dynamic_link_msvcrt",
     feature_name = "dynamic_link_msvcrt",
+    mutually_exclusive = [":crt_mode"],
 )
 
 cc_args_list(

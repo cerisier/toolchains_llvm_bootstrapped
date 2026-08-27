@@ -62,6 +62,14 @@ expect_failure \
   //:windows_msvc_crt_default_probe
 
 expect_failure \
+  windows-msvc-conflicting-crt \
+  "is provided by all of the following features: dynamic_link_msvcrt static_link_msvcrt" \
+  "${common_flags[@]}" \
+  --features=static_link_msvcrt \
+  --platforms=@llvm//platforms:windows_x86_64_msvc \
+  //:windows_msvc_crt_default_probe
+
+expect_failure \
   windows-msvc-unsupported-feature \
   "is provided by all of the following features: msvc_supported_configuration asan" \
   "${common_flags[@]}" \
