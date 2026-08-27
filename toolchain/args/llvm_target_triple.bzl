@@ -14,6 +14,7 @@ LLVM_TARGET_TRIPLE = select({
     "@llvm//platforms/config:linux_armv7_musl": ["armv7-linux-musleabihf"],
     "@llvm//platforms/config:macos_x86_64": ["x86_64-apple-darwin"],
     "@llvm//platforms/config:macos_aarch64": ["aarch64-apple-darwin"],
+    "@llvm//platforms/config:none_aarch64": ["aarch64-unknown-none-elf"],
     "@llvm//platforms/config:none_bpfeb": ["bpfeb"],
     "@llvm//platforms/config:none_bpfel": ["bpfel"],
     "@llvm//platforms/config:none_wasm32": ["wasm32-unknown-unknown"],
