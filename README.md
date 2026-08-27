@@ -7,7 +7,7 @@
 # Bazel-LLVM Ecosystem
 
 1. **Hermetic cross-compiling `cc_toolchain`**
-   We assemble LLVM with Bazeled runtimes/libc stacks to provide a zero-sysroot, hermetic C/C++ cross toolchain for many exec/target combinations (Linux glibc/musl, Windows MinGW, macOS, wasm; more coming).
+   We assemble LLVM with Bazeled runtimes/libc stacks to provide a zero-sysroot, hermetic C/C++ cross toolchain for many exec/target combinations (Linux glibc/musl, Windows MinGW/MSVC targets, macOS, wasm; more coming).
 2. **Bazeled LLVM targets**
    We expose Bazel targets for LLVM binaries and libraries. Some come from the upstream `@llvm-project` Bazel overlay, and we also provide missing coverage with our own BUILD files, including `compiler-rt`, `libc++`, `libc++abi`, `libunwind`, and sanitizer runtimes.
 3. **WIP crossenv package targets for outside-Bazel use**
@@ -128,6 +128,8 @@ If you wish to setup things manually, you will likely require a few flags:
 | **armv7-linux-musleabihf** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **aarch64-windows-gnu ²**| ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **x86_64-windows-gnu ²** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **aarch64-windows-msvc ³** | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ |
+| **x86_64-windows-msvc ³** | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ |
 | **bpfeb** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **bpfel** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **wasm32-unknown-unknown** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -136,6 +138,9 @@ If you wish to setup things manually, you will likely require a few flags:
 ¹ See "GNU C Library" section for glibc version selection.
 
 ² See "Windows" section.
+
+³ MSVC ABI targets currently require a Linux execution platform. See "Windows"
+section.
 
 ### musl
 
@@ -221,17 +226,39 @@ constraint to the target platform.
 
 ### Windows
 
-Windows is currently supported via MinGW-w64. UCRT is used by default; MSVCRT
-can be selected by adding the `@llvm//constraints/windows/crt:msvcrt` constraint
-to the target platform. This CRT constraint selects a MinGW-w64 runtime flavor;
-it does not select the MSVC target ABI.
+Windows targets support both the GNU and native MSVC ABIs. MinGW-w64 targets use
+UCRT by default; MSVCRT can be selected by adding the
+`@llvm//constraints/windows/crt:msvcrt` constraint to the target platform. This
+CRT constraint selects a MinGW-w64 runtime flavor; it does not select the MSVC
+target ABI.
 
 Repository-provided Windows platforms use the
 `@llvm//constraints/windows/abi:gnu` ABI. User-defined Windows platforms that
 omit this toolchain-specific constraint retain the same MinGW behavior. The
 `gnullvm` value is accepted for Rust compatibility and uses Clang's GNU Windows
-target environment. Native `@llvm//constraints/windows/abi:msvc` targets are not
-yet supported and intentionally have no compatible C/C++ toolchain.
+target environment.
+
+The native MSVC ABI is available through
+`@llvm//platforms:windows_x86_64_msvc` and
+`@llvm//platforms:windows_aarch64_msvc`. These target toolchains use clang-cl,
+lld-link, the Microsoft Visual C++ runtime and Windows SDK, and a statically
+linked libc++. Their compile and link actions currently require a Linux
+execution platform; native Windows and macOS execution toolchains are not yet
+registered. Using the Microsoft inputs requires explicit acceptance of both
+licenses:
+
+```sh
+bazel build \
+  --platforms=@llvm//platforms:windows_x86_64_msvc \
+  --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
+  --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
+  //:app
+```
+
+MSVC targets default to the retail dynamic CRT (`/MD`). Select the retail static
+CRT (`/MT`) with
+`--features=-dynamic_link_msvcrt,static_link_msvcrt`. Debug CRT modes (`/MDd`
+and `/MTd`) are not supported.
 
 ### macOS notes
 
