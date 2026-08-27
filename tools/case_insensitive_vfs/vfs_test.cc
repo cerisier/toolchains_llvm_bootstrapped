@@ -84,24 +84,6 @@ bool GenerateOverlay(std::initializer_list<std::filesystem::path> roots,
   return result;
 }
 
-bool PreferredName(std::string_view left, std::string_view right,
-                   std::string *preferred, std::string *error) {
-  const std::string left_string(left);
-  const std::string right_string(right);
-  char *generated = nullptr;
-  char *generated_error = nullptr;
-  const bool result = ci_preferred_name(
-      left_string.c_str(), right_string.c_str(), &generated, &generated_error);
-  if (result) {
-    *preferred = generated;
-  } else {
-    *error = generated_error;
-  }
-  std::free(generated);
-  std::free(generated_error);
-  return result;
-}
-
 std::string GenericPath(const std::filesystem::path &path) {
   char *generic = ci_generic_path(path.string().c_str());
   std::string result(generic);
@@ -137,31 +119,6 @@ bool TestGenerateCaseInsensitiveOverlay() {
          Contains(overlay, "\"name\": \"Windows.h\"") &&
          Contains(overlay, "\"name\": \"Nested\"") &&
          Contains(overlay, "\"name\": \"Ole2.h\"");
-}
-
-bool TestPreferredNameChoosesLowercaseAlias() {
-  std::string preferred;
-  std::string error;
-  if (!PreferredName("Windows.h", "windows.h", &preferred, &error)) {
-    std::cerr << error << '\n';
-    return false;
-  }
-  if (preferred != "windows.h") {
-    std::cerr << "preferred name is " << preferred
-              << ", want lowercase alias\n";
-    return false;
-  }
-  return true;
-}
-
-bool TestPreferredNameRejectsAmbiguousEntries() {
-  std::string preferred;
-  std::string error;
-  if (!PreferredName("FOO.h", "Foo.h", &preferred, &error)) {
-    return true;
-  }
-  std::cerr << "ambiguous case-only entries were accepted\n";
-  return false;
 }
 
 bool TestGeneratePrefersLowercaseAcrossMultipleAliases() {
@@ -333,8 +290,6 @@ bool TestJsonAndGenericPathEscaping() {
 
 int main() {
   if (!TestGenerateCaseInsensitiveOverlay() ||
-      !TestPreferredNameChoosesLowercaseAlias() ||
-      !TestPreferredNameRejectsAmbiguousEntries() ||
       !TestGeneratePrefersLowercaseAcrossMultipleAliases() ||
       !TestGenerateFollowsTransformedHeaderSymlink() ||
       !TestGenerateIsDeterministicAndSortsRootsAndEntries() ||

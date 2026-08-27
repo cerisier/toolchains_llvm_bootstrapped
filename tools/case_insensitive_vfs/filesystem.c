@@ -77,33 +77,6 @@ char *ci_fold_case(const char *value) {
   return result;
 }
 
-int ci_preferred_name(const char *left, const char *right, char **preferred,
-                      char **error) {
-  char *folded_left = ci_fold_case(left);
-  char *folded_right = ci_fold_case(right);
-  int result = 0;
-
-  free(*preferred);
-  *preferred = NULL;
-  if (strcmp(folded_left, folded_right) != 0) {
-    ci_set_error(error, "internal case-fold mismatch: \"%s\" and \"%s\"", left,
-                 right);
-  } else if (strcmp(left, folded_left) == 0) {
-    *preferred = ci_xstrdup(left);
-    result = 1;
-  } else if (strcmp(right, folded_left) == 0) {
-    *preferred = ci_xstrdup(right);
-    result = 1;
-  } else {
-    ci_set_error(error,
-                 "ambiguous case-insensitive SDK entries \"%s\" and \"%s\"",
-                 left, right);
-  }
-  free(folded_left);
-  free(folded_right);
-  return result;
-}
-
 static int compare_entries(const void *left, const void *right) {
   const struct ci_directory_entry *left_entry = left;
   const struct ci_directory_entry *right_entry = right;

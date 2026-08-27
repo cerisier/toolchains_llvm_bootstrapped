@@ -29,8 +29,6 @@ char *ci_xstrdup(const char *value);
 void ci_set_error(char **error, const char *format, ...);
 
 char *ci_fold_case(const char *value);
-int ci_preferred_name(const char *left, const char *right, char **preferred,
-                      char **error);
 int ci_collect_preferred_entries(const char *directory,
                                  struct ci_directory_entries *entries,
                                  char **error);
