@@ -362,8 +362,7 @@ jobs:
             //tests/... \
             //tools/case_insensitive_vfs:cli_test \
             //tools/case_insensitive_vfs:test \
-            //tools/coff_def_parser:cli_test \
-            //tools/coff_def_parser:test
+            //tools/def_file_generator:test
 
   docs:
     runs-on: macos-15-intel
