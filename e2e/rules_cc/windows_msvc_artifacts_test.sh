@@ -40,12 +40,22 @@ found_pdb=0
 debug_executable=
 debug_pdb=
 
+machine_line_matches() {
+  local machine="$1"
+  grep -Eq "Machine: IMAGE_FILE_MACHINE_${machine}([[:space:]]|$)"
+}
+
 assert_machine() {
   local artifact="$1"
   "${LLVM_READOBJ}" --file-headers "${artifact}" |
-    grep -Fq "Machine: IMAGE_FILE_MACHINE_${MACHINE}" ||
+    machine_line_matches "${MACHINE}" ||
     fail "wrong or missing ${MACHINE} machine in ${artifact}"
 }
+
+if printf '%s\n' 'Machine: IMAGE_FILE_MACHINE_ARM64EC (0xA641)' |
+  machine_line_matches ARM64; then
+  fail "ARM64 machine matcher also accepts ARM64EC"
+fi
 
 for artifact_key in ${ARTIFACTS}; do
   artifact="$(resolve "${artifact_key}")"
