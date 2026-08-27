@@ -2,6 +2,7 @@ load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains:feature.bzl", "cc_feature")
 load("@rules_cc//cc/toolchains:feature_set.bzl", "cc_feature_set")
+load("@rules_cc//cc/toolchains:mutually_exclusive_category.bzl", "cc_mutually_exclusive_category")
 load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 
 package(default_visibility = ["//visibility:public"])
@@ -59,9 +60,19 @@ cc_feature(
     implies = [":copy_dynamic_libraries_to_binary"],
 )
 
+# rules_cc generates export-all DEF files before ThinLTO indexing by scanning
+# native object symbol tables. Clang ThinLTO outputs LLVM bitcode under the
+# target object suffix, which neither the portable nor legacy DEF parser can
+# scan. Keep the two requests mutually exclusive until the generation action
+# has a bitcode-aware symbol-discovery protocol.
+cc_mutually_exclusive_category(
+    name = "generated_def_object_format",
+)
+
 cc_feature(
     name = "windows_export_all_symbols",
     feature_name = "windows_export_all_symbols",
+    mutually_exclusive = [":generated_def_object_format"],
 )
 
 cc_feature(

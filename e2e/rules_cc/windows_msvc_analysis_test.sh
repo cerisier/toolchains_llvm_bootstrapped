@@ -84,6 +84,14 @@ expect_failure \
   //:windows_msvc_fdo_optimize_probe
 
 expect_failure \
+  windows-msvc-generated-def-thinlto \
+  "is provided by all of the following features: windows_export_all_symbols thin_lto" \
+  "${common_flags[@]}" \
+  --features=thin_lto \
+  --platforms=@llvm//platforms:windows_x86_64_msvc \
+  //:windows_msvc_generated_def.dll
+
+expect_failure \
   windows-msvc-header-parsing \
   "MSVC ABI Layer 1 does not support feature(s): parse_headers" \
   "${common_flags[@]}" \
