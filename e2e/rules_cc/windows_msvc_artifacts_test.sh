@@ -52,10 +52,86 @@ assert_machine() {
     fail "wrong or missing ${MACHINE} machine in ${artifact}"
 }
 
+archive_members_match_machine() {
+  local machine="$1"
+  local member_count="$2"
+  local native_format
+  local import_format
+  case "${machine}" in
+    AMD64)
+      native_format=COFF-x86-64
+      import_format=COFF-import-file-x86-64
+      ;;
+    ARM64)
+      native_format=COFF-ARM64
+      import_format=COFF-import-file-ARM64
+      ;;
+    *) return 1 ;;
+  esac
+  awk \
+    -v expected_machine="IMAGE_FILE_MACHINE_${machine}" \
+    -v expected_members="${member_count}" \
+    -v import_format="${import_format}" \
+    -v native_format="${native_format}" '
+      function finish_member() {
+        if (!in_member) return
+        members++
+        if (format == native_format) {
+          if (machine != expected_machine) invalid = 1
+        } else if (format == import_format) {
+          if (machine != "" && machine != expected_machine) invalid = 1
+        } else {
+          invalid = 1
+        }
+      }
+      /^File: / {
+        finish_member()
+        in_member = 1
+        format = ""
+        machine = ""
+        next
+      }
+      /^Format: / { format = $2; next }
+      /^[[:space:]]*Machine: IMAGE_FILE_MACHINE_/ { machine = $2; next }
+      END {
+        finish_member()
+        if (invalid || members != expected_members || members == 0) exit 1
+      }
+    '
+}
+
 if printf '%s\n' 'Machine: IMAGE_FILE_MACHINE_ARM64EC (0xA641)' |
   machine_line_matches ARM64; then
   fail "ARM64 machine matcher also accepts ARM64EC"
 fi
+
+if printf '%s\n' \
+  'File: mixed.lib(amd64.obj)' \
+  'Format: COFF-x86-64' \
+  '  Machine: IMAGE_FILE_MACHINE_AMD64 (0x8664)' \
+  'File: mixed.lib(arm64.obj)' \
+  'Format: COFF-ARM64' \
+  '  Machine: IMAGE_FILE_MACHINE_ARM64 (0xAA64)' |
+  archive_members_match_machine AMD64 2; then
+  fail "archive machine matcher accepts a mixed-machine archive"
+fi
+
+if printf '%s\n' \
+  'File: arm64ec.lib(member.obj)' \
+  'Format: COFF-ARM64' \
+  '  Machine: IMAGE_FILE_MACHINE_ARM64EC (0xA641)' |
+  archive_members_match_machine ARM64 1; then
+  fail "archive machine matcher accepts an ARM64EC member as ARM64"
+fi
+
+printf '%s\n' \
+  'File: valid.lib(member.obj)' \
+  'Format: COFF-x86-64' \
+  '  Machine: IMAGE_FILE_MACHINE_AMD64 (0x8664)' \
+  'File: valid.lib(import)' \
+  'Format: COFF-import-file-x86-64' |
+  archive_members_match_machine AMD64 2 ||
+  fail "archive machine matcher rejects valid AMD64 members"
 
 for artifact_key in ${ARTIFACTS}; do
   artifact="$(resolve "${artifact_key}")"
@@ -71,9 +147,13 @@ for artifact_key in ${ARTIFACTS}; do
       assert_machine "${artifact}"
       ;;
     *.lib)
-      assert_machine "${artifact}"
-      [[ -n "$("${LLVM_AR}" t "${artifact}")" ]] ||
+      members="$("${LLVM_AR}" t "${artifact}")"
+      [[ -n "${members}" ]] ||
         fail "empty COFF archive or import library: ${artifact}"
+      member_count="$(awk 'NF { count++ } END { print count + 0 }' <<<"${members}")"
+      "${LLVM_READOBJ}" --file-headers "${artifact}" |
+        archive_members_match_machine "${MACHINE}" "${member_count}" ||
+        fail "wrong, mixed, or uninspected ${MACHINE} member in ${artifact}"
       ;;
     *.pdb)
       grep -a -Fq "Microsoft C/C++ MSF 7.00" "${artifact}" ||
