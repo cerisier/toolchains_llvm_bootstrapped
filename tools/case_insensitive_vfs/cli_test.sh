@@ -5,6 +5,7 @@ set -euo pipefail
 VFS_TOOL="${VFS_TOOLS%% *}"
 test_tmp="$(mktemp -d "${TMPDIR:-/tmp}/case-insensitive-vfs-cli.XXXXXX")"
 trap 'rm -rf "${test_tmp}"' EXIT
+test_tmp="$(cd "${test_tmp}" && pwd -P)"
 
 expect_failure() {
   local expected_status="$1"
