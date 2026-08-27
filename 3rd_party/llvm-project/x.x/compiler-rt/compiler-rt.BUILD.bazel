@@ -26,40 +26,21 @@ load("@llvm//toolchain/runtimes:cc_unsanitized_library.bzl", "cc_unsanitized_lib
 load("@llvm-project//:vars.bzl", "LLVM_VERSION_MAJOR")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
-selects.config_setting_group(
+config_setting(
     name = "windows_msvc",
-    match_any = [
-        "@llvm//platforms/config:windows_x86_64_msvc",
-        "@llvm//platforms/config:windows_aarch64_msvc",
+    constraint_values = [
+        "@llvm//constraints/windows/abi:msvc",
+        "@platforms//os:windows",
     ],
 )
 
 config_setting(
-    name = "windows_x86_64_msvc_optimized",
-    constraint_values = [
-        "@llvm//constraints/windows/abi:msvc",
-        "@platforms//cpu:x86_64",
-        "@platforms//os:windows",
-    ],
-    flag_values = {"@llvm//config:runtimes_optimization_mode": "optimized"},
-)
-
-config_setting(
-    name = "windows_aarch64_msvc_optimized",
-    constraint_values = [
-        "@llvm//constraints/windows/abi:msvc",
-        "@platforms//cpu:aarch64",
-        "@platforms//os:windows",
-    ],
-    flag_values = {"@llvm//config:runtimes_optimization_mode": "optimized"},
-)
-
-selects.config_setting_group(
     name = "windows_msvc_optimized",
-    match_any = [
-        ":windows_x86_64_msvc_optimized",
-        ":windows_aarch64_msvc_optimized",
+    constraint_values = [
+        "@llvm//constraints/windows/abi:msvc",
+        "@platforms//os:windows",
     ],
+    flag_values = {"@llvm//config:runtimes_optimization_mode": "optimized"},
 )
 
 # diff_tests asserting the weak-symbol lists in weak_symbols.bzl stay in sync
