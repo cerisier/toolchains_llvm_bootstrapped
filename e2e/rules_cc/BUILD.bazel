@@ -343,7 +343,6 @@ cc_library(
     name = "windows_msvc_libcxx_behavior_support",
     srcs = ["windows_msvc_libcxx_behavior_support.cc"],
     hdrs = ["windows_msvc_libcxx_behavior_support.h"],
-    copts = ["/std:c++20"],
     linkstatic = True,
     target_compatible_with = [
         "@llvm//constraints/windows/abi:msvc",
@@ -373,7 +372,6 @@ cc_library(
             "windows_msvc_c_smoke.c",
             "windows_msvc_libcxx_behavior.cc",
         ] + _WINDOWS_MSVC_RAW_ASSEMBLY_SRCS,
-        copts = ["/std:c++20"],
         features = ["generate_pdb_file"] if crt == "debug" else [],
         linkopts = ["/OPT:REF"],
         linkstatic = False,
@@ -401,7 +399,6 @@ cc_test(
         "windows_msvc_c_smoke.c",
         "windows_msvc_libcxx_behavior.cc",
     ] + _WINDOWS_MSVC_RAW_ASSEMBLY_SRCS,
-    copts = ["/std:c++20"],
     features = ["thin_lto"],
     linkopts = ["/OPT:REF"],
     linkstatic = False,
