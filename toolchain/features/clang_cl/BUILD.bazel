@@ -11,6 +11,8 @@ load("@rules_cc//cc/toolchains:nested_args.bzl", "cc_nested_args")
 
 package(default_visibility = ["//visibility:public"])
 
+_ASSEMBLE_ACTIONS = ["@rules_cc//cc/toolchains/actions:assemble"]
+
 _COMPILE_ACTIONS = [
     "@rules_cc//cc/toolchains/actions:c_compile",
     "@rules_cc//cc/toolchains/actions:cpp_compile",
@@ -241,7 +243,7 @@ cc_feature(
 
 cc_args(
     name = "compiler_output_args",
-    actions = _COMPILE_ACTIONS,
+    actions = _ASSEMBLE_ACTIONS + _COMPILE_ACTIONS,
     args = ["/Fo{output_file}"],
     format = {"output_file": "@rules_cc//cc/toolchains/variables:output_file"},
     requires_not_none = "@rules_cc//cc/toolchains/variables:output_file",
@@ -249,7 +251,7 @@ cc_args(
 
 cc_args(
     name = "compiler_input_args",
-    actions = _COMPILE_ACTIONS,
+    actions = _ASSEMBLE_ACTIONS + _COMPILE_ACTIONS,
     args = [
         "/c",
         "{source_file}",

@@ -183,6 +183,7 @@ def declare_llvm_targets(*, suffix = ""):
     # MSVC ABI actions use the CL/LINK dialect directly. Keep this map separate
     # from MinGW so target ABI, never execution OS, selects the personality.
     MSVC_CONSTRUCTION_TOOLS = {
+        "@rules_cc//cc/toolchains/actions:assemble": ":clang-cl",
         "@rules_cc//cc/toolchains/actions:c_compile": ":clang-cl",
         "@rules_cc//cc/toolchains/actions:cpp_compile": ":clang-cl",
         "@rules_cc//cc/toolchains/actions:linkstamp_compile": ":clang-cl",

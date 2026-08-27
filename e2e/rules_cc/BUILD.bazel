@@ -75,6 +75,12 @@ config_setting(
     constraint_values = ["@llvm//constraints/windows/abi:msvc"],
 )
 
+_WINDOWS_MSVC_RAW_ASSEMBLY_SRCS = select({
+    "@llvm//platforms/config:windows_aarch64_msvc": ["windows_msvc_raw_assembly_aarch64.s"],
+    "@llvm//platforms/config:windows_x86_64_msvc": ["windows_msvc_raw_assembly_x86_64.s"],
+    "//conditions:default": [],
+})
+
 _EXTERNAL_INCLUDE_PATHS_TEST_COMPATIBLE = (
     select({
         "@platforms//os:linux": [],
@@ -366,7 +372,7 @@ cc_library(
             "windows_msvc_assembly.S",
             "windows_msvc_c_smoke.c",
             "windows_msvc_libcxx_behavior.cc",
-        ],
+        ] + _WINDOWS_MSVC_RAW_ASSEMBLY_SRCS,
         copts = ["/std:c++20"],
         features = ["generate_pdb_file"] if crt == "debug" else [],
         linkopts = ["/OPT:REF"],
@@ -394,7 +400,7 @@ cc_test(
         "windows_msvc_assembly.S",
         "windows_msvc_c_smoke.c",
         "windows_msvc_libcxx_behavior.cc",
-    ],
+    ] + _WINDOWS_MSVC_RAW_ASSEMBLY_SRCS,
     copts = ["/std:c++20"],
     features = ["thin_lto"],
     linkopts = ["/OPT:REF"],
