@@ -1,0 +1,56 @@
+GCC_3.0 {
+  global:
+    _Unwind_DeleteException;
+    _Unwind_Find_FDE;
+    _Unwind_ForcedUnwind;
+    _Unwind_GetDataRelBase;
+    _Unwind_GetGR;
+    _Unwind_GetIP;
+    _Unwind_GetLanguageSpecificData;
+    _Unwind_GetRegionStart;
+    _Unwind_GetTextRelBase;
+    _Unwind_RaiseException;
+    _Unwind_Resume;
+    _Unwind_SetGR;
+    _Unwind_SetIP;
+    __addtf3;
+    __divtf3;
+    __eqtf2;
+    __extendsftf2;
+    __floatditf;
+    __floatsitf;
+    __getf2;
+    __gttf2;
+    __letf2;
+    __lttf2;
+    __multf3;
+    __netf2;
+    __subtf3;
+    __trunctfdf2;
+    __trunctfsf2;
+    __udivmodti4;
+    __udivti3;
+  local:
+    *;
+};
+GCC_3.3 {
+  global:
+    _Unwind_Backtrace;
+    _Unwind_FindEnclosingFunction;
+    _Unwind_GetCFA;
+    _Unwind_Resume_or_Rethrow;
+} GCC_3.0;
+GCC_3.4 {
+  global: __popcountdi2;
+} GCC_3.3;
+GCC_4.0.0 {
+  global: __mulsc3;
+} GCC_3.4;
+GCC_4.2.0 {
+  global:
+    _Unwind_GetIPInfo;
+    __floatunditf;
+} GCC_4.0.0;
+GCC_4.5.0 {
+  global: __unordtf2;
+} GCC_4.2.0;

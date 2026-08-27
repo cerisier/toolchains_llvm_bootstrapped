@@ -26,6 +26,14 @@ selects.config_setting_group(
     ],
 )
 
+selects.config_setting_group(
+    name = "libstdcxx_linux_complete",
+    match_all = [
+        ":libstdcxx_linux",
+        "//toolchain:runtimes_all",
+    ],
+)
+
 # Recognize the Windows selection only to fail at the cxxstdlib routing
 # boundary. The MinGW source/header entries in the libstdc++ port are audit
 # parity with GCC, not supported runtime wiring yet.
@@ -64,17 +72,6 @@ alias(
     }),
 )
 
-alias(
-    name = "libstdcxx_dynamic_runtime_lib",
-    actual = "//runtimes/libstdcxx:libstdcxx_shared_soname",
-)
-
-genrule(
-    name = "libstdcxx_static_runtime_lib",
-    outs = ["unsupported/libstdc++.a"],
-    cmd = "echo 'libstdc++ is only supported as a dynamic C++ runtime; static libstdc++ is intentionally unsupported.' >&2; exit 1",
-)
-
 genrule(
     name = "libstdcxx_windows_unsupported",
     outs = ["unsupported/windows-libstdcxx"],
@@ -86,7 +83,7 @@ genrule(
 filegroup(
     name = "static_runtime_lib",
     srcs = select({
-        ":libstdcxx_linux": [":libstdcxx_static_runtime_lib"],
+        ":libstdcxx_linux": [],
         ":libstdcxx_windows": [":libstdcxx_windows_unsupported"],
         ":libcxx_linux": [
             "@llvm-project//libcxx:libcxx.static",
@@ -105,10 +102,7 @@ filegroup(
 filegroup(
     name = "dynamic_runtime_lib",
     srcs = select({
-        ":libstdcxx_linux": [
-            ":libstdcxx_dynamic_runtime_lib",
-            "//runtimes/libunwind:libunwind.shared",
-        ],
+        ":libstdcxx_linux": [],
         ":libstdcxx_windows": [":libstdcxx_windows_unsupported"],
         ":libcxx_linux": [
             "@llvm-project//libcxx:libcxx.shared",
