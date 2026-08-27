@@ -64,14 +64,14 @@ _MSVC_VCRUNTIME_HEADERS = [
 validated_directory_info(
     name = "msvc_include",
     src = "@msvc_runtime//:msvc_include",
-    expected_path_suffix = "/Contents/VC/Tools/MSVC/{}/include".format(MSVC_PAYLOAD_VERSION),
+    expected_path_suffix = "/Contents/VC/Tools/MSVC/%s/include" % MSVC_PAYLOAD_VERSION,
 )
 
 [
     validated_directory_info(
-        name = "winsdk_{}_include".format(directory),
-        src = "@windows_sdk//:winsdk_{}_include".format(directory),
-        expected_path_suffix = "/base/c/Include/{}/{}".format(WINDOWS_SDK_INCLUDE_VERSION, directory),
+        name = "winsdk_%s_include" % directory,
+        src = "@windows_sdk//:winsdk_%s_include" % directory,
+        expected_path_suffix = "/base/c/Include/%s/%s" % (WINDOWS_SDK_INCLUDE_VERSION, directory),
     )
     for directory in [
         "shared",
@@ -102,13 +102,13 @@ validated_directory_info(
 validated_directory_info(
     name = "msvc_lib_arm64",
     src = "@msvc_runtime//:msvc_lib_arm64",
-    expected_path_suffix = "/Contents/VC/Tools/MSVC/{}/lib/arm64".format(MSVC_PAYLOAD_VERSION),
+    expected_path_suffix = "/Contents/VC/Tools/MSVC/%s/lib/arm64" % MSVC_PAYLOAD_VERSION,
 )
 
 validated_directory_info(
     name = "msvc_lib_x64",
     src = "@msvc_runtime//:msvc_lib_x64",
-    expected_path_suffix = "/Contents/VC/Tools/MSVC/{}/lib/x64".format(MSVC_PAYLOAD_VERSION),
+    expected_path_suffix = "/Contents/VC/Tools/MSVC/%s/lib/x64" % MSVC_PAYLOAD_VERSION,
 )
 
 copy_to_directory(
