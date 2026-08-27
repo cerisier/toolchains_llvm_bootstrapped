@@ -338,7 +338,7 @@ jobs:
           restore-keys: |
             bazel-cache-tests-${{ matrix.os }}-${{ matrix.bazel_version }}
 
-      - name: bazel query kernel headers and test //tests/...
+      - name: bazel query kernel headers and test root targets
         env:
           USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
         shell: bash
@@ -356,7 +356,11 @@ jobs:
             --bazelrc=.bazelrc \
             test \
             --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
-            //tests/...
+            //tests/... \
+            //tools/case_insensitive_vfs:cli_test \
+            //tools/case_insensitive_vfs:test \
+            //tools/coff_def_parser:cli_test \
+            //tools/coff_def_parser:test
 
   docs:
     runs-on: macos-15-intel
