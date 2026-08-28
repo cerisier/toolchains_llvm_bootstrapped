@@ -46,6 +46,7 @@ _LLVM_21_SOURCE_PATCHES = [
 
 _LLVM_22_SOURCE_PATCHES = [
     "//3rd_party/llvm-project/22.x/patches:lld-coff-thinlto-lazy-index.patch",
+    "//3rd_party/llvm-project/22.x/patches:lld-coff-lto-weak-alias-prevailing.patch",
     "//3rd_party/llvm-project/22.x/patches:llvm-link-multicall.patch",
     "//3rd_party/llvm-project/22.x/patches:llvm-profdata-multicall.patch",
     "//3rd_party/llvm-project/22.x/patches:clang-format-multicall.patch",

@@ -413,6 +413,18 @@ cc_test(
     ],
 )
 
+cc_test(
+    name = "windows_msvc_thinlto_weak_alias",
+    srcs = ["windows_msvc_thinlto_weak_alias.cc"],
+    features = ["thin_lto"],
+    linkstatic = False,
+    target_compatible_with = [
+        "@llvm//constraints/windows/abi:msvc",
+        "@llvm//constraints/cxxstdlib:libcxx",
+        "@platforms//os:windows",
+    ],
+)
+
 filegroup(
     name = "windows_msvc_libcxx_behavior_debug_pdb",
     testonly = True,

@@ -218,6 +218,33 @@ bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   'mnemonic("CppLink", //:windows_msvc_libcxx_behavior_md)' \
   >"${action_dir}/thin-lto-link.txt"
 bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
+  --features=thin_lto \
+  --features=-dynamic_link_msvcrt \
+  --features=static_link_msvcrt \
+  --@llvm//toolchain:bootstrap_stage=stage1_from_source \
+  --features=-compiler_param_file \
+  --output=commands \
+  'inputs(".*libcxx/src/locale.cpp", mnemonic("CppCompile", deps(@llvm-project//libcxx:libcxx.static.msvc_link_name)))' \
+  >"${action_dir}/stage1-libcxx-compile.txt"
+bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
+  --features=thin_lto \
+  --features=-dynamic_link_msvcrt \
+  --features=static_link_msvcrt \
+  --@llvm//toolchain:bootstrap_stage=stage1_from_source \
+  --include_param_files \
+  --output=text \
+  'mnemonic("CppLTOIndexing", //:windows_msvc_libcxx_behavior_md)' \
+  >"${action_dir}/stage1-thin-lto-index.txt"
+bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
+  --features=thin_lto \
+  --features=-dynamic_link_msvcrt \
+  --features=static_link_msvcrt \
+  --@llvm//toolchain:bootstrap_stage=stage1_from_source \
+  --include_param_files \
+  --output=text \
+  'mnemonic("CppLink", //:windows_msvc_libcxx_behavior_md)' \
+  >"${action_dir}/stage1-thin-lto-link.txt"
+bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   --include_param_files \
   --output=text \
   'mnemonic("DefParser", //:windows_msvc_generated_def.dll)' \
@@ -252,6 +279,11 @@ bazel --bazelrc=.bazelrc cquery "${common_flags[@]}" \
   --output=label \
   'kind(".*cc_toolchain.*", deps(//:windows_msvc_crt_default_probe))' \
   >"${action_dir}/resolved-toolchains.txt"
+bazel --bazelrc=.bazelrc build "${common_flags[@]}" \
+  --features=-dynamic_link_msvcrt \
+  --features=static_link_msvcrt \
+  --@llvm//toolchain:bootstrap_stage=stage1_from_source \
+  //:windows_msvc_thinlto_weak_alias
 
 assert_matches "${action_dir}/resolved-toolchains.txt" "@llvm_toolchains//:linux_(aarch64|x86_64)_cc_toolchain"
 assert_absent "${action_dir}/resolved-toolchains.txt" "_msvc_cc_toolchain"
@@ -484,6 +516,22 @@ assert_absent "${action_dir}/thin-lto-index.txt" ".indexing.obj"
 assert_absent "${action_dir}/thin-lto-index.txt" "-Wl,"
 assert_absent "${action_dir}/thin-lto-index.txt" " -o "
 assert_absent "${action_dir}/thin-lto-index.txt" "-x ir"
+
+assert_matches "${action_dir}/stage1-libcxx-compile.txt" "stage1_linux_(x86_64|aarch64)/bin/clang-cl"
+assert_contains "${action_dir}/stage1-libcxx-compile.txt" "--target=x86_64-pc-windows-msvc"
+assert_contains "${action_dir}/stage1-libcxx-compile.txt" "/MT"
+assert_contains "${action_dir}/stage1-libcxx-compile.txt" "msvc_com_support_headers_source"
+assert_contains "${action_dir}/stage1-libcxx-compile.txt" "msvc_vcruntime_headers_source"
+assert_contains "${action_dir}/stage1-libcxx-compile.txt" "windows_sdk/sysroot/base/c/Include"
+assert_contains "${action_dir}/stage1-libcxx-compile.txt" "msvc_sdk_header_case_overlay.yaml"
+assert_matches "${action_dir}/stage1-thin-lto-index.txt" "Command Line: \\(exec .*stage1_linux_(x86_64|aarch64)/bin/clang-cl"
+assert_matches "${action_dir}/stage1-thin-lto-index.txt" "stage1_linux_(x86_64|aarch64)/bin/lld-link"
+assert_absent "${action_dir}/stage1-thin-lto-index.txt" "llvm-toolchain-minimal"
+assert_matches "${action_dir}/stage1-thin-lto-link.txt" "Command Line: \\(exec .*stage1_linux_(x86_64|aarch64)/bin/clang-cl"
+assert_matches "${action_dir}/stage1-thin-lto-link.txt" "stage1_linux_(x86_64|aarch64)/bin/lld-link"
+assert_contains "${action_dir}/stage1-thin-lto-link.txt" "/MT"
+assert_contains "${action_dir}/stage1-thin-lto-link.txt" "msvc_static_runtime_libraries"
+assert_absent "${action_dir}/stage1-thin-lto-link.txt" "llvm-toolchain-minimal"
 
 assert_contains "${action_dir}/thin-lto-backend.txt" "CcLtoBackendCompile"
 assert_contains "${action_dir}/thin-lto-backend.txt" "bin/clang-cl"
