@@ -49,6 +49,14 @@ cc_args_list(
 )
 
 cc_args_list(
+    name = "openbsd_hosted_c_toolchain_args",
+    args = [
+        "//toolchain/args/openbsd:system_headers_include_search_paths",
+    ],
+    visibility = ["//toolchain:__subpackages__"],
+)
+
+cc_args_list(
     name = "windows_hosted_c_toolchain_args",
     args = [
         "//toolchain/args/windows:mingw_headers_include_search_paths",
@@ -65,6 +73,9 @@ cc_args_list(
         "@platforms//os:linux": [
             ":linux_hosted_c_toolchain_args",
         ],
+        "@platforms//os:openbsd": [
+            ":openbsd_hosted_c_toolchain_args",
+        ],
         "@platforms//os:windows": [
             ":windows_hosted_c_toolchain_args",
         ],
@@ -80,6 +91,7 @@ cc_args_list(
             "//toolchain:macos_toolchain_args",
         ],
         "@platforms//os:linux": [],
+        "@platforms//os:openbsd": [],
         "@platforms//os:windows": [],
         "@platforms//os:none": [],
     }),

@@ -11,6 +11,14 @@ config_setting(
 )
 
 config_setting(
+    name = "libcxx_openbsd",
+    constraint_values = [
+        "//constraints/cxxstdlib:libcxx",
+        "@platforms//os:openbsd",
+    ],
+)
+
+config_setting(
     name = "libcxx_windows",
     constraint_values = [
         "//constraints/cxxstdlib:libcxx",
@@ -93,6 +101,11 @@ filegroup(
             "@llvm-project//libcxxabi:libcxxabi.static",
             "@llvm-project//libunwind:libunwind.static",
         ],
+        ":libcxx_openbsd": [
+            "@llvm-project//libcxx:libcxx.static",
+            "@llvm-project//libcxxabi:libcxxabi.static",
+            "@llvm-project//libunwind:libunwind.static",
+        ],
         ":libcxx_windows": [
             "@llvm-project//libcxx:libcxx.static",
             "@llvm-project//libcxxabi:libcxxabi.static",
@@ -111,6 +124,11 @@ filegroup(
         ],
         ":libstdcxx_windows": [":libstdcxx_windows_unsupported"],
         ":libcxx_linux": [
+            "@llvm-project//libcxx:libcxx.shared",
+            "@llvm-project//libcxxabi:libcxxabi.shared",
+            "@llvm-project//libunwind:libunwind.shared",
+        ],
+        ":libcxx_openbsd": [
             "@llvm-project//libcxx:libcxx.shared",
             "@llvm-project//libcxxabi:libcxxabi.shared",
             "@llvm-project//libunwind:libunwind.shared",

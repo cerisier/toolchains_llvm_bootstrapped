@@ -124,6 +124,7 @@ cc_library(
             # https://github.com/hermeticbuild/hermetic-llvm/issues/146
             "@kernel_headers",
         ],
+        "@platforms//os:openbsd": [],
     }) + select({
         "@llvm//platforms/config:musl": [
             "@musl_libc//:musl_libc_headers",
@@ -133,6 +134,9 @@ cc_library(
         ],
         "@platforms//os:windows": [
             "@mingw//:mingw_headers",
+        ],
+        "@platforms//os:openbsd": [
+            "@llvm//runtimes/openbsd:headers",
         ],
         "@platforms//os:macos": [],
     }),
@@ -151,8 +155,12 @@ cc_library(
         "_NDEBUG",
         # "_LIBUNWIND_HAS_NO_THREADS", # ANY_NON_SINGLE_THREADED
         # "_DCOMPILER_RT_ARMHF_TARGET", # ARM
-        "_LIBUNWIND_USE_FRAME_HEADER_CACHE",
     ] + select({
+        # OpenBSD's dl_phdr_info does not expose the glibc cache generation
+        # counters used by FrameHeaderCache.
+        "@platforms//os:openbsd": [],
+        "//conditions:default": ["_LIBUNWIND_USE_FRAME_HEADER_CACHE"],
+    }) + select({
         ":windows_static": [
             "_LIBUNWIND_HIDE_SYMBOLS",
         ],

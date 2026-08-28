@@ -1,0 +1,173 @@
+load("@bazel_lib//:bzl_library.bzl", "bzl_library")
+load("@bazel_lib//lib:copy_file.bzl", "copy_file")
+load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("@llvm//toolchain/runtimes:cc_runtime_library.bzl", "cc_runtime_stage0_library")
+load("@llvm//toolchain/runtimes:cc_runtime_shared_library.bzl", "cc_runtime_stage0_shared_library")
+load("@llvm//toolchain/runtimes:cc_stage0_object.bzl", "cc_stage0_object")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
+load(":openbsd_stub_assembly.bzl", "openbsd_stub_assembly")
+
+package(default_visibility = ["//visibility:public"])
+
+alias(
+    name = "headers_include_search_directory",
+    actual = select({
+        "@platforms//cpu:aarch64": "@openbsd_headers_arm64//:include_directory",
+        "@platforms//cpu:x86_64": "@openbsd_headers_amd64//:include_directory",
+    }),
+)
+
+alias(
+    name = "headers",
+    actual = select({
+        "@platforms//cpu:aarch64": "@openbsd_headers_arm64//:headers",
+        "@platforms//cpu:x86_64": "@openbsd_headers_amd64//:headers",
+    }),
+)
+
+_CRT_COPTS = [
+    "-fno-addrsig",
+] + select({
+    "@platforms//cpu:x86_64": ["-fno-omit-frame-pointer"],
+    "//conditions:default": [],
+})
+
+cc_runtime_stage0_library(
+    name = "crt0",
+    srcs = ["@openbsd_src//:lib/csu/crt0.c"],
+    copts = _CRT_COPTS,
+    implementation_deps = [
+        ":headers",
+        "@openbsd_src//:csu_headers",
+    ],
+)
+
+[
+    cc_runtime_stage0_library(
+        name = name,
+        srcs = ["@openbsd_src//:lib/csu/{}.c".format(name)],
+        copts = _CRT_COPTS + (["-fPIC"] if name.endswith("S") else []),
+        implementation_deps = [
+            ":headers",
+            "@openbsd_src//:csu_headers",
+        ],
+    )
+    for name in [
+        "crtbegin",
+        "crtbeginS",
+        "crtend",
+        "crtendS",
+    ]
+]
+
+[
+    cc_stage0_object(
+        name = name + ".object",
+        srcs = [":" + name],
+        out = name + ".o",
+        copts = ["-target"] + LLVM_TARGET_TRIPLE,
+    )
+    for name in [
+        "crt0",
+        "crtbegin",
+        "crtbeginS",
+        "crtend",
+        "crtendS",
+    ]
+]
+
+openbsd_stub_assembly(
+    name = "libc_stub_assembly",
+    srcs = [
+        "@openbsd_src//:lib/libc/Symbols.list",
+    ] + select({
+        "@platforms//cpu:aarch64": ["@openbsd_src//:lib/libc/arch/aarch64/Symbols.list"],
+        "@platforms//cpu:x86_64": ["@openbsd_src//:lib/libc/arch/amd64/Symbols.list"],
+    }),
+    out = "libc_stub.s",
+    format = "list",
+)
+
+openbsd_stub_assembly(
+    name = "libm_stub_assembly",
+    srcs = ["@openbsd_src//:lib/libm/Symbols.map"],
+    out = "libm_stub.s",
+    format = "map",
+)
+
+openbsd_stub_assembly(
+    name = "libpthread_stub_assembly",
+    srcs = ["@openbsd_src//:lib/librthread/Symbols.map"],
+    out = "libpthread_stub.s",
+    format = "map",
+)
+
+[
+    cc_library(
+        name = name + "_stub",
+        srcs = [":" + name + "_stub_assembly"],
+        copts = ["-Wno-unused-command-line-argument"],
+    )
+    for name in [
+        "libc",
+        "libm",
+        "libpthread",
+    ]
+]
+
+_SHARED_LIBRARIES = {
+    "libc": "libc.so.103.0",
+    "libm": "libm.so.10.1",
+    "libpthread": "libpthread.so.28.1",
+}
+
+[
+    cc_runtime_stage0_shared_library(
+        name = name + ".shared",
+        shared_lib_name = soname,
+        user_link_flags = ["-Wl,-soname," + soname],
+        deps = [":" + name + "_stub"],
+    )
+    for name, soname in _SHARED_LIBRARIES.items()
+]
+
+[
+    write_file(
+        name = name + "_linker_script",
+        out = name + ".so",
+        content = ["GROUP ( {} )".format(soname)],
+    )
+    for name, soname in _SHARED_LIBRARIES.items()
+]
+
+copy_file(
+    name = "compiler_rt",
+    src = "//runtimes/compiler-rt:clang_rt.builtins.static",
+    out = "libcompiler_rt.a",
+    allow_symlink = True,
+)
+
+copy_to_directory(
+    name = "library_search_directory",
+    srcs = [
+        ":compiler_rt",
+    ] + [
+        ":" + name + ".shared"
+        for name in _SHARED_LIBRARIES.keys()
+    ] + [
+        ":" + name + "_linker_script"
+        for name in _SHARED_LIBRARIES.keys()
+    ],
+    include_external_repositories = ["**"],
+    root_paths = [
+        ".",
+        "runtimes/openbsd",
+    ],
+)
+
+bzl_library(
+    name = "openbsd_stub_assembly",
+    srcs = ["openbsd_stub_assembly.bzl"],
+)

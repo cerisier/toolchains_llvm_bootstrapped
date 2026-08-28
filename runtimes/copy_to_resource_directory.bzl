@@ -21,6 +21,8 @@ TRIPLE_SELECT_DICT = {
     "@llvm//platforms/config:linux_armv7_musl": "armv7-unknown-linux-musleabihf",
     "@llvm//platforms/config:macos_x86_64": "darwin",
     "@llvm//platforms/config:macos_aarch64": "darwin",
+    "@llvm//platforms/config:openbsd_x86_64": "x86_64-unknown-openbsd",
+    "@llvm//platforms/config:openbsd_aarch64": "aarch64-unknown-openbsd",
     "@llvm//platforms/config:none_bpfeb": "bpfeb-unknown-none",
     "@llvm//platforms/config:none_bpfel": "bpfel-unknown-none",
     "@llvm//platforms/config:none_wasm32": "wasm32-unknown-unknown",

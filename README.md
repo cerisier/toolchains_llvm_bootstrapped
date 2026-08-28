@@ -126,6 +126,8 @@ If you wish to setup things manually, you will likely require a few flags:
 | **riscv64-linux-musl**    | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **s390x-linux-musl**      | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **armv7-linux-musleabihf** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **aarch64-unknown-openbsd ³** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **x86_64-unknown-openbsd ³** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **aarch64-windows-gnu ²**| ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **x86_64-windows-gnu ²** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **bpfeb** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -136,6 +138,8 @@ If you wish to setup things manually, you will likely require a few flags:
 ¹ See "GNU C Library" section for glibc version selection.
 
 ² See "Windows" section.
+
+³ See "OpenBSD" section.
 
 ### musl
 
@@ -239,6 +243,19 @@ Cross-compiling to macOS from any host is supported.
 
 By default, the official macOS SDK is downloaded from Apple CDN and used hermetically.
 We use a cross-platform reimplementation of `pkgutil` to unpack SDK packages, which works on all hosts.
+
+### OpenBSD
+
+OpenBSD 7.9 is supported as an x86_64 or aarch64 target. The toolchain downloads
+the official `src.tar.gz` and `sys.tar.gz` source sets, assembles the installed
+header layout, and builds the startup objects, compiler runtime, libc++,
+libc++abi, and libunwind with Bazel. Link-only system library stubs are generated
+from OpenBSD's source export lists. As with Linux targets, no sysroot is used.
+OpenBSD is a dynamically linked target platform only; it is not currently
+supported as a toolchain execution platform.
+
+Use `--platforms @llvm//platforms:openbsd_x86_64` or
+`--platforms @llvm//platforms:openbsd_aarch64`.
 
 ### RISC-V
 

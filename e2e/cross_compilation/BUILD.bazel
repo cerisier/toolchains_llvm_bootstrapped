@@ -81,6 +81,8 @@ PLATFORMS = [
     "@llvm//platforms:linux_armv7",
     "@llvm//platforms:macos_x86_64",
     "@llvm//platforms:macos_aarch64",
+    "@llvm//platforms:openbsd_x86_64",
+    "@llvm//platforms:openbsd_aarch64",
     "@llvm//platforms:windows_amd64",
     "@llvm//platforms:windows_arm64",
 ] + [

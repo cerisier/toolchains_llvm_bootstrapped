@@ -378,6 +378,14 @@ def declare_llvm_targets(*, suffix = ""):
     )
 
     include_path(
+        name = "openbsd_target_headers",
+        srcs = [
+            ":builtin_resource_dir",
+            "@llvm//runtimes/openbsd:headers_include_search_directory",
+        ],
+    )
+
+    include_path(
         name = "wasm_target_headers",
         srcs = [
             ":builtin_resource_dir",
@@ -390,6 +398,7 @@ def declare_llvm_targets(*, suffix = ""):
         include_path = select({
             "@platforms//os:macos": ":macos_target_headers",
             "@platforms//os:linux": ":linux_target_headers",
+            "@platforms//os:openbsd": ":openbsd_target_headers",
             "@platforms//os:windows": ":windows_target_headers",
             "@platforms//os:none": ":wasm_target_headers",
         }),

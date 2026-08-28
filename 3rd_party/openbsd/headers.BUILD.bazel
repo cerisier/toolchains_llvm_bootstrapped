@@ -1,0 +1,16 @@
+load("@llvm//:directory.bzl", "headers_directory")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
+cc_library(
+    name = "headers",
+    hdrs = ["include"],
+    features = ["system_include_paths"],
+    includes = ["include"],
+    visibility = ["//visibility:public"],
+)
+
+headers_directory(
+    name = "include_directory",
+    path = "include",
+    visibility = ["//visibility:public"],
+)

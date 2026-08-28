@@ -12,6 +12,12 @@ cc_runtime_stage1_hosted_binary(
     visibility = ["//visibility:public"],
 )
 
+cc_runtime_stage1_hosted_binary(
+    name = "openbsd-stub-generator",
+    srcs = ["openbsd_stub_generator.c"],
+    visibility = ["//runtimes/openbsd:__pkg__"],
+)
+
 # rustc infers the linker flavor from the executable name. Keep the `-clang++`
 # suffix so Rust shared-library links treat this wrapper as a compiler driver.
 cc_runtime_stage1_hosted_binary(

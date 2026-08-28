@@ -1,0 +1,58 @@
+load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
+
+package(default_visibility = ["//visibility:public"])
+
+cc_args(
+    name = "default_link_flags",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = [
+        "-Wl,-no-as-needed",
+        "-Wl,-z,relro,-z,now,-z,origin",
+    ],
+)
+
+cc_args(
+    name = "system_headers_include_search_paths",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:source_compile_actions",
+    ],
+    allowlist_include_directories = [
+        "//runtimes/openbsd:headers_include_search_directory",
+    ],
+    args = [
+        "-isystem",
+        "{headers}",
+    ],
+    data = [
+        "//runtimes/openbsd:headers_include_search_directory",
+    ],
+    format = {
+        "headers": "//runtimes/openbsd:headers_include_search_directory",
+    },
+    target_compatible_with = ["@platforms//os:openbsd"],
+)
+
+cc_args(
+    name = "default_libs",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = [
+        "-L{libraries}",
+        # -nostdlib++ suppresses the OpenBSD driver's usual C++ pthread and
+        # math dependencies, so provide them after the Bazel-built runtimes.
+        "-Wl,--push-state,--as-needed",
+        "-lpthread",
+        "-lm",
+        "-Wl,--pop-state",
+    ],
+    data = [
+        "//runtimes/openbsd:library_search_directory",
+    ],
+    format = {
+        "libraries": "//runtimes/openbsd:library_search_directory",
+    },
+    target_compatible_with = ["@platforms//os:openbsd"],
+)

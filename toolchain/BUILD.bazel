@@ -144,6 +144,9 @@ cc_args_list(
             "//toolchain/args/linux:default_link_flags",
             "//toolchain/args/linux:non_pie_executable_link_flags",
         ],
+        "@platforms//os:openbsd": [
+            "//toolchain/args/openbsd:default_link_flags",
+        ],
         "@platforms//os:windows": [],
         "@platforms//os:none": [],
     }),
@@ -154,6 +157,9 @@ cc_args_list(
     args = select({
         "@platforms//os:macos": [],
         "@platforms//os:linux": [
+            "//toolchain/args:crt_search_directory",
+        ],
+        "@platforms//os:openbsd": [
             "//toolchain/args:crt_search_directory",
         ],
         "@platforms//os:windows": [
@@ -179,6 +185,9 @@ cc_args_list(
         "@platforms//os:linux": [
             "//toolchain/args/linux:default_libs",
         ],
+        "@platforms//os:openbsd": [
+            "//toolchain/args/openbsd:default_libs",
+        ],
         "@platforms//os:windows": [
             "//toolchain/args/windows:default_libs",
         ],
@@ -193,6 +202,9 @@ cc_args_list(
         # libc++ is provided by the macOS SDK.
         "@platforms//os:macos": [],
         "@platforms//os:linux": [
+            "//toolchain/args:cxxstdlib_library_search_paths",
+        ],
+        "@platforms//os:openbsd": [
             "//toolchain/args:cxxstdlib_library_search_paths",
         ],
         "@platforms//os:windows": [
@@ -211,6 +223,9 @@ cc_args_list(
             "//toolchain/args:libunwind_library_search_paths",
         ],
         "@platforms//os:linux": [
+            "//toolchain/args:libunwind_library_search_paths",
+        ],
+        "@platforms//os:openbsd": [
             "//toolchain/args:libunwind_library_search_paths",
         ],
         "@platforms//os:windows": [
@@ -256,16 +271,24 @@ cc_args_list(
 # and paths when resolving compiler runtime libraries from the resource-dir.
 cc_args_list(
     name = "rtlib",
-    args = [
-        "//toolchain/args:rtlib_compiler_rt",
-    ],
+    args = select({
+        # OpenBSD has a fixed compiler runtime selected by its Clang driver.
+        "@platforms//os:openbsd": [],
+        "//conditions:default": [
+            "//toolchain/args:rtlib_compiler_rt",
+        ],
+    }),
 )
 
 cc_args_list(
     name = "unwindlib",
-    args = [
-        "//toolchain/args:unwindlib_none",
-    ],
+    args = select({
+        # --unwindlib is not supported by the OpenBSD Clang driver.
+        "@platforms//os:openbsd": [],
+        "//conditions:default": [
+            "//toolchain/args:unwindlib_none",
+        ],
+    }),
 )
 
 # TODO(cerisier): extract those into proper semantic args list.
@@ -324,11 +347,20 @@ cc_args_list(
 )
 
 cc_args_list(
+    name = "openbsd_toolchain_args",
+    args = [
+        "//toolchain/args:cxxstdlib_headers_include_search_paths",
+        "//toolchain/args/openbsd:system_headers_include_search_paths",
+    ],
+)
+
+cc_args_list(
     name = "platform_specific_args",
     args = select({
         # Platform specific flags.
         "@platforms//os:macos": [":macos_toolchain_args"],
         "@platforms//os:linux": [":linux_toolchain_args"],
+        "@platforms//os:openbsd": [":openbsd_toolchain_args"],
         "@platforms//os:windows": [":windows_toolchain_args"],
         "@platforms//os:none": [],
         "//conditions:default": [],
