@@ -52,19 +52,26 @@ def _host_bsdtar_label(rctx):
     binary = "tar.exe" if platform.startswith("windows_") else "tar"
     return Label("@bsd_tar_toolchains_{}//:{}".format(platform, binary))
 
-def _extract(rctx, archive, includes, substitution = None, excludes = []):
+def _extract(rctx, archive, includes, output = None, strip_components = 0, excludes = []):
     args = []
     for include in includes:
         args.extend(["--include", include])
     for exclude in excludes:
         args.extend(["--exclude", exclude])
-    if substitution:
-        args.extend(["-s", substitution])
+    keep_file = None
+    if output:
+        keep_file = output + "/.openbsd_headers.keep"
+        rctx.file(keep_file, "")
+        args.extend(["-C", output])
+    if strip_components:
+        args.extend(["--strip-components", str(strip_components)])
     args.extend(["-xf", archive])
 
     result = rctx.execute([rctx.path(_host_bsdtar_label(rctx))] + args)
     if result.return_code != 0:
         fail("Failed to extract {}:\n{}\n{}".format(archive, result.stderr, result.stdout))
+    if keep_file:
+        rctx.delete(keep_file)
 
 def _openbsd_headers_repository_impl(rctx):
     src_archive = ".downloaded.src.tar.gz"
@@ -78,17 +85,22 @@ def _openbsd_headers_repository_impl(rctx):
         ["include", "include/*"],
         excludes = ["*/CVS/*", "include/Makefile"],
     )
+
+    # The Windows bsdtar prebuilt does not support -s, so relocate archive
+    # paths using -C and --strip-components instead.
     _extract(
         rctx,
         sys_archive,
         ["sys/{directory}/*.h".format(directory = directory) for directory in _SYS_HEADER_DIRECTORIES],
-        substitution = "|^sys/|include/|",
+        output = "include",
+        strip_components = 1,
     )
     _extract(
         rctx,
         sys_archive,
         ["sys/arch/{}/include/*.h".format(rctx.attr.arch)],
-        substitution = "|^sys/arch/{}/include/|include/machine/|".format(rctx.attr.arch),
+        output = "include/machine",
+        strip_components = 4,
     )
 
     for name, target in _COMPAT_HEADERS.items():
