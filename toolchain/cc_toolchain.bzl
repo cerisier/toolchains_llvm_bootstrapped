@@ -56,6 +56,10 @@ def cc_toolchain(name, tool_map, module_map = None, extra_args = []):
                 "@llvm//toolchain/features:static_link_cpp_runtimes",
                 "@llvm//toolchain/features/runtime_library_search_directories:feature",
             ],
+            "@platforms//os:openbsd": [
+                "@llvm//toolchain/features:static_link_cpp_runtimes",
+                "@llvm//toolchain/features/runtime_library_search_directories:feature",
+            ],
             "@platforms//os:windows": [
                 "@llvm//toolchain/features:static_link_cpp_runtimes",
                 "@llvm//toolchain/features/runtime_library_search_directories:feature",

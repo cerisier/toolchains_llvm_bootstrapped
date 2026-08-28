@@ -1,0 +1,7 @@
+exports_files(
+    [
+        "headers.BUILD.bazel",
+        "src.BUILD.bazel",
+    ],
+    visibility = ["//runtimes/openbsd/extension:__pkg__"],
+)

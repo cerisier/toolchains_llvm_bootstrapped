@@ -14,6 +14,8 @@ SUPPORTED_TARGETS = [
     ("linux", "riscv64"),
     ("linux", "s390x"),
     ("linux", "armv7"),
+    ("openbsd", "x86_64"),
+    ("openbsd", "aarch64"),
     ("windows", "x86_64"),
     ("windows", "aarch64"),
     ("none", "bpfeb"),

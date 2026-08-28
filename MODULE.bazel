@@ -120,6 +120,14 @@ osx.from_archive(
 )
 use_repo(osx, "macos_sdk")
 
+openbsd = use_extension("//runtimes/openbsd/extension:openbsd.bzl", "openbsd")
+use_repo(
+    openbsd,
+    "openbsd_headers_amd64",
+    "openbsd_headers_arm64",
+    "openbsd_src",
+)
+
 glibc = use_extension("//runtimes/glibc/extension:glibc.bzl", "glibc")
 
 # https://cerisier.github.io/glibc-headers/index.json

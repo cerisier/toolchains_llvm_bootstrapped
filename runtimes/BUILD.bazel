@@ -183,6 +183,24 @@ copy_to_directory(
 )
 
 copy_to_directory(
+    name = "crt_objects_directory_openbsd",
+    srcs = [
+        "//runtimes/openbsd:crt0.object",
+        "//runtimes/openbsd:crtbegin.object",
+        "//runtimes/openbsd:crtbeginS.object",
+        "//runtimes/openbsd:crtend.object",
+        "//runtimes/openbsd:crtendS.object",
+    ],
+    root_paths = [
+        "runtimes/openbsd",
+    ],
+    target_compatible_with = [
+        "@platforms//os:openbsd",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+copy_to_directory(
     name = "crt_objects_directory_windows",
     srcs = [
         "//runtimes/mingw:CRT_fp8.o",
@@ -205,10 +223,12 @@ alias(
     name = "crt_objects_directory",
     actual = select({
         "@platforms//os:linux": ":crt_objects_directory_linux",
+        "@platforms//os:openbsd": ":crt_objects_directory_openbsd",
         "@platforms//os:windows": ":crt_objects_directory_windows",
     }),
     target_compatible_with = select({
         "@platforms//os:linux": [],
+        "@platforms//os:openbsd": [],
         "@platforms//os:windows": [],
         "//conditions:default": ["@platforms//:incompatible"],
     }),

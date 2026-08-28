@@ -613,6 +613,7 @@ cc_library(
             # https://github.com/hermeticbuild/hermetic-llvm/issues/146
             "@kernel_headers",
         ],
+        "@platforms//os:openbsd": [],
         "@platforms//os:windows": [],
         "@platforms//os:none": [],
     }) + select({
@@ -628,6 +629,7 @@ cc_library(
         "@platforms//os:windows": [
             "@mingw//:mingw_headers",
         ],
+        "@platforms//os:openbsd": ["@llvm//runtimes/openbsd:headers"],
         "@platforms//os:none": [],
     }),
     includes = ["lib/builtins"],
@@ -672,6 +674,7 @@ cc_library(
             "lib/builtins/cpu_model/AArch64CPUFeatures.inc",
             "lib/builtins/cpu_model/aarch64/hwcap.inc",
             # "lib/builtins/cpu_model/aarch64/lse_atomics/atomic_helper.inc",
+            "lib/builtins/cpu_model/aarch64/lse_atomics/elf_aux_info.inc",
             "lib/builtins/cpu_model/aarch64/lse_atomics/getauxval.inc",
         ],
         "@platforms//cpu:riscv64": [
@@ -696,6 +699,10 @@ cc_library(
         ],
         "@llvm//platforms/config:macos_aarch64": [
             "lib/builtins/cpu_model/aarch64/fmv/apple.inc",
+        ],
+        "@llvm//platforms/config:openbsd_aarch64": [
+            "lib/builtins/cpu_model/aarch64/fmv/elf_aux_info.inc",
+            "lib/builtins/cpu_model/aarch64/fmv/hwcap.inc",
         ],
         "@llvm//platforms/config:windows_aarch64": [
             "lib/builtins/cpu_model/aarch64/fmv/windows.inc",

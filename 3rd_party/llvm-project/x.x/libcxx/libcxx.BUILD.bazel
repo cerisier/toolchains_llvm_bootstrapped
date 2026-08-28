@@ -270,9 +270,12 @@ cc_library(
         "src/ostream.cpp",
         "src/regex.cpp",
         "src/strstream.cpp",
-    ] + ([
-        "src/text_encoding.cpp",
-    ] if int(LLVM_VERSION_MAJOR) >= 23 else []) + [
+    ] + (select({
+        # LLVM 23's OpenBSD locale adapter does not yet implement the locale
+        # encoding hook used by the C++26 text_encoding runtime.
+        "@platforms//os:openbsd": [],
+        "//conditions:default": ["src/text_encoding.cpp"],
+    }) if int(LLVM_VERSION_MAJOR) >= 23 else []) + [
         # LIBCXX_ENABLE_FILESYSTEM
         "src/filesystem/directory_entry.cpp",
         "src/filesystem/directory_iterator.cpp",
@@ -329,6 +332,7 @@ cc_library(
             # https://github.com/hermeticbuild/hermetic-llvm/issues/146
             "@kernel_headers",
         ],
+        "@platforms//os:openbsd": [],
     }) + [
         # libcxx depends on a set of internal llvm-libc headers. (libc/shared)
         # See project hand-in-hand.
@@ -343,6 +347,9 @@ cc_library(
         ],
         "@platforms//os:windows": [
             "@mingw//:mingw_headers",
+        ],
+        "@platforms//os:openbsd": [
+            "@llvm//runtimes/openbsd:headers",
         ],
         "@platforms//os:macos": [],
     }),

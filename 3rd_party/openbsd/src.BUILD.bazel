@@ -1,0 +1,32 @@
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
+package(default_visibility = ["@llvm//runtimes/openbsd:__pkg__"])
+
+cc_library(
+    name = "csu_headers",
+    hdrs = [
+        "lib/csu/boot.h",
+        "lib/csu/extern.h",
+        "lib/csu/os-note-elf.h",
+    ] + select({
+        "@platforms//cpu:aarch64": ["lib/csu/aarch64/md_init.h"],
+        "@platforms//cpu:x86_64": ["lib/csu/amd64/md_init.h"],
+    }),
+    includes = ["lib/csu"] + select({
+        "@platforms//cpu:aarch64": ["lib/csu/aarch64"],
+        "@platforms//cpu:x86_64": ["lib/csu/amd64"],
+    }),
+)
+
+exports_files([
+    "lib/csu/crt0.c",
+    "lib/csu/crtbegin.c",
+    "lib/csu/crtbeginS.c",
+    "lib/csu/crtend.c",
+    "lib/csu/crtendS.c",
+    "lib/libc/Symbols.list",
+    "lib/libc/arch/aarch64/Symbols.list",
+    "lib/libc/arch/amd64/Symbols.list",
+    "lib/libm/Symbols.map",
+    "lib/librthread/Symbols.map",
+])

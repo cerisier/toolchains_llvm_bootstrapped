@@ -131,6 +131,7 @@ cc_library(
             # https://github.com/hermeticbuild/hermetic-llvm/issues/146
             "@kernel_headers",
         ],
+        "@platforms//os:openbsd": [],
     }) + [
         # libcxx depends on a set of internal llvm-libc headers. (libc/shared)
         # See project hand-in-hand.
@@ -145,6 +146,9 @@ cc_library(
         ],
         "@platforms//os:windows": [
             "@mingw//:mingw_headers",
+        ],
+        "@platforms//os:openbsd": [
+            "@llvm//runtimes/openbsd:headers",
         ],
         "@platforms//os:macos": [],
     }),
