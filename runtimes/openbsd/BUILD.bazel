@@ -1,3 +1,4 @@
+load("@bazel_lib//:bzl_library.bzl", "bzl_library")
 load("@bazel_lib//lib:copy_file.bzl", "copy_file")
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
@@ -6,6 +7,7 @@ load("@llvm//toolchain/runtimes:cc_runtime_shared_library.bzl", "cc_runtime_stag
 load("@llvm//toolchain/runtimes:cc_stage0_object.bzl", "cc_stage0_object")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
+load(":openbsd_stub_assembly.bzl", "openbsd_stub_assembly")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -76,7 +78,7 @@ cc_runtime_stage0_library(
     ]
 ]
 
-genrule(
+openbsd_stub_assembly(
     name = "libc_stub_assembly",
     srcs = [
         "@openbsd_src//:lib/libc/Symbols.list",
@@ -84,25 +86,22 @@ genrule(
         "@platforms//cpu:aarch64": ["@openbsd_src//:lib/libc/arch/aarch64/Symbols.list"],
         "@platforms//cpu:x86_64": ["@openbsd_src//:lib/libc/arch/amd64/Symbols.list"],
     }),
-    outs = ["libc_stub.s"],
-    cmd = "$(execpath //tools/internal:openbsd-stub-generator) --list $@ $(SRCS)",
-    tools = ["//tools/internal:openbsd-stub-generator"],
+    out = "libc_stub.s",
+    format = "list",
 )
 
-genrule(
+openbsd_stub_assembly(
     name = "libm_stub_assembly",
     srcs = ["@openbsd_src//:lib/libm/Symbols.map"],
-    outs = ["libm_stub.s"],
-    cmd = "$(execpath //tools/internal:openbsd-stub-generator) --map $@ $(SRCS)",
-    tools = ["//tools/internal:openbsd-stub-generator"],
+    out = "libm_stub.s",
+    format = "map",
 )
 
-genrule(
+openbsd_stub_assembly(
     name = "libpthread_stub_assembly",
     srcs = ["@openbsd_src//:lib/librthread/Symbols.map"],
-    outs = ["libpthread_stub.s"],
-    cmd = "$(execpath //tools/internal:openbsd-stub-generator) --map $@ $(SRCS)",
-    tools = ["//tools/internal:openbsd-stub-generator"],
+    out = "libpthread_stub.s",
+    format = "map",
 )
 
 [
@@ -166,4 +165,9 @@ copy_to_directory(
         ".",
         "runtimes/openbsd",
     ],
+)
+
+bzl_library(
+    name = "openbsd_stub_assembly",
+    srcs = ["openbsd_stub_assembly.bzl"],
 )
