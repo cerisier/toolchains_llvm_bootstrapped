@@ -1,8 +1,6 @@
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
-load("@msvc_runtime//:versions.bzl", "MSVC_TOOLSET_VERSION")
-load("@windows_sdk//:versions.bzl", "WINDOWS_SDK_INCLUDE_VERSION")
 load("//:case_insensitive_vfs.bzl", "case_insensitive_vfs_overlay")
-load("//:directory.bzl", "directory_info", "validated_directory_info")
+load("//:directory.bzl", "directory_info")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -61,17 +59,15 @@ _MSVC_VCRUNTIME_HEADERS = [
     "vcruntime_typeinfo.h",
 ]
 
-validated_directory_info(
+alias(
     name = "msvc_include",
-    src = "@msvc_runtime//:msvc_include",
-    expected_path_suffix = "/Contents/VC/Tools/MSVC/%s/include" % MSVC_TOOLSET_VERSION,
+    actual = "@msvc_runtime//:msvc_include",
 )
 
 [
-    validated_directory_info(
+    alias(
         name = "winsdk_%s_include" % directory,
-        src = "@windows_sdk//:winsdk_%s_include" % directory,
-        expected_path_suffix = "/base/c/Include/%s/%s" % (WINDOWS_SDK_INCLUDE_VERSION, directory),
+        actual = "@windows_sdk//:winsdk_%s_include" % directory,
     )
     for directory in [
         "shared",
@@ -81,34 +77,24 @@ validated_directory_info(
     ]
 ]
 
-validated_directory_info(
+alias(
     name = "winsdk_ucrt_lib",
-    src = "@windows_sdk//:winsdk_ucrt_lib",
-    expected_path_suffix = select({
-        "//platforms/config:windows_aarch64_msvc": "/arm64/c/ucrt/arm64",
-        "//conditions:default": "/x64/c/ucrt/x64",
-    }),
+    actual = "@windows_sdk//:winsdk_ucrt_lib",
 )
 
-validated_directory_info(
+alias(
     name = "winsdk_um_lib",
-    src = "@windows_sdk//:winsdk_um_lib",
-    expected_path_suffix = select({
-        "//platforms/config:windows_aarch64_msvc": "/arm64/c/um/arm64",
-        "//conditions:default": "/x64/c/um/x64",
-    }),
+    actual = "@windows_sdk//:winsdk_um_lib",
 )
 
-validated_directory_info(
+alias(
     name = "msvc_lib_arm64",
-    src = "@msvc_runtime//:msvc_lib_arm64",
-    expected_path_suffix = "/Contents/VC/Tools/MSVC/%s/lib/arm64" % MSVC_TOOLSET_VERSION,
+    actual = "@msvc_runtime//:msvc_lib_arm64",
 )
 
-validated_directory_info(
+alias(
     name = "msvc_lib_x64",
-    src = "@msvc_runtime//:msvc_lib_x64",
-    expected_path_suffix = "/Contents/VC/Tools/MSVC/%s/lib/x64" % MSVC_TOOLSET_VERSION,
+    actual = "@msvc_runtime//:msvc_lib_x64",
 )
 
 copy_to_directory(

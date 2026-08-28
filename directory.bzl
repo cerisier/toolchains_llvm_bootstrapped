@@ -74,25 +74,3 @@ directory_info = rule(
     attrs = {"src": attr.label(mandatory = True)},
     provides = [DirectoryInfo],
 )
-
-def _validated_directory_info_impl(ctx):
-    directory = ctx.attr.src[DirectoryInfo]
-    if not directory.path.endswith(ctx.attr.expected_path_suffix):
-        fail("%s requires a directory ending in %s, but received %s" % (
-            ctx.label,
-            ctx.attr.expected_path_suffix,
-            directory.path,
-        ))
-    return [
-        directory,
-        DefaultInfo(files = directory.transitive_files),
-    ]
-
-validated_directory_info = rule(
-    implementation = _validated_directory_info_impl,
-    attrs = {
-        "expected_path_suffix": attr.string(mandatory = True),
-        "src": attr.label(mandatory = True, providers = [DirectoryInfo]),
-    },
-    provides = [DirectoryInfo],
-)

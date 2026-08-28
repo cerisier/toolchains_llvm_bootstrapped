@@ -396,11 +396,6 @@ jobs:
   docs:
     runs-on: macos-15-intel
     name: Verify public docs generation
-    env:
-      # Public toolchain docs load the selected MSVC/SDK version metadata from
-      # the license-gated windows_support repositories.
-      BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA: "1"
-      BAZEL_WINDOWS_SDK_EULA: "1"
     steps:
       - uses: actions/checkout@v6
 
