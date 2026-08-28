@@ -246,6 +246,10 @@ bazel --bazelrc=.bazelrc cquery "${common_flags[@]}" \
   >"${action_dir}/clang-dynamic-config.txt"
 bazel --bazelrc=.bazelrc cquery "${common_flags[@]}" \
   --output=label \
+  'kind("source file", deps(@llvm-project//llvm:Support))' \
+  >"${action_dir}/llvm-support-sources.txt"
+bazel --bazelrc=.bazelrc cquery "${common_flags[@]}" \
+  --output=label \
   'kind(".*cc_toolchain.*", deps(//:windows_msvc_crt_default_probe))' \
   >"${action_dir}/resolved-toolchains.txt"
 
@@ -289,6 +293,11 @@ assert_contains "${action_dir}/clang-static-config.txt" "CLANG_BUILD_STATIC"
 assert_contains "${action_dir}/clang-static-config.txt" "clang/Config/config.h"
 assert_absent "${action_dir}/clang-dynamic-config.txt" "CLANG_BUILD_STATIC"
 assert_contains "${action_dir}/clang-dynamic-config.txt" "clang/Config/config.h"
+
+for blake3_implementation in avx2 avx512 sse2 sse41; do
+  assert_contains "${action_dir}/llvm-support-sources.txt" "blake3_${blake3_implementation}_x86-64_windows_gnu.S"
+  assert_absent "${action_dir}/llvm-support-sources.txt" "blake3_${blake3_implementation}_x86-64_unix.S"
+done
 
 assert_contains "${action_dir}/default-compile-flags.txt" "/std:c++17"
 assert_contains "${action_dir}/default-compile-flags.txt" "/clang:-fms-compatibility-version="
