@@ -40,12 +40,9 @@ for cpu in x86_64 aarch64; do
     exit 1
   fi
   for stage in stage2 stage3; do
-    if bazel --bazelrc=.bazelrc query \
+    bazel --bazelrc=.bazelrc query \
       "@llvm//toolchain:${stage}_linux_${cpu}_to_windows_${cpu}_msvc" \
-      >/dev/null 2>&1; then
-      echo >&2 "${stage} MSVC target toolchain unexpectedly registered for ${cpu}"
-      exit 1
-    fi
+      >/dev/null
   done
 done
 
