@@ -1,0 +1,24 @@
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
+cc_library(
+    name = "transitive_library",
+    hdrs = ["transitive.h"],
+)
+
+cc_library(
+    name = "direct_library",
+    hdrs = ["direct.h"],
+    deps = ["transitive_library"],
+)
+
+cc_library(
+    name = "direct_consumer",
+    srcs = ["direct_consumer.cc"],
+    deps = ["direct_library"],
+)
+
+cc_library(
+    name = "illegal_transitive_consumer",
+    srcs = ["illegal_transitive_consumer.cc"],
+    deps = ["direct_library"],
+)
