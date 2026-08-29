@@ -9,6 +9,17 @@ llvm_release(
     bin_suffix = ".exe",
 )
 
+llvm_release(
+    name = "windows_msvc_llvm_release",
+    bin_suffix = ".exe",
+    target_compatible_with = [
+        "@platforms//os:windows",
+        "//constraints/cxxstdlib:libcxx",
+        "//constraints/windows/abi:msvc",
+        "//constraints/windows/crt:ucrt",
+    ],
+)
+
 [
     platform_transition_filegroup(
         name = "for_" + platform.split(":")[1],
@@ -18,4 +29,16 @@ llvm_release(
         target_platform = platform,
     )
     for platform in PLATFORMS
+]
+
+[
+    platform_transition_filegroup(
+        name = "for_windows_{}_msvc".format(archive_cpu),
+        srcs = [":windows_msvc_llvm_release"],
+        target_platform = "//platforms:windows_{}_msvc".format(target_cpu),
+    )
+    for archive_cpu, target_cpu in [
+        ("amd64", "x86_64"),
+        ("arm64", "aarch64"),
+    ]
 ]
