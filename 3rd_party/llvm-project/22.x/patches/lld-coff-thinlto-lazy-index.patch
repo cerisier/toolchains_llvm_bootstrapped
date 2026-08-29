@@ -50,7 +50,7 @@ diff --git a/lld/COFF/LTO.cpp b/lld/COFF/LTO.cpp
 index d55f95493a85..48faed722db7 100644
 --- a/lld/COFF/LTO.cpp
 +++ b/lld/COFF/LTO.cpp
-@@ -150,6 +150,33 @@ BitcodeCompiler::BitcodeCompiler(COFFLinkerContext &c) : ctx(c) {
+@@ -151,3 +151,30 @@ BitcodeCompiler::BitcodeCompiler(COFFLinkerContext &c) : ctx(c) {
  
  BitcodeCompiler::~BitcodeCompiler() = default;
  
@@ -81,9 +81,6 @@ index d55f95493a85..48faed722db7 100644
 +  }
 +}
 +
- static void undefine(Symbol *s) { replaceSymbol<Undefined>(s, s->getName()); }
- 
- void BitcodeCompiler::add(BitcodeFile &f) {
 diff --git a/lld/COFF/LTO.h b/lld/COFF/LTO.h
 index 6826251b5ffa..1fbf0196347d 100644
 --- a/lld/COFF/LTO.h
