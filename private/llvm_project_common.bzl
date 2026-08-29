@@ -66,9 +66,11 @@ def _write_llvm_targets(rctx):
     )
 
 def _expose_third_party_build_files(rctx):
-    # The rules_foreign_cc pfm repository uses pfm.BUILD from
-    # utils/bazel/third_party_build. Replace the utils/bazel .bazelignore entry
-    # with LLVM_PROJECT_OVERLAY so that file remains visible.
+    # Older LLVM releases provide a rules_foreign_cc pfm.BUILD in
+    # utils/bazel/third_party_build. Keep it visible when present.
+    if not rctx.path("utils/bazel/third_party_build/pfm.BUILD").exists:
+        return
+
     bazelignore = rctx.read(".bazelignore")
     rctx.delete(".bazelignore")
     rctx.file(

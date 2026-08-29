@@ -296,7 +296,7 @@ jobs:
       matrix:
         # Normal CI covers the default LLVM release. Keep one release for each
         # other supported LLVM major here.
-        llvm_version: ["21.1.8", "23.1.0-rc1"]
+        llvm_version: ["21.1.8", "22.1.8"]
     runs-on: ubuntu-latest
     name: Analyze LLVM ${{ matrix.llvm_version }}
 
