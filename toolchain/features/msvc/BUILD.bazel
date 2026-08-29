@@ -48,6 +48,12 @@ _UNSUPPORTED_FEATURES = [
     "xray",
 ]
 
+_UNSUPPORTED_FEATURES_WITHOUT_FDO = [
+    feature
+    for feature in _UNSUPPORTED_FEATURES
+    if feature != "fdo_optimize"
+]
+
 _UNSUPPORTED_LEGACY_FEATURES = {
     "coverage": "@rules_cc//cc/toolchains/features/legacy:coverage",
     "fdo_optimize": "@rules_cc//cc/toolchains/features/legacy:fdo_optimize",
@@ -95,7 +101,12 @@ msvc_configuration_validation(
         "//config:" + sanitizer
         for sanitizer in SANITIZERS
     ],
-    unsupported_features = _UNSUPPORTED_FEATURES + ["supports_start_end_lib"],
+    unsupported_features = _UNSUPPORTED_FEATURES_WITHOUT_FDO + select({
+        "//toolchain:bootstrap_stage1_from_source": [],
+        "//toolchain:bootstrap_stage2_lto_and_fdo_instrumented": [],
+        "//toolchain:bootstrap_stage3_lto_and_fdo_applied": [],
+        "//conditions:default": ["fdo_optimize"],
+    }) + ["supports_start_end_lib"],
 )
 
 cc_args(
@@ -269,8 +280,13 @@ cc_feature_set(
         ":supported_configuration",
     ] + [
         ":unsupported_" + feature
-        for feature in _UNSUPPORTED_FEATURES
-    ],
+        for feature in _UNSUPPORTED_FEATURES_WITHOUT_FDO
+    ] + select({
+        "//toolchain:bootstrap_stage1_from_source": [],
+        "//toolchain:bootstrap_stage2_lto_and_fdo_instrumented": [],
+        "//toolchain:bootstrap_stage3_lto_and_fdo_applied": [],
+        "//conditions:default": [":unsupported_fdo_optimize"],
+    }),
 )
 
 cc_feature_set(
