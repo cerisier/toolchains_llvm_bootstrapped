@@ -20,6 +20,24 @@ assert_absent() {
   fi
 }
 
+assert_count() {
+  local file="$1"
+  local value="$2"
+  local expected="$3"
+  local actual
+  actual="$({ grep -Fo -- "${value}" "${file}" || true; } | wc -l | tr -d ' ')"
+  [[ "${actual}" == "${expected}" ]] ||
+    fail "${file} contains ${value} ${actual} times; expected ${expected}"
+}
+
+assert_not_matches() {
+  local file="$1"
+  local pattern="$2"
+  if grep -Eq -- "${pattern}" "${file}"; then
+    fail "${file} unexpectedly matches: ${pattern}"
+  fi
+}
+
 assert_command_absent() {
   local file="$1"
   local value="$2"
@@ -150,7 +168,7 @@ bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   --features=-compiler_param_file \
   --output=commands \
   'mnemonic("CppCompile", //:windows_msvc_generated_def_binary)' \
-  >"${action_dir}/pending-layering-check.txt"
+  >"${action_dir}/layering-check.txt"
 bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   -c opt \
   --features=-compiler_param_file \
@@ -442,10 +460,19 @@ assert_contains "${action_dir}/default-compile-flags.txt" "/clang:-Wthread-safet
 assert_contains "${action_dir}/default-compile-flags.txt" "/clang:-fcolor-diagnostics"
 assert_contains "${action_dir}/default-compile-flags.txt" "/clang:-fno-omit-frame-pointer"
 assert_absent "${action_dir}/default-compile-flags.txt" "/Z7"
-assert_contains "${action_dir}/pending-layering-check.txt" "clang-cl"
-assert_absent "${action_dir}/pending-layering-check.txt" "-fmodules-strict-decluse"
-assert_absent "${action_dir}/pending-layering-check.txt" "-Wprivate-header"
-assert_absent "${action_dir}/pending-layering-check.txt" "-fmodule-map-file="
+assert_contains "${action_dir}/layering-check.txt" "clang-cl"
+assert_count "${action_dir}/layering-check.txt" "/clang:-fmodules-strict-decluse" 1
+assert_count "${action_dir}/layering-check.txt" "/clang:-Wprivate-header" 1
+assert_count "${action_dir}/layering-check.txt" "/clang:-fno-cxx-modules" 1
+assert_count "${action_dir}/layering-check.txt" "/clang:-fmodule-name=" 1
+assert_count "${action_dir}/layering-check.txt" "/clang:-Xclang" 1
+assert_count "${action_dir}/layering-check.txt" "/clang:-fmodule-map-file-home-is-cwd" 1
+assert_contains "${action_dir}/layering-check.txt" "/clang:-Xclang /clang:-fmodule-map-file-home-is-cwd"
+assert_contains "${action_dir}/layering-check.txt" "/clang:-fmodule-name=//:windows_msvc_generated_def_binary"
+assert_matches "${action_dir}/layering-check.txt" "/clang:-fmodule-map-file=[^ ]*windows_msvc_generated_def_binary[.]cppmap"
+assert_matches "${action_dir}/layering-check.txt" "/clang:-fmodule-map-file=[^ ]*windows_msvc_generated_def_import[.]cppmap"
+assert_matches "${action_dir}/layering-check.txt" "/clang:-fmodule-map-file=[^ ]*module_map[.]modulemap"
+assert_not_matches "${action_dir}/layering-check.txt" "(^|[[:space:]'])-(Xclang|fmodules-strict-decluse|Wprivate-header|fno-cxx-modules|fmodule-name=[^[:space:]']+|fmodule-map-file=[^[:space:]']+|fmodule-map-file-home-is-cwd)([[:space:]']|$)"
 assert_contains "${action_dir}/opt-compile-flags.txt" "/O2"
 assert_contains "${action_dir}/opt-compile-flags.txt" "/DNDEBUG"
 assert_contains "${action_dir}/opt-compile-flags.txt" "/Gy"
