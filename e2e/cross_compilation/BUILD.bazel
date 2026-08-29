@@ -107,6 +107,7 @@ PLATFORMS = [
     platform_transition_binary(
         name = "main_" + platform.split(":")[-1],
         binary = ":main",
+        tags = ["manual"] if platform.endswith("_msvc") else [],
         target_compatible_with = select({
             ":no_test_glibc_versions": ["@platforms//:incompatible"] if "gnu" in platform else [],
             "//conditions:default": [],
