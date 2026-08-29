@@ -114,6 +114,7 @@ jobs:
           )
           bash ./windows_msvc_action_test.sh "${common_flags[@]}"
           bash ./windows_msvc_layering_test.sh "${common_flags[@]}"
+          bash ./windows_msvc_system_headers_test.sh "${common_flags[@]}"
           bash ./windows_msvc_analysis_test.sh "${common_flags[@]}"
           bazel --bazelrc=.bazelrc test \
             "${common_flags[@]}" \
