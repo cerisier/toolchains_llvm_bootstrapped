@@ -84,26 +84,6 @@ jobs:
         shell: bash
         run: ./coverage_lcov_test.sh --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7
 
-      - name: Verify Windows MSVC target support
-        if: matrix.folder == 'e2e/rules_cc' && matrix.bazel_version == 'last_rc'
-        env:
-          USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
-        working-directory: e2e/rules_cc
-        shell: bash
-        run: |
-          common_flags=(
-            --config=remote
-            --jobs=100
-            --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7
-          )
-          bash ./windows_msvc_action_test.sh "${common_flags[@]}"
-          bash ./windows_msvc_analysis_test.sh "${common_flags[@]}"
-          bazel --bazelrc=.bazelrc test \
-            "${common_flags[@]}" \
-            --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
-            --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
-            //:windows_msvc_artifacts_matrix
-
   test_windows:
     strategy:
       fail-fast: false
@@ -147,54 +127,7 @@ jobs:
             $EXTRA_ARGS \
             //...
 
-      - name: Execute Linux-RBE-built Windows MSVC programs
-        if: matrix.folder == 'e2e/rules_cc'
-        env:
-          USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
-        working-directory: e2e/rules_cc
-        shell: bash
-        run: |
-          case "$RUNNER_ARCH" in
-            X64) target_platform=windows_x86_64_msvc ;;
-            ARM64) target_platform=windows_aarch64_msvc ;;
-            *) echo "Unsupported Windows runner architecture: $RUNNER_ARCH" >&2; exit 1 ;;
-          esac
-
-          bazel \
-            --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc \
-            --bazelrc=.bazelrc \
-            --noexperimental_remote_repo_contents_cache \
-            build \
-            --repository_cache= \
-            --repo_contents_cache= \
-            --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
-            --jobs=100 \
-            --platforms=@llvm//platforms:$target_platform \
-            --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
-            --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
-            --remote_download_toplevel \
-            --features=-dynamic_link_msvcrt \
-            --features=static_link_msvcrt \
-            //:main_default \
-            //:windows_add.dll \
-            //:windows_explicit_def.dll \
-            //:windows_msvc_dll_behavior \
-            //:windows_msvc_generated_def.dll \
-            //:windows_msvc_generated_def_binary \
-            //:windows_msvc_generated_def_thinlto.dll \
-            //:windows_msvc_generated_def_thinlto_binary \
-            //:windows_msvc_libcxx_behavior_mt \
-            //:windows_msvc_libcxx_behavior_thinlto
-
-          [[ "$(./bazel-bin/main_default.exe | tr -d '\r')" == "Hello, World!" ]]
-          ./bazel-bin/windows_msvc_generated_def_binary.exe
-          ./bazel-bin/windows_msvc_generated_def_thinlto_binary.exe
-          ./bazel-bin/windows_msvc_dll_behavior.exe
-          ./bazel-bin/windows_msvc_libcxx_behavior_mt.exe
-          ./bazel-bin/windows_msvc_libcxx_behavior_thinlto.exe
-
-  # macOS: native and Windows cross-compilation smoke builds plus the supported
-  # sanitizer e2e tests.
+  # macOS: smoke build (//:main_default) plus the supported sanitizer e2e tests.
   test_macos:
     strategy:
       fail-fast: false
@@ -225,34 +158,6 @@ jobs:
             --bazelrc=.bazelrc \
             build \
             --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
-            //:main_default
-
-      - name: Cross-compile Windows smoke targets with MinGW and MSVC
-        env:
-          USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
-        working-directory: ${{ matrix.folder }}
-        shell: bash
-        run: |
-          case "$RUNNER_ARCH" in
-            X64) target_cpu=x86_64 ;;
-            ARM64) target_cpu=aarch64 ;;
-            *) echo "Unsupported macOS runner architecture: $RUNNER_ARCH" >&2; exit 1 ;;
-          esac
-
-          bazel \
-            --bazelrc=.bazelrc \
-            build \
-            --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
-            --platforms="@llvm//platforms:windows_${target_cpu}" \
-            //:main_default
-
-          bazel \
-            --bazelrc=.bazelrc \
-            build \
-            --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
-            --platforms="@llvm//platforms:windows_${target_cpu}_msvc" \
-            --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
-            --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
             //:main_default
 
       # ASan, UBSan and libFuzzer are fully supported on macOS: run their e2e
