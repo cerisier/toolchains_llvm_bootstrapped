@@ -46,10 +46,35 @@ assert_before() {
     fail "${file} does not order ${first} before ${second}"
 }
 
+materialize_module_map() {
+  local action_file="$1"
+  shift
+
+  local module_map_path
+  local module_map_repository
+  module_map_path="$(grep -Eom1 'bazel-out/[^, ]+/bin/external/[^, ]+/module_map[.]modulemap' "${action_file}" || true)"
+  [[ -n "${module_map_path}" ]] || fail "${action_file} does not name the crosstool module map"
+
+  module_map_repository="${module_map_path#*/external/}"
+  module_map_repository="${module_map_repository%%/*}"
+  bazel --bazelrc=.bazelrc build "$@" \
+    --remote_download_regex='module_map[.]modulemap$' \
+    "@@${module_map_repository}//:module_map"
+  [[ -f "${module_map_path}" ]] || fail "module map was not materialized: ${module_map_path}"
+
+  printf '%s\n' "${module_map_path}"
+}
+
 action_dir="$(mktemp -d "${RUNNER_TEMP:-/tmp}/windows-msvc-actions.XXXXXX")"
 common_flags=(
   "$@"
   --platforms=@llvm//platforms:windows_x86_64_msvc
+  --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1
+  --repo_env=BAZEL_WINDOWS_SDK_EULA=1
+)
+arm64_flags=(
+  "$@"
+  --platforms=@llvm//platforms:windows_aarch64_msvc
   --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1
   --repo_env=BAZEL_WINDOWS_SDK_EULA=1
 )
@@ -74,6 +99,10 @@ bazel --bazelrc=.bazelrc aquery "${mingw_flags[@]}" \
   --output=commands \
   'mnemonic("CppLink", //:windows_test)' \
   >"${action_dir}/mingw-link.txt"
+bazel --bazelrc=.bazelrc aquery "${mingw_flags[@]}" \
+  --output=text \
+  'mnemonic("CppCompile", //:windows_test)' \
+  >"${action_dir}/mingw-module-map-input.txt"
 bazel --bazelrc=.bazelrc aquery "${mingw_flags[@]}" \
   --features=no_exceptions \
   --features=no_rtti \
@@ -298,6 +327,41 @@ bazel --bazelrc=.bazelrc build "${common_flags[@]}" \
   --features=static_link_msvcrt \
   --@llvm//toolchain:bootstrap_stage=stage1_from_source \
   //:windows_msvc_thinlto_weak_alias
+x86_64_msvc_module_map="$(materialize_module_map "${action_dir}/compile.txt" "${common_flags[@]}")"
+
+bazel --bazelrc=.bazelrc aquery "${arm64_flags[@]}" \
+  --output=text \
+  'mnemonic("CppCompile", //:windows_msvc_crt_default_probe)' \
+  >"${action_dir}/arm64-module-map-input.txt"
+arm64_msvc_module_map="$(materialize_module_map "${action_dir}/arm64-module-map-input.txt" "${arm64_flags[@]}")"
+mingw_module_map="$(materialize_module_map "${action_dir}/mingw-module-map-input.txt" "${mingw_flags[@]}")"
+
+for msvc_module_map in "${x86_64_msvc_module_map}" "${arm64_msvc_module_map}"; do
+  assert_contains "${msvc_module_map}" 'module "crosstool" [system]'
+  assert_matches "${msvc_module_map}" 'umbrella "external/[^/]+/lib/clang/[0-9]+"'
+  assert_contains "${msvc_module_map}" "libcxx_headers_include_search_directory"
+  assert_contains "${msvc_module_map}" "msvc_com_support_headers_source"
+  assert_contains "${msvc_module_map}" "msvc_vcruntime_headers_source"
+  for winsdk_directory in ucrt shared um winrt; do
+    assert_matches "${msvc_module_map}" "umbrella \"external/windows_support[+]+windows_sdk[+]windows_sdk/sysroot/base/c/Include/[0-9.]+/${winsdk_directory}\""
+  done
+  assert_absent "${msvc_module_map}" "mingw"
+  assert_absent "${msvc_module_map}" "winpthreads"
+  assert_absent "${msvc_module_map}" "msvc_include"
+  assert_absent "${msvc_module_map}" "windows_support++msvc_runtime"
+  assert_absent "${msvc_module_map}" "textual header"
+done
+
+assert_contains "${mingw_module_map}" 'module "crosstool" [system]'
+assert_matches "${mingw_module_map}" 'umbrella "external/[^/]+/lib/clang/[0-9]+"'
+assert_contains "${mingw_module_map}" "libcxx_headers_include_search_directory"
+assert_contains "${mingw_module_map}" "libcxxabi_headers_include_search_directory"
+assert_contains "${mingw_module_map}" "mingw-w64-headers/include"
+assert_contains "${mingw_module_map}" "mingw-w64-headers/crt"
+assert_contains "${mingw_module_map}" "mingw-w64-libraries/winpthreads/include"
+assert_matches "${mingw_module_map}" 'textual header ".*/mingw-w64-headers/crt/_mingw[.]h"'
+assert_absent "${mingw_module_map}" "msvc_"
+assert_absent "${mingw_module_map}" "windows_sdk"
 
 assert_matches "${action_dir}/resolved-toolchains.txt" "@llvm_toolchains//:linux_(aarch64|x86_64)_cc_toolchain"
 assert_absent "${action_dir}/resolved-toolchains.txt" "_msvc_cc_toolchain"
