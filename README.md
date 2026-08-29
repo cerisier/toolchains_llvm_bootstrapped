@@ -258,7 +258,9 @@ bazel build \
 MSVC targets default to the retail dynamic CRT (`/MD`). Select the retail static
 CRT (`/MT`) with
 `--features=-dynamic_link_msvcrt,static_link_msvcrt`. Debug CRT modes (`/MDd`
-and `/MTd`) are not supported.
+and `/MTd`) are not supported. Sanitizers, coverage/FDO, header parsing, module
+maps, and layering checks are also not yet supported for MSVC targets; requests
+for unsupported features fail during analysis rather than being ignored.
 
 ### macOS notes
 
