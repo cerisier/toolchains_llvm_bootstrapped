@@ -571,7 +571,7 @@ def declare_toolchains(*, execs = None, targets = SUPPORTED_TARGETS):
                     visibility = ["//visibility:public"],
                 )
 
-                if stage_name == "stage1" and target_os == "windows" and (exec_os, exec_cpu) in MSVC_TARGET_SUPPORTED_EXECS:
+                if target_os == "windows" and (exec_os, exec_cpu) in MSVC_TARGET_SUPPORTED_EXECS:
                     native.toolchain(
                         name = "%s_%s_%s_to_%s_%s_msvc" % (stage_name, exec_os, exec_cpu, target_os, target_cpu),
                         exec_compatible_with = [
