@@ -1,0 +1,74 @@
+diff --git a/lld/COFF/LTO.cpp b/lld/COFF/LTO.cpp
+index d55f95493a85..995846f43b6b 100644
+--- a/lld/COFF/LTO.cpp
++++ b/lld/COFF/LTO.cpp
+@@ -164,6 +164,23 @@ void BitcodeCompiler::add(BitcodeFile &f) {
+   std::vector<Symbol *> symBodies = f.getSymbols();
+   std::vector<lto::SymbolResolution> resols(symBodies.size());
+
++  // Resolve symbol ownership before replacing prevailing symbols with
++  // undefined symbols below. A COFF weak external is represented in the
++  // linker symbol table as an Undefined with a weak alias, even when the IR
++  // symbol is a definition. Symbol::getFile() therefore cannot identify its
++  // owning BitcodeFile directly. Follow the selected weak alias while all
++  // symbol definitions still retain their file ownership.
++  SmallVector<InputFile *> symFiles;
++  symFiles.reserve(symBodies.size());
++  for (Symbol *sym : symBodies) {
++    InputFile *symFile = sym->getFile();
++    if (!symFile)
++      if (auto *u = dyn_cast<Undefined>(sym))
++        if (Symbol *alias = u->getWeakAlias())
++          symFile = alias->getFile();
++    symFiles.push_back(symFile);
++  }
++
+   if (ctx.config.thinLTOIndexOnly)
+     thinIndices.insert(obj.getName());
+
+@@ -183,7 +200,7 @@ void BitcodeCompiler::add(BitcodeFile &f) {
+     // flags an undefined in IR with a definition in ASM as prevailing.
+     // Once IRObjectFile is fixed to report only one symbol this hack can
+     // be removed.
+-    r.Prevailing = !objSym.isUndefined() && sym->getFile() == &f;
++    r.Prevailing = !objSym.isUndefined() && symFiles[symNum - 1] == &f;
+     r.VisibleToRegularObj = sym->isUsedInRegularObj;
+     if (r.Prevailing)
+       undefine(sym);
+diff --git a/lld/test/COFF/thinlto-weak-alias-prevailing.ll b/lld/test/COFF/thinlto-weak-alias-prevailing.ll
+new file mode 100644
+index 000000000000..1d8b1a950a31
+--- /dev/null
++++ b/lld/test/COFF/thinlto-weak-alias-prevailing.ll
+@@ -0,0 +1,31 @@
++; REQUIRES: x86
++
++;; A COFF weak external represents an IR weak alias as an Undefined linker
++;; symbol whose weak alias owns the defining BitcodeFile. Preserve that owner
++;; when computing ThinLTO prevailing resolutions. Otherwise the backend drops
++;; the alias even when a live vtable refers to it.
++
++; RUN: opt -thinlto-bc %s -o %t.obj
++; RUN: lld-link /entry:entry /subsystem:console /thinlto-index-only %t.obj
++; RUN: llvm-dis %t.obj.thinlto.bc -o - | FileCheck %s
++
++; CHECK: summaries: (alias: {{.*}}linkage: internal{{.*}}live: 1
++
++target datalayout = "e-m:w-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
++target triple = "x86_64-pc-windows-msvc"
++
++$scalar_dtor = comdat any
++$vtable = comdat any
++
++@vector_dtor = weak alias void (), ptr @scalar_dtor
++@vtable = linkonce_odr constant [1 x ptr] [ptr @vector_dtor], comdat
++
++define linkonce_odr void @scalar_dtor() comdat {
++  ret void
++}
++
++define i32 @entry() {
++  %slot = load ptr, ptr @vtable
++  call void %slot()
++  ret i32 0
++}
