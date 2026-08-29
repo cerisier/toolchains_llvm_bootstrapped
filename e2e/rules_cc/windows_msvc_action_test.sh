@@ -91,6 +91,14 @@ bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   --output=commands \
   'inputs(".*libcxx/src/algorithm.cpp", mnemonic("CppCompile", deps(@llvm-project//libcxx:libcxx.static.msvc_link_name)))' \
   >"${action_dir}/msvc-libcxx-compile.txt"
+bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
+  --features=no_exceptions \
+  --features=no_rtti \
+  --features=omit_frame_pointer \
+  --features=-compiler_param_file \
+  --output=commands \
+  'inputs(".*libcxxabi/src/private_typeinfo.cpp", mnemonic("CppCompile", deps(@llvm-project//libcxxabi:libcxxabi.static)))' \
+  >"${action_dir}/release-libcxxabi-compile.txt"
 
 bazel --bazelrc=.bazelrc aquery "${common_flags[@]}" \
   --include_param_files \
@@ -320,6 +328,15 @@ assert_absent "${action_dir}/msvc-libcxx-compile.txt" "/clang:-fthin-link-bitcod
 assert_absent "${action_dir}/msvc-libcxx-compile.txt" "/EHs-c-"
 assert_absent "${action_dir}/msvc-libcxx-compile.txt" "/clang:-fno-rtti"
 assert_absent "${action_dir}/msvc-libcxx-compile.txt" "/clang:-fomit-frame-pointer"
+
+assert_contains "${action_dir}/release-libcxxabi-compile.txt" "libcxxabi/src/private_typeinfo.cpp"
+assert_contains "${action_dir}/release-libcxxabi-compile.txt" "-funwind-tables"
+assert_absent "${action_dir}/release-libcxxabi-compile.txt" " -fno-exceptions"
+assert_absent "${action_dir}/release-libcxxabi-compile.txt" " -fno-rtti"
+assert_absent "${action_dir}/release-libcxxabi-compile.txt" " -fomit-frame-pointer"
+assert_absent "${action_dir}/release-libcxxabi-compile.txt" "/EHs-c-"
+assert_absent "${action_dir}/release-libcxxabi-compile.txt" "/clang:-fno-rtti"
+assert_absent "${action_dir}/release-libcxxabi-compile.txt" "/clang:-fomit-frame-pointer"
 
 assert_contains "${action_dir}/clang-static-config.txt" "CLANG_BUILD_STATIC"
 assert_contains "${action_dir}/clang-static-config.txt" "clang/Config/config.h"
