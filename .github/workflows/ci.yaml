@@ -76,6 +76,22 @@ jobs:
             ${{ matrix.extra_flags }} \
             //...
 
+          # The transitioned cross-compilation binaries are not tests, so
+          # `bazel test //...` does not build them. Exercise both MSVC target
+          # architectures in the existing cross-compilation jobs without
+          # adding a dedicated lane or executing the resulting PE files.
+          if [[ "${{ matrix.folder }}" == "e2e/cross_compilation" && "${{ matrix.bazel_version }}" == "last_rc" ]]; then
+            bazel \
+              --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc \
+              --bazelrc=.bazelrc \
+              build \
+              --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
+              --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
+              --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
+              //:main_windows_x86_64_msvc \
+              //:main_windows_aarch64_msvc
+          fi
+
       - name: bazel coverage e2e (lcov)
         if: matrix.folder == 'e2e/rules_cc' && matrix.bazel_version == 'last_rc'
         env:

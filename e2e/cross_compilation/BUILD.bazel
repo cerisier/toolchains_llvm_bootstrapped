@@ -83,6 +83,8 @@ PLATFORMS = [
     "@llvm//platforms:macos_aarch64",
     "@llvm//platforms:windows_amd64",
     "@llvm//platforms:windows_arm64",
+    "@llvm//platforms:windows_x86_64_msvc",
+    "@llvm//platforms:windows_aarch64_msvc",
 ] + [
     "@llvm//platforms:linux_x86_64_{}".format(libc)
     for libc in LIBCS
