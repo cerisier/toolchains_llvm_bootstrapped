@@ -360,8 +360,14 @@ Current packaging targets include:
 - `//prebuilt/llvm:for_macos_arm64`
 - `//prebuilt/llvm:for_windows_amd64`
 - `//prebuilt/llvm:for_windows_arm64`
+- `//prebuilt/llvm:for_windows_amd64_msvc`
+- `//prebuilt/llvm:for_windows_arm64_msvc`
 
 These targets are what release workflows use to produce `.tar.zst` artifacts today. The final crossenv UX and packaging layout are still being refined.
+The MSVC archives use source-backed ThinLTO but intentionally do not use FDO:
+the available Linux profile-training executables record Itanium C++ names,
+which cannot profile the Microsoft-mangled C++ functions in the Windows LLVM
+binaries.
 
 ## Roadmap
 
