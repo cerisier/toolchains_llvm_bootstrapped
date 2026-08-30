@@ -73,7 +73,13 @@ def _bootstrap_binary_impl(ctx):
     actual = ctx.attr.actual[0][DefaultInfo]
     exe = actual.files_to_run.executable
 
-    out = ctx.actions.declare_file(ctx.label.name)
+    output_name = ctx.label.name
+    if ctx.target_platform_has_constraint(
+        ctx.attr._windows_constraint[platform_common.ConstraintValueInfo],
+    ) and not output_name.endswith(".exe"):
+        output_name += ".exe"
+
+    out = ctx.actions.declare_file(output_name)
 
     if ctx.attr.symlink:
         ctx.actions.symlink(
@@ -119,6 +125,10 @@ bootstrap_binary = rule(
         "fdo_instrumented": attr.bool(
             default = False,
             doc = "If set, build the actual binary with FDO instrumentation.",
+        ),
+        "_windows_constraint": attr.label(
+            default = Label("@platforms//os:windows"),
+            providers = [platform_common.ConstraintValueInfo],
         ),
     },
     toolchains = COPY_FILE_TOOLCHAINS,

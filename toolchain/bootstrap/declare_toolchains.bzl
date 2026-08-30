@@ -493,7 +493,7 @@ def declare_toolchains(*, execs = None, targets = SUPPORTED_TARGETS):
             exec_os,
             exec_cpu,
             prefix = stage3_prefix,
-            fdo_profile = "//toolchain/bootstrap/stage3:llvm_fdo_profdata",
+            fdo_profile = "@llvm//toolchain/bootstrap/stage3:llvm_fdo_profdata",
         )
         declare_tool_map(
             exec_os,

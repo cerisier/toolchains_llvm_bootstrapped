@@ -139,9 +139,9 @@ If you wish to setup things manually, you will likely require a few flags:
 
 ² See "Windows" section.
 
-³ Native Windows execution uses the published GNU/MinGW-built LLVM prebuilt;
-clang-cl still emits the MSVC target ABI. Source-built bootstrap stages do not
-yet support native Windows execution. See "Windows" section.
+³ Native Windows Stage 0 execution uses the published GNU/MinGW-built LLVM
+prebuilt; clang-cl still emits the MSVC target ABI. Source-built bootstrap
+stages also support native Windows execution. See "Windows" section.
 
 ### musl
 
@@ -243,12 +243,13 @@ The native MSVC ABI is available through
 `@llvm//platforms:windows_x86_64_msvc` and
 `@llvm//platforms:windows_aarch64_msvc`. These target toolchains use clang-cl,
 lld-link, the Microsoft Visual C++ runtime and Windows SDK, and a statically
-linked libc++. Their Stage 0 compile and link actions support macOS, Linux and
-native Windows execution platforms. Native Windows execution selects the
-published GNU/MinGW-built LLVM prebuilt and uses its clang-cl/lld-link tools; an
-MSVC-built LLVM execution prebuilt is not required. Source-built bootstrap
-stages do not yet support native Windows execution. Using the Microsoft inputs
-requires explicit acceptance of both licenses:
+linked libc++. Their compile and link actions support macOS, Linux and native
+Windows execution platforms at every bootstrap stage. Stage 0 native Windows
+execution selects the published GNU/MinGW-built LLVM prebuilt and uses its
+clang-cl/lld-link tools. Later bootstrap stages build their GNU/MinGW-compatible
+Windows LLVM tools from source. An MSVC-built LLVM execution prebuilt is not
+required. Using the Microsoft inputs requires explicit acceptance of both
+licenses:
 
 ```sh
 bazel build \
