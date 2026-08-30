@@ -31,6 +31,7 @@ _BEFORE_23_SOURCE_PATCHES = [
 
 _LLVM_21_SOURCE_PATCHES = [
     "//3rd_party/llvm-project/21.x/patches:lld-coff-thinlto-lazy-index.patch",
+    "//3rd_party/llvm-project/21.x/patches:lld-coff-lto-weak-alias-prevailing.patch",
     "//3rd_party/llvm-project/21.x/patches:llvm-link-multicall.patch",
     "//3rd_party/llvm-project/21.x/patches:llvm-bazel9.patch",
     "//3rd_party/llvm-project/21.x/patches:windows_link_and_genrule.patch",
