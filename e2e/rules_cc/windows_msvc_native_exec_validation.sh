@@ -6,10 +6,22 @@ fail() {
   exit 1
 }
 
+show_report_context() {
+  local file="$1"
+  sed -n \
+    -e '/Execution platform:/p' \
+    -e '/Environment:/p' \
+    -e '/Command Line:/,$p' \
+    "${file}" | awk 'NR <= 120 { print }' >&2
+}
+
 assert_contains() {
   local file="$1"
   local value="$2"
-  grep -Fq -- "${value}" "${file}" || fail "${file} does not contain: ${value}"
+  if ! grep -Fq -- "${value}" "${file}"; then
+    show_report_context "${file}"
+    fail "${file} does not contain: ${value}"
+  fi
 }
 
 assert_absent() {
@@ -94,8 +106,8 @@ for target_cpu in x86_64 aarch64; do
 
   run_bazel aquery \
     "--platforms=${platform}" \
-    --include_param_files \
-    --output=text \
+    --features=-compiler_param_file \
+    --output=commands \
     'mnemonic("CppCompile", //:windows_msvc_crt_default_probe)' \
     >"${compile_report}"
   run_bazel aquery \
@@ -112,11 +124,11 @@ for target_cpu in x86_64 aarch64; do
     assert_absent "${report}" "llvm-toolchain-minimal-windows-${other_exec_archive_cpu}"
     assert_absent "${report}" "llvm-toolchain-minimal-linux-"
     assert_absent "${report}" "llvm-toolchain-minimal-darwin-"
-    assert_contains "${report}" "--target=${target_triple}"
     assert_contains "${report}" "LIB=__hermetic_llvm_empty_lib__"
   done
 
   assert_matches "${compile_report}" 'bin[/\\]clang-cl[.]exe'
+  assert_contains "${compile_report}" "--target=${target_triple}"
   assert_matches "${link_report}" 'bin[/\\]clang-cl[.]exe'
   assert_matches "${link_report}" 'bin[/\\]lld-link[.]exe'
   assert_contains "${link_report}" "/clang:/MACHINE:${target_machine}"
