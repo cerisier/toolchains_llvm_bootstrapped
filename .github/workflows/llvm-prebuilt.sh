@@ -37,6 +37,8 @@ bazel \
   --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
   --config=remote \
   --config=release \
+  --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
+  --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
   --remote_download_outputs=toplevel \
   //prebuilt/llvm:all
 
