@@ -1,59 +1,101 @@
+diff --git a/lld/COFF/InputFiles.cpp b/lld/COFF/InputFiles.cpp
+index fd4858581ed5..2c1b1710052a 100644
+--- a/lld/COFF/InputFiles.cpp
++++ b/lld/COFF/InputFiles.cpp
+@@ -1439,7 +1439,13 @@ void BitcodeFile::parse() {
+       sym = symtab.addUndefined(symName, this, true);
+       std::string fallback = std::string(objSym.getCOFFWeakExternalFallback());
+       Symbol *alias = symtab.addUndefined(saver.save(fallback));
++      Symbol *previousAlias = nullptr;
++      if (auto *u = dyn_cast<Undefined>(sym))
++        previousAlias = u->weakAlias;
+       checkAndSetWeakAlias(symtab, this, sym, alias, false);
++      if (auto *u = dyn_cast<Undefined>(sym))
++        if (!previousAlias || u->weakAlias != previousAlias)
++          u->weakAliasFile = this;
+     } else if (comdatIndex != -1) {
+       if (symName == obj->getComdatTable()[comdatIndex].first) {
+         sym = comdat[comdatIndex].first;
 diff --git a/lld/COFF/LTO.cpp b/lld/COFF/LTO.cpp
 index d55f95493a85..995846f43b6b 100644
 --- a/lld/COFF/LTO.cpp
 +++ b/lld/COFF/LTO.cpp
-@@ -164,6 +164,23 @@ void BitcodeCompiler::add(BitcodeFile &f) {
-   std::vector<Symbol *> symBodies = f.getSymbols();
-   std::vector<lto::SymbolResolution> resols(symBodies.size());
-
-+  // Resolve symbol ownership before replacing prevailing symbols with
-+  // undefined symbols below. A COFF weak external is represented in the
-+  // linker symbol table as an Undefined with a weak alias, even when the IR
-+  // symbol is a definition. Symbol::getFile() therefore cannot identify its
-+  // owning BitcodeFile directly. Follow the selected weak alias while all
-+  // symbol definitions still retain their file ownership.
-+  SmallVector<InputFile *> symFiles;
-+  symFiles.reserve(symBodies.size());
-+  for (Symbol *sym : symBodies) {
-+    InputFile *symFile = sym->getFile();
-+    if (!symFile)
-+      if (auto *u = dyn_cast<Undefined>(sym))
-+        if (Symbol *alias = u->getWeakAlias())
-+          symFile = alias->getFile();
-+    symFiles.push_back(symFile);
-+  }
-+
-   if (ctx.config.thinLTOIndexOnly)
-     thinIndices.insert(obj.getName());
-
-@@ -183,7 +200,7 @@ void BitcodeCompiler::add(BitcodeFile &f) {
+@@ -183,7 +183,10 @@ void BitcodeCompiler::add(BitcodeFile &f) {
      // flags an undefined in IR with a definition in ASM as prevailing.
      // Once IRObjectFile is fixed to report only one symbol this hack can
      // be removed.
 -    r.Prevailing = !objSym.isUndefined() && sym->getFile() == &f;
-+    r.Prevailing = !objSym.isUndefined() && symFiles[symNum - 1] == &f;
++    InputFile *symFile = sym->getFile();
++    if (auto *u = dyn_cast<Undefined>(sym))
++      symFile = u->weakAliasFile;
++    r.Prevailing = !objSym.isUndefined() && symFile == &f;
      r.VisibleToRegularObj = sym->isUsedInRegularObj;
      if (r.Prevailing)
        undefine(sym);
+diff --git a/lld/COFF/Symbols.h b/lld/COFF/Symbols.h
+index 9f077ddb2bb7..3a10ac162c7d 100644
+--- a/lld/COFF/Symbols.h
++++ b/lld/COFF/Symbols.h
+@@ -350,6 +350,12 @@ public:
+   // Alias pointer points to.
+   Symbol *weakAlias = nullptr;
+-
++
++  // The bitcode file that defines the selected weak IR alias. COFF represents
++  // that definition as an Undefined with a fallback, so getFile() cannot
++  // report its owner. LTO still needs the defining file to select one
++  // prevailing IR alias independently of the fallback symbol's owner.
++  InputFile *weakAliasFile = nullptr;
++
+   // If this symbol is external weak, try to resolve it to a defined
+   // symbol by searching the chain of fallback symbols. Returns the symbol if
+   // successful, otherwise returns null.
 diff --git a/lld/test/COFF/thinlto-weak-alias-prevailing.ll b/lld/test/COFF/thinlto-weak-alias-prevailing.ll
 new file mode 100644
-index 000000000000..1d8b1a950a31
+index 000000000000..daae8f3833c0
 --- /dev/null
 +++ b/lld/test/COFF/thinlto-weak-alias-prevailing.ll
-@@ -0,0 +1,31 @@
+@@ -0,0 +1,58 @@
 +; REQUIRES: x86
 +
-+;; A COFF weak external represents an IR weak alias as an Undefined linker
-+;; symbol whose weak alias owns the defining BitcodeFile. Preserve that owner
-+;; when computing ThinLTO prevailing resolutions. Otherwise the backend drops
-+;; the alias even when a live vtable refers to it.
++; RUN: split-file %s %t
++; RUN: opt -thinlto-bc %t/a.ll -o %t/a.obj
++; RUN: opt -thinlto-bc %t/b.ll -o %t/b.obj
 +
-+; RUN: opt -thinlto-bc %s -o %t.obj
-+; RUN: lld-link /entry:entry /subsystem:console /thinlto-index-only %t.obj
-+; RUN: llvm-dis %t.obj.thinlto.bc -o - | FileCheck %s
++;; A owns the prevailing COMDAT aliasee when it precedes B, but B is the only
++;; file that defines vector_dtor. The alias must prevail in B rather than in the
++;; unrelated owner of its selected fallback.
++; RUN: lld-link /entry:entry /subsystem:console /thinlto-index-only %t/a.obj %t/b.obj
++; RUN: llvm-dis %t/b.obj.thinlto.bc -o - | FileCheck %s --check-prefix=LIVE
++; RUN: opt -passes='thinlto<O2>' -summary-file=%t/a.obj.thinlto.bc %t/a.obj -o %t/a.ab.bc
++; RUN: opt -passes='thinlto<O2>' -summary-file=%t/b.obj.thinlto.bc %t/b.obj -o %t/b.ab.bc
++; RUN: llc -filetype=obj %t/a.ab.bc -o %t/a.ab.obj
++; RUN: llc -filetype=obj %t/b.ab.bc -o %t/b.ab.obj
++; RUN: lld-link /entry:entry /subsystem:console /out:%t/ab.exe %t/a.ab.obj %t/b.ab.obj
 +
-+; CHECK: summaries: (alias: {{.*}}linkage: internal{{.*}}live: 1
++;; Reversing the inputs selects B's COMDAT and must preserve the same alias.
++; RUN: rm -f %t/a.obj.thinlto.bc %t/b.obj.thinlto.bc
++; RUN: lld-link /entry:entry /subsystem:console /thinlto-index-only %t/b.obj %t/a.obj
++; RUN: llvm-dis %t/b.obj.thinlto.bc -o - | FileCheck %s --check-prefix=LIVE
++; RUN: opt -passes='thinlto<O2>' -summary-file=%t/a.obj.thinlto.bc %t/a.obj -o %t/a.ba.bc
++; RUN: opt -passes='thinlto<O2>' -summary-file=%t/b.obj.thinlto.bc %t/b.obj -o %t/b.ba.bc
++; RUN: llc -filetype=obj %t/a.ba.bc -o %t/a.ba.obj
++; RUN: llc -filetype=obj %t/b.ba.bc -o %t/b.ba.obj
++; RUN: lld-link /entry:entry /subsystem:console /out:%t/ba.exe %t/b.ba.obj %t/a.ba.obj
 +
++; LIVE: summaries: (alias: {{.*}}live: 1
++
++;--- a.ll
++target datalayout = "e-m:w-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
++target triple = "x86_64-pc-windows-msvc"
++
++$scalar_dtor = comdat any
++
++define linkonce_odr void @scalar_dtor() comdat {
++  ret void
++}
++
++;--- b.ll
 +target datalayout = "e-m:w-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"
 +target triple = "x86_64-pc-windows-msvc"
 +
