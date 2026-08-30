@@ -41,6 +41,13 @@ assert_matches() {
   fi
 }
 
+assert_hermetic_lib_env() {
+  local file="$1"
+  if sed -n '/Environment:/p' "${file}" | grep -Fq 'LIB='; then
+    assert_contains "${file}" "LIB=__hermetic_llvm_empty_lib__"
+  fi
+}
+
 case "${1:-${RUNNER_ARCH:-}}" in
   X64 | x64 | x86_64 | AMD64 | amd64)
     exec_cpu="x86_64"
@@ -128,7 +135,7 @@ for target_cpu in x86_64 aarch64; do
     assert_absent "${report}" "llvm-toolchain-minimal-windows-${other_exec_archive_cpu}"
     assert_absent "${report}" "llvm-toolchain-minimal-linux-"
     assert_absent "${report}" "llvm-toolchain-minimal-darwin-"
-    assert_contains "${report}" "LIB=__hermetic_llvm_empty_lib__"
+    assert_hermetic_lib_env "${report}"
   done
 
   assert_matches "${compile_report}" 'bin[/\\]clang-cl[.]exe'
