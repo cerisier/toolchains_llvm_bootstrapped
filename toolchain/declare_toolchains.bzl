@@ -1,4 +1,4 @@
-load("//platforms:common.bzl", "MSVC_TARGET_SUPPORTED_EXECS", "SUPPORTED_EXECS", "SUPPORTED_TARGETS")
+load("//platforms:common.bzl", "MSVC_TARGET_STAGE0_SUPPORTED_EXECS", "SUPPORTED_EXECS", "SUPPORTED_TARGETS")
 load("//toolchain:selects.bzl", "clang_cl_resource_dir_arg", "platform_cc_tool_map", "platform_module_map", "resource_dir_arg")
 load(":cc_toolchain.bzl", "cc_toolchain")
 
@@ -57,7 +57,7 @@ def declare_toolchains(*, execs = SUPPORTED_EXECS, targets = SUPPORTED_TARGETS):
                 visibility = ["//visibility:public"],
             )
 
-            if target_os == "windows" and (exec_os, exec_cpu) in MSVC_TARGET_SUPPORTED_EXECS:
+            if target_os == "windows" and (exec_os, exec_cpu) in MSVC_TARGET_STAGE0_SUPPORTED_EXECS:
                 native.toolchain(
                     name = exec_os + "_" + exec_cpu + "_to_" + target_os + "_" + target_cpu + "_msvc",
                     exec_compatible_with = [

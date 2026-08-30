@@ -143,6 +143,14 @@ jobs:
             $EXTRA_ARGS \
             //...
 
+      - name: Validate native Windows clang-cl MSVC execution
+        if: matrix.folder == 'e2e/rules_cc'
+        env:
+          USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
+        working-directory: ${{ matrix.folder }}
+        shell: bash
+        run: ./windows_msvc_native_exec_validation.sh "${{ runner.arch }}"
+
   # macOS: smoke build (//:main_default) plus the supported sanitizer e2e tests.
   test_macos:
     strategy:

@@ -128,8 +128,8 @@ If you wish to setup things manually, you will likely require a few flags:
 | **armv7-linux-musleabihf** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **aarch64-windows-gnu ²**| ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **x86_64-windows-gnu ²** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **aarch64-windows-msvc ³** | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
-| **x86_64-windows-msvc ³** | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
+| **aarch64-windows-msvc ³** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **x86_64-windows-msvc ³** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **bpfeb** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **bpfel** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **wasm32-unknown-unknown** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -139,8 +139,9 @@ If you wish to setup things manually, you will likely require a few flags:
 
 ² See "Windows" section.
 
-³ MSVC ABI targets currently require a macOS or Linux execution platform. See
-"Windows" section.
+³ Native Windows execution uses the published GNU/MinGW-built LLVM prebuilt;
+clang-cl still emits the MSVC target ABI. Source-built bootstrap stages do not
+yet support native Windows execution. See "Windows" section.
 
 ### musl
 
@@ -242,10 +243,12 @@ The native MSVC ABI is available through
 `@llvm//platforms:windows_x86_64_msvc` and
 `@llvm//platforms:windows_aarch64_msvc`. These target toolchains use clang-cl,
 lld-link, the Microsoft Visual C++ runtime and Windows SDK, and a statically
-linked libc++. Their compile and link actions currently support macOS and Linux
-execution platforms; native Windows execution toolchains are not yet
-registered. Using the Microsoft inputs requires explicit acceptance of both
-licenses:
+linked libc++. Their Stage 0 compile and link actions support macOS, Linux and
+native Windows execution platforms. Native Windows execution selects the
+published GNU/MinGW-built LLVM prebuilt and uses its clang-cl/lld-link tools; an
+MSVC-built LLVM execution prebuilt is not required. Source-built bootstrap
+stages do not yet support native Windows execution. Using the Microsoft inputs
+requires explicit acceptance of both licenses:
 
 ```sh
 bazel build \

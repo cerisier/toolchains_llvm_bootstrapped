@@ -1,0 +1,137 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+fail() {
+  echo >&2 "$@"
+  exit 1
+}
+
+assert_contains() {
+  local file="$1"
+  local value="$2"
+  grep -Fq -- "${value}" "${file}" || fail "${file} does not contain: ${value}"
+}
+
+assert_absent() {
+  local file="$1"
+  local value="$2"
+  if grep -Fq -- "${value}" "${file}"; then
+    fail "${file} unexpectedly contains: ${value}"
+  fi
+}
+
+assert_matches() {
+  local file="$1"
+  local pattern="$2"
+  grep -Eq -- "${pattern}" "${file}" || fail "${file} does not match: ${pattern}"
+}
+
+case "${1:-${RUNNER_ARCH:-}}" in
+  X64 | x64 | x86_64 | AMD64 | amd64)
+    exec_cpu="x86_64"
+    exec_archive_cpu="amd64"
+    other_exec_archive_cpu="arm64"
+    ;;
+  ARM64 | arm64 | aarch64)
+    exec_cpu="aarch64"
+    exec_archive_cpu="arm64"
+    other_exec_archive_cpu="amd64"
+    ;;
+  *)
+    fail "usage: $0 <X64|ARM64>"
+    ;;
+esac
+
+runner_temp="${RUNNER_TEMP:-/tmp}"
+if command -v cygpath >/dev/null 2>&1; then
+  runner_temp="$(cygpath -u "${runner_temp}")"
+fi
+validation_dir="$(mktemp -d "${runner_temp}/windows-msvc-native-exec.XXXXXX")"
+output_base="${validation_dir}/output-base"
+
+# Keep repository downloads available, but force every configured action into
+# this fresh output base and onto the native Windows host. The regular Windows
+# CI invocation is remote-enabled and cannot prove the execution toolchain.
+native_flags=(
+  --remote_executor=
+  --remote_cache=
+  --experimental_remote_downloader=
+  --spawn_strategy=local
+  --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1
+  --repo_env=BAZEL_WINDOWS_SDK_EULA=1
+)
+
+run_bazel() {
+  local command="$1"
+  shift
+  bazel \
+    "--output_base=${output_base}" \
+    --bazelrc=.bazelrc \
+    "${command}" \
+    "${native_flags[@]}" \
+    "$@"
+}
+
+echo "Native MSVC execution validation: exec_cpu=${exec_cpu}, reports=${validation_dir}"
+
+for target_cpu in x86_64 aarch64; do
+  case "${target_cpu}" in
+    x86_64)
+      target_triple="x86_64-pc-windows-msvc"
+      target_machine="X64"
+      ;;
+    aarch64)
+      target_triple="aarch64-pc-windows-msvc"
+      target_machine="ARM64"
+      ;;
+  esac
+
+  platform="@llvm//platforms:windows_${target_cpu}_msvc"
+  compile_report="${validation_dir}/${target_cpu}-compile.txt"
+  link_report="${validation_dir}/${target_cpu}-link.txt"
+
+  run_bazel aquery \
+    "--platforms=${platform}" \
+    --include_param_files \
+    --output=text \
+    'mnemonic("CppCompile", //:windows_msvc_crt_default_probe)' \
+    >"${compile_report}"
+  run_bazel aquery \
+    "--platforms=${platform}" \
+    --include_param_files \
+    --output=text \
+    'mnemonic("CppLink", //:windows_msvc_generated_def_thinlto_binary)' \
+    >"${link_report}"
+
+  for report in "${compile_report}" "${link_report}"; do
+    assert_matches "${report}" 'Execution platform: @+platforms//host:host'
+    assert_contains "${report}" "llvm-toolchain-minimal-windows-${exec_archive_cpu}"
+    assert_absent "${report}" "llvm-toolchain-minimal-windows-${exec_archive_cpu}-msvc"
+    assert_absent "${report}" "llvm-toolchain-minimal-windows-${other_exec_archive_cpu}"
+    assert_absent "${report}" "llvm-toolchain-minimal-linux-"
+    assert_absent "${report}" "llvm-toolchain-minimal-darwin-"
+    assert_contains "${report}" "--target=${target_triple}"
+    assert_contains "${report}" "LIB=__hermetic_llvm_empty_lib__"
+  done
+
+  assert_matches "${compile_report}" 'bin[/\\]clang-cl[.]exe'
+  assert_matches "${link_report}" 'bin[/\\]clang-cl[.]exe'
+  assert_matches "${link_report}" 'bin[/\\]lld-link[.]exe'
+  assert_contains "${link_report}" "/clang:/MACHINE:${target_machine}"
+  assert_contains "${link_report}" "/clang:-fuse-ld=lld"
+
+  run_bazel build \
+    "--platforms=${platform}" \
+    --features=-dynamic_link_msvcrt \
+    --features=static_link_msvcrt \
+    //:windows_msvc_generated_def_thinlto_binary \
+    //:windows_msvc_libcxx_behavior_mt
+done
+
+run_bazel test \
+  "--platforms=@llvm//platforms:windows_${exec_cpu}_msvc" \
+  --features=-dynamic_link_msvcrt \
+  --features=static_link_msvcrt \
+  //:windows_msvc_libcxx_behavior_mt
+
+echo "Native Windows GNU/MinGW-built clang-cl MSVC execution validation passed."

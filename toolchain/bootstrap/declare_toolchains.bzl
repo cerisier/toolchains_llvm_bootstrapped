@@ -2,7 +2,7 @@ load("@bazel_features//:features.bzl", "bazel_features")
 load("@llvm-project//:vars.bzl", "LLVM_VERSION_MAJOR")
 load("@rules_cc//cc/toolchains:tool.bzl", "cc_tool")
 load("@rules_cc//cc/toolchains:tool_map.bzl", "cc_tool_map")
-load("//platforms:common.bzl", "MSVC_TARGET_SUPPORTED_EXECS", "SUPPORTED_TARGETS")
+load("//platforms:common.bzl", "MSVC_TARGET_BOOTSTRAP_SUPPORTED_EXECS", "SUPPORTED_TARGETS")
 load("//toolchain:cc_toolchain.bzl", "cc_toolchain")
 load("//toolchain/args:compiler_resource_headers.bzl", "declare_clang_cl_compile_resource_headers", "declare_clang_compile_resource_headers")
 load(":bootstrap_binary.bzl", "bootstrap_binary", "bootstrap_directory")
@@ -564,7 +564,7 @@ def declare_toolchains(*, execs = None, targets = SUPPORTED_TARGETS):
                     visibility = ["//visibility:public"],
                 )
 
-                if target_os == "windows" and (exec_os, exec_cpu) in MSVC_TARGET_SUPPORTED_EXECS:
+                if target_os == "windows" and (exec_os, exec_cpu) in MSVC_TARGET_BOOTSTRAP_SUPPORTED_EXECS:
                     native.toolchain(
                         name = "%s_%s_%s_to_%s_%s_msvc" % (stage_name, exec_os, exec_cpu, target_os, target_cpu),
                         exec_compatible_with = [
