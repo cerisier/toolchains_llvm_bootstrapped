@@ -1,4 +1,5 @@
 load("@bazel_lib//:bzl_library.bzl", "bzl_library")
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
 
 bzl_library(
     name = "bootstrap_binary",
@@ -30,6 +31,53 @@ bzl_library(
     srcs = ["transition_settings.bzl"],
     visibility = ["//visibility:public"],
     deps = ["@llvm-project//:version"],
+)
+
+genrule(
+    name = "clang_cl_sibling_linker_output",
+    testonly = True,
+    srcs = [
+        "clang_cl_sibling_linker_test.c",
+        "failing_lld_link.sh",
+    ],
+    outs = ["clang_cl_sibling_linker_test.exe"],
+    cmd = """
+fake_bin="$(@D)/clang_cl_sibling_linker_fake_bin"
+: "source-built clang-cl must discover its declared sibling linker"
+mkdir -p "$${fake_bin}"
+cp "$(location :failing_lld_link.sh)" "$${fake_bin}/lld-link"
+chmod +x "$${fake_bin}/lld-link"
+PATH="$${fake_bin}:$${PATH}" "$(execpath //toolchain:stage1_linux_x86_64/bin/clang-cl)" \\
+  --target=x86_64-pc-windows-msvc \\
+  /clang:-fuse-ld=lld \\
+  /clang:-no-canonical-prefixes \\
+  /nologo \\
+  /TC \\
+  "$(location :clang_cl_sibling_linker_test.c)" \\
+  "/Fe$@" \\
+  /link \\
+  /entry:main \\
+  /subsystem:console \\
+  /nodefaultlib
+""",
+    exec_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+    tags = ["manual"],
+    tools = [
+        "//toolchain:stage1_linux_x86_64/bin/clang-cl",
+        "//toolchain:stage1_linux_x86_64/bin/lld-link",
+    ],
+)
+
+sh_test(
+    name = "clang_cl_sibling_linker_test",
+    srcs = ["clang_cl_sibling_linker_test.sh"],
+    data = [":clang_cl_sibling_linker_output"],
+    env = {"BINARY": "$(rlocationpath :clang_cl_sibling_linker_output)"},
+    tags = ["manual"],
+    deps = ["@bazel_tools//tools/bash/runfiles"],
 )
 
 bzl_library(

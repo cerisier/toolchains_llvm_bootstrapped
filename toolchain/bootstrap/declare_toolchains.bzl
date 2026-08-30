@@ -243,6 +243,10 @@ def declare_tool_map(exec_os, exec_cpu, prefix = None, fdo_profile = None, fdo_i
         prefix,
         "clang-cl",
         bootstrap_binary_kwargs,
+        # Copy instead of symlink so clang-cl's InstalledDir contains the
+        # declared sibling lld-link. Its /clang:-no-canonical-prefixes flag is
+        # not visible during the driver's early executable-path resolution.
+        symlink = False,
         data = [
             prefix + "/clang_builtin_headers_include_directory",
             prefix + "/bin/lld-link",
