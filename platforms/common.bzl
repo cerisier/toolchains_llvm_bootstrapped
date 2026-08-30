@@ -36,15 +36,9 @@ SUPPORTED_EXECS = [
 # still emits the explicit MSVC target configured by the target toolchain.
 MSVC_TARGET_STAGE0_SUPPORTED_EXECS = SUPPORTED_EXECS
 
-# Source-built bootstrap compilers have not yet been validated as native
-# Windows execution toolchains. Keep stages 1-3 on the previously supported
-# Unix execution platforms.
-MSVC_TARGET_BOOTSTRAP_SUPPORTED_EXECS = [
-    ("macos", "x86_64"),
-    ("macos", "aarch64"),
-    ("linux", "x86_64"),
-    ("linux", "aarch64"),
-]
+# Source-built bootstrap compilers use the same supported execution platforms
+# as their Stage 0 seeds.
+MSVC_TARGET_BOOTSTRAP_SUPPORTED_EXECS = SUPPORTED_EXECS
 
 WINDOWS_TARGETS = [target for target in SUPPORTED_TARGETS if target[0] == "windows"]
 
