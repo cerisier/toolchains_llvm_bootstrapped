@@ -47,15 +47,18 @@ if command -v cygpath >/dev/null 2>&1; then
   runner_temp="$(cygpath -u "${runner_temp}")"
 fi
 validation_dir="$(mktemp -d "${runner_temp}/windows-msvc-native-exec.XXXXXX")"
-output_base="${validation_dir}/output-base"
 
-# Keep repository downloads available, but force every configured action into
-# this fresh output base and onto the native Windows host. The regular Windows
-# CI invocation is remote-enabled and cannot prove the execution toolchain.
+# Reuse the already-fetched external repositories, but discard the regular
+# remote-enabled build's outputs and action cache. Subsequent actions must run
+# on the native Windows host without duplicating the large LLVM repository.
+bazel --bazelrc=.bazelrc clean
+
 native_flags=(
   --remote_executor=
   --remote_cache=
   --experimental_remote_downloader=
+  --repository_cache=
+  --repo_contents_cache=
   --spawn_strategy=local
   --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1
   --repo_env=BAZEL_WINDOWS_SDK_EULA=1
@@ -65,7 +68,6 @@ run_bazel() {
   local command="$1"
   shift
   bazel \
-    "--output_base=${output_base}" \
     --bazelrc=.bazelrc \
     "${command}" \
     "${native_flags[@]}" \
