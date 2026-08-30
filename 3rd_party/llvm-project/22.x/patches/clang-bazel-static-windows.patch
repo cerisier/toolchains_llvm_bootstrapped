@@ -1,22 +1,20 @@
 diff --git a/clang/BUILD.bazel b/clang/BUILD.bazel
 --- a/clang/BUILD.bazel
 +++ b/clang/BUILD.bazel
-@@ -28,5 +28,19 @@ licenses(["notice"])
+@@ -28,5 +28,17 @@ licenses(["notice"])
  licenses(["notice"])
 -
 +
 +config_setting(
-+    name = "is_windows_clang_cl_static",
++    name = "is_windows_clang_cl",
 +    constraint_values = ["@platforms//os:windows"],
 +    flag_values = {"@rules_cc//cc/compiler:compiler": "clang-cl"},
-+    values = {"dynamic_mode": "off"},
 +)
 +
 +config_setting(
-+    name = "is_windows_msvc_static",
++    name = "is_windows_msvc",
 +    constraint_values = ["@platforms//os:windows"],
 +    flag_values = {"@rules_cc//cc/compiler:compiler": "msvc-cl"},
-+    values = {"dynamic_mode": "off"},
 +)
 +
  cc_binary(
@@ -27,8 +25,8 @@ diff --git a/clang/BUILD.bazel b/clang/BUILD.bazel
          "include/clang/Config/config.h",
      ],
 +    defines = select({
-+        ":is_windows_clang_cl_static": ["CLANG_BUILD_STATIC"],
-+        ":is_windows_msvc_static": ["CLANG_BUILD_STATIC"],
++        ":is_windows_clang_cl": ["CLANG_BUILD_STATIC"],
++        ":is_windows_msvc": ["CLANG_BUILD_STATIC"],
 +        "//conditions:default": [],
 +    }),
      includes = ["include"],

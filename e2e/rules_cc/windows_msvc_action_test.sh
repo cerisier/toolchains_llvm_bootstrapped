@@ -351,7 +351,7 @@ assert_absent "${action_dir}/release-libcxxabi-compile.txt" "/clang:-fomit-frame
 
 assert_contains "${action_dir}/clang-static-config.txt" "CLANG_BUILD_STATIC"
 assert_contains "${action_dir}/clang-static-config.txt" "clang/Config/config.h"
-assert_absent "${action_dir}/clang-dynamic-config.txt" "CLANG_BUILD_STATIC"
+assert_contains "${action_dir}/clang-dynamic-config.txt" "CLANG_BUILD_STATIC"
 assert_contains "${action_dir}/clang-dynamic-config.txt" "clang/Config/config.h"
 
 for blake3_implementation in avx2 avx512 sse2 sse41; do
