@@ -64,6 +64,12 @@ bazel --bazelrc=.bazelrc aquery "${mingw_flags[@]}" \
   'inputs(".*libcxx/src/algorithm.cpp", mnemonic("CppCompile", deps(@llvm-project//libcxx:libcxx)))' \
   >"${action_dir}/mingw-libcxx-compile.txt"
 bazel --bazelrc=.bazelrc aquery "${mingw_flags[@]}" \
+  --@llvm//toolchain:bootstrap_stage=stage1_from_source \
+  --features=-compiler_param_file \
+  --output=commands \
+  'mnemonic("CppCompile", //:windows_test)' \
+  >"${action_dir}/stage1-mingw-compile.txt"
+bazel --bazelrc=.bazelrc aquery "${mingw_flags[@]}" \
   --features=-compiler_param_file \
   --output=commands \
   'mnemonic("CppLink", //:windows_test)' \
@@ -311,8 +317,13 @@ assert_absent "${action_dir}/compile.txt" "msvc_include"
 assert_contains "${action_dir}/mingw-libcxx-compile.txt" "-Wno-pragma-pack"
 assert_contains "${action_dir}/mingw-libcxx-compile.txt" "-Wno-unused-value"
 assert_contains "${action_dir}/mingw-libcxx-compile.txt" "-Xclang=-Wno-thread-safety-analysis"
+assert_contains "${action_dir}/mingw-libcxx-compile.txt" "-nobuiltininc"
+assert_matches "${action_dir}/mingw-libcxx-compile.txt" "mingw-w64-headers/crt.* -nobuiltininc -Xclang -internal-isystem -Xclang .*lib/clang/[0-9]+/include"
 assert_absent "${action_dir}/mingw-libcxx-compile.txt" "/clang:-Wno-pragma-pack"
 assert_absent "${action_dir}/mingw-libcxx-compile.txt" "/clang:-Wno-unused-value"
+assert_matches "${action_dir}/stage1-mingw-compile.txt" "stage1_linux_(x86_64|aarch64)/bin/clang\\+\\+"
+assert_contains "${action_dir}/stage1-mingw-compile.txt" "-nobuiltininc"
+assert_matches "${action_dir}/stage1-mingw-compile.txt" "mingw-w64-headers/crt.* -nobuiltininc -Xclang -internal-isystem -Xclang .*stage1_linux_(x86_64|aarch64)/lib/clang/[0-9]+/include"
 assert_contains "${action_dir}/mingw-link.txt" "-Wl,--no-insert-timestamp"
 assert_contains "${action_dir}/mingw-release-compile.txt" "-fno-exceptions"
 assert_contains "${action_dir}/mingw-release-compile.txt" "-fno-rtti"
@@ -537,6 +548,8 @@ assert_absent "${action_dir}/thin-lto-index.txt" "-x ir"
 assert_matches "${action_dir}/stage1-libcxx-compile.txt" "stage1_linux_(x86_64|aarch64)/bin/clang-cl"
 assert_contains "${action_dir}/stage1-libcxx-compile.txt" "--target=x86_64-pc-windows-msvc"
 assert_contains "${action_dir}/stage1-libcxx-compile.txt" "/MT"
+assert_contains "${action_dir}/stage1-libcxx-compile.txt" "/clang:-nobuiltininc"
+assert_matches "${action_dir}/stage1-libcxx-compile.txt" "/clang:-nobuiltininc /imsvc.*stage1_linux_(x86_64|aarch64)/lib/clang/[0-9]+/include.*msvc_vcruntime_headers_source"
 assert_contains "${action_dir}/stage1-libcxx-compile.txt" "msvc_com_support_headers_source"
 assert_contains "${action_dir}/stage1-libcxx-compile.txt" "msvc_vcruntime_headers_source"
 assert_contains "${action_dir}/stage1-libcxx-compile.txt" "windows_sdk/sysroot/base/c/Include"

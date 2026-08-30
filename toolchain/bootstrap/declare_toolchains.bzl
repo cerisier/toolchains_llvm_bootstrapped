@@ -1,10 +1,10 @@
 load("@bazel_features//:features.bzl", "bazel_features")
 load("@llvm-project//:vars.bzl", "LLVM_VERSION_MAJOR")
-load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains:tool.bzl", "cc_tool")
 load("@rules_cc//cc/toolchains:tool_map.bzl", "cc_tool_map")
 load("//platforms:common.bzl", "MSVC_TARGET_SUPPORTED_EXECS", "SUPPORTED_TARGETS")
 load("//toolchain:cc_toolchain.bzl", "cc_toolchain")
+load("//toolchain/args:compiler_resource_headers.bzl", "declare_clang_cl_compile_resource_headers", "declare_clang_compile_resource_headers")
 load(":bootstrap_binary.bzl", "bootstrap_binary", "bootstrap_directory")
 
 def _validate_static_library_tool(prefix):
@@ -189,6 +189,10 @@ def declare_tool_map(exec_os, exec_cpu, prefix = None, fdo_profile = None, fdo_i
         }),
     )
 
+    # Materialize each source-built compiler's matching Clang resource headers
+    # in the conventional location under the same stage prefix as its binaries.
+    # Shared compiler-personality arguments disable implicit driver insertion
+    # and re-add this declared directory with the intended search ordering.
     bootstrap_directory(
         name = prefix + "/clang_builtin_headers_include_directory",
         srcs = "@llvm-project//clang:builtin_headers_files",
@@ -198,33 +202,18 @@ def declare_tool_map(exec_os, exec_cpu, prefix = None, fdo_profile = None, fdo_i
         strip_prefix = "clang/lib/Headers",
     )
 
-    cc_args(
+    declare_clang_compile_resource_headers(
+        name = prefix + "/compile_resource_dir",
+        resource_include_directory = prefix + "/clang_builtin_headers_include_directory",
+        # bootstrap_directory exposes a declared tree artifact rather than the
+        # DirectoryInfo provider accepted by allowlist_include_directories.
+        allowlist_include_directories = [],
+    )
+
+    declare_clang_cl_compile_resource_headers(
         name = prefix + "/clang_cl_compile_resource_dir",
-        actions = [
-            "@rules_cc//cc/toolchains/actions:clif_match",
-            "@rules_cc//cc/toolchains/actions:cpp_compile",
-            "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
-            "@rules_cc//cc/toolchains/actions:cpp_module_codegen",
-            "@rules_cc//cc/toolchains/actions:cpp_module_compile",
-            "@rules_cc//cc/toolchains/actions:linkstamp_compile",
-            "@rules_cc//cc/toolchains/actions:objcpp_compile",
-            "@rules_cc//cc/toolchains/actions:c_compile",
-            "@rules_cc//cc/toolchains/actions:preprocess_assemble",
-            "@rules_cc//cc/toolchains/actions:objc_compile",
-        ],
-        args = [
-            # clang-cl otherwise inserts builtin headers before every /imsvc
-            # path. Suppress that implicit path, then re-add the declared
-            # resource directory between libc++ and VC/UCRT headers.
-            "/clang:-nobuiltininc",
-            "/imsvc{resource_dir}",
-        ],
-        data = [
-            prefix + "/clang_builtin_headers_include_directory",
-        ],
-        format = {
-            "resource_dir": prefix + "/clang_builtin_headers_include_directory",
-        },
+        resource_include_directory = prefix + "/clang_builtin_headers_include_directory",
+        allowlist_include_directories = [],
     )
 
     _bootstrap_cc_tool(
@@ -529,15 +518,15 @@ def declare_toolchains(*, execs = None, targets = SUPPORTED_TARGETS):
                 extra_args = select({
                     "@llvm//platforms/config:windows_x86_64_msvc": [
                         "@llvm//toolchain/args/windows/msvc:normalized_default_libs_for_runtime",
-                        ":%s/clang_cl_compile_resource_dir" % tool_prefix,
+                        "%s/clang_cl_compile_resource_dir" % tool_prefix,
                         "@llvm//toolchain/args/windows/msvc:normalized_sdk_compile_args",
                     ],
                     "@llvm//platforms/config:windows_aarch64_msvc": [
                         "@llvm//toolchain/args/windows/msvc:normalized_default_libs_for_runtime",
-                        ":%s/clang_cl_compile_resource_dir" % tool_prefix,
+                        "%s/clang_cl_compile_resource_dir" % tool_prefix,
                         "@llvm//toolchain/args/windows/msvc:normalized_sdk_compile_args",
                     ],
-                    "//conditions:default": [],
+                    "//conditions:default": ["%s/compile_resource_dir" % tool_prefix],
                 }),
                 tool_map = select({
                     "@llvm//platforms/config:windows_x86_64_msvc": ":%s/tools_for_msvc_for_runtime" % tool_prefix,

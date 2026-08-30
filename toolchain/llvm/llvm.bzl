@@ -1,15 +1,26 @@
 load("@bazel_features//:features.bzl", "bazel_features")
 load("@llvm//runtimes:module_map.bzl", "include_path", "module_map")
-load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains:tool.bzl", "cc_tool")
 load("@rules_cc//cc/toolchains:tool_map.bzl", "cc_tool_map")
 load("//:directory.bzl", "headers_directory")
+load("//toolchain/args:compiler_resource_headers.bzl", "declare_clang_cl_compile_resource_headers", "declare_clang_compile_resource_headers")
 
 _VALIDATE_STATIC_LIBRARY_TOOL = {
     "@rules_cc//cc/toolchains/actions:validate_static_library": ":static_library_validator",
 } if bazel_features.cc.supports_starlarkified_toolchains else {}
 
 def declare_llvm_targets(*, suffix = ""):
+    """Declares the Bazel interface of one installed LLVM distribution.
+
+    The bin/* tools and lib/clang/* resource headers below come from the same
+    archive and must remain coupled. These targets provide the downloaded
+    Stage 0 compiler used to build Stage 1, as well as ordinary prebuilt
+    toolchains. Source-built stages declare the analogous tools and install
+    their matching source resource headers in //toolchain/bootstrap.
+    """
+
+    # Model the resource directory already installed beside this archive's
+    # compiler binaries. This is never the LLVM source tree being compiled.
     headers_directory(
         name = "builtin_resource_dir",
         # Grab whichever version-specific dir is there.
@@ -62,71 +73,15 @@ def declare_llvm_targets(*, suffix = ""):
         allowlist_include_directories = [":builtin_resource_dir"],
     )
 
-    cc_args(
+    declare_clang_compile_resource_headers(
         name = "compile_resource_dir",
-        actions = [
-            "@rules_cc//cc/toolchains/actions:clif_match",
-            "@rules_cc//cc/toolchains/actions:cpp_compile",
-            "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
-            "@rules_cc//cc/toolchains/actions:cpp_module_codegen",
-            "@rules_cc//cc/toolchains/actions:cpp_module_compile",
-            "@rules_cc//cc/toolchains/actions:linkstamp_compile",
-            "@rules_cc//cc/toolchains/actions:objcpp_compile",
-            "@rules_cc//cc/toolchains/actions:c_compile",
-            "@rules_cc//cc/toolchains/actions:preprocess_assemble",
-            "@rules_cc//cc/toolchains/actions:objc_compile",
-        ],
-        allowlist_include_directories = [
-            ":builtin_resource_include_dir",
-        ],
-        args = [
-            # Use -isystem instead of -resource-dir to avoid conflicts with the
-            # linking specific -resource-dir and rules_foreign_cc which does
-            # 'CC CFLAGS LDFLAGS'. This has to be last in the search paths
-            "-Xclang",
-            "-internal-isystem",
-            "-Xclang",
-            "{resource_dir}/include",
-        ],
-        data = [
-            ":builtin_resource_dir",
-        ],
-        format = {
-            "resource_dir": ":builtin_resource_dir",
-        },
+        resource_include_directory = "builtin_resource_include_dir",
         visibility = ["//visibility:public"],
     )
 
-    cc_args(
+    declare_clang_cl_compile_resource_headers(
         name = "clang_cl_compile_resource_dir",
-        actions = [
-            "@rules_cc//cc/toolchains/actions:clif_match",
-            "@rules_cc//cc/toolchains/actions:cpp_compile",
-            "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
-            "@rules_cc//cc/toolchains/actions:cpp_module_codegen",
-            "@rules_cc//cc/toolchains/actions:cpp_module_compile",
-            "@rules_cc//cc/toolchains/actions:linkstamp_compile",
-            "@rules_cc//cc/toolchains/actions:objcpp_compile",
-            "@rules_cc//cc/toolchains/actions:c_compile",
-            "@rules_cc//cc/toolchains/actions:preprocess_assemble",
-            "@rules_cc//cc/toolchains/actions:objc_compile",
-        ],
-        allowlist_include_directories = [
-            ":builtin_resource_include_dir",
-        ],
-        args = [
-            # clang-cl otherwise inserts builtin headers before every /imsvc
-            # path. Suppress that implicit path, then re-add the declared
-            # resource directory between libc++ and VC/UCRT headers.
-            "/clang:-nobuiltininc",
-            "/imsvc{resource_dir}",
-        ],
-        data = [
-            ":builtin_resource_include_dir",
-        ],
-        format = {
-            "resource_dir": ":builtin_resource_include_dir",
-        },
+        resource_include_directory = "builtin_resource_include_dir",
         visibility = ["//visibility:public"],
     )
 

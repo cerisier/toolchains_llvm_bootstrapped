@@ -12,6 +12,48 @@ and source-built C++ toolchains. The bootstrap stages are:
 4. `stage3_lto_and_fdo_applied` uses the stage3 LLVM binaries as the C++
    toolchain.
 
+## Stage production and selection
+
+The stage being produced and the compiler selected to produce it are distinct:
+
+| Output or work | Selected compiler | Purpose |
+| --- | --- | --- |
+| Stage 1 binaries | Downloaded Stage 0 compiler | Establish a compiler built from the current LLVM source. |
+| Stage 2 binaries | Source-built Stage 1 compiler | Produce a ThinLTO compiler instrumented for host FDO. |
+| FDO workloads | Instrumented Stage 2 compiler | Run compiler processes and collect the profile used for Stage 3. |
+| Stage 3 binaries | Source-built Stage 1 compiler plus the merged profile | Produce the final ThinLTO and FDO-optimized compiler. |
+| Normal final builds | Stage 3 compiler | Use the compiler that is packaged as the LLVM prebuilt. |
+
+Stage 2 therefore generates profile data; it does not compile Stage 3. The
+bootstrap transition in `bootstrap_binary.bzl` selects Stage 0 for Stage 1 and
+Stage 1 for both the instrumented Stage 2 and profile-applied Stage 3 builds.
+The `bootstrap_stage` build setting selects the matching source-built toolchain
+registration declared by `declare_toolchains.bzl`.
+
+## Compiler resource headers
+
+Clang resource headers belong to the compiler executable, not the target SDK:
+
+- Downloaded Stage 0 tools and `lib/clang/<major>/include` come from the same
+  installed archive. `//toolchain/llvm:llvm.bzl` declares that archive's Bazel
+  interface.
+- Each source-built stage materializes `@llvm-project//clang:builtin_headers_files`
+  under its own stage prefix. Those headers correspond to the LLVM source used
+  to build that compiler generation.
+- Target headers, such as VC, UCRT, and the Windows SDK, remain separate target
+  inputs. They must not replace or be confused with the exec compiler's Clang
+  resource headers.
+
+Downloaded and source-built toolchains both disable implicit driver insertion
+and re-add the selected resource-header directory explicitly. This avoids
+duplicate Clang search entries and lets clang-cl place the directory between
+libc++ and the Microsoft target headers.
+
+`//toolchain:selects.bzl` maps Stage 0 requests to downloaded toolchain
+repositories and source-backed requests to the Stage 1/2/3 labels. Never pair a
+downloaded compiler with resource headers from the newer source tree currently
+being compiled.
+
 `//toolchain/bootstrap/stage1:<tool>` builds the stage1 variant.
 `//toolchain/bootstrap/stage2:<tool>` builds the stage2 variant.
 `//toolchain/bootstrap/stage3:<tool>` builds the stage3 variant.

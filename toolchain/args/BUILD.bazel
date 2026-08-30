@@ -1139,6 +1139,12 @@ cc_args(
 )
 
 bzl_library(
+    name = "compiler_resource_headers",
+    srcs = ["compiler_resource_headers.bzl"],
+    deps = ["@rules_cc//cc/toolchains:toolchain_rules"],
+)
+
+bzl_library(
     name = "llvm_target_triple",
     srcs = ["llvm_target_triple.bzl"],
     deps = ["//constraints/windows/abi:abis"],

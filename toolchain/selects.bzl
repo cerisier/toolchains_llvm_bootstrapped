@@ -9,6 +9,12 @@ def _platform_bootstrap_stage(exec_os, exec_cpu, bootstrap_stage):
     return "@llvm//platforms/config:%s_%s_%s" % (exec_os, exec_cpu, bootstrap_stage)
 
 def platform_llvm_binary(binary):
+    # Select the compiler generation requested by the bootstrap transition.
+    # Stage 0 tools and resource headers come from one downloaded installation;
+    # Stage 1/2/3 labels refer to source-built binaries whose matching resource
+    # headers are materialized under their stage prefix by bootstrap toolchain
+    # construction. Never pair the Stage 0 binary with headers from the source
+    # tree currently being compiled.
     binaries = {
         _platform_bootstrap_stage(exec_os, exec_cpu, "stage0_prebuilt_seed"): Label(
             "%s:bin/%s%s" % (_tool_repo(exec_os, exec_cpu), binary, ".exe" if exec_os == "windows" else ""),
