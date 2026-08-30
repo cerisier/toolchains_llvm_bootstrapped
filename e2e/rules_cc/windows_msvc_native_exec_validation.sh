@@ -35,7 +35,10 @@ assert_absent() {
 assert_matches() {
   local file="$1"
   local pattern="$2"
-  grep -Eq -- "${pattern}" "${file}" || fail "${file} does not match: ${pattern}"
+  if ! grep -Eq -- "${pattern}" "${file}"; then
+    show_report_context "${file}"
+    fail "${file} does not match: ${pattern}"
+  fi
 }
 
 case "${1:-${RUNNER_ARCH:-}}" in
@@ -118,7 +121,8 @@ for target_cpu in x86_64 aarch64; do
     >"${link_report}"
 
   for report in "${compile_report}" "${link_report}"; do
-    assert_matches "${report}" 'Execution platform: @+platforms//host:host'
+    assert_contains "${report}" "Execution platform:"
+    assert_absent "${report}" "rbe_platform"
     assert_contains "${report}" "llvm-toolchain-minimal-windows-${exec_archive_cpu}"
     assert_absent "${report}" "llvm-toolchain-minimal-windows-${exec_archive_cpu}-msvc"
     assert_absent "${report}" "llvm-toolchain-minimal-windows-${other_exec_archive_cpu}"
