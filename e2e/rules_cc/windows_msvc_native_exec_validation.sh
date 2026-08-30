@@ -110,7 +110,7 @@ for target_cpu in x86_64 aarch64; do
   run_bazel aquery \
     "--platforms=${platform}" \
     --features=-compiler_param_file \
-    --output=commands \
+    --output=text \
     'mnemonic("CppCompile", //:windows_msvc_crt_default_probe)' \
     >"${compile_report}"
   run_bazel aquery \
