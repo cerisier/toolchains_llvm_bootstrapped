@@ -20,9 +20,12 @@ def declare_clang_compile_resource_headers(
         *,
         name,
         resource_include_directory,
+        resource_headers_data = None,
         allowlist_include_directories = None,
         visibility = None):
     """Declares explicit Clang-mode compiler resource headers."""
+    if resource_headers_data == None:
+        resource_headers_data = resource_include_directory
     if allowlist_include_directories == None:
         allowlist_include_directories = [resource_include_directory]
 
@@ -44,7 +47,7 @@ def declare_clang_compile_resource_headers(
             "-Xclang",
             "{resource_include_directory}",
         ],
-        data = [resource_include_directory],
+        data = [resource_headers_data],
         format = {
             "resource_include_directory": resource_include_directory,
         },

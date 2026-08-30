@@ -76,6 +76,10 @@ def declare_llvm_targets(*, suffix = ""):
     declare_clang_compile_resource_headers(
         name = "compile_resource_dir",
         resource_include_directory = "builtin_resource_include_dir",
+        # The clang tool already declares this parent tree. Reuse that exact
+        # artifact instead of adding its nested include tree as a second action
+        # input, which local Bazel sandboxes cannot materialize concurrently.
+        resource_headers_data = "builtin_resource_dir",
         visibility = ["//visibility:public"],
     )
 
