@@ -19,13 +19,13 @@ def _append_unique(values, extra_values):
 def _bootstrap_transition_impl(settings, attr):
     fdo_profile = getattr(attr, "fdo_profile", None)
     fdo_instrumented = getattr(attr, "fdo_instrumented", False)
+    source_backed = getattr(attr, "source_backed", False) or fdo_profile or fdo_instrumented
     if fdo_profile and fdo_instrumented:
         fail("fdo_profile and fdo_instrumented are mutually exclusive")
 
     features = settings["//command_line_option:features"]
-    is_after_stage1 = fdo_profile or fdo_instrumented
 
-    if is_after_stage1:
+    if source_backed:
         bootstrap_stage = "stage1_from_source"
     else:
         bootstrap_stage = "stage0_prebuilt_seed"
@@ -35,7 +35,7 @@ def _bootstrap_transition_impl(settings, attr):
         "//toolchain:runtime_stage": "complete",
         "//toolchain:bootstrap_stage": bootstrap_stage,
         "//command_line_option:compilation_mode": "opt",
-        "//command_line_option:features": _append_unique(features, _LLVM_TOOL_FEATURES + ["thin_lto"]) if is_after_stage1 else features,
+        "//command_line_option:features": _append_unique(features, _LLVM_TOOL_FEATURES + ["thin_lto"]) if source_backed else features,
         "//command_line_option:fdo_profile": fdo_profile,
         "@llvm-project//llvm:driver-tools": LLVM_TOOLS,
     }
@@ -103,6 +103,10 @@ bootstrap_binary = rule(
         "platform": attr.label(
             default = None,
             doc = "If set, build the actual binary for this platform instead of the incoming target platform.",
+        ),
+        "source_backed": attr.bool(
+            default = False,
+            doc = "If set, build with the source-built Stage 1 toolchain and ThinLTO even without FDO.",
         ),
         "symlink": attr.bool(
             default = True,

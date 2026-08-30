@@ -41,26 +41,6 @@ _HOSTED_LINK_FLAGS = [
     "-pthread",
 ]
 
-_MSVC_COMMON_COMPILE_FLAGS = [
-    "/TC",
-    "/O2",
-    "/clang:-fomit-frame-pointer",
-    "/Gy",
-    "/Gw",
-]
-
-_MSVC_HOSTED_COMPILE_FLAGS = [
-    "/clang:-flto=thin",
-    "/DZSTD_DISABLE_ASM",
-    "/DZSTD_MULTITHREAD",
-    "/DZSTD_NOBENCH",
-    "/DZSTD_NODICT",
-    "/DZSTD_NODECOMPRESS",
-    "/DZSTD_NOTRACE",
-    "/UZSTD_LEGACY_SUPPORT",
-    "/DZSTD_LEGACY_SUPPORT=0",
-]
-
 _FREESTANDING_COMPILE_FLAGS = [
     "-ffreestanding",
     "-fno-builtin",
@@ -122,12 +102,7 @@ def _profile_environment(feature_configuration, action_name, variables, profraw)
 def _llvm_fdo_profile_workload_impl(ctx):
     cc_toolchain = find_cc_toolchain(ctx)
 
-    if ctx.attr.driver_mode == "msvc":
-        if ctx.attr.workload_kind != "hosted":
-            fail("MSVC FDO workloads must be hosted")
-        compile_flags = _MSVC_COMMON_COMPILE_FLAGS + _MSVC_HOSTED_COMPILE_FLAGS
-        link_flags = []
-    elif ctx.attr.workload_kind == "hosted":
+    if ctx.attr.workload_kind == "hosted":
         compile_flags = _COMMON_COMPILE_FLAGS + _HOSTED_COMPILE_FLAGS
         link_flags = _HOSTED_LINK_FLAGS
     else:
@@ -151,11 +126,7 @@ def _llvm_fdo_profile_workload_impl(ctx):
     profraws = []
     objects = []
     for index, source in enumerate(_c_sources(ctx.files.srcs)):
-        object_file = ctx.actions.declare_file("%s.%s%s" % (
-            ctx.label.name,
-            index,
-            ctx.attr.object_file_extension,
-        ))
+        object_file = ctx.actions.declare_file("%s.%s.o" % (ctx.label.name, index))
         profraw = ctx.actions.declare_file("%s.%s.profraw" % (ctx.label.name, index))
         compile_variables = cc_common.create_compile_variables(
             cc_toolchain = cc_toolchain,
@@ -249,18 +220,6 @@ llvm_fdo_profile_workload = rule(
             allow_files = [".c", ".h"],
             mandatory = True,
             doc = "Training sources compiled for target_platform.",
-        ),
-        "driver_mode": attr.string(
-            default = "generic",
-            values = [
-                "generic",
-                "msvc",
-            ],
-            doc = "Compiler-driver argument dialect for the workload.",
-        ),
-        "object_file_extension": attr.string(
-            default = ".o",
-            doc = "Target toolchain's object-file extension.",
         ),
         "target_platform": attr.label(
             mandatory = True,

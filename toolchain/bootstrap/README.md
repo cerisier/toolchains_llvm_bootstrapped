@@ -5,12 +5,13 @@ and source-built C++ toolchains. The bootstrap stages are:
 
 1. `stage0_prebuilt_seed` compiles the stage1 LLVM binaries from source.
 2. `stage1_from_source` compiles the stage2 LLVM binaries with ThinLTO and FDO
-   instrumentation.
-3. `stage2_lto_and_fdo_instrumented` runs workloads for every
-   `SUPPORTED_TARGETS` target. `stage1_from_source` compiles the stage3 LLVM
-   binaries with the merged profile for the target CPU.
-4. `stage3_lto_and_fdo_applied` uses the stage3 LLVM binaries as the C++
-   toolchain.
+   instrumentation where FDO is supported.
+3. `stage2_lto_and_fdo_instrumented` runs the supported profile workloads.
+   `stage1_from_source` compiles the stage3 LLVM binaries with ThinLTO and, on
+   profile-compatible targets, the merged profile for the target CPU.
+4. `stage3_lto_and_fdo_applied` is the historical name of the setting that uses
+   stage3 LLVM binaries as the C++ toolchain. A Windows MSVC stage3 binary does
+   not contain FDO despite that generic setting name.
 
 ## Stage production and selection
 
@@ -21,14 +22,22 @@ The stage being produced and the compiler selected to produce it are distinct:
 | Stage 1 binaries | Downloaded Stage 0 compiler | Establish a compiler built from the current LLVM source. |
 | Stage 2 binaries | Source-built Stage 1 compiler | Produce a ThinLTO compiler instrumented for host FDO. |
 | FDO workloads | Instrumented Stage 2 compiler | Run compiler processes and collect the profile used for Stage 3. |
-| Stage 3 binaries | Source-built Stage 1 compiler plus the merged profile | Produce the final ThinLTO and FDO-optimized compiler. |
+| Stage 3 binaries | Source-built Stage 1 compiler, plus the merged profile where supported | Produce the final ThinLTO compiler, with FDO on supported targets. |
 | Normal final builds | Stage 3 compiler | Use the compiler that is packaged as the LLVM prebuilt. |
 
 Stage 2 therefore generates profile data; it does not compile Stage 3. The
 bootstrap transition in `bootstrap_binary.bzl` selects Stage 0 for Stage 1 and
-Stage 1 for both the instrumented Stage 2 and profile-applied Stage 3 builds.
+Stage 1 for both the instrumented Stage 2 and source-backed Stage 3 builds.
 The `bootstrap_stage` build setting selects the matching source-built toolchain
 registration declared by `declare_toolchains.bzl`.
+
+Windows MSVC Stage 3 binaries use ThinLTO but do not use FDO. Profile generation
+runs the instrumented compiler process, not the target program it emits. The
+available profile executors are Linux binaries and therefore record Itanium C++
+linkage names, which do not match the Microsoft C++ linkage names in a Windows
+MSVC LLVM binary. Clang profile remapping does not support the Windows C++ ABI.
+MSVC FDO must remain unsupported until training can execute an instrumented
+Windows LLVM binary and demonstrate profile application to named C++ functions.
 
 ## Compiler resource headers
 
