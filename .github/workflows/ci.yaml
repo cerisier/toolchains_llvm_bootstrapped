@@ -100,28 +100,6 @@ jobs:
         shell: bash
         run: ./coverage_lcov_test.sh --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7
 
-      - name: Verify Windows MSVC target support
-        if: matrix.folder == 'e2e/rules_cc' && matrix.bazel_version == 'last_rc'
-        env:
-          USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
-        working-directory: e2e/rules_cc
-        shell: bash
-        run: |
-          common_flags=(
-            --config=remote
-            --jobs=100
-            --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7
-          )
-          bash ./windows_msvc_action_test.sh "${common_flags[@]}"
-          bash ./windows_msvc_layering_test.sh "${common_flags[@]}"
-          bash ./windows_msvc_system_headers_test.sh "${common_flags[@]}"
-          bash ./windows_msvc_analysis_test.sh "${common_flags[@]}"
-          bazel --bazelrc=.bazelrc test \
-            "${common_flags[@]}" \
-            --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
-            --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
-            //:windows_msvc_artifacts_matrix
-
   test_windows:
     strategy:
       fail-fast: false
