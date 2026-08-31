@@ -407,6 +407,14 @@ def declare_llvm_targets(*, suffix = ""):
         ],
     )
 
+    # The include_path graph below defines the toolchain-owned header surface
+    # emitted into the generated crosstool module map. Compile actions expose
+    # that surface independently through their selected compile-argument graph
+    # and per-toolchain additions. When changing header composition, trace both
+    # graphs for the active target platform and ABI, then compare the materialized
+    # module map with a representative compile action and its declared inputs.
+
+    # macOS: apply the module-map/compile-action alignment invariant above.
     include_path(
         name = "macos_target_headers",
         srcs = [
@@ -415,7 +423,7 @@ def declare_llvm_targets(*, suffix = ""):
         ],
     )
 
-    # This must match //toolchain:linux_toolchain_args
+    # Linux: apply the module-map/compile-action alignment invariant above.
     include_path(
         name = "linux_target_headers",
         srcs = [
@@ -439,7 +447,7 @@ def declare_llvm_targets(*, suffix = ""):
         }),
     )
 
-    # This must match //toolchain:windows_toolchain_args for MinGW targets.
+    # Windows MinGW: apply the module-map/compile-action alignment invariant above.
     include_path(
         name = "windows_mingw_target_headers",
         srcs = [
@@ -458,7 +466,7 @@ def declare_llvm_targets(*, suffix = ""):
         ],
     )
 
-    # This must match //toolchain:windows_toolchain_args for MSVC targets.
+    # Windows MSVC: apply the module-map/compile-action alignment invariant above.
     # Keep the filtered VC compiler/runtime surface separate from the excluded
     # Microsoft STL headers.
     include_path(
