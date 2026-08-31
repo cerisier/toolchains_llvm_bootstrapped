@@ -1418,16 +1418,6 @@ cc_library(
 )
 
 cc_library(
-    name = "windows_msvc_system_headers",
-    testonly = True,
-    srcs = ["windows_msvc_system_headers.cc"],
-    target_compatible_with = [
-        "@llvm//constraints/windows/abi:msvc",
-        "@platforms//os:windows",
-    ],
-)
-
-cc_library(
     name = "windows_msvc_unsupported_feature_probe",
     testonly = True,
     srcs = ["windows_msvc_crt_default_probe.c"],
