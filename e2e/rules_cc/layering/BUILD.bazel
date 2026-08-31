@@ -20,5 +20,6 @@ cc_library(
 cc_library(
     name = "illegal_transitive_consumer",
     srcs = ["illegal_transitive_consumer.cc"],
+    tags = ["manual"],
     deps = ["direct_library"],
 )
