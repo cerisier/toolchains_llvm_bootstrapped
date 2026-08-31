@@ -42,25 +42,18 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      # Cache build and external artifacts so that the next ci build is incremental.
-      # Because github action caches cannot be updated after a build, we need to
-      # store the contents of each build in a unique cache key, then fall back to loading
-      # it on the next ci run. We use hashFiles(...) in the key and restore-keys- with
-      # the prefix to load the most recent cache for the branch on a cache miss. You
-      # should customize the contents of hashFiles to capture any bazel input sources,
-      # although this doesn't need to be perfect. If none of the input sources change
-      # then a cache hit will load an existing cache and bazel won't have to do any work.
-      # In the case of a cache miss, you want the fallback cache to contain most of the
-      # previously built artifacts to minimize build time. The more precise you are with
-      # hashFiles sources the less work bazel will have to do.
-      - name: Mount bazel caches
-        uses: actions/cache@v4
+      # Pull requests restore dependency caches published by main. PR-scoped caches can
+      # only be reused by reruns of the same PR, so they are not saved here.
+      - name: Restore Bazel repository cache
+        id: bazel-repository-cache
+        uses: actions/cache/restore@v4
         with:
           path: |
             ~/.cache/bazel-repo
-          key: bazel-cache-${{ matrix.os }}-${{ matrix.bazel_version }}-${{ matrix.folder }}-${{ hashFiles('**/BUILD.bazel', '**/*.bzl', 'MODULE.bazel') }}
+          key: bazel-repository-v2-${{ matrix.os }}-${{ matrix.bazel_version }}-${{ matrix.folder }}-${{ hashFiles('MODULE.bazel', 'MODULE.bazel.lock', format('{0}/MODULE.bazel', matrix.folder), format('{0}/MODULE.bazel.lock', matrix.folder)) }}
           restore-keys: |
-            bazel-cache-${{ matrix.os }}-${{ matrix.bazel_version }}-${{ matrix.folder }}
+            bazel-repository-v2-${{ matrix.os }}-${{ matrix.bazel_version }}-${{ matrix.folder }}-
+            bazel-cache-${{ matrix.os }}-${{ matrix.bazel_version }}-${{ matrix.folder }}-
 
       - name: bazel test //...
         env:
@@ -99,6 +92,22 @@ jobs:
         working-directory: ${{ matrix.folder }}
         shell: bash
         run: ./coverage_lcov_test.sh --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7
+
+      - name: Stop Bazel before saving repository cache
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && matrix.folder != 'e2e/cross_compilation' && steps.bazel-repository-cache.outputs.cache-hit != 'true'
+        env:
+          USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
+        working-directory: ${{ matrix.folder }}
+        shell: bash
+        run: bazel --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc --bazelrc=.bazelrc shutdown
+
+      - name: Save Bazel repository cache
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && matrix.folder != 'e2e/cross_compilation' && steps.bazel-repository-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.cache/bazel-repo
+          key: ${{ steps.bazel-repository-cache.outputs.cache-primary-key }}
 
   test_windows:
     strategy:
@@ -282,14 +291,16 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Mount bazel caches
-        uses: actions/cache@v4
+      - name: Restore Bazel repository cache
+        id: bazel-repository-cache
+        uses: actions/cache/restore@v4
         with:
           path: |
             ~/.cache/bazel-repo
-          key: bazel-cache-tests-${{ matrix.os }}-${{ matrix.bazel_version }}-${{ hashFiles('**/BUILD.bazel', '**/*.bzl', 'MODULE.bazel') }}
+          key: bazel-repository-v2-tests-${{ matrix.os }}-${{ matrix.bazel_version }}-${{ hashFiles('MODULE.bazel', 'MODULE.bazel.lock') }}
           restore-keys: |
-            bazel-cache-tests-${{ matrix.os }}-${{ matrix.bazel_version }}
+            bazel-repository-v2-tests-${{ matrix.os }}-${{ matrix.bazel_version }}-
+            bazel-cache-tests-${{ matrix.os }}-${{ matrix.bazel_version }}-
 
       - name: bazel query kernel headers and test root targets
         env:
@@ -313,6 +324,21 @@ jobs:
             //tools/case_insensitive_vfs:cli_test \
             //tools/case_insensitive_vfs:test \
             //tools/def_file_generator:test
+
+      - name: Stop Bazel before saving repository cache
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.bazel-repository-cache.outputs.cache-hit != 'true'
+        env:
+          USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
+        shell: bash
+        run: bazel --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc --bazelrc=.bazelrc shutdown
+
+      - name: Save Bazel repository cache
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.bazel-repository-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.cache/bazel-repo
+          key: ${{ steps.bazel-repository-cache.outputs.cache-primary-key }}
 
   docs:
     runs-on: macos-15-intel
