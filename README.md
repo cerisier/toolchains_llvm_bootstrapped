@@ -7,7 +7,7 @@
 # Bazel-LLVM Ecosystem
 
 1. **Hermetic cross-compiling `cc_toolchain`**
-   We assemble LLVM with Bazeled runtimes/libc stacks to provide a zero-sysroot, hermetic C/C++ cross toolchain for many exec/target combinations (Linux glibc/musl, Windows MinGW, macOS, wasm; more coming).
+   We assemble LLVM with Bazeled runtimes/libc stacks to provide a zero-sysroot, hermetic C/C++ cross toolchain for many exec/target combinations (Linux glibc/musl, Windows MinGW/MSVC targets, macOS, wasm; more coming).
 2. **Bazeled LLVM targets**
    We expose Bazel targets for LLVM binaries and libraries. Some come from the upstream `@llvm-project` Bazel overlay, and we also provide missing coverage with our own BUILD files, including `compiler-rt`, `libc++`, `libc++abi`, `libunwind`, and sanitizer runtimes.
 3. **WIP crossenv package targets for outside-Bazel use**
@@ -128,6 +128,8 @@ If you wish to setup things manually, you will likely require a few flags:
 | **armv7-linux-musleabihf** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **aarch64-windows-gnu ²**| ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **x86_64-windows-gnu ²** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **aarch64-windows-msvc ³** | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
+| **x86_64-windows-msvc ³** | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
 | **bpfeb** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **bpfel** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **wasm32-unknown-unknown** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -136,6 +138,9 @@ If you wish to setup things manually, you will likely require a few flags:
 ¹ See "GNU C Library" section for glibc version selection.
 
 ² See "Windows" section.
+
+³ MSVC ABI targets currently require a macOS or Linux execution platform. See
+"Windows" section.
 
 ### musl
 
@@ -221,9 +226,41 @@ constraint to the target platform.
 
 ### Windows
 
-Windows is currently supported via MinGW-w64. UCRT is used by default; MSVCRT
-can be selected by adding the `@llvm//constraints/windows/crt:msvcrt` constraint
-to the target platform. Native MSVC targets are not yet supported.
+Windows targets support both the GNU and native MSVC ABIs. MinGW-w64 targets use
+UCRT by default; MSVCRT can be selected by adding the
+`@llvm//constraints/windows/crt:msvcrt` constraint to the target platform. This
+CRT constraint selects a MinGW-w64 runtime flavor; it does not select the MSVC
+target ABI.
+
+Repository-provided Windows platforms use the
+`@llvm//constraints/windows/abi:gnu` ABI. User-defined Windows platforms that
+omit this toolchain-specific constraint retain the same MinGW behavior. The
+`gnullvm` value is accepted for Rust compatibility and uses Clang's GNU Windows
+target environment.
+
+The native MSVC ABI is available through
+`@llvm//platforms:windows_x86_64_msvc` and
+`@llvm//platforms:windows_aarch64_msvc`. These target toolchains use clang-cl,
+lld-link, the Microsoft Visual C++ runtime and Windows SDK, and a statically
+linked libc++. Their compile and link actions currently support macOS and Linux
+execution platforms; native Windows execution toolchains are not yet
+registered. Using the Microsoft inputs requires explicit acceptance of both
+licenses:
+
+```sh
+bazel build \
+  --platforms=@llvm//platforms:windows_x86_64_msvc \
+  --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
+  --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
+  //:app
+```
+
+MSVC targets default to the retail dynamic CRT (`/MD`). Select the retail static
+CRT (`/MT`) with
+`--features=-dynamic_link_msvcrt,static_link_msvcrt`. Debug CRT modes (`/MDd`
+and `/MTd`) are not supported. Sanitizers, coverage/FDO, header parsing, module
+maps, and layering checks are also not yet supported for MSVC targets; requests
+for unsupported features fail during analysis rather than being ignored.
 
 ### macOS notes
 
@@ -323,8 +360,14 @@ Current packaging targets include:
 - `//prebuilt/llvm:for_macos_arm64`
 - `//prebuilt/llvm:for_windows_amd64`
 - `//prebuilt/llvm:for_windows_arm64`
+- `//prebuilt/llvm:for_windows_amd64_msvc`
+- `//prebuilt/llvm:for_windows_arm64_msvc`
 
 These targets are what release workflows use to produce `.tar.zst` artifacts today. The final crossenv UX and packaging layout are still being refined.
+The MSVC archives use source-backed ThinLTO but intentionally do not use FDO:
+the available Linux profile-training executables record Itanium C++ names,
+which cannot profile the Microsoft-mangled C++ functions in the Windows LLVM
+binaries.
 
 ## Roadmap
 
@@ -332,6 +375,7 @@ See https://github.com/hermeticbuild/hermetic-llvm/milestone/1
 
 ## Users
 - [OpenAI](https://github.com/openai/codex)
+- [LLVM](https://github.com/llvm/llvm-project)
 - [Aspect](https://github.com/aspect-build/aspect-cli)
 - [ZML](https://github.com/zml/zml)
 - [rules_py](https://github.com/aspect-build/rules_py)
@@ -343,6 +387,10 @@ See https://github.com/hermeticbuild/hermetic-llvm/milestone/1
 - [Patagia](https://patagia.se)
 - [OpenROAD](https://github.com/The-OpenROAD-Project/OpenROAD)
 - [kepler-formal](https://github.com/keplertech/kepler-formal)
+- [Xybrid](https://github.com/xybrid-ai/xybrid)
+- [Google XLS](https://github.com/google/xls)
+- [Drake](https://github.com/RobotLocomotion/drake)
+- [Internet Computer](https://github.com/dfinity/ic)
 
 ## Prior art
 

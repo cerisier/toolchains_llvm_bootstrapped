@@ -76,6 +76,22 @@ jobs:
             ${{ matrix.extra_flags }} \
             //...
 
+          # The transitioned cross-compilation binaries are not tests, so
+          # `bazel test //...` does not build them. Exercise both MSVC target
+          # architectures in the existing cross-compilation jobs without
+          # adding a dedicated lane or executing the resulting PE files.
+          if [[ "${{ matrix.folder }}" == "e2e/cross_compilation" && "${{ matrix.bazel_version }}" == "last_rc" ]]; then
+            bazel \
+              --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc \
+              --bazelrc=.bazelrc \
+              build \
+              --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
+              --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
+              --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
+              //:main_windows_x86_64_msvc \
+              //:main_windows_aarch64_msvc
+          fi
+
       - name: bazel coverage e2e (lcov)
         if: matrix.folder == 'e2e/rules_cc' && matrix.bazel_version == 'last_rc'
         env:
@@ -160,8 +176,9 @@ jobs:
             --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
             //:main_default
 
-      # ASan and UBSan are fully supported on macOS: run their e2e tests (they
-      # execute locally — no remote executor is configured for macOS).
+      # ASan, UBSan and libFuzzer are fully supported on macOS: run their e2e
+      # tests (they execute locally — no remote executor is configured for
+      # macOS).
       # TSan and LSan build, link and load on macOS, but their runtime support
       # is a follow-up, so we only validate that their instrumented binaries
       # build (the runtime e2e tests stay Linux-only).
@@ -176,7 +193,10 @@ jobs:
             test \
             --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
             //:asan_output_test \
-            //:ubsan_output_test
+            //:ubsan_output_test \
+            //:fuzzer_output_test \
+            //:fuzzer_asan_output_test \
+            //:fuzzer_ubsan_output_test
           bazel \
             --bazelrc=.bazelrc \
             build \
@@ -195,9 +215,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Normal CI covers the current LLVM release. Keep one release for each
-        # supported prior LLVM major here.
-        llvm_version: ["21.1.8"]
+        # Normal CI covers the default LLVM release. Keep one release for each
+        # other supported LLVM major here.
+        llvm_version: ["21.1.8", "22.1.8"]
     runs-on: ubuntu-latest
     name: Analyze LLVM ${{ matrix.llvm_version }}
 
@@ -214,24 +234,41 @@ jobs:
           import re
           from pathlib import Path
 
-          module_file = Path("MODULE.bazel")
-          module_text = module_file.read_text()
-          module_text, replacement_count = re.subn(
-              r'^LLVM_VERSION = "[^"]+"$',
-              f'LLVM_VERSION = "{os.environ["LLVM_VERSION"]}"',
-              module_text,
-              count=1,
-              flags=re.MULTILINE,
-          )
-          if replacement_count != 1:
-              raise SystemExit("Expected exactly one LLVM_VERSION assignment in MODULE.bazel")
-          module_file.write_text(module_text)
+          for module_file in [
+              Path("MODULE.bazel"),
+              Path("e2e/llvm_version_selection/MODULE.bazel"),
+          ]:
+              module_text = module_file.read_text()
+              module_text, replacement_count = re.subn(
+                  r'^LLVM_VERSION = "[^"]+"$',
+                  f'LLVM_VERSION = "{os.environ["LLVM_VERSION"]}"',
+                  module_text,
+                  count=1,
+                  flags=re.MULTILINE,
+              )
+              if replacement_count != 1:
+                  raise SystemExit(f"Expected exactly one LLVM_VERSION assignment in {module_file}")
+              module_file.write_text(module_text)
           PY
 
       - name: Analyze LLVM ${{ matrix.llvm_version }} driver
         shell: bash
         run: |
           bazel build --nobuild //toolchain/bootstrap/stage1:llvm
+
+      - name: Verify consumer prebuilt LLVM ${{ matrix.llvm_version }} selection
+        env:
+          LLVM_VERSION: ${{ matrix.llvm_version }}
+        working-directory: e2e/llvm_version_selection
+        shell: bash
+        run: |
+          bazel --bazelrc=/dev/null build --nobuild //:hello --lockfile_mode=off
+          resource_dir="$(bazel --bazelrc=/dev/null cquery @llvm//:builtin_resource_dir --output=files --lockfile_mode=off)"
+          expected_suffix="/lib/clang/${LLVM_VERSION%%.*}"
+          if [[ "${resource_dir}" != *"${expected_suffix}" ]]; then
+            echo "Expected LLVM ${LLVM_VERSION} resource directory ending in ${expected_suffix}, got ${resource_dir}" >&2
+            exit 1
+          fi
 
   tests:
     strategy:
@@ -254,7 +291,7 @@ jobs:
           restore-keys: |
             bazel-cache-tests-${{ matrix.os }}-${{ matrix.bazel_version }}
 
-      - name: bazel query kernel headers and test //tests/...
+      - name: bazel query kernel headers and test root targets
         env:
           USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
         shell: bash
@@ -272,7 +309,10 @@ jobs:
             --bazelrc=.bazelrc \
             test \
             --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
-            //tests/...
+            //tests/... \
+            //tools/case_insensitive_vfs:cli_test \
+            //tools/case_insensitive_vfs:test \
+            //tools/def_file_generator:test
 
   docs:
     runs-on: macos-15-intel

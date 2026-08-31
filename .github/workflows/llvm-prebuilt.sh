@@ -24,7 +24,7 @@ if [[ ! "${BRANCH_NAME}" =~ ^llvm- ]]; then
 fi
 
 BRANCH_PAYLOAD="${BRANCH_NAME#llvm-}"
-BASE_BRANCH_VERSION="${BRANCH_PAYLOAD%%-*}"
+BASE_BRANCH_VERSION="${BRANCH_PAYLOAD%-*}"
 
 if [[ "${BASE_BRANCH_VERSION}" != "${LLVM_VERSION}" ]]; then
   echo "Branch version '${BASE_BRANCH_VERSION}' does not match LLVM_VERSION '${LLVM_VERSION}'" >&2
@@ -37,6 +37,8 @@ bazel \
   --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
   --config=remote \
   --config=release \
+  --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
+  --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
   --remote_download_outputs=toplevel \
   //prebuilt/llvm:all
 
@@ -50,6 +52,8 @@ PLATFORMS=(
   macos_amd64      darwin-amd64     llvm_release
   windows_amd64    windows-amd64    windows_llvm_release
   windows_arm64    windows-arm64    windows_llvm_release
+  windows_x86_64_msvc windows-amd64-msvc windows_msvc_llvm_release
+  windows_aarch64_msvc windows-arm64-msvc windows_msvc_llvm_release
 )
 
 for ((i=0; i<${#PLATFORMS[@]}; i+=3)); do

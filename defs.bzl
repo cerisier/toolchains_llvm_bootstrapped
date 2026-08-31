@@ -1,8 +1,12 @@
-def exec_test(*, rule, name, tags = [], args = [], env = {}, data = [], tools = [], **kwargs):
+def exec_test(rule, *, name, tags = [], args = [], env = {}, data = [], inner_data = [], tools = [], **kwargs):
+    # The inner executable is built in the exec configuration. Keep target
+    # artifacts on the outer test unless an inner rule attribute itself uses a
+    # location expansion for one of them (for example go_test.x_defs), in which
+    # case the caller must also declare it in inner_data.
     rule(
         name = name + "_",
+        data = inner_data,
         tags = tags + (["manual"] if "manual" not in tags else []),
-        data = data,
         **kwargs
     )
 
@@ -19,16 +23,19 @@ def exec_test(*, rule, name, tags = [], args = [], env = {}, data = [], tools = 
 
 def _exec_test_impl(ctx):
     inner = ctx.attr.inner[DefaultInfo]
-    out = ctx.outputs.executable
+    inner_executable = inner.files_to_run.executable
+    out = ctx.actions.declare_file(ctx.label.name + ".exe") if inner_executable.extension == "exe" else ctx.outputs.executable
 
     ctx.actions.symlink(
-        target_file = inner.files_to_run.executable,
+        target_file = inner_executable,
         output = out,
     )
 
-    runfiles = ctx.runfiles(ctx.files.data + ctx.files.tools)
-
     data = ctx.attr.data + ctx.attr.tools
+    runfiles = ctx.runfiles(ctx.files.data + ctx.files.tools).merge_all([
+        target[DefaultInfo].default_runfiles
+        for target in data
+    ])
 
     return [
         DefaultInfo(
@@ -64,6 +71,12 @@ _exec_test = rule(
         "env": attr.string_dict(
             doc = "The service manager will merge these variables into the environment when spawning the underlying binary.",
         ),
+    },
+    # The executable is built in the rule's exec configuration. Override
+    # Bazel's implicit target-matching test toolchain so the test runner uses
+    # the same unconstrained execution-platform selection as this rule.
+    exec_groups = {
+        "test": exec_group(),
     },
     test = True,
 )

@@ -1,4 +1,5 @@
 load("@bazel_lib//lib:transitions.bzl", "platform_transition_binary")
+load("@llvm//:defs.bzl", "exec_test")
 load("@llvm//toolchain:selects.bzl", "platform_llvm_binary")
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
@@ -71,7 +72,8 @@ platform_transition_binary(
     target_platform = "@llvm//platforms:linux_aarch64",
 )
 
-sh_test(
+exec_test(
+    sh_test,
     name = "x86_64_musl_static_pie_test",
     srcs = ["verify_static_pie.sh"],
     args = [
@@ -80,11 +82,14 @@ sh_test(
     ],
     data = [
         ":hello_x86_64_musl_pie_on",
+    ],
+    tools = [
         ":llvm-readelf",
     ],
 )
 
-sh_test(
+exec_test(
+    sh_test,
     name = "x86_64_musl_static_non_pie_default_test",
     srcs = ["verify_static_non_pie.sh"],
     args = [
@@ -93,11 +98,14 @@ sh_test(
     ],
     data = [
         ":hello_x86_64_musl",
+    ],
+    tools = [
         ":llvm-readelf",
     ],
 )
 
-sh_test(
+exec_test(
+    sh_test,
     name = "x86_64_glibc_dynamic_non_pie_test",
     srcs = ["verify_dynamic_non_pie.sh"],
     args = [
@@ -106,11 +114,14 @@ sh_test(
     ],
     data = [
         ":hello_x86_64_gnu",
+    ],
+    tools = [
         ":llvm-readelf",
     ],
 )
 
-sh_test(
+exec_test(
+    sh_test,
     name = "aarch64_musl_static_pie_test",
     srcs = ["verify_static_pie.sh"],
     args = [
@@ -119,11 +130,14 @@ sh_test(
     ],
     data = [
         ":hello_aarch64_musl_pie_on",
+    ],
+    tools = [
         ":llvm-readelf",
     ],
 )
 
-sh_test(
+exec_test(
+    sh_test,
     name = "aarch64_musl_static_non_pie_default_test",
     srcs = ["verify_static_non_pie.sh"],
     args = [
@@ -132,11 +146,14 @@ sh_test(
     ],
     data = [
         ":hello_aarch64_musl",
+    ],
+    tools = [
         ":llvm-readelf",
     ],
 )
 
-sh_test(
+exec_test(
+    sh_test,
     name = "aarch64_glibc_dynamic_non_pie_test",
     srcs = ["verify_dynamic_non_pie.sh"],
     args = [
@@ -145,6 +162,8 @@ sh_test(
     ],
     data = [
         ":hello_aarch64_gnu",
+    ],
+    tools = [
         ":llvm-readelf",
     ],
 )

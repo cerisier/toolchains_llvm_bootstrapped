@@ -2,6 +2,7 @@ load("@bazel_lib//:bzl_library.bzl", "bzl_library")
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
 load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@bazel_skylib//rules:common_settings.bzl", "string_setting")
+load("@llvm-project//:vars.bzl", "LLVM_VERSION_MAJOR")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
 load("//toolchain/runtimes:cc_stage0_object.bzl", "cc_stage0_object")
@@ -219,6 +220,12 @@ copy_to_resource_directory(
     srcs = select({
         "//platforms/config:none_bpfeb": {},
         "//platforms/config:none_bpfel": {},
+        "//platforms/config:windows_x86_64_msvc": {
+            "//runtimes/compiler-rt:clang_rt.builtins.static": "clang_rt.builtins",
+        },
+        "//platforms/config:windows_aarch64_msvc": {
+            "//runtimes/compiler-rt:clang_rt.builtins.static": "clang_rt.builtins",
+        },
         "//conditions:default": {
             "//runtimes/compiler-rt:clang_rt.builtins.static": "libclang_rt.builtins",
         },
@@ -238,7 +245,9 @@ copy_to_resource_directory(
         "//config:ubsan_enabled": {
             "//runtimes/compiler-rt:clang_rt.ubsan_standalone.static": "libclang_rt.ubsan_standalone",
             "//runtimes/compiler-rt:clang_rt.ubsan_standalone_cxx.static": "libclang_rt.ubsan_standalone_cxx",
-        },
+        } | ({
+            "//runtimes/compiler-rt:clang_rt.ubsan_loop_detect.static": "libclang_rt.ubsan_loop_detect",
+        } if int(LLVM_VERSION_MAJOR) >= 23 else {}),
         "//conditions:default": {},
     }) | select({
         "//config:cfi_enabled": {
@@ -354,6 +363,13 @@ copy_to_resource_directory(
             "//runtimes/compiler-rt:clang_rt.profile.static": "libclang_rt.profile_osx",
         },
         "//conditions:default": {},
+    }) | select({
+        "//config:fuzzer_enabled": {
+            "//runtimes/compiler-rt:clang_rt.fuzzer.static": "libclang_rt.fuzzer_osx",
+            "//runtimes/compiler-rt:clang_rt.fuzzer_no_main.static": "libclang_rt.fuzzer_no_main_osx",
+            "//runtimes/compiler-rt:clang_rt.fuzzer_interceptors.static": "libclang_rt.fuzzer_interceptors_osx",
+        },
+        "//conditions:default": {},
     }),
     target_compatible_with = ["@platforms//os:macos"],
     target_triple = "darwin",
@@ -374,6 +390,7 @@ bzl_library(
     srcs = ["copy_to_resource_directory.bzl"],
     visibility = ["//visibility:public"],
     deps = [
+        "//constraints/windows/abi:abis",
         "@bazel_lib//lib:copy_file",
         "@bazel_lib//lib:copy_to_directory",
     ],

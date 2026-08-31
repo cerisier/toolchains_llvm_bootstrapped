@@ -17,27 +17,65 @@ Groups are defined at the level of the most constrained targets, so that more fe
 
 ### Package structure
 
-**//toolchain/args:BUILD.bazel**:
-- Defines the canonical meaning of each argument group.
-- Groups may be empty, but must exist.
-- No platform select() logic.
+**//toolchain:BUILD.bazel**:
+- Owns complete rules_cc argument-list ordering and composition.
+- Exposes the public `toolchain_args` target consumed by `cc_toolchain`.
+- Selects between complete generic and Windows compositions at the target-OS
+  boundary.
+- References named semantic implementations; it contains no raw flags or
+  action bindings.
 
-This package defines what each group means, independent of platform or environment.
+`windows_toolchain_args` is intentionally a complete composition rather than a
+late platform-specific delta. Its semantic slots may use generic
+implementations unchanged or select Windows, clang-cl, COFF, MSVC ABI, CRT, and
+SDK implementations as appropriate. This explicit duplication is temporary
+while those semantics are normalized. `platform_specific_args` remains only as
+a legacy holder for generic platform behavior that has not yet been decomposed;
+it is not the Windows extension point.
+
+**//toolchain/args:BUILD.bazel**:
+- Defines generic argument implementations and reusable compiler-personality
+  implementations.
+- Groups may be empty, but their semantic meaning must remain stable.
+- Does not own complete toolchain ordering.
+
+This package provides generic and personality-specific semantic pieces for the
+top-level compositions.
 
 **//toolchain/args/\<platform\>:BUILD.bazel**:
-- Defines platform-specific implementations of argument groups.
-- May replace or extend canonical groups where platform semantics differ.
-- No platform select() logic.
+- Defines named semantic overrides for one target OS/platform family.
+- May select peer implementations at the next platform-local level—such as a
+  Windows target ABI/environment or an intentional empty implementation.
+- Does not define the complete rules_cc argument list or its ordering.
 
-These packages adjust how a canonical group is implemented on a given platform, without changing its semantic intent.
+For example, `//toolchain/args/windows:unwindlib` selects the applicable
+Windows implementation of that one semantic. `//toolchain:windows_toolchain_args`
+composes it in the complete Windows toolchain.
 
-**//toolchain:BUILD.bazel**:
-- Assembles the final toolchain by selecting between argument groups.
-- Contains only cc_args_list targets.
-- No raw flags or action bindings.
-- **All platform selection lives here.**
+**//toolchain/args/\<platform\>/\<variant\>:BUILD.bazel**:
+- Defines semantic implementations scoped to one selected platform variant.
+- May select dimensions that further specialize that scope, such as CRT
+  family or linkage, CPU, SDK version, or runtime build stage.
+- Owns the concrete flags, action bindings, inputs, and data for that scoped
+  implementation.
 
-This package answers which groups apply on which platforms, and nothing else.
+Selection follows the package hierarchy: a package may refine dimensions below
+its declared scope, but it must not route upward to a broader target OS or
+sideways between peer variants. For example, `//toolchain/args/windows` selects
+MinGW versus MSVC implementations, while the selected variant may refine its
+own CRT choice. Compiler personality and execution platform remain separate
+axes rather than deeper platform variants.
+
+Compiler personality is a separate axis from target OS, object format, ABI,
+CRT, SDK/runtime family, C++ runtime, and execution platform. Reusable clang-cl
+grammar stays in compiler-personality argument and feature layers. A supported
+Windows composition explicitly combines that grammar with its COFF and MSVC
+target semantics.
+
+**//toolchain/runtimes:BUILD.bazel** follows the same ownership rule for staged
+runtime toolchains: its public `toolchain_args` selects complete generic or
+Windows runtime compositions, while concrete runtime compiler/linker semantics
+remain in argument implementation packages.
 
 TODO(cerisier): Support macOS specific flags (objc and frameworks). Still needed ?
 

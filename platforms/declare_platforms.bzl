@@ -1,5 +1,6 @@
 load("//constraints/cxxstdlib:cxxstdlib_versions.bzl", "DEFAULT_CXXSTDLIB")
 load("//constraints/libc:libc_versions.bzl", "LIBCS", "default_libc")
+load("//constraints/windows/abi:abis.bzl", "WINDOWS_GENERIC_PLATFORM_ABI")
 load("//platforms:common.bzl", "ARCH_ALIASES", "LIBC_SUPPORTED_TARGETS", "SUPPORTED_TARGETS")
 
 def declare_platforms():
@@ -23,6 +24,13 @@ def declare_platforms():
             # constraint if they want to.
             constraints.append("//constraints/libc:{}".format(default_libc(target_os, target_cpu)))
 
+        if target_os == "windows":
+            # Repository-owned Windows platforms state their existing GNU ABI
+            # contract explicitly. The constraint default remains
+            # unconstrained for downstream platforms that do not know about
+            # this toolchain-specific dimension.
+            constraints.append("//constraints/windows/abi:" + WINDOWS_GENERIC_PLATFORM_ABI)
+
         native.platform(
             name = "{}_{}".format(target_os, target_cpu),
             constraint_values = constraints,
@@ -37,6 +45,21 @@ def declare_platforms():
             )
 
     declare_platforms_libc_aware()
+    declare_windows_msvc_platforms()
+
+def declare_windows_msvc_platforms():
+    for target_cpu in ["x86_64", "aarch64"]:
+        native.platform(
+            name = "windows_{}_msvc".format(target_cpu),
+            constraint_values = [
+                "@platforms//cpu:{}".format(target_cpu),
+                "@platforms//os:windows",
+                "//constraints/cxxstdlib:libcxx",
+                "//constraints/windows/abi:msvc",
+                "//constraints/windows/crt:ucrt",
+            ],
+            visibility = ["//visibility:public"],
+        )
 
 def declare_platforms_libc_aware():
     for target_os, target_cpu in LIBC_SUPPORTED_TARGETS:

@@ -1,20 +1,37 @@
 load("@bazel_features//:features.bzl", "bazel_features")
 load("@bazel_skylib//rules/directory:directory.bzl", "directory")
 load("@llvm//runtimes:module_map.bzl", "include_path", "module_map")
-load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains:tool.bzl", "cc_tool")
 load("@rules_cc//cc/toolchains:tool_map.bzl", "cc_tool_map")
 load("//:directory.bzl", "headers_directory")
+load("//toolchain/args:compiler_resource_headers.bzl", "declare_clang_cl_compile_resource_headers", "declare_clang_compile_resource_headers")
 
 _VALIDATE_STATIC_LIBRARY_TOOL = {
     "@rules_cc//cc/toolchains/actions:validate_static_library": ":static_library_validator",
 } if bazel_features.cc.supports_starlarkified_toolchains else {}
 
 def declare_llvm_targets(*, suffix = ""):
+    """Declares the Bazel interface of one installed LLVM distribution.
+
+    The bin/* tools and lib/clang/* resource headers below come from the same
+    archive and must remain coupled. These targets provide the downloaded
+    Stage 0 compiler used to build Stage 1, as well as ordinary prebuilt
+    toolchains. Source-built stages declare the analogous tools and install
+    their matching source resource headers in //toolchain/bootstrap.
+    """
+
+    # Model the resource directory already installed beside this archive's
+    # compiler binaries. This is never the LLVM source tree being compiled.
     headers_directory(
         name = "builtin_resource_dir",
         # Grab whichever version-specific dir is there.
         path = native.glob(["lib/clang/*"], exclude_directories = 0)[0],
+        visibility = ["//visibility:public"],
+    )
+
+    headers_directory(
+        name = "builtin_resource_include_dir",
+        path = native.glob(["lib/clang/*/include"], exclude_directories = 0)[0],
         visibility = ["//visibility:public"],
     )
 
@@ -62,29 +79,19 @@ def declare_llvm_targets(*, suffix = ""):
         allowlist_include_directories = [":builtin_resource_dir"],
     )
 
-    cc_args(
+    declare_clang_compile_resource_headers(
         name = "compile_resource_dir",
-        actions = [
-            "@rules_cc//cc/toolchains/actions:compile_actions",
-        ],
-        allowlist_include_directories = [
-            ":builtin_resource_dir",
-        ],
-        args = [
-            # Use -isystem instead of -resource-dir to avoid conflicts with the
-            # linking specific -resource-dir and rules_foreign_cc which does
-            # 'CC CFLAGS LDFLAGS'. This has to be last in the search paths
-            "-Xclang",
-            "-internal-isystem",
-            "-Xclang",
-            "{resource_dir}/include",
-        ],
-        data = [
-            ":builtin_resource_dir",
-        ],
-        format = {
-            "resource_dir": ":builtin_resource_dir",
-        },
+        resource_include_directory = "builtin_resource_include_dir",
+        # The clang tool already declares this parent tree. Reuse that exact
+        # artifact instead of adding its nested include tree as a second action
+        # input, which local Bazel sandboxes cannot materialize concurrently.
+        resource_headers_data = "builtin_resource_dir",
+        visibility = ["//visibility:public"],
+    )
+
+    declare_clang_cl_compile_resource_headers(
+        name = "clang_cl_compile_resource_dir",
+        resource_include_directory = "builtin_resource_include_dir",
         visibility = ["//visibility:public"],
     )
 
@@ -103,6 +110,14 @@ def declare_llvm_targets(*, suffix = ""):
             "cxxfilt": "bin/c++filt" + suffix,
             "llvm_nm": "bin/llvm-nm" + suffix,
         },
+    )
+
+    cc_tool(
+        name = "def_file_generator",
+        src = "@llvm//tools/def_file_generator",
+        data = ["bin/llvm-nm" + suffix],
+        env = {"LLVM_NM": "{llvm_nm}"},
+        format = {"llvm_nm": "bin/llvm-nm" + suffix},
     )
 
     TOOLS_WITHOUT_LINKER = {
@@ -130,6 +145,52 @@ def declare_llvm_targets(*, suffix = ""):
         tools = BASE_TOOLS | COMPLETE_ONLY_TOOLS | {
             "@rules_cc//cc/toolchains/actions:ar_actions": ":llvm-ar",
         },
+        visibility = ["//visibility:public"],
+    )
+
+    # MSVC ABI actions use the CL/LINK dialect directly. Keep this map separate
+    # from MinGW so target ABI, never execution OS, selects the personality.
+    MSVC_CONSTRUCTION_TOOLS = {
+        "@rules_cc//cc/toolchains/actions:assemble": ":clang-cl",
+        "@rules_cc//cc/toolchains/actions:c_compile": ":clang-cl",
+        "@rules_cc//cc/toolchains/actions:cpp_compile": ":clang-cl",
+        "@rules_cc//cc/toolchains/actions:linkstamp_compile": ":clang-cl",
+        "@rules_cc//cc/toolchains/actions:lto_backend": ":clang-cl",
+        "@rules_cc//cc/toolchains/actions:preprocess_assemble": ":clang-cl",
+        "@rules_cc//cc/toolchains/actions:cpp_header_parsing": ":clang-cl",
+        "@rules_cc//cc/toolchains/actions:ar_actions": ":llvm-ar",
+        "@rules_cc//cc/toolchains/actions:cpp_link_executable": ":clang-cl",
+        "@rules_cc//cc/toolchains/actions:cpp_link_dynamic_library": ":clang-cl",
+        "@rules_cc//cc/toolchains/actions:cpp_link_nodeps_dynamic_library": ":clang-cl",
+        "@rules_cc//cc/toolchains/actions:objc_executable": ":clang-cl",
+        "@rules_cc//cc/toolchains/actions:lto_index_for_executable": ":clang-cl",
+        "@rules_cc//cc/toolchains/actions:lto_index_for_dynamic_library": ":clang-cl",
+        "@rules_cc//cc/toolchains/actions:lto_index_for_nodeps_dynamic_library": ":clang-cl",
+        "@rules_cc//cc/toolchains/actions:strip": ":llvm-strip",
+    }
+
+    MSVC_COMPLETE_TOOLS = MSVC_CONSTRUCTION_TOOLS | {
+        "@rules_cc//cc/toolchains/actions:generate_def_file": ":def_file_generator",
+    } | _VALIDATE_STATIC_LIBRARY_TOOL
+
+    cc_tool_map(
+        name = "complete_tools_for_msvc",
+        tools = MSVC_COMPLETE_TOOLS,
+        visibility = ["//visibility:public"],
+    )
+
+    cc_tool_map(
+        name = "construction_tools_for_msvc",
+        tools = MSVC_CONSTRUCTION_TOOLS,
+        visibility = ["//visibility:public"],
+    )
+
+    native.alias(
+        name = "tools_for_msvc_for_runtime",
+        actual = select({
+            "@llvm//toolchain:runtimes_all": ":complete_tools_for_msvc",
+            "//conditions:default": ":construction_tools_for_msvc",
+        }),
         visibility = ["//visibility:public"],
     )
 
@@ -224,6 +285,26 @@ def declare_llvm_targets(*, suffix = ""):
     )
 
     cc_tool(
+        name = "clang-cl",
+        src = "bin/clang-cl" + suffix,
+        data = [
+            ":builtin_resource_include_dir",
+            "bin/lld-link" + suffix,
+        ],
+        capabilities = [
+            "@rules_cc//cc/toolchains/capabilities:has_configured_linker_path",
+            "@rules_cc//cc/toolchains/capabilities:supports_dynamic_linker",
+            "@rules_cc//cc/toolchains/capabilities:supports_interface_shared_libraries",
+        ],
+        env = {
+            # Presence suppresses clang-cl's Visual Studio library probing;
+            # /lldignoreenv prevents the child linker from consuming it.
+            "LIB": "__hermetic_llvm_empty_lib__",
+        },
+        allowlist_include_directories = [":builtin_resource_include_dir"],
+    )
+
+    cc_tool(
         name = "lld",
         src = "bin/clang++" + suffix,
         data = [
@@ -232,6 +313,7 @@ def declare_llvm_targets(*, suffix = ""):
             "bin/lld" + suffix,
             "bin/wasm-ld" + suffix,
         ],
+        capabilities = ["@rules_cc//cc/toolchains/capabilities:supports_start_end_lib"],
     )
 
     cc_tool(
@@ -253,6 +335,7 @@ def declare_llvm_targets(*, suffix = ""):
         capabilities = [
             "@rules_cc//cc/toolchains/capabilities:has_configured_linker_path",
             "@rules_cc//cc/toolchains/capabilities:supports_interface_shared_libraries",
+            "@rules_cc//cc/toolchains/capabilities:supports_start_end_lib",
         ],
         env = {
             "COMPILER_PATH": "{llvm_bin}",
@@ -363,7 +446,7 @@ def declare_llvm_targets(*, suffix = ""):
         }),
     )
 
-    # this must match //toolchain:windows_toolchain_args
+    # This must match //toolchain:windows_toolchain_args.
     include_path(
         name = "windows_target_headers",
         srcs = [

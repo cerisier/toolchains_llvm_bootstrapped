@@ -22,6 +22,11 @@ py_binary(
     tags = ["manual"],
 )
 
+alias(
+    name = "def_file_generator",
+    actual = "//tools/def_file_generator",
+)
+
 bzl_library(
     name = "defs",
     srcs = ["defs.bzl"],

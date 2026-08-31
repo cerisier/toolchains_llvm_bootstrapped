@@ -1,5 +1,6 @@
 load("@bazel_lib//lib:copy_file.bzl", "COPY_FILE_TOOLCHAINS", "copy_file_action")
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory_bin_action")
+load("//constraints/windows/abi:abis.bzl", "WINDOWS_TARGET_TRIPLES_BY_CONFIG")
 
 # echo 'int main() {}' | bazel run //tools:clang -- -x c - -fuse-ld=lld -v --rtlib=compiler-rt -### --target=<triple>
 TRIPLE_SELECT_DICT = {
@@ -20,13 +21,11 @@ TRIPLE_SELECT_DICT = {
     "@llvm//platforms/config:linux_armv7_musl": "armv7-unknown-linux-musleabihf",
     "@llvm//platforms/config:macos_x86_64": "darwin",
     "@llvm//platforms/config:macos_aarch64": "darwin",
-    "@llvm//platforms/config:windows_x86_64": "x86_64-w64-windows-gnu",
-    "@llvm//platforms/config:windows_aarch64": "aarch64-w64-windows-gnu",
     "@llvm//platforms/config:none_bpfeb": "bpfeb-unknown-none",
     "@llvm//platforms/config:none_bpfel": "bpfel-unknown-none",
     "@llvm//platforms/config:none_wasm32": "wasm32-unknown-unknown",
     "@llvm//platforms/config:none_wasm64": "wasm64-unknown-unknown",
-}
+} | WINDOWS_TARGET_TRIPLES_BY_CONFIG
 
 def _copy_to_resource_directory_rule_impl(ctx):
     # Private staging folder inside the output-dir layout before we rewrite prefixes.

@@ -13,7 +13,14 @@ _LLVM_FDO_EXECUTORS = {
     },
 }
 
-bootstrap_binaries(fdo_profile = ":llvm_fdo_profdata")
+bootstrap_binaries(
+    fdo_profile = select({
+        "//platforms/config:windows_aarch64_msvc": None,
+        "//platforms/config:windows_x86_64_msvc": None,
+        "//conditions:default": ":llvm_fdo_profdata",
+    }),
+    source_backed = True,
+)
 
 [
     llvm_fdo_profile_workload(

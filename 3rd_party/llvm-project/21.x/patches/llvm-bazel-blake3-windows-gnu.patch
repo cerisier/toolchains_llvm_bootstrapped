@@ -14,7 +14,7 @@ diff --git a/llvm/BUILD.bazel b/llvm/BUILD.bazel
  load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
  load("@rules_cc//cc:cc_library.bzl", "cc_library")
  load("@bazel_skylib//rules:common_settings.bzl", "string_flag")
-@@ -245,6 +246,57 @@
+@@ -245,6 +246,66 @@
      flag_values = {"@rules_cc//cc/compiler:compiler": "msvc-cl"},
  )
 
@@ -25,6 +25,15 @@ diff --git a/llvm/BUILD.bazel b/llvm/BUILD.bazel
 +        "@platforms//os:windows",
 +    ],
 +    flag_values = {"@rules_cc//cc/compiler:compiler": "clang"},
++)
++
++config_setting(
++    name = "is_x86_64_windows_clang_cl",
++    constraint_values = [
++        "@platforms//cpu:x86_64",
++        "@platforms//os:windows",
++    ],
++    flag_values = {"@rules_cc//cc/compiler:compiler": "clang-cl"},
 +)
 +
 +# TODO(zbarsky): Is there a better way to express this?
@@ -72,7 +81,7 @@ diff --git a/llvm/BUILD.bazel b/llvm/BUILD.bazel
  cc_library(
      name = "Support",
      srcs = glob([
-@@ -272,11 +324,13 @@
+@@ -272,11 +333,17 @@
          "@platforms//cpu:aarch64": [
              "lib/Support/BLAKE3/blake3_neon.c",
          ],
@@ -82,6 +91,10 @@ diff --git a/llvm/BUILD.bazel b/llvm/BUILD.bazel
 -            "lib/Support/BLAKE3/blake3_sse2_x86-64_unix.S",
 -            "lib/Support/BLAKE3/blake3_sse41_x86-64_unix.S",
 +        ":is_x86_64_windows_clang_mingw": [
++            pattern % "windows_gnu"
++            for pattern in BLAKE3_x86_64_ASM_SOURCE_PATTERNS
++        ],
++        ":is_x86_64_windows_clang_cl": [
 +            pattern % "windows_gnu"
 +            for pattern in BLAKE3_x86_64_ASM_SOURCE_PATTERNS
 +        ],

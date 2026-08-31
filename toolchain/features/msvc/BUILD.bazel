@@ -1,0 +1,289 @@
+load("@bazel_lib//:bzl_library.bzl", "bzl_library")
+load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
+load("@rules_cc//cc/toolchains:feature.bzl", "cc_feature")
+load("@rules_cc//cc/toolchains:feature_set.bzl", "cc_feature_set")
+load("@rules_cc//cc/toolchains:mutually_exclusive_category.bzl", "cc_mutually_exclusive_category")
+load("@rules_cc//cc/toolchains:nested_args.bzl", "cc_nested_args")
+load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
+load("//config:defs.bzl", "SANITIZERS")
+load(":validation.bzl", "msvc_configuration_validation")
+
+package(default_visibility = ["//visibility:public"])
+
+_COMPILE_ACTIONS = [
+    "@rules_cc//cc/toolchains/actions:c_compile",
+    "@rules_cc//cc/toolchains/actions:cpp_compile",
+    "@rules_cc//cc/toolchains/actions:linkstamp_compile",
+    "@rules_cc//cc/toolchains/actions:preprocess_assemble",
+    "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
+]
+
+_LINK_ACTIONS = ["@rules_cc//cc/toolchains/actions:link_actions"]
+
+_UNSUPPORTED_FEATURES = [
+    "asan",
+    "cfi",
+    "coverage",
+    "dfsan",
+    "fission",
+    "fdo_optimize",
+    "fully_static_link",
+    "fuzzer",
+    "gcc_coverage_map_format",
+    "llvm_coverage_map_format",
+    "lsan",
+    "msan",
+    "nsan",
+    "objc_arc",
+    "openmp",
+    "parse_headers",
+    "per_object_debug_info",
+    "profile",
+    "rtsan",
+    "safestack",
+    "supports_pic",
+    "tsan",
+    "tysan",
+    "ubsan",
+    "xray",
+]
+
+_UNSUPPORTED_LEGACY_FEATURES = {
+    "coverage": "@rules_cc//cc/toolchains/features/legacy:coverage",
+    "fdo_optimize": "@rules_cc//cc/toolchains/features/legacy:fdo_optimize",
+    "fully_static_link": "@rules_cc//cc/toolchains/features/legacy:fully_static_link",
+    "gcc_coverage_map_format": "@rules_cc//cc/toolchains/features/legacy:gcc_coverage_map_format",
+    "llvm_coverage_map_format": "@rules_cc//cc/toolchains/features/legacy:llvm_coverage_map_format",
+    "per_object_debug_info": "@rules_cc//cc/toolchains/features/legacy:per_object_debug_info",
+}
+
+# This feature is always enabled. Binding every unsupported feature to the same
+# category makes target-local and command-line requests fail in the consuming
+# C++ feature configuration, where ctx.features on a data dependency cannot.
+cc_mutually_exclusive_category(
+    name = "configuration_support",
+)
+
+cc_feature(
+    name = "supported_configuration",
+    feature_name = "msvc_supported_configuration",
+    mutually_exclusive = [":configuration_support"],
+)
+
+[
+    cc_feature(
+        name = "unsupported_" + feature,
+        feature_name = feature,
+        mutually_exclusive = [":configuration_support"],
+    )
+    for feature in _UNSUPPORTED_FEATURES
+    if feature not in _UNSUPPORTED_LEGACY_FEATURES
+]
+
+[
+    cc_feature(
+        name = "unsupported_" + feature,
+        mutually_exclusive = [":configuration_support"],
+        overrides = label,
+    )
+    for feature, label in _UNSUPPORTED_LEGACY_FEATURES.items()
+]
+
+msvc_configuration_validation(
+    name = "configuration_validation",
+    unsupported_build_settings = [
+        "//config:" + sanitizer
+        for sanitizer in SANITIZERS
+    ],
+    unsupported_features = _UNSUPPORTED_FEATURES + ["supports_start_end_lib"],
+)
+
+cc_args(
+    name = "configuration_validation_args",
+    actions = _COMPILE_ACTIONS + _LINK_ACTIONS + [
+        "@rules_cc//cc/toolchains/actions:cpp_link_static_library",
+    ],
+    data = [":configuration_validation"],
+)
+
+# The MSVC ABI route still archives COFF objects with llvm-ar. This is an
+# artifact/tool contract, not clang-cl command-line syntax.
+cc_args(
+    name = "archive_create_args",
+    actions = ["@rules_cc//cc/toolchains/actions:cpp_link_static_library"],
+    args = [
+        "rcsD",
+        "{output_execpath}",
+    ],
+    format = {"output_execpath": "@rules_cc//cc/toolchains/variables:output_execpath"},
+    requires_not_none = "@rules_cc//cc/toolchains/variables:output_execpath",
+)
+
+cc_nested_args(
+    name = "archive_object",
+    args = ["{object_file}"],
+    format = {"object_file": "@rules_cc//cc/toolchains/variables:libraries_to_link.name"},
+    requires_equal = "@rules_cc//cc/toolchains/variables:libraries_to_link.type",
+    requires_equal_value = "object_file",
+)
+
+cc_nested_args(
+    name = "archive_object_group",
+    args = ["{object_file}"],
+    format = {"object_file": "@rules_cc//cc/toolchains/variables:libraries_to_link.object_files"},
+    iterate_over = "@rules_cc//cc/toolchains/variables:libraries_to_link.object_files",
+    requires_equal = "@rules_cc//cc/toolchains/variables:libraries_to_link.type",
+    requires_equal_value = "object_file_group",
+)
+
+cc_nested_args(
+    name = "archive_inputs_expansion",
+    iterate_over = "@rules_cc//cc/toolchains/variables:libraries_to_link",
+    nested = [
+        ":archive_object",
+        ":archive_object_group",
+    ],
+)
+
+cc_args(
+    name = "archive_inputs_args",
+    actions = ["@rules_cc//cc/toolchains/actions:cpp_link_static_library"],
+    nested = [":archive_inputs_expansion"],
+    requires_not_none = "@rules_cc//cc/toolchains/variables:libraries_to_link",
+)
+
+cc_feature(
+    name = "archiver_flags",
+    args = [
+        ":archive_create_args",
+        ":archive_inputs_args",
+    ],
+    overrides = "@rules_cc//cc/toolchains/features/legacy:archiver_flags",
+)
+
+cc_feature(
+    name = "pic",
+    # COFF has no PIC/non-PIC object distinction.
+    overrides = "@rules_cc//cc/toolchains/features/legacy:pic",
+)
+
+cc_feature(
+    name = "force_pic",
+    # COFF has no PIC/non-PIC object distinction.
+    overrides = "@rules_cc//cc/toolchains/features/legacy:force_pic_flags",
+)
+
+cc_feature_set(
+    name = "pic_flags",
+    all_of = [
+        ":pic",
+        ":force_pic",
+    ],
+)
+
+cc_feature(
+    name = "dynamic_linking_mode",
+    overrides = "@rules_cc//cc/toolchains/features:dynamic_linking_mode",
+)
+
+cc_feature(
+    name = "static_linking_mode",
+    overrides = "@rules_cc//cc/toolchains/features:static_linking_mode",
+)
+
+config_setting(
+    name = "static_crt_config",
+    values = {"features": "static_link_msvcrt"},
+)
+
+cc_mutually_exclusive_category(
+    name = "crt_mode",
+)
+
+cc_args(
+    name = "static_crt_compile_args",
+    actions = _COMPILE_ACTIONS + _LINK_ACTIONS,
+    args = ["/MT"],
+)
+
+cc_feature(
+    name = "static_link_msvcrt",
+    feature_name = "static_link_msvcrt",
+    mutually_exclusive = [":crt_mode"],
+)
+
+cc_args(
+    name = "dynamic_crt_compile_args",
+    actions = _COMPILE_ACTIONS + _LINK_ACTIONS,
+    args = ["/MD"],
+)
+
+cc_feature(
+    name = "dynamic_link_msvcrt",
+    feature_name = "dynamic_link_msvcrt",
+    mutually_exclusive = [":crt_mode"],
+)
+
+cc_args_list(
+    name = "crt_compile_args",
+    args = select({
+        ":static_crt_config": [":static_crt_compile_args"],
+        "//conditions:default": [":dynamic_crt_compile_args"],
+    }),
+)
+
+cc_args(
+    name = "interface_library_args",
+    actions = ["@rules_cc//cc/toolchains/actions:dynamic_library_link_actions"],
+    args = [
+        "/clang:-Xlinker",
+        "/clang:/IMPLIB:{interface_library_output_path}",
+    ],
+    format = {"interface_library_output_path": "@rules_cc//cc/toolchains/variables:interface_library_output_path"},
+    requires_not_none = "@rules_cc//cc/toolchains/variables:interface_library_output_path",
+)
+
+cc_feature(
+    name = "interface_library",
+    args = [":interface_library_args"],
+    feature_name = "msvc_interface_library",
+)
+
+cc_args(
+    name = "pdb_args",
+    actions = _LINK_ACTIONS,
+    args = [
+        "/clang:-Xlinker",
+        "/clang:/DEBUG",
+    ],
+)
+
+cc_feature_set(
+    name = "abi_known_features",
+    all_of = [
+        ":dynamic_link_msvcrt",
+        ":dynamic_linking_mode",
+        ":interface_library",
+        ":static_link_msvcrt",
+        ":static_linking_mode",
+        ":supported_configuration",
+    ] + [
+        ":unsupported_" + feature
+        for feature in _UNSUPPORTED_FEATURES
+    ],
+)
+
+cc_feature_set(
+    name = "abi_enabled_features",
+    all_of = [
+        ":dynamic_link_msvcrt",
+        ":interface_library",
+        ":supported_configuration",
+    ],
+)
+
+bzl_library(
+    name = "validation",
+    srcs = ["validation.bzl"],
+    deps = ["@bazel_skylib//rules:common_settings"],
+)

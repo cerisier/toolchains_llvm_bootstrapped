@@ -39,9 +39,11 @@ common:release  -c opt
 common:release  --strip=always
 common:release  --stripopt=--strip-all
 common:release  --features=thin_lto
-common:release  --copt=-fno-exceptions
-common:release  --copt=-fno-rtti
-common:release  --copt=-fomit-frame-pointer
+common:release  --features=no_exceptions
+common:release  --features=no_rtti
+common:release  --features=omit_frame_pointer
+common:release  --features=-dynamic_link_msvcrt
+common:release  --features=static_link_msvcrt
 common:release  --dynamic_mode=off
 common:release  --extra_toolchains=//toolchain:all
 common:release  --extra_execution_platforms=@llvm//:rbe_linux_x86_64,@llvm//:rbe_linux_aarch64
@@ -66,8 +68,8 @@ common:remote --jobs=800
 common:remote --extra_execution_platforms=@llvm//:rbe_platform
 common:remote --rewind_lost_inputs
 
-common --per_file_copt=external/.*llvm-project.*@-Wno-thread-safety-analysis
-common --host_per_file_copt=external/.*llvm-project.*@-Wno-thread-safety-analysis
+common --per_file_copt=external/.*llvm-project.*@-Xclang=-Wno-thread-safety-analysis
+common --host_per_file_copt=external/.*llvm-project.*@-Xclang=-Wno-thread-safety-analysis
 
 # Load any settings specific to the current user.
 # .bazelrc.user should appear in .gitignore so that settings are not shared with team members

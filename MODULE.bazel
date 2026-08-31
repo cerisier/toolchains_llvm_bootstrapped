@@ -5,15 +5,18 @@ module(
 )
 
 bazel_dep(name = "bazel_lib", version = "3.2.2")
-bazel_dep(name = "bazel_skylib", version = "1.8.2")
+bazel_dep(name = "bazel_skylib", version = "1.9.0")
 bazel_dep(name = "bazel_features", version = "1.42.0")
 bazel_dep(name = "platforms", version = "1.1.0")
-bazel_dep(name = "rules_cc", version = "0.2.20")
-bazel_dep(name = "rules_shell", version = "0.6.1")
-bazel_dep(name = "rules_python", version = "1.7.0")
+bazel_dep(name = "rules_cc", version = "0.2.22")
+bazel_dep(name = "rules_shell", version = "0.8.0")
+bazel_dep(name = "rules_python", version = "1.8.0")
 bazel_dep(name = "with_cfg.bzl", version = "0.12.0")
 bazel_dep(name = "tar.bzl", version = "0.10.4")
 bazel_dep(name = "rules_go", version = "0.62.0", repo_name = None)
+bazel_dep(name = "windows_support", version = "0.4.1")
+bazel_dep(name = "zlib-ng", version = "2.3.3.bcr.2", repo_name = "llvm_zlib")
+bazel_dep(name = "zstd", version = "1.5.7.bcr.1", repo_name = "llvm_zstd")
 
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
@@ -31,23 +34,35 @@ http_archive(
     urls = ["https://github.com/facebook/zstd/releases/download/v1.5.2/zstd-1.5.2.tar.gz"],
 )
 
-LLVM_VERSION = "22.1.8"
+LLVM_VERSION = "23.1.0"
 
-PREBUILT_LLVM_VERSION = "22.1.8"
+llvm = use_extension("//extensions:llvm.bzl", "llvm")
+llvm.version(llvm_version = LLVM_VERSION)
+llvm.configure(
+    targets = [
+        "AArch64",
+        "AMDGPU",
+        "ARM",
+        "BPF",
+        "NVPTX",
+        "RISCV",
+        "SystemZ",
+        "WebAssembly",
+        "X86",
+    ],
+)
+use_repo(llvm, "llvm-project", "llvm_version")
 
 llvm_toolchain_minimal = use_extension("//extensions:llvm_toolchain_minimal.bzl", "llvm_toolchain_minimal")
 llvm_toolchain_minimal.index(file = "//extensions:llvm_toolchain_minimal_index.json")
-llvm_toolchain_minimal.release(
-    llvm_version = PREBUILT_LLVM_VERSION,
-)
 use_repo(
     llvm_toolchain_minimal,
-    "llvm-toolchain-minimal-22.1.8-darwin-amd64",
-    "llvm-toolchain-minimal-22.1.8-darwin-arm64",
-    "llvm-toolchain-minimal-22.1.8-linux-amd64",
-    "llvm-toolchain-minimal-22.1.8-linux-arm64",
-    "llvm-toolchain-minimal-22.1.8-windows-amd64",
-    "llvm-toolchain-minimal-22.1.8-windows-arm64",
+    "llvm-toolchain-minimal-darwin-amd64",
+    "llvm-toolchain-minimal-darwin-arm64",
+    "llvm-toolchain-minimal-linux-amd64",
+    "llvm-toolchain-minimal-linux-arm64",
+    "llvm-toolchain-minimal-windows-amd64",
+    "llvm-toolchain-minimal-windows-arm64",
 )
 
 TOOLCHAIN_EXTRAS_SHA256 = {
@@ -85,40 +100,50 @@ use_repo(
     "bsd_tar_toolchains_windows_arm64",
 )
 
-llvm = use_extension("//extensions:llvm.bzl", "llvm")
-llvm.version(llvm_version = LLVM_VERSION)
-llvm.configure(
-    targets = [
-        "AArch64",
-        "AMDGPU",
-        "ARM",
-        "BPF",
-        "NVPTX",
-        "RISCV",
-        "SystemZ",
-        "WebAssembly",
-        "X86",
-    ],
-)
-use_repo(llvm, "llvm-project")
-
 musl = use_extension("//runtimes/musl/extension:musl.bzl", "musl")
 use_repo(musl, "musl_libc")
 
 mingw = use_extension("//runtimes/mingw/extension:mingw.bzl", "mingw")
 use_repo(mingw, "mingw")
 
+# The Microsoft payloads remain lazily fetched: the EULA gate is evaluated
+# only when an MSVC-ABI target requests @msvc_runtime.
+msvc_runtime = use_extension(
+    "@windows_support//windows:extensions.bzl",
+    "msvc_runtime",
+)
+msvc_runtime.configure(
+    msvc_version = "14.50.35717",
+    visual_studio_installer_manifest_integrity = "sha256-qOhU+p8/uurCfXME4pfxZg1xN0ATid61fPeYPzPBb+8=",
+    visual_studio_installer_manifest_url = "https://download.visualstudio.microsoft.com/download/pr/fdc37f6e-59f6-4054-838a-b476eeaa6ec3/1d82370739911457e0a2f6be15d8b5f569531b352b2eabb961429eea1e99e356/VisualStudio.vsman",
+)
+use_repo(msvc_runtime, "msvc_runtime")
+
+windows_sdk = use_extension(
+    "@windows_support//windows:extensions.bzl",
+    "windows_sdk",
+)
+windows_sdk.configure(
+    windows_sdk_integrity = {
+        "Microsoft.Windows.SDK.CPP": "sha256-/0VWYL7gcadEcVqWZWZvopwHaBV509gVlZqe7FpVZCQ=",
+        "Microsoft.Windows.SDK.CPP.arm64": "sha256-A7wMA9Q5zvhQdLvNQl+dXTptO0Z5Z6zSHaO6bf7q+mc=",
+        "Microsoft.Windows.SDK.CPP.x64": "sha256-rWzpD/lAEGmdKVSLPCseUsieuBFD4hmRVdmlw4ABtSs=",
+    },
+    windows_sdk_version = "10.0.26100.7705",
+)
+use_repo(windows_sdk, "windows_sdk")
+
 gcc = use_extension("//3rd_party/gcc/extension:gcc.bzl", "gcc")
 use_repo(gcc, "gcc")
 
 osx = use_extension("//extensions:osx.bzl", "osx")
 osx.from_archive(
-    sha256 = "edc7ce9b8f09e0c7a39aaa714f941b4c2597f333ec1ffe59a14d67eb36cdb7e7",
-    strip_prefix = "Payload/Library/Developer/CommandLineTools/SDKs/MacOSX26.4.sdk",
+    sha256 = "5f044578cd78a3a9b9c965a42d56bad609ee5d252e1d4e6aa7c42fc3f35fee7b",
+    strip_prefix = "Payload/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk",
     type = "pkg",
     urls = [
-        "https://swcdn.apple.com/content/downloads/60/13/122-35686-A_30JUXWIJFR/ck0gzuw5qccefzm3ptlwou3pu6a55d0o02/CLTools_macOSNMOS_SDK.pkg",
-        "https://web.archive.org/web/20260430051604id_/https://swcdn.apple.com/content/downloads/60/13/122-35686-A_30JUXWIJFR/ck0gzuw5qccefzm3ptlwou3pu6a55d0o02/CLTools_macOSNMOS_SDK.pkg",
+        "https://swcdn.apple.com/content/downloads/09/08/047-91568-A_Y1CFZWQCD4/4xekpyz43i26dbp4enxfro8eb1q7wiujh5/CLTools_macOSNMOS_SDK.pkg",
+        "https://web.archive.org/web/20260512015547id_/https://swcdn.apple.com/content/downloads/09/08/047-91568-A_Y1CFZWQCD4/4xekpyz43i26dbp4enxfro8eb1q7wiujh5/CLTools_macOSNMOS_SDK.pkg",
     ],
 )
 use_repo(osx, "macos_sdk")

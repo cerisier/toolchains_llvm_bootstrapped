@@ -104,8 +104,10 @@ def _llvm_fdo_profile_workload_impl(ctx):
 
     if ctx.attr.workload_kind == "hosted":
         compile_flags = _COMMON_COMPILE_FLAGS + _HOSTED_COMPILE_FLAGS
+        link_flags = _HOSTED_LINK_FLAGS
     else:
         compile_flags = _COMMON_COMPILE_FLAGS + _FREESTANDING_COMPILE_FLAGS
+        link_flags = []
 
     include_dirs = {}
     for file in ctx.files.srcs:
@@ -173,7 +175,7 @@ def _llvm_fdo_profile_workload_impl(ctx):
         cc_toolchain = cc_toolchain,
         feature_configuration = feature_configuration,
         output_file = binary_file.path,
-        user_link_flags = _HOSTED_LINK_FLAGS,
+        user_link_flags = link_flags,
     )
     link_args = ctx.actions.args()
     link_args.add_all(cc_common.get_memory_inefficient_command_line(

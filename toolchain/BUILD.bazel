@@ -144,7 +144,7 @@ cc_args_list(
             "//toolchain/args/linux:default_link_flags",
             "//toolchain/args/linux:non_pie_executable_link_flags",
         ],
-        "@platforms//os:windows": [],
+        "@platforms//os:windows": ["//toolchain/args/windows:default_link_flags"],
         "@platforms//os:none": [],
     }),
 )
@@ -156,18 +156,26 @@ cc_args_list(
         "@platforms//os:linux": [
             "//toolchain/args:crt_search_directory",
         ],
-        "@platforms//os:windows": [
-            "//toolchain/args:crt_search_directory",
-        ],
+        "@platforms//os:windows": ["//toolchain/args/windows:default_startfiles"],
         "@platforms//os:none": [],
     }),
 )
 
 cc_args_list(
     name = "resource_dir",
-    args = [
-        "//toolchain/args:resource_dir",
-    ],
+    args = select({
+        "@platforms//os:windows": ["//toolchain/args/windows:resource_dir"],
+        "//conditions:default": ["//toolchain/args:resource_dir"],
+    }),
+)
+
+cc_args_list(
+    name = "cxxstdlib_headers_include_search_paths",
+    args = select({
+        "@platforms//os:linux": ["//toolchain/args:cxxstdlib_headers_include_search_paths"],
+        "@platforms//os:windows": ["//toolchain/args/windows:cxxstdlib_headers_include_search_paths"],
+        "//conditions:default": [],
+    }),
 )
 
 cc_args_list(
@@ -179,9 +187,7 @@ cc_args_list(
         "@platforms//os:linux": [
             "//toolchain/args/linux:default_libs",
         ],
-        "@platforms//os:windows": [
-            "//toolchain/args/windows:default_libs",
-        ],
+        "@platforms//os:windows": ["//toolchain/args/windows:default_libs"],
         "//conditions:default": [],
     }),
 )
@@ -195,9 +201,7 @@ cc_args_list(
         "@platforms//os:linux": [
             "//toolchain/args:cxxstdlib_library_search_paths",
         ],
-        "@platforms//os:windows": [
-            "//toolchain/args:cxxstdlib_library_search_paths",
-        ],
+        "@platforms//os:windows": ["//toolchain/args/windows:cxxstdlib_library_search_paths"],
         "//conditions:default": [],
     }),
 )
@@ -213,9 +217,7 @@ cc_args_list(
         "@platforms//os:linux": [
             "//toolchain/args:libunwind_library_search_paths",
         ],
-        "@platforms//os:windows": [
-            "//toolchain/args:libunwind_library_search_paths",
-        ],
+        "@platforms//os:windows": ["//toolchain/args/windows:libunwind_library_search_paths"],
         "//conditions:default": [],
     }),
 )
@@ -226,6 +228,7 @@ cc_args_list(
         "@platforms//os:macos": [
             "//toolchain/args/macos:macos_sdk_sysroot",
         ],
+        "@platforms//os:windows": ["//toolchain/args/windows:sysroot_flags"],
         "//conditions:default": [
             "//toolchain/args:empty_sysroot_flags",
         ],
@@ -236,6 +239,7 @@ cc_args_list(
     name = "hermetic_compile_flags",
     args = select({
         "@platforms//os:macos": [],
+        "@platforms//os:windows": ["//toolchain/args/windows:hermetic_compile_flags"],
         "//conditions:default": [
             "//toolchain/args:hermetic_compile_flags",
         ],
@@ -243,9 +247,19 @@ cc_args_list(
 )
 
 cc_args_list(
+    name = "deterministic_link_flags",
+    args = select({
+        "@platforms//os:macos": ["//toolchain/args/macos:deterministic_link_flags"],
+        "@platforms//os:windows": ["//toolchain/args/windows:deterministic_link_flags"],
+        "//conditions:default": [],
+    }),
+)
+
+cc_args_list(
     name = "stdlib",
     args = select({
         "@platforms//os:macos": [],
+        "@platforms//os:windows": ["//toolchain/args/windows:stdlib"],
         "//conditions:default": [
             "//toolchain/args:stdlib",
         ],
@@ -263,9 +277,10 @@ cc_args_list(
 
 cc_args_list(
     name = "unwindlib",
-    args = [
-        "//toolchain/args:unwindlib_none",
-    ],
+    args = select({
+        "@platforms//os:windows": ["//toolchain/args/windows:unwindlib"],
+        "//conditions:default": ["//toolchain/args:unwindlib_none"],
+    }),
 )
 
 # TODO(cerisier): extract those into proper semantic args list.
@@ -289,9 +304,7 @@ cc_args_list(
 # TODO(zbarsky): This must match llvm/toolchains/llvm.bzl
 cc_args_list(
     name = "linux_toolchain_args",
-    args = [
-        "//toolchain/args:cxxstdlib_headers_include_search_paths",
-    ] + select({
+    args = select({
         "//platforms/config:musl": [
             "//toolchain/args/linux:kernel_headers_include_search_paths",
             "//toolchain/args/linux:musl_libc_headers_include_search_paths",
@@ -313,30 +326,20 @@ cc_args_list(
     ],
 )
 
-# TODO(cerisier): extract those into proper semantic args list.
-# TODO(zbarsky): This must match llvm/toolchains/llvm.bzl
-cc_args_list(
-    name = "windows_toolchain_args",
-    args = [
-        "//toolchain/args:cxxstdlib_headers_include_search_paths",
-        "//toolchain/args/windows:mingw_headers_include_search_paths",
-    ],
-)
-
 cc_args_list(
     name = "platform_specific_args",
     args = select({
-        # Platform specific flags.
         "@platforms//os:macos": [":macos_toolchain_args"],
         "@platforms//os:linux": [":linux_toolchain_args"],
-        "@platforms//os:windows": [":windows_toolchain_args"],
+        # Windows uses the complete :windows_toolchain_args composition below.
+        "@platforms//os:windows": [],
         "@platforms//os:none": [],
         "//conditions:default": [],
     }),
 )
 
 cc_args_list(
-    name = "toolchain_args",
+    name = "generic_toolchain_args",
     args = [
         # Common default compile flags.
         "//toolchain/args:target_flags",
@@ -347,8 +350,9 @@ cc_args_list(
         ":hermetic_compile_flags",
 
         # Keep external -isystem directories before the toolchain C and C++
-        # -isystem directories in :platform_specific_args.
+        # -isystem directories below.
         "@rules_cc//cc/toolchains/args/external_include_paths:external_include_paths",
+        ":cxxstdlib_headers_include_search_paths",
 
         # TODO(cerisier): Explode this into specific args instead
         ":platform_specific_args",
@@ -370,6 +374,7 @@ cc_args_list(
         "//toolchain/args:profile_flags",
 
         # Common default link flags.
+        ":deterministic_link_flags",
         "//toolchain/args:fuse_ld",
         "//toolchain/args:lto_plugin_target_flags",
     ] + [
@@ -384,7 +389,78 @@ cc_args_list(
         # Needs to stay out of resource_dir since clang does not always search for crtstuff for all targets.
         ":default_startfiles",
         ":default_libs",
+        # TODO: rules_cc passes extra args to these actions, ideally these would be fixed in rules_cc.
+        "//toolchain/args:ignore_unused_command_line_argument",
     ],
+)
+
+# Keep the complete Windows composition explicit while its individual
+# compiler-personality, object-format, ABI, and runtime semantics are being
+# normalized. This mirrors :generic_toolchain_args instead of appending a bag
+# of Windows-only arguments through :platform_specific_args.
+cc_args_list(
+    name = "windows_toolchain_args",
+    args = [
+        # Common default compile flags.
+        "//toolchain/args/windows:target_flags",
+        "//toolchain/args:no_absolute_paths_for_builtins",
+        "//toolchain/args/windows:deterministic_compile_flags",
+        "//toolchain/args:module_map",
+        ":sysroot_flags",
+        ":hermetic_compile_flags",
+
+        # Keep external -isystem directories before the toolchain C and C++
+        # -isystem directories below.
+        "@rules_cc//cc/toolchains/args/external_include_paths:external_include_paths",
+
+        # Windows compiler, ABI, CRT, object-format, and C++ runtime semantics.
+        "//toolchain/args/windows:crt_compile_defines",
+        ":cxxstdlib_headers_include_search_paths",
+        "//toolchain/args/windows:headers_before_compiler_resource",
+
+        # Optional sanitizers
+        "//toolchain/args:ubsan_flags",
+        "//toolchain/args:cfi_flags",
+        "//toolchain/args:msan_flags",
+        "//toolchain/args:dfsan_flags",
+        "//toolchain/args:nsan_flags",
+        "//toolchain/args:safestack_flags",
+        "//toolchain/args:rtsan_flags",
+        "//toolchain/args:tysan_flags",
+        "//toolchain/args:tsan_flags",
+        "//toolchain/args:asan_flags",
+        "//toolchain/args:lsan_flags",
+        "//toolchain/args:xray_flags",
+        "//toolchain/args:fuzzer_flags",
+        "//toolchain/args:profile_flags",
+
+        # Common default link flags.
+        ":deterministic_link_flags",
+        "//toolchain/args:fuse_ld",
+        "//toolchain/args:lto_plugin_target_flags",
+        ":cxxstdlib_library_search_paths",
+        ":libunwind_library_search_paths",
+        ":rtlib",
+        ":stdlib",
+        ":unwindlib",
+        ":resource_dir",
+        "//toolchain/args:validate_static_library_args",
+        ":default_link_flags",
+        # Needs to stay out of resource_dir since clang does not always search for crtstuff for all targets.
+        ":default_startfiles",
+        ":default_libs",
+        "//toolchain/args/windows:configuration_validation_args",
+        "//toolchain/args/windows:crt_linkage_args",
+        "//toolchain/args/windows:ignore_unused_command_line_argument",
+    ],
+)
+
+cc_args_list(
+    name = "toolchain_args",
+    args = select({
+        "@platforms//os:windows": [":windows_toolchain_args"],
+        "//conditions:default": [":generic_toolchain_args"],
+    }),
     visibility = ["//visibility:public"],
 )
 
@@ -392,6 +468,46 @@ cc_artifact_name_pattern(
     name = "windows_executable_pattern",
     category = "@rules_cc//cc/toolchains/artifacts:executable",
     extension = ".exe",
+    prefix = "",
+    visibility = ["//visibility:public"],
+)
+
+cc_artifact_name_pattern(
+    name = "windows_msvc_object_file_pattern",
+    category = "@rules_cc//cc/toolchains/artifacts:object_file",
+    extension = ".obj",
+    prefix = "",
+    visibility = ["//visibility:public"],
+)
+
+cc_artifact_name_pattern(
+    name = "windows_msvc_static_library_pattern",
+    category = "@rules_cc//cc/toolchains/artifacts:static_library",
+    extension = ".lib",
+    prefix = "",
+    visibility = ["//visibility:public"],
+)
+
+cc_artifact_name_pattern(
+    name = "windows_msvc_alwayslink_static_library_pattern",
+    category = "@rules_cc//cc/toolchains/artifacts:alwayslink_static_library",
+    extension = ".lo.lib",
+    prefix = "",
+    visibility = ["//visibility:public"],
+)
+
+cc_artifact_name_pattern(
+    name = "windows_dynamic_library_pattern",
+    category = "@rules_cc//cc/toolchains/artifacts:dynamic_library",
+    extension = ".dll",
+    prefix = "",
+    visibility = ["//visibility:public"],
+)
+
+cc_artifact_name_pattern(
+    name = "windows_interface_library_pattern",
+    category = "@rules_cc//cc/toolchains/artifacts:interface_library",
+    extension = ".if.lib",
     prefix = "",
     visibility = ["//visibility:public"],
 )

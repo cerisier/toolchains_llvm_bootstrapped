@@ -39,6 +39,7 @@ load(
 )
 load(":bazel_version.bzl", "validate_static_library_compatible")
 load(":musl_header_generation_tests.bzl", "musl_header_generation_tests")
+load(":windows_msvc_artifacts.bzl", "windows_msvc_artifacts")
 load(":windows_runtime_dynamic_libraries_test.bzl", "windows_runtime_dynamic_libraries_assertion")
 
 _VALIDATE_STATIC_LIBRARY_COMPATIBLE = validate_static_library_compatible()
@@ -68,6 +69,17 @@ _ASAN_LIBCXX_CONTAINER_OVERFLOW_TEST_COMPATIBLE = select({
     "@platforms//os:linux": [],
     "//conditions:default": ["@platforms//:incompatible"],
 }) if _ASAN_INTERNAL_SYMBOLIZER_SUPPORTED else ["@platforms//:incompatible"]
+
+config_setting(
+    name = "windows_msvc_abi",
+    constraint_values = ["@llvm//constraints/windows/abi:msvc"],
+)
+
+_WINDOWS_MSVC_RAW_ASSEMBLY_SRCS = select({
+    "@llvm//platforms/config:windows_aarch64_msvc": ["windows_msvc_raw_assembly_aarch64.s"],
+    "@llvm//platforms/config:windows_x86_64_msvc": ["windows_msvc_raw_assembly_x86_64.s"],
+    "//conditions:default": [],
+})
 
 _EXTERNAL_INCLUDE_PATHS_TEST_COMPATIBLE = (
     select({
@@ -292,11 +304,11 @@ platform_transition_filegroup(
 ]
 
 exec_test(
+    sh_test,
     name = "libstdcxx_main_dynamic_output_test",
     srcs = ["libstdcxx_main_dynamic_output_test.sh"],
     data = [":libstdcxx_main_dynamic_linux_x86_64"],
     env = {"BINARY": "$(rootpath :libstdcxx_main_dynamic_linux_x86_64)"},
-    rule = sh_test,
     target_compatible_with = select({
         "@platforms//cpu:x86_64": [],
         "//conditions:default": ["@platforms//:incompatible"],
@@ -307,11 +319,11 @@ exec_test(
 )
 
 exec_test(
+    sh_test,
     name = "libstdcxx_main_dynamic_with_linkopts_output_test",
     srcs = ["libstdcxx_main_dynamic_output_test.sh"],
     data = [":libstdcxx_main_dynamic_with_linkopts_linux_x86_64"],
     env = {"BINARY": "$(rootpath :libstdcxx_main_dynamic_with_linkopts_linux_x86_64)"},
-    rule = sh_test,
     target_compatible_with = select({
         "@platforms//cpu:x86_64": [],
         "//conditions:default": ["@platforms//:incompatible"],
@@ -325,6 +337,99 @@ exec_test(
 cc_binary(
     name = "main_default",
     srcs = ["main.cc"],
+)
+
+cc_library(
+    name = "windows_msvc_libcxx_behavior_support",
+    srcs = ["windows_msvc_libcxx_behavior_support.cc"],
+    hdrs = ["windows_msvc_libcxx_behavior_support.h"],
+    linkstatic = True,
+    target_compatible_with = [
+        "@llvm//constraints/windows/abi:msvc",
+        "@llvm//constraints/cxxstdlib:libcxx",
+        "@platforms//os:windows",
+    ],
+)
+
+cc_library(
+    name = "windows_msvc_libcxx_alwayslink",
+    srcs = ["windows_msvc_libcxx_alwayslink.cc"],
+    linkstatic = True,
+    target_compatible_with = [
+        "@llvm//constraints/windows/abi:msvc",
+        "@llvm//constraints/cxxstdlib:libcxx",
+        "@platforms//os:windows",
+    ],
+    deps = [":windows_msvc_libcxx_behavior_support"],
+    alwayslink = True,
+)
+
+[
+    cc_test(
+        name = "windows_msvc_libcxx_behavior_" + crt,
+        srcs = [
+            "windows_msvc_assembly.S",
+            "windows_msvc_c_smoke.c",
+            "windows_msvc_libcxx_behavior.cc",
+        ] + _WINDOWS_MSVC_RAW_ASSEMBLY_SRCS,
+        features = ["generate_pdb_file"] if crt == "debug" else [],
+        linkopts = ["/OPT:REF"],
+        linkstatic = False,
+        target_compatible_with = [
+            "@llvm//constraints/windows/abi:msvc",
+            "@llvm//constraints/cxxstdlib:libcxx",
+            "@platforms//os:windows",
+        ],
+        deps = [
+            ":windows_msvc_libcxx_alwayslink",
+            ":windows_msvc_libcxx_behavior_support",
+        ],
+    )
+    for crt in [
+        "md",
+        "mt",
+        "debug",
+    ]
+]
+
+cc_test(
+    name = "windows_msvc_libcxx_behavior_thinlto",
+    srcs = [
+        "windows_msvc_assembly.S",
+        "windows_msvc_c_smoke.c",
+        "windows_msvc_libcxx_behavior.cc",
+    ] + _WINDOWS_MSVC_RAW_ASSEMBLY_SRCS,
+    features = ["thin_lto"],
+    linkopts = ["/OPT:REF"],
+    linkstatic = False,
+    target_compatible_with = [
+        "@llvm//constraints/windows/abi:msvc",
+        "@llvm//constraints/cxxstdlib:libcxx",
+        "@platforms//os:windows",
+    ],
+    deps = [
+        ":windows_msvc_libcxx_alwayslink",
+        ":windows_msvc_libcxx_behavior_support",
+    ],
+)
+
+cc_test(
+    name = "windows_msvc_thinlto_weak_alias",
+    srcs = ["windows_msvc_thinlto_weak_alias.cc"],
+    features = ["thin_lto"],
+    linkstatic = False,
+    target_compatible_with = [
+        "@llvm//constraints/windows/abi:msvc",
+        "@llvm//constraints/cxxstdlib:libcxx",
+        "@platforms//os:windows",
+    ],
+)
+
+filegroup(
+    name = "windows_msvc_libcxx_behavior_debug_pdb",
+    testonly = True,
+    srcs = [":windows_msvc_libcxx_behavior_debug"],
+    output_group = "pdb_file",
 )
 
 # same as default
@@ -341,8 +446,18 @@ cc_binary(
     target_compatible_with = ["@platforms//os:windows"],
 )
 
+filegroup(
+    name = "windows_add_interface_library",
+    srcs = [":windows_add.dll"],
+    output_group = "interface_library",
+)
+
 cc_import(
     name = "windows_add_import",
+    interface_library = select({
+        ":windows_msvc_abi": ":windows_add_interface_library",
+        "//conditions:default": None,
+    }),
     shared_library = ":windows_add.dll",
     target_compatible_with = ["@platforms//os:windows"],
 )
@@ -367,7 +482,7 @@ write_file(
     content = [
         "LIBRARY windows_explicit_def",
         "EXPORTS",
-        "    add42=internal_add42",
+        "    explicit_add42=internal_add42",
     ],
 )
 
@@ -379,8 +494,18 @@ cc_binary(
     win_def_file = ":windows_explicit_def_file",
 )
 
+filegroup(
+    name = "windows_explicit_def_interface_library",
+    srcs = [":windows_explicit_def.dll"],
+    output_group = "interface_library",
+)
+
 cc_import(
     name = "windows_explicit_def_import",
+    interface_library = select({
+        ":windows_msvc_abi": ":windows_explicit_def_interface_library",
+        "//conditions:default": None,
+    }),
     shared_library = ":windows_explicit_def.dll",
     target_compatible_with = ["@platforms//os:windows"],
 )
@@ -419,8 +544,18 @@ cc_binary(
     deps = [":windows_generated_def_library"],
 )
 
+filegroup(
+    name = "windows_generated_def_interface_library",
+    srcs = [":windows_generated_def.dll"],
+    output_group = "interface_library",
+)
+
 cc_import(
     name = "windows_generated_def_import",
+    interface_library = select({
+        ":windows_msvc_abi": ":windows_generated_def_interface_library",
+        "//conditions:default": None,
+    }),
     shared_library = ":windows_generated_def.dll",
     target_compatible_with = ["@platforms//os:windows"],
 )
@@ -431,6 +566,104 @@ cc_test(
     exec_properties = {"test.no-remote": "1"},
     target_compatible_with = ["@platforms//os:windows"],
     deps = [":windows_generated_def_import"],
+)
+
+# The generic MinGW target requires a Windows execution host. This MSVC twin
+# uses the portable llvm-nm DEF generator through the toolchain action instead.
+cc_binary(
+    name = "windows_msvc_generated_def.dll",
+    features = [
+        "-no_windows_export_all_symbols",
+        "windows_export_all_symbols",
+    ],
+    linkshared = True,
+    target_compatible_with = [
+        "@llvm//constraints/windows/abi:msvc",
+        "@platforms//os:windows",
+    ],
+    deps = [":windows_generated_def_library"],
+)
+
+cc_binary(
+    name = "windows_msvc_generated_def_thinlto.dll",
+    srcs = ["windows_generated_def.cc"],
+    features = [
+        "-no_windows_export_all_symbols",
+        "thin_lto",
+        "windows_export_all_symbols",
+    ],
+    linkshared = True,
+    target_compatible_with = [
+        "@llvm//constraints/windows/abi:msvc",
+        "@platforms//os:windows",
+    ],
+)
+
+filegroup(
+    name = "windows_msvc_generated_def_thinlto_interface_library",
+    srcs = [":windows_msvc_generated_def_thinlto.dll"],
+    output_group = "interface_library",
+)
+
+cc_import(
+    name = "windows_msvc_generated_def_thinlto_import",
+    interface_library = ":windows_msvc_generated_def_thinlto_interface_library",
+    shared_library = ":windows_msvc_generated_def_thinlto.dll",
+    target_compatible_with = [
+        "@llvm//constraints/windows/abi:msvc",
+        "@platforms//os:windows",
+    ],
+)
+
+cc_binary(
+    name = "windows_msvc_generated_def_thinlto_binary",
+    srcs = ["windows_generated_def_test.cc"],
+    target_compatible_with = [
+        "@llvm//constraints/windows/abi:msvc",
+        "@platforms//os:windows",
+    ],
+    deps = [":windows_msvc_generated_def_thinlto_import"],
+)
+
+filegroup(
+    name = "windows_msvc_generated_def_interface_library",
+    srcs = [":windows_msvc_generated_def.dll"],
+    output_group = "interface_library",
+)
+
+cc_import(
+    name = "windows_msvc_generated_def_import",
+    interface_library = ":windows_msvc_generated_def_interface_library",
+    shared_library = ":windows_msvc_generated_def.dll",
+    target_compatible_with = [
+        "@llvm//constraints/windows/abi:msvc",
+        "@platforms//os:windows",
+    ],
+)
+
+cc_binary(
+    name = "windows_msvc_generated_def_binary",
+    srcs = ["windows_generated_def_test.cc"],
+    target_compatible_with = [
+        "@llvm//constraints/windows/abi:msvc",
+        "@platforms//os:windows",
+    ],
+    deps = [":windows_msvc_generated_def_import"],
+)
+
+cc_test(
+    name = "windows_msvc_dll_behavior",
+    srcs = ["windows_msvc_dll_behavior.cc"],
+    linkstatic = False,
+    target_compatible_with = [
+        "@llvm//constraints/windows/abi:msvc",
+        "@platforms//os:windows",
+    ],
+    deps = [
+        ":windows_add_import",
+        ":windows_explicit_def_import",
+        ":windows_msvc_generated_def_import",
+    ],
 )
 
 # dynamic linker + static runtime libs (even tho -static)
@@ -568,11 +801,11 @@ ubsan_cc_binary(
 )
 
 exec_test(
+    sh_test,
     name = "ubsan_output_test",
     srcs = ["ubsan_output_test.sh"],
     data = [":ubsan_fail"],
     env = {"BINARY": "$(rootpath :ubsan_fail)"},
-    rule = sh_test,
     target_compatible_with = select({
         "@platforms//os:windows": ["@platforms//:incompatible"],
         "//conditions:default": [],
@@ -589,11 +822,11 @@ cfi_cc_binary(
 )
 
 exec_test(
+    sh_test,
     name = "cfi_output_test",
     srcs = ["cfi_output_test.sh"],
     data = [":cfi_fail"],
     env = {"BINARY": "$(rootpath :cfi_fail)"},
-    rule = sh_test,
     target_compatible_with = select({
         "@platforms//os:linux": [],
         "//conditions:default": ["@platforms//:incompatible"],
@@ -610,11 +843,11 @@ msan_cc_binary(
 )
 
 exec_test(
+    sh_test,
     name = "msan_output_test",
     srcs = ["msan_output_test.sh"],
     data = [":msan_fail"],
     env = {"BINARY": "$(rootpath :msan_fail)"},
-    rule = sh_test,
     target_compatible_with = select({
         "@platforms//os:linux": [],
         "//conditions:default": ["@platforms//:incompatible"],
@@ -631,6 +864,7 @@ dfsan_cc_binary(
 )
 
 exec_test(
+    sh_test,
     name = "dfsan_output_test",
     srcs = ["dfsan_output_test.sh"],
     data = [":dfsan_fail"],
@@ -638,7 +872,6 @@ exec_test(
         "BINARY": "$(rootpath :dfsan_fail)",
         "DFSAN_OPTIONS": "warn_unimplemented=1",
     },
-    rule = sh_test,
     target_compatible_with = select({
         "@platforms//os:linux": [],
         "//conditions:default": ["@platforms//:incompatible"],
@@ -656,6 +889,7 @@ nsan_cc_binary(
 )
 
 exec_test(
+    sh_test,
     name = "nsan_output_test",
     srcs = ["nsan_output_test.sh"],
     data = [":nsan_fail"],
@@ -663,7 +897,6 @@ exec_test(
         "BINARY": "$(rootpath :nsan_fail)",
         "NSAN_OPTIONS": "check_nan=true,halt_on_error=0",
     },
-    rule = sh_test,
     target_compatible_with = select({
         # nsan is x86 only
         "@llvm//platforms/config:linux_x86_64": [],
@@ -681,11 +914,11 @@ safestack_cc_binary(
 )
 
 exec_test(
+    sh_test,
     name = "safestack_output_test",
     srcs = ["safestack_output_test.sh"],
     data = [":safestack_fail"],
     env = {"BINARY": "$(rootpath :safestack_fail)"},
-    rule = sh_test,
     target_compatible_with = select({
         "@platforms//os:linux": [],
         "//conditions:default": ["@platforms//:incompatible"],
@@ -702,11 +935,11 @@ rtsan_cc_binary(
 )
 
 exec_test(
+    sh_test,
     name = "rtsan_output_test",
     srcs = ["rtsan_output_test.sh"],
     data = [":rtsan_fail"],
     env = {"BINARY": "$(rootpath :rtsan_fail)"},
-    rule = sh_test,
     target_compatible_with = select({
         "@platforms//os:linux": [],
         "//conditions:default": ["@platforms//:incompatible"],
@@ -723,11 +956,11 @@ tysan_cc_binary(
 )
 
 exec_test(
+    sh_test,
     name = "tysan_output_test",
     srcs = ["tysan_output_test.sh"],
     data = [":tysan_fail"],
     env = {"BINARY": "$(rootpath :tysan_fail)"},
-    rule = sh_test,
     target_compatible_with = select({
         "@platforms//os:linux": [],
         "//conditions:default": ["@platforms//:incompatible"],
@@ -745,11 +978,11 @@ tsan_cc_binary(
 )
 
 exec_test(
+    sh_test,
     name = "tsan_output_test",
     srcs = ["tsan_output_test.sh"],
     data = [":tsan_fail"],
     env = {"BINARY": "$(rootpath :tsan_fail)"},
-    rule = sh_test,
     target_compatible_with = select({
         # firecracker + docker on arm64 is too restrictive.
         # macOS: the TSan dylib builds/links/loads, but the runtime crashes
@@ -776,15 +1009,16 @@ asan_cc_binary(
 )
 
 exec_test(
+    asan_cc_binary,
     name = "asan_libcxx_container_overflow_test",
     srcs = ["asan_libcxx_container_overflow.cc"],
     copts = ["-fno-exceptions"],
     linkopts = ["-Wl,--icf=none"],
-    rule = asan_cc_binary,
     target_compatible_with = _ASAN_LIBCXX_CONTAINER_OVERFLOW_TEST_COMPATIBLE,
 )
 
 exec_test(
+    sh_test,
     name = "asan_output_test",
     srcs = ["asan_output_test.sh"],
     data = [":asan_fail"] + select({
@@ -805,7 +1039,6 @@ exec_test(
         },
         "//conditions:default": {"BINARY": "$(rootpath :asan_fail)"},
     }),
-    rule = sh_test,
 )
 
 lsan_cc_binary(
@@ -819,11 +1052,11 @@ lsan_cc_binary(
 )
 
 exec_test(
+    sh_test,
     name = "lsan_output_test",
     srcs = ["lsan_output_test.sh"],
     data = [":lsan_fail"],
     env = {"BINARY": "$(rootpath :lsan_fail)"},
-    rule = sh_test,
     target_compatible_with = select({
         "@platforms//os:linux": [],
         "//conditions:default": ["@platforms//:incompatible"],
@@ -936,6 +1169,7 @@ cc_test(
         "header_parse_system_header.h",
         "main.cc",
     ],
+    exec_compatible_with = HOST_CONSTRAINTS,
     features = [
         "layering_check",
         "parse_headers",
@@ -1023,7 +1257,10 @@ cc_test(
         "duplicate_symbol_a.cc",
         "duplicate_symbol_b.cc",
     ],
-    env_inherit = ["PATH"],
+    env_inherit = [
+        "PATH",
+        "RUNNER_TEMP",
+    ],
     exec_properties = {"test.local": "1"},
     target_compatible_with = _VALIDATE_STATIC_LIBRARY_COMPATIBLE,
     deps = ["@bazel_tools//tools/cpp/runfiles"],
@@ -1036,6 +1273,7 @@ fuzzer_cc_binary(
     srcs = ["fuzzer_main.cc"],
     target_compatible_with = select({
         "@platforms//os:linux": [],
+        "@platforms//os:macos": [],
         "//conditions:default": ["@platforms//:incompatible"],
     }),
 )
@@ -1051,16 +1289,17 @@ profile_cc_binary(
 )
 
 exec_test(
+    sh_test,
     name = "fuzzer_output_test",
     srcs = ["fuzzer_output_test.sh"],
     data = [":fuzzer_main"],
     env = {
         "BINARY": "$(rootpath :fuzzer_main)",
     },
-    rule = sh_test,
     tags = ["no-remote"],
     target_compatible_with = select({
         "@platforms//os:linux": [],
+        "@platforms//os:macos": [],
         "//conditions:default": ["@platforms//:incompatible"],
     }),
 )
@@ -1070,11 +1309,13 @@ fuzzer_asan_cc_binary(
     srcs = ["fuzzer_asan_main.cc"],
     target_compatible_with = select({
         "@platforms//os:linux": [],
+        "@platforms//os:macos": [],
         "//conditions:default": ["@platforms//:incompatible"],
     }),
 )
 
 exec_test(
+    sh_test,
     name = "fuzzer_asan_output_test",
     srcs = ["fuzzer_sanitizer_output_test.sh"],
     data = [":fuzzer_asan_main"],
@@ -1084,10 +1325,10 @@ exec_test(
         "EXPECT_NONZERO": "1",
         "INPUT_TEXT": "ASAN",
     },
-    rule = sh_test,
     tags = ["no-remote"],
     target_compatible_with = select({
         "@platforms//os:linux": [],
+        "@platforms//os:macos": [],
         "//conditions:default": ["@platforms//:incompatible"],
     }),
 )
@@ -1097,11 +1338,13 @@ fuzzer_cc_binary(
     srcs = ["fuzzer_ubsan_main.cc"],
     target_compatible_with = select({
         "@platforms//os:linux": [],
+        "@platforms//os:macos": [],
         "//conditions:default": ["@platforms//:incompatible"],
     }),
 )
 
 exec_test(
+    sh_test,
     name = "fuzzer_ubsan_output_test",
     srcs = ["fuzzer_sanitizer_output_test.sh"],
     data = [":fuzzer_ubsan_main"],
@@ -1111,10 +1354,10 @@ exec_test(
         "EXPECT_NONZERO": "0",
         "INPUT_TEXT": "UBSAN",
     },
-    rule = sh_test,
     tags = ["no-remote"],
     target_compatible_with = select({
         "@platforms//os:linux": [],
+        "@platforms//os:macos": [],
         "//conditions:default": ["@platforms//:incompatible"],
     }),
 )
@@ -1157,4 +1400,149 @@ cc_test(
         "//conditions:default": ["@platforms//:incompatible"],
     }),
     deps = [":coverage_lib"],
+)
+
+_WINDOWS_MSVC_ARTIFACT_PLATFORMS = [
+    ("x86_64", "@llvm//platforms:windows_x86_64_msvc", "AMD64"),
+    ("aarch64", "@llvm//platforms:windows_aarch64_msvc", "ARM64"),
+]
+
+cc_library(
+    name = "windows_msvc_crt_default_probe",
+    testonly = True,
+    srcs = ["windows_msvc_crt_default_probe.c"],
+    target_compatible_with = [
+        "@llvm//constraints/windows/abi:msvc",
+        "@platforms//os:windows",
+    ],
+)
+
+cc_library(
+    name = "windows_msvc_unsupported_feature_probe",
+    testonly = True,
+    srcs = ["windows_msvc_crt_default_probe.c"],
+    features = ["asan"],
+    target_compatible_with = [
+        "@llvm//constraints/windows/abi:msvc",
+        "@platforms//os:windows",
+    ],
+)
+
+cc_library(
+    name = "windows_msvc_fdo_optimize_probe",
+    testonly = True,
+    srcs = ["windows_msvc_crt_default_probe.c"],
+    features = ["fdo_optimize"],
+    target_compatible_with = [
+        "@llvm//constraints/windows/abi:msvc",
+        "@platforms//os:windows",
+    ],
+)
+
+platform(
+    name = "windows_x86_64_msvc_libstdcxx_invalid",
+    constraint_values = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:windows",
+        _DEFAULT_LIBSTDCXX_CONSTRAINT,
+        "@llvm//constraints/windows/abi:msvc",
+        "@llvm//constraints/windows/crt:ucrt",
+    ],
+    tags = ["manual"],
+)
+
+_WINDOWS_MSVC_MD_ARTIFACTS = [
+    "windows_msvc_libcxx_behavior_md",
+    "windows_msvc_libcxx_behavior_thinlto",
+    "windows_msvc_libcxx_behavior_debug",
+    "windows_msvc_libcxx_behavior_debug_pdb",
+    "windows_msvc_libcxx_behavior_support",
+    "windows_msvc_dll_behavior",
+    "windows_add.dll",
+    "windows_add_interface_library",
+    "windows_explicit_def.dll",
+    "windows_explicit_def_interface_library",
+    "windows_msvc_generated_def.dll",
+    "windows_msvc_generated_def_interface_library",
+    "windows_msvc_generated_def_thinlto.dll",
+    "windows_msvc_generated_def_thinlto_binary",
+    "windows_msvc_generated_def_thinlto_interface_library",
+]
+
+_WINDOWS_MSVC_MT_ARTIFACTS = [
+    "windows_msvc_libcxx_behavior_mt",
+]
+
+[
+    windows_msvc_artifacts(
+        name = "windows_msvc_artifacts_" + cpu + "_md",
+        testonly = True,
+        static_crt = False,
+        tags = ["manual"],
+        target_platform = platform,
+        targets = _WINDOWS_MSVC_MD_ARTIFACTS,
+    )
+    for cpu, platform, _ in _WINDOWS_MSVC_ARTIFACT_PLATFORMS
+]
+
+[
+    windows_msvc_artifacts(
+        name = "windows_msvc_artifacts_" + cpu + "_mt",
+        testonly = True,
+        static_crt = True,
+        tags = ["manual"],
+        target_platform = platform,
+        targets = _WINDOWS_MSVC_MT_ARTIFACTS,
+    )
+    for cpu, platform, _ in _WINDOWS_MSVC_ARTIFACT_PLATFORMS
+]
+
+[
+    filegroup(
+        name = "windows_msvc_artifacts_" + cpu,
+        testonly = True,
+        srcs = [
+            ":windows_msvc_artifacts_" + cpu + "_md",
+            ":windows_msvc_artifacts_" + cpu + "_mt",
+        ],
+        tags = ["manual"],
+    )
+    for cpu, _, _ in _WINDOWS_MSVC_ARTIFACT_PLATFORMS
+]
+
+[
+    exec_test(
+        sh_test,
+        name = "windows_msvc_artifacts_" + cpu + "_test",
+        srcs = ["windows_msvc_artifacts_test.sh"],
+        data = ["windows_msvc_artifacts_" + cpu],
+        env = {
+            "ARTIFACTS": "$(rlocationpaths :windows_msvc_artifacts_{})".format(cpu),
+            "LLVM_AR": "$(rlocationpath @llvm//tools:llvm-ar)",
+            "LLVM_NM": "$(rlocationpath @llvm//tools:llvm-nm)",
+            "LLVM_READOBJ": "$(rlocationpath @llvm//tools:llvm-readobj)",
+            "MACHINE": machine,
+        },
+        tags = ["manual"],
+        target_compatible_with = select({
+            "@platforms//os:windows": ["@platforms//:incompatible"],
+            "//conditions:default": [],
+        }),
+        tools = [
+            "@llvm//tools:llvm-ar",
+            "@llvm//tools:llvm-nm",
+            "@llvm//tools:llvm-readobj",
+        ],
+        deps = ["@bazel_tools//tools/bash/runfiles"],
+    )
+    for cpu, _, machine in _WINDOWS_MSVC_ARTIFACT_PLATFORMS
+]
+
+test_suite(
+    name = "windows_msvc_artifacts_matrix",
+    tags = ["manual"],
+    tests = [
+        "windows_msvc_artifacts_" + cpu + "_test"
+        for cpu, _, _ in _WINDOWS_MSVC_ARTIFACT_PLATFORMS
+    ],
 )

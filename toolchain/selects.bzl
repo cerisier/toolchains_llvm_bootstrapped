@@ -1,16 +1,20 @@
 load("//platforms:common.bzl", "SUPPORTED_EXECS")
 
-LLVM_VERSION = "22.1.8"
-
 def _tool_repo(exec_os, exec_cpu):
     os_part = "darwin" if exec_os == "macos" else exec_os
     cpu_part = "amd64" if exec_cpu == "x86_64" else "arm64"
-    return "@llvm-toolchain-minimal-%s-%s-%s//" % (LLVM_VERSION, os_part, cpu_part)
+    return "@llvm-toolchain-minimal-%s-%s//" % (os_part, cpu_part)
 
 def _platform_bootstrap_stage(exec_os, exec_cpu, bootstrap_stage):
     return "@llvm//platforms/config:%s_%s_%s" % (exec_os, exec_cpu, bootstrap_stage)
 
 def platform_llvm_binary(binary):
+    # Select the compiler generation requested by the bootstrap transition.
+    # Stage 0 tools and resource headers come from one downloaded installation;
+    # Stage 1/2/3 labels refer to source-built binaries whose matching resource
+    # headers are materialized under their stage prefix by bootstrap toolchain
+    # construction. Never pair the Stage 0 binary with headers from the source
+    # tree currently being compiled.
     binaries = {
         _platform_bootstrap_stage(exec_os, exec_cpu, "stage0_prebuilt_seed"): Label(
             "%s:bin/%s%s" % (_tool_repo(exec_os, exec_cpu), binary, ".exe" if exec_os == "windows" else ""),
@@ -45,6 +49,9 @@ def platform_module_map(exec_os, exec_cpu):
 def resource_dir_arg(exec_os, exec_cpu):
     return Label(_tool_repo(exec_os, exec_cpu) + ":compile_resource_dir")
 
+def clang_cl_resource_dir_arg(exec_os, exec_cpu):
+    return Label(_tool_repo(exec_os, exec_cpu) + ":clang_cl_compile_resource_dir")
+
 def platform_cc_tool_map(exec_os, exec_cpu):
     tool_repo = _tool_repo(exec_os, exec_cpu)
 
@@ -53,6 +60,8 @@ def platform_cc_tool_map(exec_os, exec_cpu):
     # point at further aliases that use `select`, those will resolve according to the exec platform.
     # See https://github.com/bazelbuild/bazel/issues/27623#issuecomment-3529439585 for more details.
     return select({
+        "@llvm//platforms/config:windows_x86_64_msvc": Label(tool_repo + ":tools_for_msvc_for_runtime"),
+        "@llvm//platforms/config:windows_aarch64_msvc": Label(tool_repo + ":tools_for_msvc_for_runtime"),
         "@llvm//toolchain:linux_complete": Label(tool_repo + ":tools_with_interface_libraries"),
         "@llvm//toolchain:macos_complete_with_libtool": Label(tool_repo + ":tools_with_dsym_and_libtool"),
         "@llvm//toolchain:macos_complete": Label(tool_repo + ":tools_with_dsym"),

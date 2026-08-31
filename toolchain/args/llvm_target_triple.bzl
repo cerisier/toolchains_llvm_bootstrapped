@@ -1,5 +1,7 @@
+load("//constraints/windows/abi:abis.bzl", "WINDOWS_TARGET_TRIPLES_BY_CONFIG")
+
 LLVM_TARGET_TRIPLE = select({
-    #TODO: Generate this automatically
+    # TODO: Generate this automatically.
     "@llvm//platforms/config:linux_x86_64_gnu": ["x86_64-linux-gnu"],
     "@llvm//platforms/config:linux_aarch64_gnu": ["aarch64-linux-gnu"],
     "@llvm//platforms/config:linux_riscv64_gnu": ["riscv64-linux-gnu"],
@@ -12,10 +14,11 @@ LLVM_TARGET_TRIPLE = select({
     "@llvm//platforms/config:linux_armv7_musl": ["armv7-linux-musleabihf"],
     "@llvm//platforms/config:macos_x86_64": ["x86_64-apple-darwin"],
     "@llvm//platforms/config:macos_aarch64": ["aarch64-apple-darwin"],
-    "@llvm//platforms/config:windows_x86_64": ["x86_64-w64-windows-gnu"],
-    "@llvm//platforms/config:windows_aarch64": ["aarch64-w64-windows-gnu"],
     "@llvm//platforms/config:none_bpfeb": ["bpfeb"],
     "@llvm//platforms/config:none_bpfel": ["bpfel"],
     "@llvm//platforms/config:none_wasm32": ["wasm32-unknown-unknown"],
     "@llvm//platforms/config:none_wasm64": ["wasm64-unknown-unknown"],
+} | {
+    target_config: [target_triple]
+    for target_config, target_triple in WINDOWS_TARGET_TRIPLES_BY_CONFIG.items()
 }, no_match_error = "Unsupported platform")

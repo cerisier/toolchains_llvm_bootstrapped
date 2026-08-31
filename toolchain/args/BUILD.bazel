@@ -5,6 +5,20 @@ load("//toolchain/args:llvm_target_triple.bzl", "LLVM_TARGET_TRIPLE")
 
 package(default_visibility = ["//visibility:public"])
 
+_CLANG_CL_FRONTEND_ACTIONS = [
+    "@rules_cc//cc/toolchains/actions:c_compile",
+    "@rules_cc//cc/toolchains/actions:cpp_compile",
+    "@rules_cc//cc/toolchains/actions:linkstamp_compile",
+    "@rules_cc//cc/toolchains/actions:preprocess_assemble",
+    "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
+]
+
+_CLANG_CL_CXX_FRONTEND_ACTIONS = [
+    "@rules_cc//cc/toolchains/actions:cpp_compile",
+    "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
+    "@rules_cc//cc/toolchains/actions:linkstamp_compile",
+]
+
 # COMMON RESET FLAGS
 # --no-default-config
 # -fno-spell-checking
@@ -33,14 +47,48 @@ cc_args(
 )
 
 cc_args(
-    name = "target_flags",
+    name = "clang_cl_resource_dir",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    # clang-cl's response parser requires the option and its value in one
+    # token. Keep the personality-specific implementation separate so it can
+    # be chosen while constructing the toolchain without consulting the
+    # current-toolchain compiler flag and creating a dependency cycle.
+    args = ["-resource-dir={resource_dir}"],
+    data = [
+        "//runtimes:resource_directory",
+    ],
+    format = {
+        "resource_dir": "//runtimes:resource_directory",
+    },
+)
+
+cc_args(
+    name = "clang_cl_suppress_compiler_banner",
+    actions = ["@rules_cc//cc/toolchains/actions:source_compile_actions"],
+    args = ["/nologo"],
+)
+
+cc_args(
+    name = "clang_cl_default_exception_handling",
+    actions = _CLANG_CL_CXX_FRONTEND_ACTIONS,
+    args = ["/EHsc"],
+)
+
+cc_args(
+    name = "clang_cl_default_rtti",
+    actions = _CLANG_CL_CXX_FRONTEND_ACTIONS,
+    args = ["/GR"],
+)
+
+cc_args(
+    name = "clang_target_flags",
     actions = [
         "@rules_cc//cc/toolchains/actions:compile_actions",
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
-    args = [
-        "-target",
-    ] + LLVM_TARGET_TRIPLE + select({
+    args = ["-target"] + LLVM_TARGET_TRIPLE + select({
         # We hardcode these for now given the complexity of RISC-V extensions.
         # TODO(cerisier): Support ISA configuration.
         "@platforms//cpu:riscv64": [
@@ -53,6 +101,27 @@ cc_args(
     }) + select({
         "//constraints/fpu:vfpv4-d16": ["-mfpu=vfpv4-d16"],
         "//conditions:default": [],
+    }),
+)
+
+cc_args(
+    name = "clang_cl_target_flags",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:compile_actions",
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    args = select({
+        "//platforms/config:windows_x86_64_msvc": ["--target=x86_64-pc-windows-msvc"],
+        "//platforms/config:windows_aarch64_msvc": ["--target=aarch64-pc-windows-msvc"],
+        "//conditions:default": [],
+    }),
+)
+
+cc_args_list(
+    name = "target_flags",
+    args = select({
+        "//constraints/windows/abi:msvc": [":clang_cl_target_flags"],
+        "//conditions:default": [":clang_target_flags"],
     }),
 )
 
@@ -81,20 +150,23 @@ cc_args(
     actions = [
         "@rules_cc//cc/toolchains/actions:compile_actions",
     ],
-    args = [
-        # With C++20, Clang defaults to using C++ rather than Clang modules,
-        # which breaks Bazel's `use_module_maps` feature, which is used by
-        # `layering_check`. Since Bazel doesn't support C++ modules yet, it
-        # is safe to disable them globally until the toolchain shipped by
-        # Bazel sets this flag on `use_module_maps`.
-        # https://github.com/llvm/llvm-project/commit/0556138624edf48621dd49a463dbe12e7101f17d
-        "-Xclang",
-        "-fno-cxx-modules",
-        "-Wno-module-import-in-extern-c",
-        # This warning would mean we had an error configuring the toolchain or modulemap
-        "-Werror=incomplete-umbrella",
-        "-Wno-modules-import-nested-redundant",
-    ],
+    args = select({
+        "//constraints/windows/abi:msvc": [],
+        "//conditions:default": [
+            # With C++20, Clang defaults to using C++ rather than Clang modules,
+            # which breaks Bazel's `use_module_maps` feature, which is used by
+            # `layering_check`. Since Bazel doesn't support C++ modules yet, it
+            # is safe to disable them globally until the toolchain shipped by
+            # Bazel sets this flag on `use_module_maps`.
+            # https://github.com/llvm/llvm-project/commit/0556138624edf48621dd49a463dbe12e7101f17d
+            "-Xclang",
+            "-fno-cxx-modules",
+            "-Wno-module-import-in-extern-c",
+            # This warning would mean we had an error configuring the toolchain or modulemap
+            "-Werror=incomplete-umbrella",
+            "-Wno-modules-import-nested-redundant",
+        ],
+    }),
 )
 
 cc_args(
@@ -124,6 +196,22 @@ cc_args(
     format = {
         "cxxstdlib_headers_include_search_path": "//runtimes/cxxstdlib:headers_include_search_directory",
         "cxxstdlib_abi_headers_include_search_path": "//runtimes/cxxstdlib:abi_headers_include_search_directory",
+    },
+)
+
+cc_args(
+    name = "clang_cl_cxxstdlib_headers_include_search_paths",
+    actions = _CLANG_CL_CXX_FRONTEND_ACTIONS,
+    args = select({
+        "//toolchain:runtimes_all": ["/imsvc{cxxstdlib_headers_include_search_path}"],
+        "//conditions:default": [],
+    }),
+    data = select({
+        "//toolchain:runtimes_all": ["//runtimes/cxxstdlib:headers_include_search_directory"],
+        "//conditions:default": [],
+    }),
+    format = {
+        "cxxstdlib_headers_include_search_path": "//runtimes/cxxstdlib:headers_include_search_directory",
     },
 )
 
@@ -188,41 +276,60 @@ cc_args(
     actions = [
         "@rules_cc//cc/toolchains/actions:link_actions",
     ],
-    args = [
-        "-fuse-ld=lld",
-        # lld will be used if it's next to clang.
-        # It would have been great to set the path explicitly.
-        # "--ld-path={lld_path}",
-    ],
+    args = select({
+        "//constraints/windows/abi:msvc": [
+            "/clang:-fuse-ld=lld",
+        ],
+        "//conditions:default": [
+            "-fuse-ld=lld",
+            # lld will be used if it's next to clang.
+            # It would have been great to set the path explicitly.
+            # "--ld-path={lld_path}",
+        ],
+    }),
 )
 
 cc_args(
     name = "no_absolute_paths_for_builtins",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:compile_actions",
-    ],
-    args = [
-        # If the compiler sometimes rewrites paths in the .d files without symlinks
-        # (ie when they're shorter), it confuses Bazel's logic for verifying all
-        # #included header files are listed as inputs to the action.
-        "-no-canonical-prefixes",
-    ],
+    actions = select({
+        "//constraints/windows/abi:msvc": _CLANG_CL_FRONTEND_ACTIONS,
+        "//conditions:default": ["@rules_cc//cc/toolchains/actions:source_compile_actions"],
+    }),
+    args = select({
+        "//constraints/windows/abi:msvc": ["/clang:-no-canonical-prefixes"],
+        # If the compiler sometimes rewrites paths in the .d files without
+        # symlinks (for example, when they are shorter), Bazel can no longer
+        # match included headers to declared action inputs.
+        "//conditions:default": ["-no-canonical-prefixes"],
+    }),
 )
 
 cc_args(
     name = "deterministic_compile_flags",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:compile_actions",
-    ],
-    args = [
+    actions = select({
+        "//constraints/windows/abi:msvc": _CLANG_CL_FRONTEND_ACTIONS,
+        "//conditions:default": ["@rules_cc//cc/toolchains/actions:source_compile_actions"],
+    }),
+    args = select({
+        "//constraints/windows/abi:msvc": ["/clang:-Wno-builtin-macro-redefined"],
+        "//conditions:default": ["-Wno-builtin-macro-redefined"],
+    }) + select({
         # Make C++ compilation deterministic. Use linkstamping instead of these
         # compiler symbols.
-        "-Wno-builtin-macro-redefined",
-        "-D__DATE__=\"redacted\"",
-        "-D__TIMESTAMP__=\"redacted\"",
-        "-D__TIME__=\"redacted\"",
-        "-ffile-compilation-dir=.",  # Avoid absolute paths in binaries
-    ],
+        "//constraints/windows/abi:msvc": [
+            "/D__DATE__=\"redacted\"",
+            "/D__TIMESTAMP__=\"redacted\"",
+            "/D__TIME__=\"redacted\"",
+        ],
+        "//conditions:default": [
+            "-D__DATE__=\"redacted\"",
+            "-D__TIMESTAMP__=\"redacted\"",
+            "-D__TIME__=\"redacted\"",
+        ],
+    }) + select({
+        "//constraints/windows/abi:msvc": ["/clang:-ffile-compilation-dir=."],
+        "//conditions:default": ["-ffile-compilation-dir=."],  # Avoid absolute paths in binaries
+    }),
 )
 
 #######
@@ -832,17 +939,40 @@ cc_args_list(
 cc_args(
     name = "hermetic_compile_flags",
     actions = [
-        "@rules_cc//cc/toolchains/actions:cpp_compile_actions",
-        "@rules_cc//cc/toolchains/actions:c_compile_actions",
-        # -nostdlibinc triggers a warning for assemble (no preprocess)
+        "@rules_cc//cc/toolchains/actions:clif_match",
+        "@rules_cc//cc/toolchains/actions:cpp_compile",
+        "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
+        "@rules_cc//cc/toolchains/actions:cpp_module_codegen",
+        "@rules_cc//cc/toolchains/actions:cpp_module_compile",
+        "@rules_cc//cc/toolchains/actions:linkstamp_compile",
+        "@rules_cc//cc/toolchains/actions:objcpp_compile",
+        "@rules_cc//cc/toolchains/actions:c_compile",
         "@rules_cc//cc/toolchains/actions:preprocess_assemble",
         "@rules_cc//cc/toolchains/actions:objc_compile",
-        "@rules_cc//cc/toolchains/actions:objcpp_compile",
     ],
     args = [
         # We want to disable everything except builtin headers since they are
         # provided as part of the compiler toolchain repository.
         "-nostdlibinc",
+    ],
+)
+
+cc_args(
+    name = "clang_cl_hermetic_compile_flags",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:clif_match",
+        "@rules_cc//cc/toolchains/actions:cpp_compile",
+        "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
+        "@rules_cc//cc/toolchains/actions:cpp_module_codegen",
+        "@rules_cc//cc/toolchains/actions:cpp_module_compile",
+        "@rules_cc//cc/toolchains/actions:linkstamp_compile",
+        "@rules_cc//cc/toolchains/actions:objcpp_compile",
+        "@rules_cc//cc/toolchains/actions:c_compile",
+        "@rules_cc//cc/toolchains/actions:preprocess_assemble",
+        "@rules_cc//cc/toolchains/actions:objc_compile",
+    ],
+    args = [
+        "/clang:-nostdlibinc",
     ],
 )
 
@@ -923,6 +1053,39 @@ cc_args(
     },
 )
 
+cc_args(
+    name = "clang_cl_cxxstdlib_library_search_paths",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    # clang-cl rejects the common -L spelling in CL mode. Keep the common
+    # declared directory model, but translate it to clang-cl/link syntax.
+    args = [
+        "/clang:-Xlinker",
+        "/clang:/LIBPATH:{cxxstdlib_library_search_path}",
+    ],
+    data = [
+        "//runtimes/cxxstdlib:library_search_directory",
+    ],
+    format = {
+        "cxxstdlib_library_search_path": "//runtimes/cxxstdlib:library_search_directory",
+    },
+)
+
+cc_args(
+    name = "clang_cl_static_libcxx_default_lib",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:link_actions",
+    ],
+    # The currently supported native Windows tuple selects static libc++. Name
+    # it in the Bazel-owned default-library composition instead of relying on
+    # a COFF .drectve section emitted by each consumer object.
+    args = [
+        "/clang:-Xlinker",
+        "/clang:/DEFAULTLIB:libc++.lib",
+    ],
+)
+
 # Those are stubs since we link against static_runtime_libs / dynamic_runtime_libs.
 cc_args(
     name = "libunwind_library_search_paths",
@@ -976,6 +1139,13 @@ cc_args(
 )
 
 bzl_library(
+    name = "compiler_resource_headers",
+    srcs = ["compiler_resource_headers.bzl"],
+    deps = ["@rules_cc//cc/toolchains:toolchain_rules"],
+)
+
+bzl_library(
     name = "llvm_target_triple",
     srcs = ["llvm_target_triple.bzl"],
+    deps = ["//constraints/windows/abi:abis"],
 )

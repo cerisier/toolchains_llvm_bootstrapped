@@ -1,0 +1,656 @@
+load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
+load("@rules_cc//cc/toolchains:feature.bzl", "cc_feature")
+load("@rules_cc//cc/toolchains:feature_constraint.bzl", "cc_feature_constraint")
+load("@rules_cc//cc/toolchains:feature_set.bzl", "cc_feature_set")
+load("@rules_cc//cc/toolchains:nested_args.bzl", "cc_nested_args")
+
+# Expansion structure independently adapted from hermetic-llvm PR 187,
+# commit ef1eb169508b7f0461463c442e0e100ef575a90a,
+# toolchain/features/legacy/BUILD.bazel (Apache-2.0). The current contracts
+# replace its ShowIncludes, debug-CRT, sanitizer, module, and llvm-lib behavior.
+
+package(default_visibility = ["//visibility:public"])
+
+_ASSEMBLE_ACTIONS = ["@rules_cc//cc/toolchains/actions:assemble"]
+
+_COMPILE_ACTIONS = [
+    "@rules_cc//cc/toolchains/actions:c_compile",
+    "@rules_cc//cc/toolchains/actions:cpp_compile",
+    "@rules_cc//cc/toolchains/actions:linkstamp_compile",
+    "@rules_cc//cc/toolchains/actions:preprocess_assemble",
+    "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
+]
+
+_CXX_FRONTEND_ACTIONS = [
+    "@rules_cc//cc/toolchains/actions:cpp_compile",
+    "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
+    "@rules_cc//cc/toolchains/actions:linkstamp_compile",
+]
+
+_LINK_ACTIONS = ["@rules_cc//cc/toolchains/actions:link_actions"]
+
+_LTO_INDEX_ACTIONS = [
+    "@rules_cc//cc/toolchains/actions:lto_index_for_dynamic_library",
+    "@rules_cc//cc/toolchains/actions:lto_index_for_executable",
+    "@rules_cc//cc/toolchains/actions:lto_index_for_nodeps_dynamic_library",
+]
+
+cc_args(
+    name = "no_exceptions_args",
+    # Exception support is a C++ frontend semantic. The generated LLVM IR
+    # already records that choice, so neither C/assembly nor LTO backends need it.
+    actions = _CXX_FRONTEND_ACTIONS,
+    args = ["/EHs-c-"],
+)
+
+cc_feature(
+    name = "no_exceptions",
+    args = [":no_exceptions_args"],
+    feature_name = "no_exceptions",
+)
+
+cc_args(
+    name = "no_rtti_args",
+    # RTTI is also decided by the C++ frontend and encoded in LLVM IR; it has
+    # no semantic effect on C/assembly or on a backend consuming that IR.
+    actions = _CXX_FRONTEND_ACTIONS,
+    # /GR- maps to Clang's weaker -fno-rtti-data and leaves __cpp_rtti
+    # defined. Use the Clang option to preserve the no-RTTI semantic.
+    args = ["/clang:-fno-rtti"],
+)
+
+cc_feature(
+    name = "no_rtti",
+    args = [":no_rtti_args"],
+    feature_name = "no_rtti",
+)
+
+cc_args(
+    name = "omit_frame_pointer_args",
+    # Frame-pointer omission affects machine-code generation for both C and
+    # C++, including ThinLTO backend code generation.
+    actions = _COMPILE_ACTIONS + ["@rules_cc//cc/toolchains/actions:lto_backend"],
+    args = ["/clang:-fomit-frame-pointer"],
+)
+
+cc_feature(
+    name = "omit_frame_pointer",
+    args = [":omit_frame_pointer_args"],
+    feature_name = "omit_frame_pointer",
+)
+
+cc_feature_set(
+    name = "compiler_policy_features",
+    all_of = [
+        ":no_exceptions",
+        ":no_rtti",
+        ":omit_frame_pointer",
+    ],
+)
+
+# rules_cc's generic ThinLTO args target a GNU driver and ELF linker protocol.
+# This repository's fixed LLVM Windows route instead requires the combined
+# clang-cl driver and lld-link/COFF protocol, so keep that bridge together.
+cc_feature(
+    name = "supports_start_end_lib",
+    feature_name = "supports_start_end_lib",
+)
+
+cc_args(
+    name = "thin_lto_compile_and_link_args",
+    actions = [
+        "@rules_cc//cc/toolchains/actions:c_compile",
+        "@rules_cc//cc/toolchains/actions:cpp_compile",
+    ] + _LTO_INDEX_ACTIONS + _LINK_ACTIONS,
+    args = ["/clang:-flto=thin"],
+)
+
+cc_args(
+    name = "thin_lto_indexing_bitcode_args",
+    actions = ["@rules_cc//cc/toolchains/actions:compile_actions"],
+    args = [
+        "/clang:-Xclang",
+        "/clang:-fthin-link-bitcode={lto_indexing_bitcode_file}",
+    ],
+    format = {
+        "lto_indexing_bitcode_file": "@rules_cc//cc/toolchains/variables:lto_indexing_bitcode_file",
+    },
+    requires_not_none = "@rules_cc//cc/toolchains/variables:lto_indexing_bitcode_file",
+)
+
+cc_args(
+    name = "thin_lto_indexing_param_args",
+    actions = _LTO_INDEX_ACTIONS,
+    args = [
+        "/clang:-Xlinker",
+        "/clang:/thinlto-index-only:{thinlto_indexing_param_file}",
+    ],
+    format = {
+        "thinlto_indexing_param_file": "@rules_cc//cc/toolchains/variables:thinlto_indexing_param_file",
+    },
+    requires_not_none = "@rules_cc//cc/toolchains/variables:thinlto_indexing_param_file",
+)
+
+cc_args(
+    name = "thin_lto_emit_imports_args",
+    actions = _LTO_INDEX_ACTIONS,
+    args = [
+        "/clang:-Xlinker",
+        "/clang:/thinlto-emit-imports-files",
+    ],
+)
+
+cc_args(
+    name = "thin_lto_prefix_replace_args",
+    actions = _LTO_INDEX_ACTIONS,
+    args = [
+        "/clang:-Xlinker",
+        "/clang:/thinlto-prefix-replace:{thinlto_prefix_replace}",
+    ],
+    format = {
+        "thinlto_prefix_replace": "@rules_cc//cc/toolchains/variables:thinlto_prefix_replace",
+    },
+    requires_not_none = "@rules_cc//cc/toolchains/variables:thinlto_prefix_replace",
+)
+
+cc_args(
+    name = "thin_lto_object_suffix_replace_args",
+    actions = _LTO_INDEX_ACTIONS,
+    args = [
+        "/clang:-Xlinker",
+        "/clang:/thinlto-object-suffix-replace:{thinlto_object_suffix_replace}",
+    ],
+    format = {
+        "thinlto_object_suffix_replace": "@rules_cc//cc/toolchains/variables:thinlto_object_suffix_replace",
+    },
+    requires_not_none = "@rules_cc//cc/toolchains/variables:thinlto_object_suffix_replace",
+)
+
+cc_args(
+    name = "thin_lto_merged_object_args",
+    actions = _LTO_INDEX_ACTIONS,
+    args = [
+        "/clang:-Xlinker",
+        "/clang:/lto-obj-path:{thinlto_merged_object_file}",
+    ],
+    format = {
+        "thinlto_merged_object_file": "@rules_cc//cc/toolchains/variables:thinlto_merged_object_file",
+    },
+    requires_not_none = "@rules_cc//cc/toolchains/variables:thinlto_merged_object_file",
+)
+
+cc_args(
+    name = "thin_lto_backend_compile_args",
+    actions = ["@rules_cc//cc/toolchains/actions:lto_backend"],
+    args = ["/c"],
+)
+
+cc_args(
+    name = "thin_lto_backend_index_args",
+    actions = ["@rules_cc//cc/toolchains/actions:lto_backend"],
+    args = ["/clang:-fthinlto-index={thinlto_index}"],
+    format = {"thinlto_index": "@rules_cc//cc/toolchains/variables:thinlto_index"},
+    requires_not_none = "@rules_cc//cc/toolchains/variables:thinlto_index",
+)
+
+cc_args(
+    name = "thin_lto_backend_output_args",
+    actions = ["@rules_cc//cc/toolchains/actions:lto_backend"],
+    args = ["/Fo{thinlto_output_object_file}"],
+    format = {
+        "thinlto_output_object_file": "@rules_cc//cc/toolchains/variables:thinlto_output_object_file",
+    },
+    requires_not_none = "@rules_cc//cc/toolchains/variables:thinlto_output_object_file",
+)
+
+cc_args(
+    name = "thin_lto_backend_input_args",
+    actions = ["@rules_cc//cc/toolchains/actions:lto_backend"],
+    args = ["{thinlto_input_bitcode_file}"],
+    format = {
+        "thinlto_input_bitcode_file": "@rules_cc//cc/toolchains/variables:thinlto_input_bitcode_file",
+    },
+    requires_not_none = "@rules_cc//cc/toolchains/variables:thinlto_input_bitcode_file",
+)
+
+cc_feature(
+    name = "thin_lto",
+    args = [
+        ":thin_lto_compile_and_link_args",
+        ":thin_lto_indexing_bitcode_args",
+        ":thin_lto_indexing_param_args",
+        ":thin_lto_emit_imports_args",
+        ":thin_lto_prefix_replace_args",
+        ":thin_lto_object_suffix_replace_args",
+        ":thin_lto_merged_object_args",
+        ":thin_lto_backend_compile_args",
+        ":thin_lto_backend_index_args",
+        ":thin_lto_backend_output_args",
+        ":thin_lto_backend_input_args",
+    ],
+    feature_name = "thin_lto",
+    implies = [":supports_start_end_lib"],
+)
+
+cc_feature_constraint(
+    name = "thin_lto_disabled",
+    none_of = [":thin_lto"],
+)
+
+cc_args(
+    name = "preprocessor_defines_args",
+    actions = _COMPILE_ACTIONS,
+    args = ["/D{preprocessor_defines}"],
+    format = {"preprocessor_defines": "@rules_cc//cc/toolchains/variables:preprocessor_defines"},
+    iterate_over = "@rules_cc//cc/toolchains/variables:preprocessor_defines",
+)
+
+cc_feature(
+    name = "preprocessor_defines",
+    args = [":preprocessor_defines_args"],
+    overrides = "@rules_cc//cc/toolchains/features/legacy:preprocessor_defines",
+)
+
+cc_args(
+    name = "quote_include_paths_args",
+    actions = _COMPILE_ACTIONS,
+    args = ["/I{quote_include_paths}"],
+    format = {"quote_include_paths": "@rules_cc//cc/toolchains/variables:quote_include_paths"},
+    iterate_over = "@rules_cc//cc/toolchains/variables:quote_include_paths",
+)
+
+cc_args(
+    name = "include_paths_args",
+    actions = _COMPILE_ACTIONS,
+    args = ["/I{include_paths}"],
+    format = {"include_paths": "@rules_cc//cc/toolchains/variables:include_paths"},
+    iterate_over = "@rules_cc//cc/toolchains/variables:include_paths",
+)
+
+cc_args(
+    name = "system_include_paths_args",
+    actions = _COMPILE_ACTIONS,
+    args = ["/imsvc{system_include_paths}"],
+    format = {"system_include_paths": "@rules_cc//cc/toolchains/variables:system_include_paths"},
+    iterate_over = "@rules_cc//cc/toolchains/variables:system_include_paths",
+)
+
+cc_args(
+    name = "forced_includes_args",
+    actions = _COMPILE_ACTIONS,
+    args = ["/FI{includes}"],
+    format = {"includes": "@rules_cc//cc/toolchains/variables:includes"},
+    iterate_over = "@rules_cc//cc/toolchains/variables:includes",
+    requires_not_none = "@rules_cc//cc/toolchains/variables:includes",
+)
+
+cc_feature(
+    name = "include_paths",
+    args = [
+        ":quote_include_paths_args",
+        ":include_paths_args",
+        ":system_include_paths_args",
+    ],
+    overrides = "@rules_cc//cc/toolchains/features/legacy:include_paths",
+)
+
+cc_feature(
+    name = "forced_includes",
+    args = [":forced_includes_args"],
+    overrides = "@rules_cc//cc/toolchains/features/legacy:includes",
+)
+
+cc_args(
+    name = "compiler_output_args",
+    actions = _ASSEMBLE_ACTIONS + _COMPILE_ACTIONS,
+    args = ["/Fo{output_file}"],
+    format = {"output_file": "@rules_cc//cc/toolchains/variables:output_file"},
+    requires_not_none = "@rules_cc//cc/toolchains/variables:output_file",
+)
+
+cc_args(
+    name = "compiler_input_args",
+    actions = _ASSEMBLE_ACTIONS + _COMPILE_ACTIONS,
+    args = [
+        "/c",
+        "{source_file}",
+    ],
+    format = {"source_file": "@rules_cc//cc/toolchains/variables:source_file"},
+    requires_not_none = "@rules_cc//cc/toolchains/variables:source_file",
+)
+
+cc_feature(
+    name = "compiler_output",
+    args = [":compiler_output_args"],
+    overrides = "@rules_cc//cc/toolchains/features/legacy:compiler_output_flags",
+)
+
+cc_feature(
+    name = "compiler_input",
+    args = [":compiler_input_args"],
+    overrides = "@rules_cc//cc/toolchains/features/legacy:compiler_input_flags",
+)
+
+cc_args(
+    name = "dependency_file_args",
+    actions = _COMPILE_ACTIONS,
+    args = [
+        "/clang:-MD",
+        "/clang:-MF",
+        "/clang:{dependency_file}",
+    ],
+    format = {"dependency_file": "@rules_cc//cc/toolchains/variables:dependency_file"},
+    requires_not_none = "@rules_cc//cc/toolchains/variables:dependency_file",
+)
+
+cc_feature(
+    name = "dependency_file",
+    args = [":dependency_file_args"],
+    overrides = "@rules_cc//cc/toolchains/features/legacy:dependency_file",
+)
+
+# This is the narrow driver/linker bridge: rules_cc exposes libraries as one
+# structured variable, while clang-cl must forward lld-link/COFF options
+# through /clang:-Xlinker.
+cc_nested_args(
+    name = "link_object_group",
+    args = ["{object_file}"],
+    format = {"object_file": "@rules_cc//cc/toolchains/variables:libraries_to_link.object_files"},
+    iterate_over = "@rules_cc//cc/toolchains/variables:libraries_to_link.object_files",
+    requires_equal = "@rules_cc//cc/toolchains/variables:libraries_to_link.type",
+    requires_equal_value = "object_file_group",
+)
+
+cc_nested_args(
+    name = "thin_link_object_group_start",
+    args = [
+        "/clang:-Xlinker",
+        "/clang:/start-lib",
+    ],
+    requires_false = "@rules_cc//cc/toolchains/variables:libraries_to_link.is_whole_archive",
+)
+
+cc_nested_args(
+    name = "thin_link_object_group_members",
+    args = ["{object_file}"],
+    format = {"object_file": "@rules_cc//cc/toolchains/variables:libraries_to_link.object_files"},
+    iterate_over = "@rules_cc//cc/toolchains/variables:libraries_to_link.object_files",
+)
+
+cc_nested_args(
+    name = "thin_link_object_group_end",
+    args = [
+        "/clang:-Xlinker",
+        "/clang:/end-lib",
+    ],
+    requires_false = "@rules_cc//cc/toolchains/variables:libraries_to_link.is_whole_archive",
+)
+
+cc_nested_args(
+    name = "thin_link_object_group",
+    nested = [
+        ":thin_link_object_group_start",
+        ":thin_link_object_group_members",
+        ":thin_link_object_group_end",
+    ],
+    requires_equal = "@rules_cc//cc/toolchains/variables:libraries_to_link.type",
+    requires_equal_value = "object_file_group",
+)
+
+cc_nested_args(
+    name = "link_object",
+    args = ["{library}"],
+    format = {"library": "@rules_cc//cc/toolchains/variables:libraries_to_link.name"},
+    requires_equal = "@rules_cc//cc/toolchains/variables:libraries_to_link.type",
+    requires_equal_value = "object_file",
+)
+
+cc_nested_args(
+    name = "link_interface_library",
+    args = ["{library}"],
+    format = {"library": "@rules_cc//cc/toolchains/variables:libraries_to_link.name"},
+    requires_equal = "@rules_cc//cc/toolchains/variables:libraries_to_link.type",
+    requires_equal_value = "interface_library",
+)
+
+cc_nested_args(
+    name = "link_static_library_plain",
+    args = ["{library}"],
+    format = {"library": "@rules_cc//cc/toolchains/variables:libraries_to_link.name"},
+    requires_false = "@rules_cc//cc/toolchains/variables:libraries_to_link.is_whole_archive",
+)
+
+cc_nested_args(
+    name = "link_static_library_whole",
+    args = [
+        "/clang:-Xlinker",
+        "/clang:/WHOLEARCHIVE:{library}",
+    ],
+    format = {"library": "@rules_cc//cc/toolchains/variables:libraries_to_link.name"},
+    requires_true = "@rules_cc//cc/toolchains/variables:libraries_to_link.is_whole_archive",
+)
+
+cc_nested_args(
+    name = "link_static_library",
+    nested = [
+        ":link_static_library_plain",
+        ":link_static_library_whole",
+    ],
+    requires_equal = "@rules_cc//cc/toolchains/variables:libraries_to_link.type",
+    requires_equal_value = "static_library",
+)
+
+cc_nested_args(
+    name = "link_dynamic_library",
+    args = ["{library}"],
+    format = {"library": "@rules_cc//cc/toolchains/variables:libraries_to_link.name"},
+    requires_equal = "@rules_cc//cc/toolchains/variables:libraries_to_link.type",
+    requires_equal_value = "dynamic_library",
+)
+
+cc_nested_args(
+    name = "libraries_expansion",
+    iterate_over = "@rules_cc//cc/toolchains/variables:libraries_to_link",
+    nested = [
+        ":link_object_group",
+        ":link_object",
+        ":link_interface_library",
+        ":link_static_library",
+        ":link_dynamic_library",
+    ],
+)
+
+cc_nested_args(
+    name = "thin_libraries_expansion",
+    iterate_over = "@rules_cc//cc/toolchains/variables:libraries_to_link",
+    nested = [
+        ":thin_link_object_group",
+        ":link_object",
+        ":link_interface_library",
+        ":link_static_library",
+        ":link_dynamic_library",
+    ],
+)
+
+cc_nested_args(
+    name = "thin_lto_final_param_file",
+    args = ["@{thinlto_param_file}"],
+    format = {"thinlto_param_file": "@rules_cc//cc/toolchains/variables:thinlto_param_file"},
+    requires_not_none = "@rules_cc//cc/toolchains/variables:thinlto_param_file",
+)
+
+cc_args(
+    name = "libraries_to_link_args",
+    actions = _LINK_ACTIONS,
+    nested = [":libraries_expansion"],
+    requires_any_of = [":thin_lto_disabled"],
+    requires_not_none = "@rules_cc//cc/toolchains/variables:libraries_to_link",
+)
+
+cc_args(
+    name = "thin_libraries_to_link_args",
+    actions = _LINK_ACTIONS,
+    nested = [
+        ":thin_lto_final_param_file",
+        ":thin_libraries_expansion",
+    ],
+    requires_any_of = [":thin_lto"],
+    requires_not_none = "@rules_cc//cc/toolchains/variables:libraries_to_link",
+)
+
+cc_feature(
+    name = "libraries_to_link",
+    args = [
+        ":libraries_to_link_args",
+        ":thin_libraries_to_link_args",
+    ],
+    overrides = "@rules_cc//cc/toolchains/features/legacy:libraries_to_link",
+)
+
+cc_args(
+    name = "output_execpath_args",
+    actions = _LINK_ACTIONS,
+    args = ["/Fe{output_execpath}"],
+    format = {"output_execpath": "@rules_cc//cc/toolchains/variables:output_execpath"},
+    requires_not_none = "@rules_cc//cc/toolchains/variables:output_execpath",
+)
+
+cc_args(
+    name = "legacy_link_flags_args",
+    actions = _LINK_ACTIONS,
+    args = [
+        "/clang:-Xlinker",
+        "/clang:{legacy_link_flags}",
+    ],
+    format = {"legacy_link_flags": "@rules_cc//cc/toolchains/variables:legacy_link_flags"},
+    iterate_over = "@rules_cc//cc/toolchains/variables:legacy_link_flags",
+    requires_not_none = "@rules_cc//cc/toolchains/variables:legacy_link_flags",
+)
+
+cc_args(
+    name = "user_link_flags_args",
+    actions = _LINK_ACTIONS,
+    args = [
+        "/clang:-Xlinker",
+        "/clang:{user_link_flags}",
+    ],
+    format = {"user_link_flags": "@rules_cc//cc/toolchains/variables:user_link_flags"},
+    iterate_over = "@rules_cc//cc/toolchains/variables:user_link_flags",
+    requires_not_none = "@rules_cc//cc/toolchains/variables:user_link_flags",
+)
+
+cc_feature(
+    name = "legacy_link_flags",
+    args = [":legacy_link_flags_args"],
+    overrides = "@rules_cc//cc/toolchains/features/legacy:legacy_link_flags",
+)
+
+cc_feature(
+    name = "user_link_flags",
+    args = [":user_link_flags_args"],
+    overrides = "@rules_cc//cc/toolchains/features/legacy:user_link_flags",
+)
+
+cc_feature(
+    name = "output_execpath_flags",
+    args = [":output_execpath_args"],
+    overrides = "@rules_cc//cc/toolchains/features/legacy:output_execpath_flags",
+)
+
+cc_feature_set(
+    name = "link_flags",
+    all_of = [
+        ":legacy_link_flags",
+        ":user_link_flags",
+        ":output_execpath_flags",
+    ],
+)
+
+cc_args(
+    name = "library_search_directories_args",
+    actions = _LINK_ACTIONS,
+    args = [
+        "/clang:-Xlinker",
+        "/clang:/LIBPATH:{library_search_directories}",
+    ],
+    format = {"library_search_directories": "@rules_cc//cc/toolchains/variables:library_search_directories"},
+    iterate_over = "@rules_cc//cc/toolchains/variables:library_search_directories",
+    requires_not_none = "@rules_cc//cc/toolchains/variables:library_search_directories",
+)
+
+cc_feature(
+    name = "library_search_directories",
+    args = [":library_search_directories_args"],
+    overrides = "@rules_cc//cc/toolchains/features/legacy:library_search_directories",
+)
+
+cc_feature(
+    name = "random_seed",
+    # clang-cl has no driver-level equivalent to rules_cc's GNU
+    # -frandom-seed spelling. Deterministic compile policy is supplied by the
+    # repository's canonical argument groups instead.
+    overrides = "@rules_cc//cc/toolchains/features/legacy:random_seed",
+)
+
+cc_feature(
+    name = "compiler_param_file",
+    feature_name = "compiler_param_file",
+)
+
+cc_feature(
+    name = "windows_quoting_for_param_files",
+    feature_name = "windows_quoting_for_param_files",
+)
+
+cc_args(
+    name = "def_file_args",
+    actions = _LINK_ACTIONS,
+    args = [
+        "/clang:-Xlinker",
+        "/clang:/DEF:{def_file_path}",
+    ],
+    format = {"def_file_path": "@rules_cc//cc/toolchains/variables:def_file_path"},
+    requires_not_none = "@rules_cc//cc/toolchains/variables:def_file_path",
+)
+
+cc_feature(
+    name = "def_file",
+    args = [":def_file_args"],
+    feature_name = "def_file",
+)
+
+# Temporary compatibility boundary. The repository's e2e configuration
+# requests layering_check globally, but CL-mode module-map and header-parsing
+# actions have not yet been implemented. Register the names without enabling
+# module args; do not treat this no-op as support.
+cc_feature(
+    name = "pending_layering_check",
+    feature_name = "layering_check",
+)
+
+cc_feature(
+    name = "pending_use_module_maps",
+    feature_name = "use_module_maps",
+)
+
+cc_feature_set(
+    name = "known_features",
+    all_of = [
+        ":compiler_param_file",
+        ":def_file",
+        ":pending_layering_check",
+        ":pending_use_module_maps",
+        ":supports_start_end_lib",
+        ":thin_lto",
+        ":windows_quoting_for_param_files",
+    ],
+)
+
+cc_feature_set(
+    name = "enabled_features",
+    all_of = [
+        ":compiler_param_file",
+        ":def_file",
+        ":windows_quoting_for_param_files",
+    ],
+)

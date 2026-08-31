@@ -3,55 +3,140 @@ load("@rules_cc//cc/toolchains:feature.bzl", "cc_feature")
 load("@rules_cc//cc/toolchains:feature_set.bzl", "cc_feature_set")
 load("@rules_cc//cc/toolchains:nested_args.bzl", "cc_nested_args")
 
+_CLANG_CL_FRONTEND_ACTIONS = [
+    "@rules_cc//cc/toolchains/actions:c_compile",
+    "@rules_cc//cc/toolchains/actions:cpp_compile",
+    "@rules_cc//cc/toolchains/actions:linkstamp_compile",
+    "@rules_cc//cc/toolchains/actions:preprocess_assemble",
+    "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
+]
+
+_CLANG_CL_SOURCE_CODEGEN_ACTIONS = [
+    "@rules_cc//cc/toolchains/actions:c_compile",
+    "@rules_cc//cc/toolchains/actions:cpp_compile",
+    "@rules_cc//cc/toolchains/actions:linkstamp_compile",
+]
+
+_CLANG_CL_CODEGEN_ACTIONS = _CLANG_CL_SOURCE_CODEGEN_ACTIONS + [
+    "@rules_cc//cc/toolchains/actions:lto_backend",
+]
+
 cc_args(
     name = "legacy_default_cxx_compile_flags",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:cpp_compile_actions",
-    ],
+    actions = ["@rules_cc//cc/toolchains/actions:cpp_compile_actions"],
+    args = ["-std=c++17"],
+)
+
+cc_args(
+    name = "legacy_default_stack_protector",
+    actions = ["@rules_cc//cc/toolchains/actions:source_compile_actions"],
+    args = select({
+        "@platforms//os:none": [],
+        "//conditions:default": ["-fstack-protector"],
+    }),
+)
+
+cc_args(
+    name = "legacy_default_warning_flags",
+    actions = ["@rules_cc//cc/toolchains/actions:source_compile_actions"],
     args = [
-        "-std=c++17",
+        "-Wall",
+        "-Wthread-safety",
+        "-Wself-assign",
+        "-Wunused-but-set-parameter",
+        "-Wno-free-nonheap-object",
     ],
 )
 
 cc_args(
-    name = "legacy_default_compile_flags",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:compile_actions",
-    ],
-    args = select({
-        "@platforms//os:none": [],
-        "//conditions:default": ["-fstack-protector"],
-    }) + [
-        # All warnings are enabled.
-        "-Wall",
-        # Enable a few more warnings that aren't part of -Wall.
-        "-Wthread-safety",
-        "-Wself-assign",
-        # Disable problematic warnings.
-        "-Wunused-but-set-parameter",
-        # has false positives
-        "-Wno-free-nonheap-object",
-        # Enable coloring even if there's no attached terminal. Bazel removes the
-        # escape sequences if --nocolor is specified.
-        "-fcolor-diagnostics",
-        # Keep stack frames for debugging, even in opt mode.
-        "-fno-omit-frame-pointer",
-    ],
+    name = "legacy_default_color_diagnostics",
+    actions = ["@rules_cc//cc/toolchains/actions:source_compile_actions"],
+    # Enable coloring even without an attached terminal. Bazel removes the
+    # escape sequences if --nocolor is specified.
+    args = ["-fcolor-diagnostics"],
+)
+
+cc_args(
+    name = "legacy_default_frame_pointer",
+    actions = ["@rules_cc//cc/toolchains/actions:compile_actions"],
+    # Keep stack frames for debugging, even in opt mode. Product-specific
+    # release policy may deliberately override this later in argument order.
+    args = ["-fno-omit-frame-pointer"],
 )
 
 cc_feature(
     name = "default_compile_flags",
     args = [
         ":legacy_default_cxx_compile_flags",
-        ":legacy_default_compile_flags",
+        ":legacy_default_stack_protector",
+        ":legacy_default_warning_flags",
+        ":legacy_default_color_diagnostics",
+        ":legacy_default_frame_pointer",
     ],
     overrides = "@rules_cc//cc/toolchains/features/legacy:default_compile_flags",
 )
 
+# Keep compiler-personality implementations explicit. Selecting on the current
+# cc toolchain's compiler flag from a feature used to construct that toolchain
+# creates a dependency cycle.
+cc_args(
+    name = "clang_cl_legacy_default_cxx_compile_flags",
+    # Header parsing remains registered but unsupported; modules, ObjC++, and
+    # CLIF are unsupported, while the LTO backend consumes IR rather than a C++
+    # source-language default.
+    actions = [
+        "@rules_cc//cc/toolchains/actions:cpp_compile",
+        "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
+        "@rules_cc//cc/toolchains/actions:linkstamp_compile",
+    ],
+    args = ["/std:c++17"],
+)
+
+cc_args(
+    name = "clang_cl_legacy_default_stack_protector",
+    actions = _CLANG_CL_SOURCE_CODEGEN_ACTIONS,
+    args = ["/GS"],
+)
+
+cc_args(
+    name = "clang_cl_legacy_default_warning_flags",
+    actions = _CLANG_CL_FRONTEND_ACTIONS,
+    # Preserve the generic Clang diagnostic policy through explicit Clang
+    # passthrough instead of approximating it with a /W level.
+    args = [
+        "/clang:-Wall",
+        "/clang:-Wthread-safety",
+        "/clang:-Wself-assign",
+        "/clang:-Wunused-but-set-parameter",
+        "/clang:-Wno-free-nonheap-object",
+    ],
+)
+
+cc_args(
+    name = "clang_cl_legacy_default_color_diagnostics",
+    actions = _CLANG_CL_FRONTEND_ACTIONS,
+    args = ["/clang:-fcolor-diagnostics"],
+)
+
+cc_args(
+    name = "clang_cl_legacy_default_frame_pointer",
+    actions = _CLANG_CL_CODEGEN_ACTIONS,
+    args = ["/clang:-fno-omit-frame-pointer"],
+)
+
 cc_feature(
-    name = "supports_start_end_lib",
-    feature_name = "supports_start_end_lib",
-    visibility = ["//visibility:public"],
+    name = "clang_cl_default_compile_flags",
+    args = [
+        "//toolchain/args:clang_cl_suppress_compiler_banner",
+        "//toolchain/args:clang_cl_default_exception_handling",
+        "//toolchain/args:clang_cl_default_rtti",
+        ":clang_cl_legacy_default_cxx_compile_flags",
+        ":clang_cl_legacy_default_stack_protector",
+        ":clang_cl_legacy_default_warning_flags",
+        ":clang_cl_legacy_default_color_diagnostics",
+        ":clang_cl_legacy_default_frame_pointer",
+    ],
+    overrides = "@rules_cc//cc/toolchains/features/legacy:default_compile_flags",
 )
 
 # General case when not targetting macOS or when targetting macOS but not generating a dSYM.
@@ -87,6 +172,43 @@ cc_feature(
 )
 
 cc_feature(
+    name = "coff_runtime_library_search_directories",
+    # PE/COFF does not encode ELF-style runtime library search directories.
+    overrides = "@rules_cc//cc/toolchains/features/legacy:runtime_library_search_directories",
+)
+
+cc_args(
+    name = "clang_cl_shared_flag_args",
+    actions = ["@rules_cc//cc/toolchains/actions:dynamic_library_link_actions"],
+    args = [
+        "/clang:-Xlinker",
+        "/clang:/DLL",
+    ],
+)
+
+cc_feature(
+    name = "clang_cl_shared_flag",
+    args = [":clang_cl_shared_flag_args"],
+    overrides = "@rules_cc//cc/toolchains/features/legacy:shared_flag",
+)
+
+cc_args(
+    name = "clang_cl_strip_debug_symbols_args",
+    actions = ["@rules_cc//cc/toolchains/actions:link_actions"],
+    args = [
+        "/clang:-Xlinker",
+        "/clang:/DEBUG:NONE",
+    ],
+    requires_not_none = "@rules_cc//cc/toolchains/variables:strip_debug_symbols",
+)
+
+cc_feature(
+    name = "clang_cl_strip_debug_symbols",
+    args = [":clang_cl_strip_debug_symbols_args"],
+    overrides = "@rules_cc//cc/toolchains/features/legacy:strip_debug_symbols",
+)
+
+cc_feature(
     name = "no_legacy_features",
     feature_name = "no_legacy_features",
 )
@@ -95,25 +217,28 @@ cc_feature(
 
 cc_feature_set(
     name = "all_legacy_builtin_features",
-    all_of = [
-        ":default_compile_flags",
-        ":supports_start_end_lib",
-    ],
+    all_of = [":default_compile_flags"],
+    visibility = ["//visibility:public"],
+)
+
+cc_feature_set(
+    name = "clang_cl_all_legacy_builtin_features",
+    all_of = [":clang_cl_default_compile_flags"],
     visibility = ["//visibility:public"],
 )
 
 # Inlined from rules_cc to avoid problematic features that can't be overridden.
+# Keep the two ordered lists explicit until rules_cc exposes compiler-specific
+# implementations that toolchain assembly can select from an explicit compiler
+# personality. This duplication makes every unsupported or target-inapplicable
+# clang-cl slot auditable without an early shared-list abstraction.
 # https://github.com/bazelbuild/rules_cc/blob/541eda5d72e9b5f18e6a24e8d14975afcd865717/cc/toolchains/args/BUILD#L6-L42
 cc_feature_set(
-    name = "experimental_replace_legacy_action_config_features",
+    name = "generic_legacy_replacements",
     all_of = [
-        ":no_legacy_features",
         "@rules_cc//cc/toolchains/args/archiver_flags:feature",
         "@rules_cc//cc/toolchains/args/pic_flags:feature",
-        # TODO: Restore this after a rules_cc release includes the Windows
-        # /start-lib and /end-lib arguments.
-        # "@rules_cc//cc/toolchains/args/libraries_to_link:feature",
-        "@llvm//toolchain/features/libraries_to_link:feature",
+        "@rules_cc//cc/toolchains/args/libraries_to_link:feature",
         "@rules_cc//cc/toolchains/args/linker_param_file:feature",
         "@rules_cc//cc/toolchains/args/preprocessor_defines:feature",
         "@rules_cc//cc/toolchains/args/random_seed:feature",
@@ -142,6 +267,59 @@ cc_feature_set(
         # NOTE: This should come after user compile flags since some flags need to be added before the input file (e.g., -x lang)
         "@rules_cc//cc/toolchains/args/compiler_input_flags:feature",
         "@rules_cc//cc/toolchains/args/compiler_output_flags:feature",
+    ],
+)
+
+cc_feature_set(
+    name = "clang_cl_windows_msvc_legacy_replacements",
+    all_of = [
+        # Target ABI/tool protocol: llvm-ar writes deterministic COFF archives.
+        "//toolchain/features/msvc:archiver_flags",
+        # Target-inapplicable under COFF: registered empty implementations.
+        "//toolchain/features/msvc:pic_flags",
+        # Driver-dialect replacements, kept in the same order as the generic
+        # rules_cc spine above.
+        "//toolchain/features/clang_cl:libraries_to_link",
+        "@rules_cc//cc/toolchains/args/linker_param_file:feature",
+        "//toolchain/features/clang_cl:preprocessor_defines",
+        "//toolchain/features/clang_cl:random_seed",
+        ":coff_runtime_library_search_directories",
+        ":clang_cl_shared_flag",
+        ":clang_cl_strip_debug_symbols",
+        # The generic strip action protocol is not registered for this route.
+        # ObjC ARC and fission are explicit unsupported MSVC features.
+        ":set_soname",
+
+        # static_libgcc remains intentionally omitted for every dialect.
+        "//toolchain/features/clang_cl:forced_includes",
+        "//toolchain/features/clang_cl:include_paths",
+        "//toolchain/features/clang_cl:link_flags",
+        # Linkstamp inputs are raw object paths and are dialect-independent.
+        "@rules_cc//cc/toolchains/args/linkstamp_flags:feature",
+        "//toolchain/features/clang_cl:library_search_directories",
+        "//toolchain/features/clang_cl:dependency_file",
+
+        # User flags remain last among policy arguments, before input/output.
+        "@rules_cc//cc/toolchains/args/compile_flags:feature",
+        "//toolchain/features/clang_cl:compiler_input",
+        "//toolchain/features/clang_cl:compiler_output",
+    ],
+)
+
+cc_feature_set(
+    name = "experimental_replace_legacy_action_config_features",
+    all_of = [
+        ":no_legacy_features",
+        ":generic_legacy_replacements",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+cc_feature_set(
+    name = "clang_cl_experimental_replace_legacy_action_config_features",
+    all_of = [
+        ":no_legacy_features",
+        ":clang_cl_windows_msvc_legacy_replacements",
     ],
     visibility = ["//visibility:public"],
 )

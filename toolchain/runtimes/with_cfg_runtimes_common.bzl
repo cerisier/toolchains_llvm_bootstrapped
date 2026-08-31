@@ -12,6 +12,16 @@ def configure_builder_for_runtimes(builder, runtime_stage, linkmode = "static", 
     builder.set("host_conlyopt", [])
     builder.set("host_linkopt", [])
 
+    # Release policy is expressed through compiler-personality features rather
+    # than user compile options. Reset it at the same runtime boundary as the
+    # options above: each runtime owns its exception, RTTI, and frame-pointer
+    # requirements independently from the final LLVM product.
+    builder.extend("features", [
+        "-no_exceptions",
+        "-no_rtti",
+        "-omit_frame_pointer",
+    ])
+
     # We are compiling runtimes without any kind of other dependencies.
     builder.set(
         Label("//toolchain:runtime_stage"),

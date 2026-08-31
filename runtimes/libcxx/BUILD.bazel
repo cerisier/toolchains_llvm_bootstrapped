@@ -42,6 +42,14 @@ copy_to_directory(
     visibility = ["//visibility:public"],
 )
 
+copy_to_directory(
+    name = "libcxx_msvc_library_search_directory",
+    srcs = [":libcxx.static"],
+    include_external_repositories = ["**"],
+    root_paths = ["**/libcxx"],
+    visibility = ["//visibility:public"],
+)
+
 alias(
     name = "libcxx_headers_include_search_directory",
     actual = "@llvm-project//libcxx:libcxx_headers_include_search_directory",

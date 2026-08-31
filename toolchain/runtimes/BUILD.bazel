@@ -6,6 +6,13 @@ load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 cc_args_list(
     name = "hermetic_link_flags",
     args = select({
+        # The generic -nostdlib++ policy says that Bazel's runtime attributes
+        # own C++ runtime linkage. /NODEFAULTLIB is not its clang-cl equivalent:
+        # it would also suppress the selected Microsoft CRT and SDK libraries.
+        # The complete MSVC toolchain instead disables libc++ object auto-link
+        # metadata and names static libc++ through its default-libraries
+        # composition.
+        "//constraints/windows/abi:msvc": [],
         "@platforms//os:macos": [],
         "//conditions:default": [
             "//toolchain/runtimes/args:hermetic_link_flags",
@@ -19,6 +26,7 @@ cc_args_list(
         "@platforms//os:macos": [
             "//toolchain/args/macos:default_link_flags",
         ],
+        "@platforms//os:windows": ["//toolchain/args/windows:default_link_flags"],
         "//conditions:default": [],
     }),
 )
@@ -49,14 +57,6 @@ cc_args_list(
 )
 
 cc_args_list(
-    name = "windows_hosted_c_toolchain_args",
-    args = [
-        "//toolchain/args/windows:mingw_headers_include_search_paths",
-    ],
-    visibility = ["//toolchain:__subpackages__"],
-)
-
-cc_args_list(
     name = "stage1_hosted_platform_specific_args",
     args = select({
         "@platforms//os:macos": [
@@ -65,9 +65,8 @@ cc_args_list(
         "@platforms//os:linux": [
             ":linux_hosted_c_toolchain_args",
         ],
-        "@platforms//os:windows": [
-            ":windows_hosted_c_toolchain_args",
-        ],
+        # Windows uses the complete :windows_toolchain_args composition below.
+        "@platforms//os:windows": [],
         "@platforms//os:none": [],
     }),
     visibility = ["//toolchain:__subpackages__"],
@@ -80,6 +79,7 @@ cc_args_list(
             "//toolchain:macos_toolchain_args",
         ],
         "@platforms//os:linux": [],
+        # Windows uses the complete :windows_toolchain_args composition below.
         "@platforms//os:windows": [],
         "@platforms//os:none": [],
     }),
@@ -100,7 +100,7 @@ cc_args_list(
 )
 
 cc_args_list(
-    name = "toolchain_args",
+    name = "generic_toolchain_args",
     args = [
         # Common default compile flags.
         "//toolchain/args:target_flags",
@@ -134,6 +134,7 @@ cc_args_list(
         "//toolchain/runtimes/args:profile_flags",
 
         # Common default link flags.
+        "//toolchain:deterministic_link_flags",
         "//toolchain/args:fuse_ld",
         "//toolchain/args:lto_plugin_target_flags",
         ":rtlib",
@@ -142,14 +143,87 @@ cc_args_list(
         # Needs to stay out of resource_dir since clang does not always search for crtstuff for all targets.
         ":default_startfiles",
         ":default_libs",
+        # TODO: rules_cc passes extra args to these actions, ideally these would be fixed in rules_cc.
+        "//toolchain/args:ignore_unused_command_line_argument",
     ],
+)
+
+cc_args_list(
+    name = "windows_headers_before_compiler_resource",
+    args = select({
+        "//toolchain:runtimes_stage1_hosted": ["//toolchain/args/windows:headers_before_compiler_resource"],
+        "//conditions:default": [],
+    }),
+)
+
+# Keep the complete Windows runtime composition explicit while its individual
+# compiler-personality, object-format, ABI, and runtime semantics are being
+# normalized. This mirrors :generic_toolchain_args instead of appending a bag
+# of Windows-only arguments through :staged_platform_specific_args.
+cc_args_list(
+    name = "windows_toolchain_args",
+    args = [
+        # Common default compile flags.
+        "//toolchain/args/windows:target_flags",
+        "//toolchain/args:no_absolute_paths_for_builtins",
+        "//toolchain/args/windows:deterministic_compile_flags",
+        "//toolchain/args:module_map",
+        "//toolchain/runtimes/args:optimization_flags",
+        "//toolchain:sysroot_flags",
+        "//toolchain:hermetic_compile_flags",
+        ":hermetic_link_flags",
+
+        # Keep external -isystem directories before the toolchain C and C++
+        # -isystem directories below.
+        "@rules_cc//cc/toolchains/args/external_include_paths:external_include_paths",
+
+        # Windows compiler, ABI, CRT, object-format, and C++ runtime semantics.
+        "//toolchain/args/windows:crt_compile_defines",
+        ":windows_headers_before_compiler_resource",
+
+        # Optional sanitizers
+        "//toolchain/runtimes/args:ubsan_flags",
+        "//toolchain/runtimes/args:cfi_flags",
+        "//toolchain/runtimes/args:msan_flags",
+        "//toolchain/runtimes/args:dfsan_flags",
+        "//toolchain/runtimes/args:nsan_flags",
+        "//toolchain/runtimes/args:safestack_flags",
+        "//toolchain/runtimes/args:rtsan_flags",
+        "//toolchain/runtimes/args:tysan_flags",
+        "//toolchain/runtimes/args:tsan_flags",
+        "//toolchain/runtimes/args:asan_flags",
+        "//toolchain/runtimes/args:lsan_flags",
+        "//toolchain/runtimes/args:profile_flags",
+
+        # Common default link flags.
+        "//toolchain:deterministic_link_flags",
+        "//toolchain/args:fuse_ld",
+        "//toolchain/args:lto_plugin_target_flags",
+        ":rtlib",
+        ":resource_dir",
+        ":default_link_flags",
+        # Needs to stay out of resource_dir since clang does not always search for crtstuff for all targets.
+        ":default_startfiles",
+        ":default_libs",
+        "//toolchain/args/windows:configuration_validation_args",
+        "//toolchain/args/windows:crt_linkage_args",
+        "//toolchain/args/windows:ignore_unused_command_line_argument",
+    ],
+)
+
+cc_args_list(
+    name = "toolchain_args",
+    args = select({
+        "@platforms//os:windows": [":windows_toolchain_args"],
+        "//conditions:default": [":generic_toolchain_args"],
+    }),
     visibility = ["//visibility:public"],
 )
 
 #TODO(cerisier): Maybe with a _gt_x select we could reuse this everywhere.
 
 cc_args_list(
-    name = "resource_dir",
+    name = "generic_resource_dir",
     args = select({
         "//toolchain:runtimes_all": [],
         "//toolchain:runtimes_stage1": ["//toolchain:resource_dir"],
@@ -159,7 +233,23 @@ cc_args_list(
 )
 
 cc_args_list(
-    name = "default_startfiles",
+    name = "msvc_resource_dir",
+    args = select({
+        "//toolchain:runtimes_all": ["//toolchain:resource_dir"],
+        "//conditions:default": [],
+    }),
+)
+
+cc_args_list(
+    name = "resource_dir",
+    args = select({
+        "//constraints/windows/abi:msvc": [":msvc_resource_dir"],
+        "//conditions:default": [":generic_resource_dir"],
+    }),
+)
+
+cc_args_list(
+    name = "generic_default_startfiles",
     args = select({
         "//toolchain:runtimes_all": [],
         "//toolchain:runtimes_stage1": ["//toolchain:default_startfiles"],
@@ -169,7 +259,12 @@ cc_args_list(
 )
 
 cc_args_list(
-    name = "rtlib",
+    name = "default_startfiles",
+    args = ["generic_default_startfiles"],
+)
+
+cc_args_list(
+    name = "generic_rtlib",
     args = select({
         "//toolchain:runtimes_all": [],
         "//toolchain:runtimes_stage1": [
@@ -182,9 +277,25 @@ cc_args_list(
     }),
 )
 
+cc_args_list(
+    name = "msvc_rtlib",
+    args = select({
+        "//toolchain:runtimes_all": ["//toolchain:rtlib"],
+        "//conditions:default": [],
+    }),
+)
+
+cc_args_list(
+    name = "rtlib",
+    args = select({
+        "//constraints/windows/abi:msvc": [":msvc_rtlib"],
+        "//conditions:default": [":generic_rtlib"],
+    }),
+)
+
 #TODO(cerisier): Need a level of indirection to handle OS differences between stages.
 cc_args_list(
-    name = "default_libs",
+    name = "generic_default_libs",
     args = select({
         "//toolchain:runtimes_all": [],
         "//toolchain:runtimes_stage1": [
@@ -195,6 +306,11 @@ cc_args_list(
         ],
         "//toolchain:runtimes_none": [],
     }),
+)
+
+cc_args_list(
+    name = "default_libs",
+    args = ["generic_default_libs"],
 )
 
 bzl_library(

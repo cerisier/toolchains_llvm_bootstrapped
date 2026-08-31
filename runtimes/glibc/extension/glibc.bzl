@@ -35,10 +35,12 @@ GLIBC_RELEASE_COMMITS = {
 
 GLIBC_RELEASE_URLS = {
     "2.43": ["https://ftp.gnu.org/gnu/glibc/glibc-2.43.tar.xz"],
+    "2.44": ["https://ftp.gnu.org/gnu/glibc/glibc-2.44.tar.xz"],
 }
 
 GLIBC_RELEASE_STRIP_PREFIXES = {
     "2.43": "glibc-2.43",
+    "2.44": "glibc-2.44",
 }
 
 GLIBC_RELEASE_INTEGRITY = {
@@ -58,6 +60,7 @@ GLIBC_RELEASE_INTEGRITY = {
     "2.41": "ae2ef9d50a04e5f4e7eece46455a21bf4e4e69518ed31496fdb4c0895f7e18fd",
     "2.42": "0a1427b902e6fe666508162d92d5be3eaff4d410fe66f3426ccaa9848ed90f05",
     "2.43": "d9c86c6b5dbddb43a3e08270c5844fc5177d19442cf5b8df4be7c07cd5fa3831",
+    "2.44": "37f600f2bef3c5e8300147059568b2a2e40a7ad6ccc65ce942556d49429cc667",
 }
 
 def _glibc_release_urls(version):

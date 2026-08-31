@@ -1,0 +1,189 @@
+load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
+load("//:case_insensitive_vfs.bzl", "case_insensitive_vfs_overlay")
+load("//:directory.bzl", "directory_info")
+
+package(default_visibility = ["//visibility:public"])
+
+_MSVC_DYNAMIC_RUNTIME_LIBRARIES = [
+    "iso_stdio_wide_specifiers.lib",
+    "msvcprt.lib",
+    "msvcrt.lib",
+    "oldnames.lib",
+    "vcruntime.lib",
+]
+
+_MSVC_STATIC_RUNTIME_LIBRARIES = [
+    "iso_stdio_wide_specifiers.lib",
+    "libcmt.lib",
+    "libcpmt.lib",
+    "libvcruntime.lib",
+    "oldnames.lib",
+]
+
+# Keep LLVM's COM compiler-support dependency separate from the Microsoft STL.
+# new.h is already provided by the selected UCRT include tree.
+_MSVC_COM_SUPPORT_HEADERS = [
+    "comdef.h",
+    "comdefsp.h",
+    "comip.h",
+    "comutil.h",
+]
+
+_MSVC_COM_SUPPORT_LIBRARIES = [
+    "comsuppw.lib",
+]
+
+# Keep Layer 1's VCRuntime ABI surface separate from Microsoft STL. These are
+# the compiler/exception runtime headers required by clang-cl and libc++; the
+# selected C++ standard-library headers still come exclusively from libc++.
+_MSVC_VCRUNTIME_HEADERS = [
+    "CodeAnalysis/sourceannotations.h",
+    "concurrencysal.h",
+    "crtdefs.h",
+    "eh.h",
+    "ehdata.h",
+    "ehdata_forceinclude.h",
+    "ehdata_values.h",
+    "excpt.h",
+    "sal.h",
+    "setjmp.h",
+    "setjmpex.h",
+    "threads.h",
+    "vadefs.h",
+    "vcruntime.h",
+    "vcruntime_exception.h",
+    "vcruntime_new.h",
+    "vcruntime_new_debug.h",
+    "vcruntime_string.h",
+    "vcruntime_startup.h",
+    "vcruntime_typeinfo.h",
+]
+
+alias(
+    name = "msvc_include",
+    actual = "@msvc_runtime//:msvc_include",
+)
+
+[
+    alias(
+        name = "winsdk_%s_include" % directory,
+        actual = "@windows_sdk//:winsdk_%s_include" % directory,
+    )
+    for directory in [
+        "shared",
+        "ucrt",
+        "um",
+        "winrt",
+    ]
+]
+
+alias(
+    name = "winsdk_ucrt_lib",
+    actual = "@windows_sdk//:winsdk_ucrt_lib",
+)
+
+alias(
+    name = "winsdk_um_lib",
+    actual = "@windows_sdk//:winsdk_um_lib",
+)
+
+alias(
+    name = "msvc_lib_arm64",
+    actual = "@msvc_runtime//:msvc_lib_arm64",
+)
+
+alias(
+    name = "msvc_lib_x64",
+    actual = "@msvc_runtime//:msvc_lib_x64",
+)
+
+copy_to_directory(
+    name = "msvc_vcruntime_headers_source",
+    srcs = [":msvc_include"],
+    include_external_repositories = ["**"],
+    include_srcs_patterns = _MSVC_VCRUNTIME_HEADERS,
+    root_paths = ["**/include"],
+)
+
+directory_info(
+    name = "msvc_vcruntime_headers",
+    src = ":msvc_vcruntime_headers_source",
+)
+
+copy_to_directory(
+    name = "msvc_com_support_headers_source",
+    srcs = [":msvc_include"],
+    include_external_repositories = ["**"],
+    include_srcs_patterns = _MSVC_COM_SUPPORT_HEADERS,
+    root_paths = ["**/include"],
+)
+
+directory_info(
+    name = "msvc_com_support_headers",
+    src = ":msvc_com_support_headers_source",
+)
+
+case_insensitive_vfs_overlay(
+    name = "msvc_sdk_header_case_overlay",
+    roots = [
+        ":msvc_com_support_headers",
+        ":msvc_vcruntime_headers",
+        ":winsdk_shared_include",
+        ":winsdk_ucrt_include",
+        ":winsdk_um_include",
+        ":winsdk_winrt_include",
+    ],
+)
+
+case_insensitive_vfs_overlay(
+    name = "msvc_sdk_library_case_overlay",
+    roots = [
+        ":winsdk_ucrt_lib",
+        ":winsdk_um_lib",
+    ],
+)
+
+copy_to_directory(
+    name = "msvc_com_support_libraries",
+    srcs = select({
+        "//platforms/config:windows_aarch64_msvc": [":msvc_lib_arm64"],
+        "//platforms/config:windows_x86_64_msvc": [":msvc_lib_x64"],
+        "//conditions:default": [],
+    }),
+    include_external_repositories = ["**"],
+    include_srcs_patterns = _MSVC_COM_SUPPORT_LIBRARIES,
+    root_paths = [
+        "**/lib/arm64",
+        "**/lib/x64",
+    ],
+)
+
+copy_to_directory(
+    name = "msvc_dynamic_runtime_libraries",
+    srcs = select({
+        "//platforms/config:windows_aarch64_msvc": [":msvc_lib_arm64"],
+        "//platforms/config:windows_x86_64_msvc": [":msvc_lib_x64"],
+        "//conditions:default": [],
+    }),
+    include_external_repositories = ["**"],
+    include_srcs_patterns = _MSVC_DYNAMIC_RUNTIME_LIBRARIES,
+    root_paths = [
+        "**/lib/arm64",
+        "**/lib/x64",
+    ],
+)
+
+copy_to_directory(
+    name = "msvc_static_runtime_libraries",
+    srcs = select({
+        "//platforms/config:windows_aarch64_msvc": [":msvc_lib_arm64"],
+        "//platforms/config:windows_x86_64_msvc": [":msvc_lib_x64"],
+        "//conditions:default": [],
+    }),
+    include_external_repositories = ["**"],
+    include_srcs_patterns = _MSVC_STATIC_RUNTIME_LIBRARIES,
+    root_paths = [
+        "**/lib/arm64",
+        "**/lib/x64",
+    ],
+)

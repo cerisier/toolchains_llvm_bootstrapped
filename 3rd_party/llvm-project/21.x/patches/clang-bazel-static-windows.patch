@@ -1,0 +1,34 @@
+diff --git a/clang/BUILD.bazel b/clang/BUILD.bazel
+--- a/clang/BUILD.bazel
++++ b/clang/BUILD.bazel
+@@ -28,5 +28,17 @@ licenses(["notice"])
+ licenses(["notice"])
+-
++
++config_setting(
++    name = "is_windows_clang_cl",
++    constraint_values = ["@platforms//os:windows"],
++    flag_values = {"@rules_cc//cc/compiler:compiler": "clang-cl"},
++)
++
++config_setting(
++    name = "is_windows_msvc",
++    constraint_values = ["@platforms//os:windows"],
++    flag_values = {"@rules_cc//cc/compiler:compiler": "msvc-cl"},
++)
++
+ cc_binary(
+     name = "clang-tblgen",
+     srcs = glob([
+@@ -685,6 +699,11 @@ cc_library(
+         "include/clang/Basic/Version.inc",
+         "include/clang/Config/config.h",
+     ],
++    defines = select({
++        ":is_windows_clang_cl": ["CLANG_BUILD_STATIC"],
++        ":is_windows_msvc": ["CLANG_BUILD_STATIC"],
++        "//conditions:default": [],
++    }),
+     includes = ["include"],
+     deps = [
+         # We rely on the LLVM config library to provide configuration defines.

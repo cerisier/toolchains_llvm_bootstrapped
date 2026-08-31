@@ -2,6 +2,7 @@ load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@rules_cc//cc/toolchains:args.bzl", "cc_args")
 load("@rules_cc//cc/toolchains:feature.bzl", "cc_feature")
 load("@rules_cc//cc/toolchains:feature_set.bzl", "cc_feature_set")
+load("@rules_cc//cc/toolchains/impl:documented_api.bzl", "cc_args_list")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -12,6 +13,21 @@ _DEBUG_INFO_COMPILE_ACTIONS = [
     "@rules_cc//cc/toolchains/actions:objc_compile",
     "@rules_cc//cc/toolchains/actions:objcpp_compile",
 ]
+
+# rules_cc's compile_actions group also contains raw assembly. clang-cl's
+# source-language optimization and debug options do not apply there, while
+# preprocessed assembly still needs the preprocessor-facing subset.
+_CONFIGURATION_COMPILE_ACTIONS = select({
+    "//constraints/windows/abi:msvc": [
+        "@rules_cc//cc/toolchains/actions:c_compile",
+        "@rules_cc//cc/toolchains/actions:cpp_compile",
+        "@rules_cc//cc/toolchains/actions:linkstamp_compile",
+        "@rules_cc//cc/toolchains/actions:preprocess_assemble",
+        "@rules_cc//cc/toolchains/actions:cpp_header_parsing",
+        "@rules_cc//cc/toolchains/actions:lto_backend",
+    ],
+    "//conditions:default": ["@rules_cc//cc/toolchains/actions:compile_actions"],
+})
 
 _FINAL_LINK_ACTIONS = [
     "@rules_cc//cc/toolchains/actions:cpp_link_dynamic_library",
@@ -33,16 +49,66 @@ cc_feature(
     overrides = "@rules_cc//cc/toolchains/features:static_link_cpp_runtimes",
 )
 
+cc_args(
+    name = "no_exceptions_args",
+    # Preserve the generic Clang behavior previously provided by --copt,
+    # whose user_compile_flags expansion covers rules_cc compile_actions.
+    actions = ["@rules_cc//cc/toolchains/actions:compile_actions"],
+    args = ["-fno-exceptions"],
+)
+
+cc_feature(
+    name = "no_exceptions",
+    args = [":no_exceptions_args"],
+    feature_name = "no_exceptions",
+)
+
+cc_args(
+    name = "no_rtti_args",
+    # Preserve the generic Clang behavior previously provided by --copt,
+    # whose user_compile_flags expansion covers rules_cc compile_actions.
+    actions = ["@rules_cc//cc/toolchains/actions:compile_actions"],
+    args = ["-fno-rtti"],
+)
+
+cc_feature(
+    name = "no_rtti",
+    args = [":no_rtti_args"],
+    feature_name = "no_rtti",
+)
+
+cc_args(
+    name = "omit_frame_pointer_args",
+    # Preserve the generic Clang behavior previously provided by --copt,
+    # including C compilation and ThinLTO backend code generation.
+    actions = ["@rules_cc//cc/toolchains/actions:compile_actions"],
+    args = ["-fomit-frame-pointer"],
+)
+
+cc_feature(
+    name = "omit_frame_pointer",
+    args = [":omit_frame_pointer_args"],
+    feature_name = "omit_frame_pointer",
+)
+
+cc_feature_set(
+    name = "compiler_policy_features",
+    all_of = [
+        ":no_exceptions",
+        ":no_rtti",
+        ":omit_frame_pointer",
+    ],
+)
+
 cc_feature(
     name = "prefer_pic_for_opt_binaries",
     feature_name = "prefer_pic_for_opt_binaries",
 )
 
-# Allow external repositories to get included with -isystem instead of -I
-# in order to silence warnings from external headers. //toolchain:toolchain_args
-# and //toolchain/runtimes:toolchain_args expand external_include_paths before
-# //toolchain:platform_specific_args and
-# //toolchain/runtimes:staged_platform_specific_args, respectively.
+# Allow external repositories to get included with -isystem instead of -I in
+# order to silence warnings from external headers. The complete generic and
+# Windows toolchain compositions expand external_include_paths before their
+# target C and C++ include semantics.
 cc_feature(
     name = "external_include_paths",
     feature_name = "external_include_paths",
@@ -67,6 +133,11 @@ cc_feature(
 cc_feature(
     name = "no_windows_export_all_symbols",
     feature_name = "no_windows_export_all_symbols",
+)
+
+cc_feature(
+    name = "sanitize_pwd",
+    feature_name = "sanitize_pwd",
 )
 
 # --icf=safe is LLD/ELF-only: sanitizer runtimes forbid ICF, wasm and Windows
@@ -116,33 +187,107 @@ cc_args(
 )
 
 cc_args(
+    name = "opt_no_debug_info",
+    actions = _CONFIGURATION_COMPILE_ACTIONS,
+    args = select({
+        # clang-cl emits no CodeView unless a /Z debug option is requested.
+        "//constraints/windows/abi:msvc": [],
+        "//conditions:default": [
+            # No debug symbols.
+            # Maybe we should enable https://gcc.gnu.org/wiki/DebugFission for opt or
+            # even generally? However, that can't happen here, as it requires special
+            # handling in Bazel.
+            "-g0",
+        ],
+    }),
+)
+
+cc_args(
+    name = "opt_optimization_level",
+    actions = _CONFIGURATION_COMPILE_ACTIONS,
+    args = select({
+        "//constraints/windows/abi:msvc": ["/O2"],
+        "//conditions:default": [
+            # Conservative choice for -O
+            # -O3 can increase binary size and even slow down the resulting binaries.
+            # Profile first and / or use FDO if you need better performance than this.
+            "-O2",
+        ],
+    }),
+)
+
+cc_args(
+    name = "opt_fortify",
+    actions = _CONFIGURATION_COMPILE_ACTIONS,
+    args = select({
+        # VCRuntime provides its own checked-runtime policy; _FORTIFY_SOURCE is
+        # a glibc-family source contract, not a clang-cl spelling problem.
+        "//constraints/windows/abi:msvc": [],
+        "//conditions:default": [
+            # Security hardening on by default.
+            # Conservative choice; -D_FORTIFY_SOURCE=2 may be unsafe in some cases.
+            "-D_FORTIFY_SOURCE=1",
+        ],
+    }),
+)
+
+cc_args(
+    name = "opt_disable_assertions",
+    actions = _CONFIGURATION_COMPILE_ACTIONS,
+    args = select({
+        "//constraints/windows/abi:msvc": ["/DNDEBUG"],
+        "//conditions:default": [
+            # Disable assertions
+            "-DNDEBUG",
+        ],
+    }),
+)
+
+cc_args(
+    name = "opt_function_sections",
+    actions = _CONFIGURATION_COMPILE_ACTIONS,
+    args = select({
+        "//constraints/windows/abi:msvc": ["/Gy"],
+        "//conditions:default": [
+            # Removal of unused code and data at link time (can this increase binary
+            # size in some cases?).
+            "-ffunction-sections",
+        ],
+    }),
+)
+
+cc_args(
+    name = "opt_data_sections",
+    actions = _CONFIGURATION_COMPILE_ACTIONS,
+    args = select({
+        "//constraints/windows/abi:msvc": ["/Gw"],
+        "//conditions:default": [
+            "-fdata-sections",
+        ],
+    }),
+)
+
+cc_args(
+    name = "opt_inline_elimination",
+    actions = _CONFIGURATION_COMPILE_ACTIONS,
+    args = select({
+        "//constraints/windows/abi:msvc": ["/Zc:inline"],
+        # Generic Clang's section and linker-GC policy already owns dead-code
+        # removal; it has no separate driver option equivalent to /Zc:inline.
+        "//conditions:default": [],
+    }),
+)
+
+cc_args_list(
     name = "opt_compile_flags",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:compile_actions",
-    ],
     args = [
-        # No debug symbols.
-        # Maybe we should enable https://gcc.gnu.org/wiki/DebugFission for opt or
-        # even generally? However, that can't happen here, as it requires special
-        # handling in Bazel.
-        "-g0",
-
-        # Conservative choice for -O
-        # -O3 can increase binary size and even slow down the resulting binaries.
-        # Profile first and / or use FDO if you need better performance than this.
-        "-O2",
-
-        # Security hardening on by default.
-        # Conservative choice; -D_FORTIFY_SOURCE=2 may be unsafe in some cases.
-        "-D_FORTIFY_SOURCE=1",
-
-        # Disable assertions
-        "-DNDEBUG",
-
-        # Removal of unused code and data at link time (can this increase binary
-        # size in some cases?).
-        "-ffunction-sections",
-        "-fdata-sections",
+        ":opt_no_debug_info",
+        ":opt_optimization_level",
+        ":opt_fortify",
+        ":opt_disable_assertions",
+        ":opt_function_sections",
+        ":opt_data_sections",
+        ":opt_inline_elimination",
     ],
 )
 
@@ -163,21 +308,51 @@ cc_feature(
 )
 
 cc_args(
+    name = "dbg_runtime_debug_define",
+    actions = _CONFIGURATION_COMPILE_ACTIONS,
+    args = select({
+        # Only retail /MD and /MT are supported. _DEBUG would select debug CRT
+        # behavior that the declared Microsoft runtime closure does not provide.
+        "//constraints/windows/abi:msvc": [],
+        "//conditions:default": [
+            # windows c runtime requires -D_DEBUG if using debug libraries
+            "-D_DEBUG",
+        ],
+    }),
+)
+
+cc_args(
+    name = "dbg_no_optimization",
+    actions = _CONFIGURATION_COMPILE_ACTIONS,
+    args = select({
+        "//constraints/windows/abi:msvc": ["/Od"],
+        "//conditions:default": [
+            # Clang has -Og for compatibility with GCC, but currently it is just equivalent
+            # to -O1. Besides potentially impairing debugging, -O1/-Og significantly
+            # increases compile times.
+            "-O0",
+        ],
+    }),
+)
+
+cc_args(
+    name = "dbg_debug_info",
+    actions = _CONFIGURATION_COMPILE_ACTIONS,
+    args = select({
+        "//constraints/windows/abi:msvc": ["/Z7"],
+        "//conditions:default": [
+            # Debug symbols.
+            "-g",
+        ],
+    }),
+)
+
+cc_args_list(
     name = "dbg_compile_flags",
-    actions = [
-        "@rules_cc//cc/toolchains/actions:compile_actions",
-    ],
     args = [
-        # windows c runtime requires -D_DEBUG if using debug libraries
-        "-D_DEBUG",
-
-        # Clang has -Og for compatibility with GCC, but currently it is just equivalent
-        # to -O1. Besides potentially impairing debugging, -O1/-Og significantly
-        # increases compile times.
-        "-O0",
-
-        # Debug symbols.
-        "-g",
+        ":dbg_runtime_debug_define",
+        ":dbg_no_optimization",
+        ":dbg_debug_info",
     ],
 )
 
@@ -188,6 +363,10 @@ cc_feature(
         ":dbg_compile_flags",
     ],
     feature_name = "_underlying_dbg",
+    implies = select({
+        "//constraints/windows/abi:msvc": [":generate_pdb_file"],
+        "//conditions:default": [],
+    }),
     requires_any_of = [":dbg_stub"],
 )
 
@@ -247,7 +426,10 @@ cc_feature(
 cc_args(
     name = "generate_pdb_file_compile_args",
     actions = _DEBUG_INFO_COMPILE_ACTIONS,
-    args = ["-gcodeview"],
+    args = select({
+        "//constraints/windows/abi:msvc": ["/Z7"],
+        "//conditions:default": ["-gcodeview"],
+    }),
 )
 
 cc_args(
@@ -258,10 +440,10 @@ cc_args(
 
 cc_feature(
     name = "generate_pdb_file",
-    args = [
-        ":generate_pdb_file_compile_args",
-        ":generate_pdb_file_link_args",
-    ],
+    args = [":generate_pdb_file_compile_args"] + select({
+        "//constraints/windows/abi:msvc": ["//toolchain/features/msvc:pdb_args"],
+        "//conditions:default": [":generate_pdb_file_link_args"],
+    }),
     feature_name = "generate_pdb_file",
 )
 

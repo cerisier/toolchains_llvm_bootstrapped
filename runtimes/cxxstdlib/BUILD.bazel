@@ -18,6 +18,15 @@ config_setting(
     ],
 )
 
+config_setting(
+    name = "libcxx_windows_msvc_vcruntime",
+    constraint_values = [
+        "//constraints/cxxstdlib:libcxx",
+        "//constraints/windows/abi:msvc",
+        "@platforms//os:windows",
+    ],
+)
+
 selects.config_setting_group(
     name = "libstdcxx_linux",
     match_all = [
@@ -51,6 +60,9 @@ alias(
     actual = select({
         ":libstdcxx_linux": "//runtimes/libstdcxx:abi_headers_include_search_directory",
         ":libstdcxx_windows": ":libstdcxx_windows_unsupported",
+        # The supported native Windows tuple uses libc++ with the Microsoft
+        # ABI implementation supplied by VCRuntime, not libc++abi headers.
+        ":libcxx_windows_msvc_vcruntime": "@llvm//runtimes:none",
         "//conditions:default": "@llvm-project//libcxxabi:libcxxabi_headers_include_search_directory",
     }),
 )
@@ -60,6 +72,7 @@ alias(
     actual = select({
         ":libstdcxx_linux": "//runtimes/libstdcxx:libstdcxx_library_search_directory",
         ":libstdcxx_windows": ":libstdcxx_windows_unsupported",
+        ":libcxx_windows_msvc_vcruntime": "//runtimes/libcxx:libcxx_msvc_library_search_directory",
         "//conditions:default": "//runtimes/libcxx:libcxx_library_search_directory",
     }),
 )
@@ -88,6 +101,7 @@ filegroup(
     srcs = select({
         ":libstdcxx_linux": [":libstdcxx_static_runtime_lib"],
         ":libstdcxx_windows": [":libstdcxx_windows_unsupported"],
+        ":libcxx_windows_msvc_vcruntime": ["//runtimes/libcxx:libcxx.static"],
         ":libcxx_linux": [
             "@llvm-project//libcxx:libcxx.static",
             "@llvm-project//libcxxabi:libcxxabi.static",
@@ -110,6 +124,9 @@ filegroup(
             "//runtimes/libunwind:libunwind.shared",
         ],
         ":libstdcxx_windows": [":libstdcxx_windows_unsupported"],
+        # Windows MSVC libc++ is configuration-wide static even when ordinary
+        # dependency linkage selects dynamic libraries.
+        ":libcxx_windows_msvc_vcruntime": ["//runtimes/libcxx:libcxx.static"],
         ":libcxx_linux": [
             "@llvm-project//libcxx:libcxx.shared",
             "@llvm-project//libcxxabi:libcxxabi.shared",

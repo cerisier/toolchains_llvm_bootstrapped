@@ -66,9 +66,11 @@ def _write_llvm_targets(rctx):
     )
 
 def _expose_third_party_build_files(rctx):
-    # llvm_zlib, llvm_zstd, and the rules_foreign_cc pfm repository use BUILD
-    # files from utils/bazel/third_party_build. Replace the utils/bazel
-    # .bazelignore entry with LLVM_PROJECT_OVERLAY so those files remain visible.
+    # Older LLVM releases provide a rules_foreign_cc pfm.BUILD in
+    # utils/bazel/third_party_build. Keep it visible when present.
+    if not rctx.path("utils/bazel/third_party_build/pfm.BUILD").exists:
+        return
+
     bazelignore = rctx.read(".bazelignore")
     rctx.delete(".bazelignore")
     rctx.file(
@@ -80,7 +82,7 @@ def _expose_third_party_build_files(rctx):
         executable = False,
     )
     rctx.delete("utils/bazel/third_party_build/BUILD.bazel")
-    rctx.file("utils/bazel/third_party_build/BUILD.bazel", """exports_files(["pfm.BUILD", "zlib-ng.BUILD", "zstd.BUILD"])\n""", executable = False)
+    rctx.file("utils/bazel/third_party_build/BUILD.bazel", """exports_files(["pfm.BUILD"])\n""", executable = False)
 
 def write_llvm_project_files(rctx):
     _expose_third_party_build_files(rctx)
