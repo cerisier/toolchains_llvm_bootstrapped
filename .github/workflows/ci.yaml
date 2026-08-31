@@ -45,6 +45,7 @@ jobs:
       # Pull requests restore dependency caches published by main. PR-scoped caches can
       # only be reused by reruns of the same PR, so they are not saved here.
       - name: Restore Bazel repository cache
+        if: matrix.folder != 'e2e/cross_compilation'
         id: bazel-repository-cache
         uses: actions/cache/restore@v4
         with:
@@ -61,10 +62,16 @@ jobs:
         working-directory: ${{ matrix.folder }}
         shell: bash
         run: |
+          repository_cache_flags=()
+          if [[ "${{ matrix.folder }}" == "e2e/cross_compilation" ]]; then
+            repository_cache_flags+=(--repository_cache= --repo_contents_cache=)
+          fi
+
           bazel \
             --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc \
             --bazelrc=.bazelrc \
             test \
+            "${repository_cache_flags[@]}" \
             --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
             ${{ matrix.extra_flags }} \
             //...
@@ -78,6 +85,7 @@ jobs:
               --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc \
               --bazelrc=.bazelrc \
               build \
+              "${repository_cache_flags[@]}" \
               --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
               --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
               --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
