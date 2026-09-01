@@ -479,10 +479,15 @@ def declare_llvm_targets(*, suffix = ""):
                 "@llvm//runtimes/cxxstdlib:abi_headers_include_search_directory",
             ],
             "//conditions:default": [],
-        }),
+        }) + [
+            # These generated directory artifacts must stay as File values in
+            # the module-map action so Bazel can apply output-path mapping.
+            "@llvm//runtimes/msvc:msvc_com_support_headers_source",
+            "@llvm//runtimes/msvc:msvc_vcruntime_headers_source",
+        ],
         umbrella_directories = [
-            "@llvm//runtimes/msvc:msvc_com_support_headers",
-            "@llvm//runtimes/msvc:msvc_vcruntime_headers",
+            # The SDK roots are source directories in an external repository,
+            # so their paths are independent of the output configuration.
             "@llvm//runtimes/msvc:winsdk_ucrt_include",
             "@llvm//runtimes/msvc:winsdk_shared_include",
             "@llvm//runtimes/msvc:winsdk_um_include",

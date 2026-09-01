@@ -7,7 +7,7 @@ IncludePathInfo = provider(
     "IncludePathInfo",
     fields = {
         "submodule_directories": "A depset of File objects representing directories to be included as umbrella submodules.",
-        "submodule_directory_paths": "A list of directory paths to be included as umbrella submodules.",
+        "source_submodule_directory_paths": "A list of source directory paths to be included as umbrella submodules.",
         "textual_headers": "A depset of File objects representing headers to be included as textual headers.",
     },
 )
@@ -20,8 +20,12 @@ def _umbrella_submodule_path(path):
     umbrella "{path}"
   }}""".format(path = path)
 
-def _umbrella_submodule(directory):
-    return _umbrella_submodule_path(directory.path)
+def _add_umbrella_submodule(args, directory):
+    # Keep File values opaque to Starlark so Bazel can rewrite generated paths
+    # when output-path mapping is enabled.
+    args.add_all([directory], format_each = "\n  module \"%s\" {", expand_directories = False)
+    args.add_all([directory], format_each = "    umbrella \"%s\"", expand_directories = False)
+    args.add("  }")
 
 def _module_map_impl(ctx):
     module_map = ctx.actions.declare_file(ctx.attr.name + ".modulemap")
@@ -32,15 +36,11 @@ def _module_map_impl(ctx):
     module_map_args.set_param_file_format("multiline")
     module_map_args.add('module "crosstool" [system] {')
 
-    module_map_args.add_joined(
-        include_path_info.submodule_directories,
-        join_with = "\n",
-        map_each = _umbrella_submodule,
-        expand_directories = False,
-    )
+    for directory in include_path_info.submodule_directories.to_list():
+        _add_umbrella_submodule(module_map_args, directory)
 
     module_map_args.add_joined(
-        include_path_info.submodule_directory_paths,
+        include_path_info.source_submodule_directory_paths,
         join_with = "\n",
         map_each = _umbrella_submodule_path,
     )
@@ -81,7 +81,7 @@ module_map = rule(
 
 def _include_path_impl(ctx):
     submodule_directories = []
-    submodule_directory_paths = []
+    source_submodule_directory_paths = []
     textual_headers_depsets = []
 
     for src in ctx.attr.srcs:
@@ -92,12 +92,15 @@ def _include_path_impl(ctx):
             textual_headers_depsets.append(src[DirectoryInfo].transitive_files)
 
     for directory in ctx.attr.umbrella_directories:
-        submodule_directory_paths.append(directory[DirectoryInfo].path)
+        path = directory[DirectoryInfo].path
+        if path.startswith("bazel-out/"):
+            fail("Generated umbrella directory {} must be passed through srcs as a File-backed target so Bazel can apply output-path mapping.".format(directory.label))
+        source_submodule_directory_paths.append(path)
 
     return [
         IncludePathInfo(
             submodule_directories = depset([], transitive = submodule_directories),
-            submodule_directory_paths = submodule_directory_paths,
+            source_submodule_directory_paths = source_submodule_directory_paths,
             textual_headers = depset([], transitive = textual_headers_depsets),
         ),
     ]
