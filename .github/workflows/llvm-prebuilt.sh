@@ -38,7 +38,7 @@ bazel \
   --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
   --config=remote \
   --config=release \
-  --jobs=128 \
+  --jobs=400 \
   --discard_analysis_cache \
   --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
   --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
