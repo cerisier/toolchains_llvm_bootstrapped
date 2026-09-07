@@ -138,7 +138,7 @@ def bootstrap_binaries(**kwargs):
     for tool in ["llvm"] + TOOLCHAIN_BINARIES:
         bootstrap_binary(
             name = tool,
-            actual = "@llvm-project//llvm",
+            actual = "@llvm-project//llvm:llvm.stripped",
             visibility = ["//visibility:public"],
             **kwargs
         )
