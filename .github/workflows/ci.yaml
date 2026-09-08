@@ -72,7 +72,6 @@ jobs:
             --bazelrc=.bazelrc \
             test \
             "${repository_cache_flags[@]}" \
-            --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
             ${{ matrix.extra_flags }} \
             //...
 
@@ -86,8 +85,7 @@ jobs:
               --bazelrc=.bazelrc \
               build \
               "${repository_cache_flags[@]}" \
-              --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
-              --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
+                --repo_env=BAZEL_MSVC_RUNTIME_VISUAL_STUDIO_EULA=1 \
               --repo_env=BAZEL_WINDOWS_SDK_EULA=1 \
               //:main_windows_x86_64_msvc \
               //:main_windows_aarch64_msvc
@@ -99,7 +97,7 @@ jobs:
           USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
         working-directory: ${{ matrix.folder }}
         shell: bash
-        run: ./coverage_lcov_test.sh --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7
+        run: ./coverage_lcov_test.sh
 
       - name: Stop Bazel before saving repository cache
         if: github.event_name == 'push' && github.ref == 'refs/heads/main' && matrix.folder != 'e2e/cross_compilation' && steps.bazel-repository-cache.outputs.cache-hit != 'true'
@@ -155,7 +153,6 @@ jobs:
             test \
             --repository_cache= \
             --repo_contents_cache= \
-            --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
             --jobs=100 \
             $EXTRA_ARGS \
             //...
@@ -190,7 +187,6 @@ jobs:
           bazel \
             --bazelrc=.bazelrc \
             build \
-            --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
             //:main_default
 
       # ASan, UBSan and libFuzzer are fully supported on macOS: run their e2e
@@ -208,7 +204,6 @@ jobs:
           bazel \
             --bazelrc=.bazelrc \
             test \
-            --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
             //:asan_output_test \
             //:ubsan_output_test \
             //:fuzzer_output_test \
@@ -217,7 +212,6 @@ jobs:
           bazel \
             --bazelrc=.bazelrc \
             build \
-            --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
             //:tsan_fail \
             //:lsan_fail
 
@@ -226,7 +220,7 @@ jobs:
           USE_BAZEL_VERSION: ${{ matrix.bazel_version }}
         working-directory: ${{ matrix.folder }}
         shell: bash
-        run: ./coverage_lcov_test.sh --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7
+        run: ./coverage_lcov_test.sh
 
   llvm_version_analysis:
     strategy:
@@ -319,7 +313,6 @@ jobs:
             --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc \
             --bazelrc=.bazelrc \
             query \
-            --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
             --output=package \
             'deps(set(@kernel_headers//:3.6_kernel_headers @kernel_headers//:3.6_kernel_headers_directory @kernel_headers//:4.14_kernel_headers @kernel_headers//:4.14_kernel_headers_directory))'
 
@@ -327,7 +320,6 @@ jobs:
             --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc \
             --bazelrc=.bazelrc \
             test \
-            --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
             //tests/... \
             //tools/case_insensitive_vfs:cli_test \
             //tools/case_insensitive_vfs:test \
@@ -360,7 +352,6 @@ jobs:
           bazel \
             run \
             --config=remote \
-            --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
             //gazelle:gazelle -- -mode=diff
 
       - name: Build release docs
@@ -379,5 +370,4 @@ jobs:
         run: |
           bazel \
             run \
-            --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
             //internal_tools:buildifier.check

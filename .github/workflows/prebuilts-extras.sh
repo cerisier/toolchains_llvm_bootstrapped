@@ -17,7 +17,6 @@ BRANCH_PAYLOAD="${BRANCH_NAME#prebuilts-extras-}"
 bazel \
   --bazelrc=".github/workflows/ci.bazelrc" \
   build \
-  --remote_header=x-buildbuddy-api-key=4jtaxdhxtyu4ylxdEwI7 \
   --@libarchive//:use_mbedtls=true \
   --config=remote \
   --config=release \
