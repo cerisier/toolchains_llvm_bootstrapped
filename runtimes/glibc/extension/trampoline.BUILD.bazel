@@ -15,6 +15,12 @@ alias(
 )
 
 alias(
+    name = "glibc_headers_files",
+    actual = make_select_glibc_repository_target("@glibc_headers", "glibc_headers_files"),
+    target_compatible_with = ["@platforms//os:linux"],
+)
+
+alias(
     name = "glibc_c_nonshared.static",
     actual = make_select_glibc_repository_target("@glibc", "c_nonshared"),
     target_compatible_with = ["@platforms//os:linux"],
