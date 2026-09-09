@@ -1,9 +1,14 @@
 #include <errno.h>
-#include <fcntl.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifdef _WIN32
+#include <process.h>
+#else
 #include <unistd.h>
+#endif
 
 int main(int argc, char **argv) {
   const char *path = getenv("PARSE_HEADER");
@@ -12,13 +17,13 @@ int main(int argc, char **argv) {
     exit(2);
   }
 
-  int fd = open(path, O_WRONLY | O_CREAT, 0666);
-  if (fd < 0) {
+  FILE *touched = fopen(path, "a");
+  if (touched == NULL) {
     fprintf(stderr, "header_parser: failed to touch %s: %s\n",
             path, strerror(errno));
     exit(2);
   }
-  if (close(fd) != 0) {
+  if (fclose(touched) != 0) {
     fprintf(stderr, "header_parser: failed to close =%s: %s\n",
             path, strerror(errno));
     exit(2);
@@ -31,7 +36,17 @@ int main(int argc, char **argv) {
   }
 
   argv[0] = (char *)clang_path;
+#ifdef _WIN32
+  intptr_t status = _spawnv(_P_WAIT, clang_path, (const char *const *)argv);
+  if (status == -1) {
+    fprintf(stderr, "header_parser: failed to execute %s: %s\n",
+            clang_path, strerror(errno));
+    return 2;
+  }
+  return (int)status;
+#else
   execv(clang_path, argv);
   fprintf(stderr, "header_parser: execv failed: %s\n", strerror(errno));
   return 2;
+#endif
 }
