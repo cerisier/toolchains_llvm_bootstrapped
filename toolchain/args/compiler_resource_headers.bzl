@@ -33,20 +33,36 @@ def declare_clang_compile_resource_headers(
         name = name,
         actions = _COMPILE_RESOURCE_HEADER_ACTIONS,
         allowlist_include_directories = allowlist_include_directories,
-        args = [
-            # The toolchain supplies the resource headers explicitly so normal
-            # and bootstrap compilers have the same ownership model. Disable
-            # Clang's implicit entry instead of emitting the same
-            # -internal-isystem twice and relying on header-search deduplication.
-            # Do not use -resource-dir here: link actions have separate
-            # resource-directory semantics, and rules_foreign_cc may combine
-            # CC, CFLAGS, and LDFLAGS into one driver invocation.
-            "-nobuiltininc",
-            "-Xclang",
-            "-internal-isystem",
-            "-Xclang",
-            "{resource_include_directory}",
-        ],
+        # The toolchain supplies the resource headers explicitly so normal and
+        # bootstrap compilers have the same ownership model. Disable Clang's
+        # implicit entry instead of emitting the same -internal-isystem twice
+        # and relying on header-search deduplication.
+        # Do not use -resource-dir here: link actions have separate
+        # resource-directory semantics, and rules_foreign_cc may combine CC,
+        # CFLAGS, and LDFLAGS into one driver invocation.
+        args = select({
+            # The driver appends -Xclang arguments after the include
+            # directories it derives from the sysroot, so the explicit entry
+            # ends up after the SDK's /usr/include. That breaks -fmodules
+            # builds: the SDK's sys/_types/_ptrdiff_t.h (and friends) then
+            # include <stddef.h> expecting Clang's builtin header, but find the
+            # SDK's own copy, which circularly includes <_types.h>. Keep the
+            # implicit entry, which the driver places before the SDK headers,
+            # and let Clang drop the later duplicate.
+            "@platforms//os:macos": [
+                "-Xclang",
+                "-internal-isystem",
+                "-Xclang",
+                "{resource_include_directory}",
+            ],
+            "//conditions:default": [
+                "-nobuiltininc",
+                "-Xclang",
+                "-internal-isystem",
+                "-Xclang",
+                "{resource_include_directory}",
+            ],
+        }),
         data = [resource_headers_data],
         format = {
             "resource_include_directory": resource_include_directory,
